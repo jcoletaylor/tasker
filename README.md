@@ -1,3 +1,5 @@
+[![CI](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg)](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml)
+
 # Tasker: Queable Multi-Step Tasks Made Easy-ish
 
 ## *Designed to make developing queuable multi-step tasks easier to reason about*
