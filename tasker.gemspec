@@ -1,24 +1,44 @@
-require_relative "lib/tasker/version"
+# frozen_string_literal: true
+
+require_relative 'lib/tasker/version'
 
 Gem::Specification.new do |spec|
-  spec.name        = "tasker"
+  spec.name        = 'tasker'
   spec.version     = Tasker::VERSION
-  spec.authors     = ["Pete Taylor"]
-  spec.email       = ["pete.jc.taylor@hey.com"]
-  spec.homepage    = "TODO"
-  spec.summary     = "TODO: Summary of Tasker."
-  spec.description = "TODO: Description of Tasker."
-  spec.license     = "MIT"
+  spec.authors     = ['Pete Taylor']
+  spec.email       = ['pete.jc.taylor@hey.com']
+  spec.homepage    = 'https://github.com/jcoletaylor/tasker'
+  spec.summary     = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
+  spec.description = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
+  spec.license     = 'MIT'
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.7.3')
 
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
+  spec.metadata['homepage_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+  spec.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
 
-  spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
+  spec.add_dependency 'rails', '~> 6.1.4', '>= 6.1.4.1'
+  # Use postgresql as the database for Active Record
+  spec.add_dependency 'pg', '~> 1.1'
+  # Use Puma as the app server
+  spec.add_dependency 'puma', '~> 5.0'
 
-  spec.add_dependency "rails", "~> 6.1.4", ">= 6.1.4.1"
+  spec.add_dependency 'sidekiq'
+
+  # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
+  spec.add_dependency 'rack-cors'
+
+  spec.add_dependency 'active_model_serializers', '>= 0.10.0'
+
+  spec.add_dependency 'sorbet-runtime'
+
+  spec.add_dependency 'json-schema', '>= 2.4.0'
+
+  spec.add_dependency 'rswag-api'
+  spec.add_dependency 'rswag-ui'
+
+  spec.add_dependency 'graphql'
+
+  spec.add_development_dependency 'rspec-rails'
 end
