@@ -1,6 +1,10 @@
 # frozen_string_literal: true
+
 # typed: strict
 
+require 'rails'
+require 'pg'
+require 'sidekiq'
 require 'sorbet-runtime'
 require 'active_model_serializers'
 require 'json-schema'
