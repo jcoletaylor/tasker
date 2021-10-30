@@ -1,0 +1,23 @@
+query PendingTasks($limit: Int, $offset: Int, $sort_by: String, $sort_order: String) {
+  tasksByStatus(
+    limit: $limit,
+    offset: $offset,
+    sortBy: $sort_by,
+    sortOrder: $sort_order,
+    status: "pending"
+  ) {
+    taskId,
+    status,
+    workflowSteps {
+      workflowStepId,
+      status
+    },
+    taskAnnotations {
+      taskAnnotationId,
+      annotationType {
+        name
+      },
+      annotation
+    }
+  }
+}

@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
 
-  spec.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
+  spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
   spec.add_dependency 'rails', '~> 6.1.4', '>= 6.1.4.1'
   # Use postgresql as the database for Active Record
@@ -41,4 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'graphql'
 
   spec.add_development_dependency 'rspec-rails'
+  spec.add_development_dependency 'sorbet'
+  spec.add_development_dependency 'sqlite3'
 end

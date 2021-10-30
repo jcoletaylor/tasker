@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    tasker (0.1.0)
+    tasker (1.0.0)
       active_model_serializers (>= 0.10.0)
       graphql
       json-schema (>= 2.4.0)
@@ -253,6 +253,7 @@ GEM
       actionpack (>= 4.0)
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
+    sqlite3 (1.4.2)
     thor (1.1.0)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
@@ -283,6 +284,7 @@ DEPENDENCIES
   sorbet
   spring
   spring-watcher-listen (~> 2.0.0)
+  sqlite3
   tasker!
 
 BUNDLED WITH

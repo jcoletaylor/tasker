@@ -310,3 +310,92 @@ module ActionController::Serialization::ClassMethods
 end
 class ActiveModelSerializers::Railtie < Rails::Railtie
 end
+class ActiveModel::Serializer::Field < Struct
+  def block; end
+  def block=(_); end
+  def condition; end
+  def condition_type; end
+  def evaluate_condition(serializer); end
+  def excluded?(serializer); end
+  def initialize(*arg0); end
+  def name; end
+  def name=(_); end
+  def options; end
+  def options=(_); end
+  def self.[](*arg0); end
+  def self.inspect; end
+  def self.members; end
+  def self.new(*arg0); end
+  def validate_condition!; end
+  def value(serializer); end
+end
+class ActiveModel::Serializer::Attribute < ActiveModel::Serializer::Field
+end
+class ActiveModel::Serializer::LazyAssociation < Struct
+  def association_options; end
+  def association_options=(_); end
+  def cached_result; end
+  def collection?(**, &&); end
+  def eval_reflection_block; end
+  def include_data?; end
+  def instantiate_collection_serializer(object); end
+  def instantiate_serializer(object); end
+  def namespace; end
+  def object; end
+  def reflection; end
+  def reflection=(_); end
+  def reflection_options; end
+  def self.[](*arg0); end
+  def self.inspect; end
+  def self.members; end
+  def self.new(*arg0); end
+  def serialize_object!(object); end
+  def serializer; end
+  def serializer_class; end
+  def virtual_value; end
+end
+class ActiveModel::Serializer::Association < Struct
+  def association_options; end
+  def association_options=(_); end
+  def belongs_to?; end
+  def collection?(**, &&); end
+  def include_data?(**, &&); end
+  def initialize(*arg0); end
+  def key; end
+  def key?; end
+  def lazy_association; end
+  def links; end
+  def meta; end
+  def name(**, &&); end
+  def object(**, &&); end
+  def polymorphic?; end
+  def reflection; end
+  def reflection=(_); end
+  def reflection_options(**, &&); end
+  def self.[](*arg0); end
+  def self.inspect; end
+  def self.members; end
+  def self.new(*arg0); end
+  def serializable_hash(adapter_options, adapter_instance); end
+  def virtual_value(**, &&); end
+end
+class ActiveModel::Serializer::Reflection < ActiveModel::Serializer::Field
+  def build_association(parent_serializer, parent_serializer_options, include_slice = nil); end
+  def collection?; end
+  def foreign_key; end
+  def foreign_key_on; end
+  def include_data(value = nil); end
+  def include_data?(include_slice); end
+  def initialize(*arg0); end
+  def link(name, value = nil, &block); end
+  def meta(value = nil, &block); end
+  def object; end
+  def object=(arg0); end
+  def scope; end
+  def scope=(arg0); end
+  def type; end
+  def value(serializer, include_slice); end
+end
+class ActiveModel::Serializer::HasManyReflection < ActiveModel::Serializer::Reflection
+  def collection?; end
+end

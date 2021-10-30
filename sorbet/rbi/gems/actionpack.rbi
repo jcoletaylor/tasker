@@ -2824,3 +2824,241 @@ class ActionDispatch::Routing::Mapper::Scope
   def scope_level; end
   include Enumerable
 end
+class ActionDispatch::Request::Utils
+  def perform_deep_munge; end
+  def perform_deep_munge=(val); end
+  def self.check_param_encoding(params); end
+  def self.each_param_value(params, &block); end
+  def self.normalize_encode_params(params); end
+  def self.perform_deep_munge; end
+  def self.perform_deep_munge=(val); end
+  def self.set_binary_encoding(request, params, controller, action); end
+end
+class ActionDispatch::Request::Utils::ParamEncoder
+  def self.handle_array(params); end
+  def self.normalize_encode_params(params); end
+end
+class ActionDispatch::Request::Utils::NoNilParamEncoder < ActionDispatch::Request::Utils::ParamEncoder
+  def self.handle_array(params); end
+end
+class ActionDispatch::Request::Utils::CustomParamEncoder
+  def self.action_encoding_template(request, controller, action); end
+  def self.encode(request, params, controller, action); end
+end
+class ActionDispatch::ExceptionWrapper
+  def application_trace; end
+  def backtrace; end
+  def backtrace_cleaner; end
+  def causes_for(exception); end
+  def clean_backtrace(*args); end
+  def exception; end
+  def exception_trace; end
+  def expand_backtrace; end
+  def extract_file_and_line_number(trace); end
+  def file; end
+  def framework_trace; end
+  def full_trace; end
+  def initialize(backtrace_cleaner, exception); end
+  def line_number; end
+  def rescue_responses; end
+  def rescue_responses=(val); end
+  def rescue_template; end
+  def rescue_templates; end
+  def rescue_templates=(val); end
+  def self.rescue_responses; end
+  def self.rescue_responses=(val); end
+  def self.rescue_templates; end
+  def self.rescue_templates=(val); end
+  def self.silent_exceptions; end
+  def self.silent_exceptions=(val); end
+  def self.status_code_for_exception(class_name); end
+  def self.wrapper_exceptions; end
+  def self.wrapper_exceptions=(val); end
+  def silent_exceptions; end
+  def silent_exceptions=(val); end
+  def source_extracts; end
+  def source_fragment(path, line); end
+  def source_to_show_id; end
+  def status_code; end
+  def trace_to_show; end
+  def traces; end
+  def unwrapped_exception; end
+  def wrapped_causes; end
+  def wrapped_causes_for(exception, backtrace_cleaner); end
+  def wrapper_exceptions; end
+  def wrapper_exceptions=(val); end
+end
+class ActionDispatch::Callbacks
+  def __callbacks; end
+  def __callbacks?; end
+  def _call_callbacks; end
+  def _run_call_callbacks(&block); end
+  def call(env); end
+  def initialize(app); end
+  def self.__callbacks; end
+  def self.__callbacks=(value); end
+  def self.__callbacks?; end
+  def self._call_callbacks; end
+  def self._call_callbacks=(value); end
+  def self.after(*args, &block); end
+  def self.before(*args, &block); end
+  extend ActiveSupport::Callbacks::ClassMethods
+  extend ActiveSupport::DescendantsTracker
+  include ActiveSupport::Callbacks
+end
+class ActionDispatch::HostAuthorization
+  def authorized?(request); end
+  def call(env); end
+  def excluded?(request); end
+  def initialize(app, hosts, deprecated_response_app = nil, exclude: nil, response_app: nil); end
+  def mark_as_authorized(request); end
+end
+class ActionDispatch::HostAuthorization::Permissions
+  def allows?(host); end
+  def empty?; end
+  def initialize(hosts); end
+  def sanitize_hosts(hosts); end
+  def sanitize_regexp(host); end
+  def sanitize_string(host); end
+end
+class ActionDispatch::Static
+  def call(env); end
+  def initialize(app, path, index: nil, headers: nil); end
+end
+class ActionDispatch::FileHandler
+  def attempt(env); end
+  def call(env); end
+  def clean_path(path_info); end
+  def compressible?(content_type); end
+  def each_candidate_filepath(path_info); end
+  def each_precompressed_filepath(filepath); end
+  def file_readable?(path); end
+  def find_file(path_info, accept_encoding:); end
+  def initialize(root, index: nil, headers: nil, precompressed: nil, compressible_content_types: nil); end
+  def serve(request, filepath, content_headers); end
+  def try_files(filepath, content_type, accept_encoding:); end
+  def try_precompressed_files(filepath, headers, accept_encoding:); end
+end
+class ActionDispatch::Executor
+  def call(env); end
+  def initialize(app, executor); end
+end
+class ActionDispatch::RequestId
+  def call(env); end
+  def initialize(app, header:); end
+  def internal_request_id; end
+  def make_request_id(request_id); end
+end
+class ActionDispatch::RemoteIp
+  def call(env); end
+  def check_ip; end
+  def initialize(app, ip_spoofing_check = nil, custom_proxies = nil); end
+  def proxies; end
+end
+class ActionDispatch::RemoteIp::IpSpoofAttackError < StandardError
+end
+class ActionDispatch::RemoteIp::GetIp
+  def calculate_ip; end
+  def filter_proxies(ips); end
+  def initialize(req, check_ip, proxies); end
+  def ips_from(header); end
+  def to_s; end
+end
+class ActionDispatch::ShowExceptions
+  def call(env); end
+  def initialize(app, exceptions_app); end
+  def pass_response(status); end
+  def render_exception(request, exception); end
+end
+class ActionDispatch::PublicExceptions
+  def call(env); end
+  def initialize(public_path); end
+  def public_path; end
+  def public_path=(arg0); end
+  def render(status, content_type, body); end
+  def render_format(status, content_type, body); end
+  def render_html(status); end
+end
+class ActionDispatch::Routing::RouteWrapper < SimpleDelegator
+  def action; end
+  def constraints; end
+  def controller; end
+  def endpoint; end
+  def engine?; end
+  def internal?; end
+  def name; end
+  def path; end
+  def rack_app; end
+  def reqs; end
+end
+class ActionDispatch::Routing::RoutesInspector
+  def collect_engine_routes(route); end
+  def collect_routes(routes); end
+  def filter_routes(filter); end
+  def format(formatter, filter = nil); end
+  def initialize(routes); end
+  def normalize_filter(filter); end
+end
+module ActionDispatch::Routing::ConsoleFormatter
+end
+class ActionDispatch::Routing::ConsoleFormatter::Base
+  def header(routes); end
+  def initialize; end
+  def no_routes(routes, filter); end
+  def result; end
+  def section(routes); end
+  def section_title(title); end
+end
+class ActionDispatch::Routing::ConsoleFormatter::Sheet < ActionDispatch::Routing::ConsoleFormatter::Base
+  def draw_header(routes); end
+  def draw_section(routes); end
+  def header(routes); end
+  def section(routes); end
+  def section_title(title); end
+  def widths(routes); end
+end
+class ActionDispatch::Routing::ConsoleFormatter::Expanded < ActionDispatch::Routing::ConsoleFormatter::Base
+  def draw_expanded_section(routes); end
+  def initialize(width: nil); end
+  def route_header(index:); end
+  def section(routes); end
+  def section_title(title); end
+end
+class ActionDispatch::Routing::HtmlTableFormatter
+  def header(routes); end
+  def initialize(view); end
+  def no_routes(*arg0); end
+  def result; end
+  def section(routes); end
+  def section_title(title); end
+end
+class ActionDispatch::DebugExceptions
+  def api_request?(content_type); end
+  def call(env); end
+  def create_template(request, wrapper); end
+  def initialize(app, routes_app = nil, response_format = nil, interceptors = nil); end
+  def invoke_interceptors(request, exception); end
+  def log_array(logger, array); end
+  def log_error(request, wrapper); end
+  def logger(request); end
+  def render(status, body, format); end
+  def render_exception(request, exception); end
+  def render_for_api_request(content_type, wrapper); end
+  def render_for_browser_request(request, wrapper); end
+  def routes_inspector(exception); end
+  def self.interceptors; end
+  def self.register_interceptor(object = nil, &block); end
+  def stderr_logger; end
+end
+class ActionDispatch::ActionableExceptions
+  def actionable_request?(request); end
+  def call(env); end
+  def endpoint; end
+  def endpoint=(val); end
+  def initialize(app); end
+  def redirect_to(location); end
+  def self.endpoint; end
+  def self.endpoint=(val); end
+end
+class ActionDispatch::Reloader < ActionDispatch::Executor
+end

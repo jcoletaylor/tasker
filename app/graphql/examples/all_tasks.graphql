@@ -1,0 +1,22 @@
+query AllTasks($limit: Int, $offset: Int, $sort_by: String, $sort_order: String) {
+  tasks(
+    limit: $limit,
+    offset: $offset,
+    sortBy: $sort_by,
+    sortOrder: $sort_order
+  ) {
+    taskId,
+    status,
+    workflowSteps {
+      workflowStepId,
+      status
+    },
+    taskAnnotations {
+      taskAnnotationId,
+      annotationType {
+        name
+      },
+      annotation
+    }
+  }
+}

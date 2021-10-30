@@ -12,6 +12,8 @@
 class Hash
   def _deep_transform_keys_in_object!(object, &block); end
   def _deep_transform_keys_in_object(object, &block); end
+  def _deep_transform_values_in_object!(object, &block); end
+  def _deep_transform_values_in_object(object, &block); end
   def as_json(options = nil); end
   def assert_valid_keys(*valid_keys); end
   def blank?; end
@@ -26,6 +28,8 @@ class Hash
   def deep_symbolize_keys; end
   def deep_transform_keys!(&block); end
   def deep_transform_keys(&block); end
+  def deep_transform_values!(&block); end
+  def deep_transform_values(&block); end
   def except!(*keys); end
   def except(*keys); end
   def extract!(*keys); end
@@ -186,10 +190,14 @@ class Array
   def forty_two; end
   def fourth; end
   def from(position); end
+  def in_groups(number, fill_with = nil); end
+  def in_groups_of(number, fill_with = nil); end
   def including(*elements); end
+  def inquiry; end
   def second; end
   def second_to_last; end
   def self.[](*arg0); end
+  def split(value = nil); end
   def third; end
   def third_to_last; end
   def to(position); end
@@ -213,12 +221,16 @@ class String
   def dasherize; end
   def deconstantize; end
   def demodulize; end
+  def ends_with?(*arg0); end
+  def exclude?(string); end
   def first(limit = nil); end
   def foreign_key(separate_class_name_and_id_with_underscore = nil); end
   def from(position); end
   def html_safe; end
   def humanize(capitalize: nil, keep_id_suffix: nil); end
   def in_time_zone(zone = nil); end
+  def indent!(amount, indent_string = nil, indent_empty_lines = nil); end
+  def indent(amount, indent_string = nil, indent_empty_lines = nil); end
   def inquiry; end
   def is_utf8?; end
   def last(limit = nil); end
@@ -231,6 +243,8 @@ class String
   def singularize(locale = nil); end
   def squish!; end
   def squish; end
+  def starts_with?(*arg0); end
+  def strip_heredoc; end
   def tableize; end
   def titlecase(keep_id_suffix: nil); end
   def titleize(keep_id_suffix: nil); end
@@ -400,7 +414,14 @@ class Module
   def self.attr_internal_naming_format; end
   def self.attr_internal_naming_format=(arg0); end
   def silence_redefinition_of_method(method); end
+  def thread_cattr_accessor(*syms, instance_reader: nil, instance_writer: nil, instance_accessor: nil, default: nil); end
+  def thread_cattr_reader(*syms, instance_reader: nil, instance_accessor: nil, default: nil); end
+  def thread_cattr_writer(*syms, instance_writer: nil, instance_accessor: nil, default: nil); end
+  def thread_mattr_accessor(*syms, instance_reader: nil, instance_writer: nil, instance_accessor: nil, default: nil); end
+  def thread_mattr_reader(*syms, instance_reader: nil, instance_accessor: nil, default: nil); end
+  def thread_mattr_writer(*syms, instance_writer: nil, instance_accessor: nil, default: nil); end
   include ActiveSupport::Dependencies::ModuleConstMissing
+  include Module::Concerning
 end
 module ActiveSupport::LoggerThreadSafeLevel
   def add(severity, message = nil, progname = nil, &block); end
@@ -448,7 +469,10 @@ module DateAndTime::Compatibility
   def utc_to_local_returns_utc_offset_times; end
 end
 module Kernel
+  def class_eval(*args, &block); end
+  def concern(topic, &module_definition); end
   def enable_warnings; end
+  def self.concern(topic, &module_definition); end
   def self.enable_warnings; end
   def self.silence_warnings; end
   def self.suppress(*exception_classes); end
@@ -907,7 +931,7 @@ module ActiveSupport::Dependencies
   def self.run_interlock; end
   def self.unload_interlock; end
   def self.verbose; end
-  def self.verbose=(val); end
+  def self.verbose=(verbose); end
   def self.warnings_on_first_load; end
   def self.warnings_on_first_load=(val); end
   def to_constant_name(desc); end
@@ -1903,6 +1927,9 @@ end
 class Integer < Numeric
   def month; end
   def months; end
+  def multiple_of?(number); end
+  def ordinal; end
+  def ordinalize; end
   def year; end
   def years; end
 end
@@ -2711,4 +2738,31 @@ module ActiveSupport::EachTimeWithZone
   def each(&block); end
   def ensure_iteration_allowed; end
   def step(n = nil, &block); end
+end
+module Digest
+end
+module Digest::UUID
+  def self.uuid_from_hash(hash_class, uuid_namespace, name); end
+  def self.uuid_v3(uuid_namespace, name); end
+  def self.uuid_v4; end
+  def self.uuid_v5(uuid_namespace, name); end
+end
+module Module::Concerning
+  def concern(topic, &module_definition); end
+  def concerning(topic, prepend: nil, &block); end
+end
+module ActiveSupport::NumericWithFormat
+  def to_s(format = nil, options = nil); end
+end
+module SecureRandom
+  def self.base36(n = nil); end
+  def self.base58(n = nil); end
+end
+module ActiveSupport::CurrentAttributes::TestHelper
+  def after_teardown; end
+  def before_setup; end
+end
+class ActiveSupport::Concurrency::LoadInterlockAwareMonitor < Monitor
+  def mon_enter; end
+  def synchronize; end
 end

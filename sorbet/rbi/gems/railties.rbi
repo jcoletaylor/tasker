@@ -412,3 +412,163 @@ class Rails::SourceAnnotationExtractor::Annotation < Anonymous_Struct_3
   def self.tags; end
   def to_s(options = nil); end
 end
+class Rails::Application::Configuration < Rails::Engine::Configuration
+  def add_autoload_paths_to_load_path; end
+  def add_autoload_paths_to_load_path=(arg0); end
+  def allow_concurrency; end
+  def allow_concurrency=(arg0); end
+  def annotations; end
+  def api_only; end
+  def api_only=(value); end
+  def asset_host; end
+  def asset_host=(arg0); end
+  def autoflush_log; end
+  def autoflush_log=(arg0); end
+  def autoloader; end
+  def autoloader=(autoloader); end
+  def beginning_of_week; end
+  def beginning_of_week=(arg0); end
+  def cache_classes; end
+  def cache_classes=(arg0); end
+  def cache_store; end
+  def cache_store=(arg0); end
+  def colorize_logging; end
+  def colorize_logging=(val); end
+  def consider_all_requests_local; end
+  def consider_all_requests_local=(arg0); end
+  def console; end
+  def console=(arg0); end
+  def content_security_policy(&block); end
+  def content_security_policy_nonce_directives; end
+  def content_security_policy_nonce_directives=(arg0); end
+  def content_security_policy_nonce_generator; end
+  def content_security_policy_nonce_generator=(arg0); end
+  def content_security_policy_report_only; end
+  def content_security_policy_report_only=(arg0); end
+  def credentials; end
+  def credentials=(arg0); end
+  def credentials_available_for_current_env?; end
+  def database_configuration; end
+  def debug_exception_response_format; end
+  def debug_exception_response_format=(arg0); end
+  def default_credentials_content_path; end
+  def default_credentials_key_path; end
+  def default_log_file; end
+  def disable_sandbox; end
+  def disable_sandbox=(arg0); end
+  def eager_load; end
+  def eager_load=(arg0); end
+  def enable_dependency_loading; end
+  def enable_dependency_loading=(arg0); end
+  def encoding; end
+  def encoding=(value); end
+  def exceptions_app; end
+  def exceptions_app=(arg0); end
+  def file_watcher; end
+  def file_watcher=(arg0); end
+  def filter_parameters; end
+  def filter_parameters=(arg0); end
+  def filter_redirect; end
+  def filter_redirect=(arg0); end
+  def force_ssl; end
+  def force_ssl=(arg0); end
+  def helpers_paths; end
+  def helpers_paths=(arg0); end
+  def host_authorization; end
+  def host_authorization=(arg0); end
+  def hosts; end
+  def hosts=(arg0); end
+  def initialize(*arg0); end
+  def load_database_yaml; end
+  def load_defaults(target_version); end
+  def loaded_config_version; end
+  def log_formatter; end
+  def log_formatter=(arg0); end
+  def log_level; end
+  def log_level=(arg0); end
+  def log_tags; end
+  def log_tags=(arg0); end
+  def logger; end
+  def logger=(arg0); end
+  def paths; end
+  def permissions_policy(&block); end
+  def public_file_server; end
+  def public_file_server=(arg0); end
+  def railties_order; end
+  def railties_order=(arg0); end
+  def rake_eager_load; end
+  def rake_eager_load=(arg0); end
+  def read_encrypted_secrets; end
+  def read_encrypted_secrets=(arg0); end
+  def relative_url_root; end
+  def relative_url_root=(arg0); end
+  def reload_classes_only_on_change; end
+  def reload_classes_only_on_change=(arg0); end
+  def require_master_key; end
+  def require_master_key=(arg0); end
+  def secret_key_base; end
+  def secret_key_base=(arg0); end
+  def session_options; end
+  def session_options=(arg0); end
+  def session_store(new_session_store = nil, **options); end
+  def session_store?; end
+  def ssl_options; end
+  def ssl_options=(arg0); end
+  def time_zone; end
+  def time_zone=(arg0); end
+  def x; end
+  def x=(arg0); end
+end
+class Rails::Application::Configuration::Custom
+  def initialize; end
+  def method_missing(method, *args); end
+  def respond_to_missing?(symbol, *arg1); end
+end
+module Rails::Application::Bootstrap
+  extend Rails::Initializable::ClassMethods
+  include Rails::Initializable
+end
+module Rails::Application::Finisher
+  extend Rails::Initializable::ClassMethods
+  include Rails::Initializable
+end
+class Rails::Application::Finisher::MutexHook
+  def complete(_state); end
+  def initialize(mutex = nil); end
+  def run; end
+end
+module Rails::Application::Finisher::InterlockHook
+  def self.complete(_state); end
+  def self.run; end
+end
+class Rails::BacktraceCleaner < ActiveSupport::BacktraceCleaner
+  def initialize; end
+end
+class Rails::Application::RoutesReloader
+  def clear!; end
+  def eager_load; end
+  def eager_load=(arg0); end
+  def execute(**, &&); end
+  def execute_if_updated(**, &&); end
+  def external_routes; end
+  def finalize!; end
+  def initialize; end
+  def load_paths; end
+  def paths; end
+  def reload!; end
+  def revert; end
+  def route_sets; end
+  def updated?(**, &&); end
+  def updater; end
+end
+class Rails::Application::DefaultMiddlewareStack
+  def app; end
+  def build_stack; end
+  def config; end
+  def initialize(app, config, paths); end
+  def load_rack_cache; end
+  def paths; end
+  def show_exceptions_app; end
+end
+class Rails::Rack::Logger < ActiveSupport::LogSubscriber
+end
