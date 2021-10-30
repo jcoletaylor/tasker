@@ -16,6 +16,13 @@ Add to your Rails `Gemfile`
 gem 'tasker', '~> 1.0'
 ```
 
+Add the migrations in your Rails app root:
+
+```bash
+bundle exec rake tasker:install:migrations
+bundle exec rake db:migrate
+```
+
 And then mount it where you'd like in `config/routes.rb` with:
 
 ```ruby
