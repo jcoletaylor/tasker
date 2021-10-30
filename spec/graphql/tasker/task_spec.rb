@@ -14,7 +14,7 @@ module Tasker
     end
 
     it 'should get all tasks' do
-      post '/graphql', params: { query: all_tasks_query }
+      post '/tasker/graphql', params: { query: all_tasks_query }
       json = JSON.parse(response.body).deep_symbolize_keys
       task_data = json[:data][:tasks]
       expect(task_data.length.positive?).to be_truthy
@@ -31,7 +31,7 @@ module Tasker
     end
 
     it 'should get pending tasks' do
-      post '/graphql', params: { query: pending_tasks_query }
+      post '/tasker/graphql', params: { query: pending_tasks_query }
       json = JSON.parse(response.body).deep_symbolize_keys
       task_data = json[:data][:tasksByStatus]
       expect(task_data.length.positive?).to be_truthy

@@ -561,14 +561,3 @@ class Rails::Application::RoutesReloader
   def updated?(**, &&); end
   def updater; end
 end
-class Rails::Application::DefaultMiddlewareStack
-  def app; end
-  def build_stack; end
-  def config; end
-  def initialize(app, config, paths); end
-  def load_rack_cache; end
-  def paths; end
-  def show_exceptions_app; end
-end
-class Rails::Rack::Logger < ActiveSupport::LogSubscriber
-end

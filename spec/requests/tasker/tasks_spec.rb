@@ -26,7 +26,7 @@ module Tasker
       { 'content-type': 'application/json' }
     end
 
-    path '/tasks' do
+    path '/tasker/tasks' do
       get('list tasks') do
         tags 'Tasks'
         description 'Lists Tasks'
@@ -102,7 +102,7 @@ module Tasker
       end
     end
 
-    path '/tasks/{task_id}' do
+    path '/tasker/tasks/{task_id}' do
       parameter name: 'task_id', in: :path, type: :integer, description: 'task_id'
 
       get('show task') do

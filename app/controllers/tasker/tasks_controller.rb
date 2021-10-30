@@ -15,12 +15,12 @@ module Tasker
     def index
       @tasks =
         query_base.limit(page_sort_params[:limit]).offset(page_sort_params[:offset]).order(page_sort_params[:order]).all
-      render json: @tasks, status: :ok, adapter: :json
+      render json: @tasks, status: :ok, adapter: :json, root: :tasks, each_serializer: Tasker::TaskSerializer
     end
 
     # GET /tasks/1
     def show
-      render json: @task, status: :ok, adapter: :json
+      render json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
     end
 
     # POST /tasks
@@ -39,7 +39,7 @@ module Tasker
       # we don't want to re-run save here because it will remove the
       # context validation from the handler and check "valid?"
       if @task.errors.empty?
-        render json: @task, status: :created, adapter: :json
+        render json: @task, status: :created, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
       else
         render status: :bad_request, json: { error: @task.errors }
       end
@@ -48,7 +48,7 @@ module Tasker
     # PATCH/PUT /tasks/1
     def update
       if @task.update(update_task_params)
-        render json: @task, status: :ok, adapter: :json
+        render json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
       else
         render json: { error: @task.errors }, status: :unprocessable_entity
       end
@@ -79,7 +79,7 @@ module Tasker
     end
 
     def set_page_sort_params
-      build_page_sort_params(:task, :task_id)
+      build_page_sort_params('Tasker::Task', :task_id)
     end
 
     def handler_factory

@@ -17,7 +17,7 @@ module Tasker
       { retry_limit: 8 }
     end
 
-    path '/tasks/{task_id}/workflow_steps' do
+    path '/tasker/tasks/{task_id}/workflow_steps' do
       parameter name: 'task_id', in: :path, type: :string, description: 'task_id'
 
       get('list steps by task') do
@@ -40,7 +40,7 @@ module Tasker
       end
     end
 
-    path '/tasks/{task_id}/workflow_steps/{step_id}' do
+    path '/tasker/tasks/{task_id}/workflow_steps/{step_id}' do
       parameter name: 'task_id', in: :path, type: :string, description: 'task_id'
       parameter name: 'step_id', in: :path, type: :string, description: 'step_id'
 

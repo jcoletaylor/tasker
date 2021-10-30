@@ -3,6 +3,11 @@
 
 # typed: strong
 module ActionDispatch::Response::ContentTypeHeader; end
+module ActiveStorage::Attachment; end
+module ActiveStorage::Blob::Analyzable; end
+module ActiveStorage::Blob::Identifiable; end
+module ActiveStorage::Variant; end
+module JSONAPI::Rails; end
 module Mail::CheckDeliveryParams; end
 module Mail::Ruby19; end
 module PG::TextDecoder::TimestampLocal; end

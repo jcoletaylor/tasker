@@ -1,6 +1,11 @@
 # frozen_string_literal: true
-
 # typed: strict
+
+require 'sorbet-runtime'
+require 'active_model_serializers'
+require 'json-schema'
+require 'graphql'
+
 module Tasker
   class Engine < ::Rails::Engine
     isolate_namespace Tasker
