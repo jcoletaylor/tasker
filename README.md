@@ -13,7 +13,7 @@ Add to your Rails `Gemfile`
 
 ```ruby
 # add to your Gemfile
-gem 'tasker', '~> 1.0'
+gem 'tasker', '~> 0.1'
 ```
 
 Add the migrations in your Rails app root:
