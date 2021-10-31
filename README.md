@@ -13,7 +13,9 @@ Add to your Rails `Gemfile`
 
 ```ruby
 # add to your Gemfile
-gem 'tasker', '~> 0.1'
+source 'https://rubygems.pkg.github.com/jcoletaylor' do
+  gem 'tasker', '~> 0.1'
+end
 ```
 
 Add the migrations in your Rails app root:
