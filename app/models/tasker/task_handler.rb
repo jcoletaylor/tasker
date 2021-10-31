@@ -6,13 +6,57 @@ require 'json-schema'
 module Tasker
   module TaskHandler
     extend T::Sig
-    attr_accessor :step_handler_class_map, :step_templates
+    attr_accessor :step_handler_class_map
+
+    def self.included(klass)
+      klass.extend(ClassMethods)
+    end
+
+    module ClassMethods
+      class StepTemplateDefiner
+        attr_reader :step_templates, :klass
+
+        def initialize(klass)
+          @klass = klass
+          @step_templates = []
+        end
+
+        def define(**kwargs)
+          dependent_system = kwargs.fetch(:dependent_system, Tasker::Constants::UNKNOWN)
+          name = kwargs.fetch(:name)
+          handler_class = kwargs.fetch(:handler_class)
+          description = kwargs.fetch(:description, name)
+          default_retryable = kwargs.fetch(:default_retryable, true)
+          default_retry_limit = kwargs.fetch(:default_retry_limit, 3)
+          skippable = kwargs.fetch(:skippable, false)
+          depends_on_step = kwargs.fetch(:depends_on_step, nil)
+
+          @step_templates << Tasker::StepTemplate.new(
+            dependent_system: dependent_system,
+            name: name,
+            description: description,
+            default_retryable: default_retryable,
+            default_retry_limit: default_retry_limit,
+            skippable: skippable,
+            handler_class: handler_class,
+            depends_on_step: depends_on_step
+          )
+        end
+      end
+
+      def define_step_templates
+        definer = StepTemplateDefiner.new(self)
+        yield definer
+        definer.klass.define_method :step_templates do
+          definer.step_templates
+        end
+      end
+    end
 
     def initialize
       # NOTE: this relies on super being called
       # or classes where this is included calling
       # the register methods themselves
-      register_step_templates
       register_step_handler_classes
     end
 
@@ -239,11 +283,6 @@ module Tasker
     # typed: true
     sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).void }
     def update_annotations(task, sequence, steps); end
-
-    # override in implementing class
-    def register_step_templates
-      self.step_templates = []
-    end
 
     # override in implementing class
     def schema
