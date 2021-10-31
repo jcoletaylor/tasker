@@ -247,3 +247,45 @@ module ActiveStorage::Reflection::ActiveRecordExtensions::ClassMethods
 end
 class ActiveStorage::Engine < Rails::Engine
 end
+module ActiveStorage::Attached::Model
+  def attachment_changes; end
+  def changed_for_autosave?; end
+  def initialize_dup(*arg0); end
+  def reload(*arg0); end
+  extend ActiveSupport::Concern
+end
+module ActiveStorage::Attached::Model::ClassMethods
+  def has_many_attached(name, dependent: nil, service: nil, strict_loading: nil); end
+  def has_one_attached(name, dependent: nil, service: nil, strict_loading: nil); end
+  def validate_service_configuration(association_name, service); end
+end
+class ActiveStorage::Attached::One < ActiveStorage::Attached
+  def attach(attachable); end
+  def attached?; end
+  def attachment; end
+  def blank?; end
+  def detach; end
+  def method_missing(method, *args, &block); end
+  def purge; end
+  def purge_later; end
+  def respond_to_missing?(name, include_private = nil); end
+  def write_attachment(attachment); end
+end
+class ActiveStorage::Attached::Many < ActiveStorage::Attached
+  def attach(*attachables); end
+  def attached?; end
+  def attachments; end
+  def blobs; end
+  def detach; end
+  def method_missing(method, *args, &block); end
+  def respond_to_missing?(name, include_private = nil); end
+end
+module ActiveStorage::Attached::Changes
+  extend ActiveSupport::Autoload
+end
+class ActiveStorage::Attached
+  def change; end
+  def initialize(name, record); end
+  def name; end
+  def record; end
+end

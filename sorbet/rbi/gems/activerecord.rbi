@@ -150,7 +150,7 @@ class Arel::Table
 end
 module Arel::Attributes
 end
-class Anonymous_Struct_12 < Struct
+class Anonymous_Struct_10 < Struct
   def name; end
   def name=(_); end
   def relation; end
@@ -160,7 +160,7 @@ class Anonymous_Struct_12 < Struct
   def self.members; end
   def self.new(*arg0); end
 end
-class Arel::Attributes::Attribute < Anonymous_Struct_12
+class Arel::Attributes::Attribute < Anonymous_Struct_10
   def able_to_type_cast?; end
   def lower; end
   def type_cast_for_database(value); end
@@ -480,7 +480,7 @@ class Arel::Visitors::Dot::Node
   def name; end
   def name=(arg0); end
 end
-class Anonymous_Struct_13 < Struct
+class Anonymous_Struct_11 < Struct
   def from; end
   def from=(_); end
   def name; end
@@ -492,7 +492,7 @@ class Anonymous_Struct_13 < Struct
   def to; end
   def to=(_); end
 end
-class Arel::Visitors::Dot::Edge < Anonymous_Struct_13
+class Arel::Visitors::Dot::Edge < Anonymous_Struct_11
 end
 module Arel::Collectors
 end
@@ -2382,7 +2382,7 @@ class ActiveRecord::Type::Time < ActiveModel::Type::Time
   def serialize(value); end
   include ActiveRecord::Type::Internal::Timezone
 end
-class ActiveRecord::Type::Time::Value < Anonymous_Delegator_14
+class ActiveRecord::Type::Time::Value < Anonymous_Delegator_12
 end
 class ActiveRecord::Type::Text < ActiveModel::Type::String
   def type; end
@@ -2391,7 +2391,7 @@ class ActiveRecord::Type::UnsignedInteger < ActiveModel::Type::Integer
   def max_value; end
   def min_value; end
 end
-class ActiveRecord::Type::Serialized < Anonymous_Delegator_15
+class ActiveRecord::Type::Serialized < Anonymous_Delegator_13
   def accessor; end
   def assert_valid_value(value); end
   def changed_in_place?(raw_old_value, value); end
@@ -2542,7 +2542,7 @@ module ActiveRecord::Core::ClassMethods
   def table_metadata; end
   def type_caster; end
 end
-class ActiveRecord::Core::InspectionMask < Anonymous_Delegator_16
+class ActiveRecord::Core::InspectionMask < Anonymous_Delegator_14
   def pretty_print(pp); end
 end
 module ActiveRecord::ConnectionAdapters
@@ -3028,7 +3028,7 @@ module ActiveRecord::Locking::Optimistic::ClassMethods
   def reset_locking_column; end
   def update_counters(id, counters); end
 end
-class ActiveRecord::Locking::LockingType < Anonymous_Delegator_17
+class ActiveRecord::Locking::LockingType < Anonymous_Delegator_15
   def deserialize(value); end
   def encode_with(coder); end
   def init_with(coder); end
@@ -3096,7 +3096,7 @@ end
 module ActiveRecord::AttributeMethods::TimeZoneConversion
   extend ActiveSupport::Concern
 end
-class ActiveRecord::AttributeMethods::TimeZoneConversion::TimeZoneConverter < Anonymous_Delegator_18
+class ActiveRecord::AttributeMethods::TimeZoneConversion::TimeZoneConverter < Anonymous_Delegator_16
   def cast(value); end
   def convert_time_to_time_zone(value); end
   def deserialize(value); end
@@ -5506,7 +5506,7 @@ module ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaStatements
   def validate_constraint(table_name, constraint_name); end
   def validate_foreign_key(from_table, to_table = nil, **options); end
 end
-class ActiveRecord::ConnectionAdapters::PostgreSQL::TypeMetadata < Anonymous_Delegator_19
+class ActiveRecord::ConnectionAdapters::PostgreSQL::TypeMetadata < Anonymous_Delegator_17
   def ==(other); end
   def deduplicated; end
   def eql?(other); end
@@ -5682,4 +5682,109 @@ class ActiveRecord::DestroyAssociationAsyncJob < ActiveJob::Base
   def perform(owner_model_name: nil, owner_id: nil, association_class: nil, association_ids: nil, association_primary_key_column: nil, ensuring_owner_was_method: nil); end
   def self.queue_name; end
   def self.rescue_handlers; end
+end
+class ActiveRecord::Tasks::DatabaseNotSupported < StandardError
+end
+module ActiveRecord::Tasks::DatabaseTasks
+  def cache_dump_filename(db_config_name, schema_cache_path: nil); end
+  def charset(configuration, *arguments); end
+  def charset_current(env_name = nil, db_name = nil); end
+  def check_protected_environments!; end
+  def check_schema_file(filename); end
+  def check_target_version; end
+  def class_for_adapter(adapter); end
+  def clear_schema_cache(filename); end
+  def collation(configuration, *arguments); end
+  def collation_current(env_name = nil, db_name = nil); end
+  def create(configuration, *arguments); end
+  def create_all; end
+  def create_current(environment = nil, name = nil); end
+  def current_config(*args, &block); end
+  def current_config=(*args, &block); end
+  def database_adapter_for(db_config, *arguments); end
+  def database_configuration; end
+  def database_configuration=(arg0); end
+  def db_dir; end
+  def db_dir=(arg0); end
+  def drop(configuration, *arguments); end
+  def drop_all; end
+  def drop_current(environment = nil); end
+  def dump_filename(db_config_name, format = nil); end
+  def dump_schema(db_config, format = nil); end
+  def dump_schema_cache(conn, filename); end
+  def each_current_configuration(environment, name = nil); end
+  def each_local_configuration; end
+  def env; end
+  def env=(arg0); end
+  def fixtures_path; end
+  def fixtures_path=(arg0); end
+  def for_each(databases); end
+  def load_schema(db_config, format = nil, file = nil); end
+  def load_schema_current(format = nil, file = nil, environment = nil); end
+  def load_seed; end
+  def local_database?(db_config); end
+  def migrate; end
+  def migrate_status; end
+  def migrations_paths; end
+  def migrations_paths=(arg0); end
+  def name; end
+  def purge(configuration); end
+  def purge_all; end
+  def purge_current(environment = nil); end
+  def raise_for_multi_db(environment = nil, command:); end
+  def reconstruct_from_schema(db_config, format = nil, file = nil); end
+  def register_task(pattern, task); end
+  def resolve_configuration(configuration); end
+  def root; end
+  def root=(arg0); end
+  def schema_file(format = nil); end
+  def schema_file_type(format = nil); end
+  def schema_sha1(file); end
+  def schema_up_to_date?(configuration, format = nil, file = nil, environment = nil, name = nil); end
+  def seed_loader; end
+  def seed_loader=(arg0); end
+  def self.structure_dump_flags; end
+  def self.structure_dump_flags=(val); end
+  def self.structure_load_flags; end
+  def self.structure_load_flags=(val); end
+  def setup_initial_database_yaml; end
+  def spec(*args, &block); end
+  def structure_dump(configuration, *arguments); end
+  def structure_load(configuration, *arguments); end
+  def target_version; end
+  def truncate_all(environment = nil); end
+  def truncate_tables(db_config); end
+  def verbose?; end
+  extend ActiveRecord::Tasks::DatabaseTasks
+end
+class ActiveRecord::ConnectionAdapters::SchemaCache
+  def add(table_name); end
+  def clear!; end
+  def clear_data_source_cache!(name); end
+  def columns(table_name); end
+  def columns_hash(table_name); end
+  def columns_hash?(table_name); end
+  def connection; end
+  def connection=(arg0); end
+  def data_source_exists?(name); end
+  def data_sources(name); end
+  def database_version; end
+  def deep_deduplicate(value); end
+  def derive_columns_hash_and_deduplicate_values; end
+  def dump_to(filename); end
+  def encode_with(coder); end
+  def indexes(table_name); end
+  def init_with(coder); end
+  def initialize(conn); end
+  def initialize_dup(other); end
+  def marshal_dump; end
+  def marshal_load(array); end
+  def open(filename); end
+  def prepare_data_sources; end
+  def primary_keys(table_name); end
+  def reset_version!; end
+  def self.load_from(filename); end
+  def self.read(filename, &block); end
+  def size; end
+  def version; end
 end

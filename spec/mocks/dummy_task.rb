@@ -1,8 +1,10 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 class DummyTask
   include Tasker::TaskHandler
+
+  # these are just for readability, they could just be strings elsewhere
   DUMMY_SYSTEM = 'dummy-system'
   STEP_ONE = 'step-one'
   STEP_TWO = 'step-two'
@@ -12,10 +14,49 @@ class DummyTask
   ANNOTATION_TYPE = 'dummy-annotation'
   TASK_REGISTRY_NAME = 'dummy_task'
 
+  # this is for convenience to read, it could be any class that has a handle method with this signature
   class Handler
     def handle(_task, _sequence, step)
       step.results = { dummy: true }
     end
+  end
+
+  # this makes it easier to define step templates for a handler
+  # you could alternatively create an instance method `step_templates`
+  # that returns an array of Tasker::StepTemplate's
+  # only name and handler_class are required, but others help with
+  # visibility and findability
+  define_step_templates do |templates|
+    templates.define(
+      dependent_system: DUMMY_SYSTEM,
+      name: STEP_ONE,
+      description: 'Independent Step One',
+      # these are the defaults, omitted elsewhere for brevity
+      default_retryable: true,
+      default_retry_limit: 3,
+      skippable: false,
+      handler_class: DummyTask::Handler
+    )
+    templates.define(
+      dependent_system: DUMMY_SYSTEM,
+      name: STEP_TWO,
+      description: 'Independent Step Two',
+      handler_class: DummyTask::Handler
+    )
+    templates.define(
+      dependent_system: DUMMY_SYSTEM,
+      name: STEP_THREE,
+      depends_on_step: STEP_TWO,
+      description: 'Step Three Dependent on Step Two',
+      handler_class: DummyTask::Handler
+    )
+    templates.define(
+      dependent_system: DUMMY_SYSTEM,
+      name: STEP_FOUR,
+      depends_on_step: STEP_THREE,
+      description: 'Step Four Dependent on Step Three',
+      handler_class: DummyTask::Handler
+    )
   end
 
   def schema
@@ -38,49 +79,9 @@ class DummyTask
       )
     end
   end
-
-  def register_step_templates
-    self.step_templates = [
-      Tasker::StepTemplate.new(
-        dependent_system: DUMMY_SYSTEM,
-        name: STEP_ONE,
-        description: 'Independent Step One',
-        default_retryable: true,
-        default_retry_limit: 3,
-        skippable: false,
-        handler_class: DummyTask::Handler
-      ),
-      Tasker::StepTemplate.new(
-        dependent_system: DUMMY_SYSTEM,
-        name: STEP_TWO,
-        description: 'Independent Step Two',
-        default_retryable: true,
-        default_retry_limit: 3,
-        skippable: false,
-        handler_class: DummyTask::Handler
-      ),
-      Tasker::StepTemplate.new(
-        dependent_system: DUMMY_SYSTEM,
-        name: STEP_THREE,
-        depends_on_step: STEP_TWO,
-        description: 'Step Three Dependent on Step Two',
-        default_retryable: true,
-        default_retry_limit: 3,
-        skippable: false,
-        handler_class: DummyTask::Handler
-      ),
-      Tasker::StepTemplate.new(
-        dependent_system: DUMMY_SYSTEM,
-        name: STEP_FOUR,
-        depends_on_step: STEP_THREE,
-        description: 'Step Four Dependent on Step Three',
-        default_retryable: true,
-        default_retry_limit: 3,
-        skippable: false,
-        handler_class: DummyTask::Handler
-      )
-    ]
-  end
 end
 
+# this is critical - if the handler factory does not register your task handler
+# the Tasker system will not know how to either validate a request
+# or ultimately handle the steps
 Tasker::HandlerFactory.instance.register(DummyTask::TASK_REGISTRY_NAME, DummyTask)

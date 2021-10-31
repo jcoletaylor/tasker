@@ -276,3 +276,62 @@ class ActiveJob::Base
   include ActiveSupport::Callbacks
   include ActiveSupport::Rescuable
 end
+module ActiveJob::Serializers
+  def _additional_serializers; end
+  def _additional_serializers=(val); end
+  def self._additional_serializers; end
+  def self._additional_serializers=(val); end
+  def self.add_serializers(*new_serializers); end
+  def self.deserialize(argument); end
+  def self.serialize(argument); end
+  def self.serializers; end
+  extend ActiveSupport::Autoload
+end
+class ActiveJob::Serializers::ObjectSerializer
+  def deserialize(json); end
+  def klass; end
+  def self.allocate; end
+  def self.deserialize(**, &&); end
+  def self.new(*arg0); end
+  def self.serialize(**, &&); end
+  def self.serialize?(**, &&); end
+  def serialize(hash); end
+  def serialize?(argument); end
+  extend Singleton::SingletonClassMethods
+  include Singleton
+end
+class ActiveJob::Serializers::SymbolSerializer < ActiveJob::Serializers::ObjectSerializer
+  def deserialize(argument); end
+  def klass; end
+  def serialize(argument); end
+end
+class ActiveJob::Serializers::DurationSerializer < ActiveJob::Serializers::ObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+  def serialize(duration); end
+end
+class ActiveJob::Serializers::TimeObjectSerializer < ActiveJob::Serializers::ObjectSerializer
+  def serialize(time); end
+end
+class ActiveJob::Serializers::DateTimeSerializer < ActiveJob::Serializers::TimeObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+end
+class ActiveJob::Serializers::DateSerializer < ActiveJob::Serializers::ObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+  def serialize(date); end
+end
+class ActiveJob::Serializers::TimeWithZoneSerializer < ActiveJob::Serializers::TimeObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+end
+class ActiveJob::Serializers::TimeSerializer < ActiveJob::Serializers::TimeObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+end
+class ActiveJob::Serializers::ModuleSerializer < ActiveJob::Serializers::ObjectSerializer
+  def deserialize(hash); end
+  def klass; end
+  def serialize(constant); end
+end

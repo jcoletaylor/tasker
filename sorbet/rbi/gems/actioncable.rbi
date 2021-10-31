@@ -25,6 +25,83 @@ module ActionCable::Helpers::ActionCableHelper
 end
 class ActionCable::Engine < Rails::Engine
 end
+module ActionCable::Server
+  extend ActiveSupport::Autoload
+end
+module ActionCable::Server::Broadcasting
+  def broadcast(broadcasting, message, coder: nil); end
+  def broadcaster_for(broadcasting, coder: nil); end
+end
+class ActionCable::Server::Broadcasting::Broadcaster
+  def broadcast(message); end
+  def broadcasting; end
+  def coder; end
+  def initialize(server, broadcasting, coder:); end
+  def server; end
+end
+module ActionCable::Server::Connections
+  def add_connection(connection); end
+  def connections; end
+  def open_connections_statistics; end
+  def remove_connection(connection); end
+  def setup_heartbeat_timer; end
+end
+class ActionCable::Server::Configuration
+  def allow_same_origin_as_host; end
+  def allow_same_origin_as_host=(arg0); end
+  def allowed_request_origins; end
+  def allowed_request_origins=(arg0); end
+  def cable; end
+  def cable=(arg0); end
+  def connection_class; end
+  def connection_class=(arg0); end
+  def disable_request_forgery_protection; end
+  def disable_request_forgery_protection=(arg0); end
+  def initialize; end
+  def log_tags; end
+  def log_tags=(arg0); end
+  def logger; end
+  def logger=(arg0); end
+  def mount_path; end
+  def mount_path=(arg0); end
+  def pubsub_adapter; end
+  def url; end
+  def url=(arg0); end
+  def worker_pool_size; end
+  def worker_pool_size=(arg0); end
+end
+class ActionCable::Server::Worker
+  def __callbacks; end
+  def __callbacks?; end
+  def _run_work_callbacks(&block); end
+  def _work_callbacks; end
+  def async_exec(receiver, *args, connection:, &block); end
+  def async_invoke(receiver, method, *args, connection: nil, &block); end
+  def connection; end
+  def connection=(obj); end
+  def executor; end
+  def halt; end
+  def initialize(max_size: nil); end
+  def invoke(receiver, method, *args, connection:, &block); end
+  def logger; end
+  def self.__callbacks; end
+  def self.__callbacks=(value); end
+  def self.__callbacks?; end
+  def self._work_callbacks; end
+  def self._work_callbacks=(value); end
+  def self.connection; end
+  def self.connection=(obj); end
+  def stopping?; end
+  def work(connection); end
+  extend ActiveSupport::Callbacks::ClassMethods
+  extend ActiveSupport::DescendantsTracker
+  include ActionCable::Server::Worker::ActiveRecordConnectionManagement
+  include ActiveSupport::Callbacks
+end
+module ActionCable::Server::Worker::ActiveRecordConnectionManagement
+  def with_database_connections; end
+  extend ActiveSupport::Concern
+end
 module ActionCable::Channel
   extend ActiveSupport::Autoload
 end
@@ -150,6 +227,25 @@ class ActionCable::Channel::Base
   include ActionCable::Channel::Streams
   include ActiveSupport::Callbacks
   include ActiveSupport::Rescuable
+end
+class ActionCable::Server::Base
+  def call(env); end
+  def config; end
+  def connection_identifiers; end
+  def disconnect(identifiers); end
+  def event_loop; end
+  def initialize(config: nil); end
+  def logger(**, &&); end
+  def mutex; end
+  def pubsub; end
+  def remote_connections; end
+  def restart; end
+  def self.config; end
+  def self.config=(val); end
+  def self.logger; end
+  def worker_pool; end
+  include ActionCable::Server::Broadcasting
+  include ActionCable::Server::Connections
 end
 module ActionCable::Connection
   extend ActiveSupport::Autoload
