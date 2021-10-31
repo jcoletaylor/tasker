@@ -79,7 +79,14 @@ class DummyTask
 
   # this is for convenience to read, it could be any class that has a handle method with this signature
   class Handler
+    # the handle method is only expected to catch around recoverable errors
+    # it is responsible for setting results back on the step
+    # anything that raises StandardError or subclass will be caught
+    # by the wrapper logic in TaskHandler
     def handle(_task, _sequence, step)
+      # task and sequence are passed in
+      # in case the task context or the sequence's prior steps
+      # may contain data that is necessary for the handling of this step
       step.results = { dummy: true }
     end
   end
@@ -122,6 +129,8 @@ class DummyTask
     )
   end
 
+  # this should conform to the json-schema gem's expectations for how to validate json
+  # used to validate the context of a given TaskRequest whether from the API or otherwise
   def schema
     @schema ||= { type: :object, required: [:dummy], properties: { dummy: { type: 'boolean' } } }
   end
