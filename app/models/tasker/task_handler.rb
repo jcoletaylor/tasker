@@ -51,6 +51,10 @@ module Tasker
           definer.step_templates
         end
       end
+
+      def register_handler(name)
+        Tasker::HandlerFactory.instance.register(name, self)
+      end
     end
 
     def initialize

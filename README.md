@@ -91,6 +91,11 @@ class DummyTask
     end
   end
 
+  # this is critical - if the handler factory does not register your task handler
+  # the Tasker system will not know how to either validate a request
+  # or ultimately handle the steps
+  register_handler(TASK_REGISTRY_NAME)
+
   # this makes it easier to define step templates for a handler
   # you could alternatively create an instance method `step_templates`
   # that returns an array of Tasker::StepTemplate's
@@ -135,11 +140,6 @@ class DummyTask
     @schema ||= { type: :object, required: [:dummy], properties: { dummy: { type: 'boolean' } } }
   end
 end
-
-# this is critical - if the handler factory does not register your task handler
-# the Tasker system will not know how to either validate a request
-# or ultimately handle the steps
-Tasker::HandlerFactory.instance.register(DummyTask::TASK_REGISTRY_NAME, DummyTask)
 
 ```
 ## Dependencies
