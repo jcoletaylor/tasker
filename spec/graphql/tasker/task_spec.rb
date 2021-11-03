@@ -50,13 +50,60 @@ module Tasker
     end
 
     context 'mutations' do
-      it 'should be able to create a task' do
-        post '/tasker/graphql', params: { query: create_task_mutation }
-        json = JSON.parse(response.body).deep_symbolize_keys
-        task_data = json[:data][:createTask]
-        expect(task_data[:taskId]).not_to be_nil
-        expect(task_data[:status]).to eq('pending')
+      context 'create' do
+        it 'should be able to create a task' do
+          post '/tasker/graphql', params: { query: create_task_mutation }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:createTask]
+          expect(task_data[:taskId]).not_to be_nil
+          expect(task_data[:status]).to eq('pending')
+        end
       end
+      context 'update' do
+        it 'should be able to update a task' do
+          post '/tasker/graphql', params: { query: update_task_mutation }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:updateTask]
+          expect(task_data[:taskId]).not_to be_nil
+          expect(task_data[:reason]).to eq('testing update task mutation')
+          expect(task_data[:tags]).to match_array(%w[some great set of tags])
+        end
+      end
+      context 'cancel' do
+        it 'should be able to cancel a task' do
+          post '/tasker/graphql', params: { query: cancel_task_mutation }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:cancelTask]
+          expect(task_data[:taskId]).not_to be_nil
+          expect(task_data[:status]).to eq('cancelled')
+        end
+      end
+    end
+
+    def cancel_task_mutation
+      <<~GQL
+        mutation {
+          cancelTask(input: {
+            taskId: #{@task.task_id}
+          }) {
+            #{task_fields}
+          }
+        }
+      GQL
+    end
+
+    def update_task_mutation
+      <<~GQL
+        mutation {
+          updateTask(input: {
+            taskId: #{@task.task_id}
+            reason: "testing update task mutation"
+            tags: ["some", "great", "set", "of", "tags"]
+          }) {
+            #{task_fields}
+          }
+        }
+      GQL
     end
 
     def create_task_mutation
@@ -70,8 +117,7 @@ module Tasker
             reason: "#{task_request.reason}"
             sourceSystem: "#{task_request.source_system}"
           }) {
-            taskId
-            status
+            #{task_fields}
           }
         }
       GQL
@@ -86,19 +132,7 @@ module Tasker
             sortBy: $sort_by,
             sortOrder: $sort_order
           ) {
-            taskId,
-            status,
-            workflowSteps {
-              workflowStepId,
-              status
-            },
-            taskAnnotations {
-              taskAnnotationId,
-              annotationType {
-                name
-              },
-              annotation
-            }
+            #{task_fields}
           }
         }
       GQL
@@ -114,20 +148,28 @@ module Tasker
             sortOrder: $sort_order,
             status: "pending"
           ) {
-            taskId,
-            status,
-            workflowSteps {
-              workflowStepId,
-              status
-            },
-            taskAnnotations {
-              taskAnnotationId,
-              annotationType {
-                name
-              },
-              annotation
-            }
+            #{task_fields}
           }
+        }
+      GQL
+    end
+
+    def task_fields
+      <<~GQL
+        taskId,
+        status,
+        reason,
+        tags,
+        workflowSteps {
+          workflowStepId,
+          status
+        },
+        taskAnnotations {
+          taskAnnotationId,
+          annotationType {
+            name
+          },
+          annotation
         }
       GQL
     end
