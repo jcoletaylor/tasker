@@ -13,38 +13,68 @@ module Tasker
       @task = @handler.initialize_task!(task_request)
     end
 
-    it 'should get all tasks' do
-      post '/tasker/graphql', params: { query: all_tasks_query }
-      json = JSON.parse(response.body).deep_symbolize_keys
-      task_data = json[:data][:tasks]
-      expect(task_data.length.positive?).to be_truthy
-      task_data.each do |task|
-        expect(task[:status]).not_to be_nil
-        task[:workflowSteps].each do |step|
-          expect(step[:status]).not_to be_nil
+    context 'queries' do
+      it 'should get all tasks' do
+        post '/tasker/graphql', params: { query: all_tasks_query }
+        json = JSON.parse(response.body).deep_symbolize_keys
+        task_data = json[:data][:tasks]
+        expect(task_data.length.positive?).to be_truthy
+        task_data.each do |task|
+          expect(task[:status]).not_to be_nil
+          task[:workflowSteps].each do |step|
+            expect(step[:status]).not_to be_nil
+          end
+          task[:taskAnnotations].each do |annotation|
+            expect(annotation[:annotationType][:name]).not_to be_nil
+            expect(annotation[:annotation]).not_to be_nil
+          end
         end
-        task[:taskAnnotations].each do |annotation|
-          expect(annotation[:annotationType][:name]).not_to be_nil
-          expect(annotation[:annotation]).not_to be_nil
+      end
+
+      it 'should get pending tasks' do
+        post '/tasker/graphql', params: { query: pending_tasks_query }
+        json = JSON.parse(response.body).deep_symbolize_keys
+        task_data = json[:data][:tasksByStatus]
+        expect(task_data.length.positive?).to be_truthy
+        task_data.each do |task|
+          expect(task[:status]).to eq('pending')
+          task[:workflowSteps].each do |step|
+            expect(step[:status]).not_to be_nil
+          end
+          task[:taskAnnotations].each do |annotation|
+            expect(annotation[:annotationType][:name]).not_to be_nil
+            expect(annotation[:annotation]).not_to be_nil
+          end
         end
       end
     end
 
-    it 'should get pending tasks' do
-      post '/tasker/graphql', params: { query: pending_tasks_query }
-      json = JSON.parse(response.body).deep_symbolize_keys
-      task_data = json[:data][:tasksByStatus]
-      expect(task_data.length.positive?).to be_truthy
-      task_data.each do |task|
-        expect(task[:status]).to eq('pending')
-        task[:workflowSteps].each do |step|
-          expect(step[:status]).not_to be_nil
-        end
-        task[:taskAnnotations].each do |annotation|
-          expect(annotation[:annotationType][:name]).not_to be_nil
-          expect(annotation[:annotation]).not_to be_nil
-        end
+    context 'mutations' do
+      it 'should be able to create a task' do
+        post '/tasker/graphql', params: { query: create_task_mutation }
+        json = JSON.parse(response.body).deep_symbolize_keys
+        task_data = json[:data][:createTask]
+        expect(task_data[:taskId]).not_to be_nil
+        expect(task_data[:status]).to eq('pending')
       end
+    end
+
+    def create_task_mutation
+      task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }, initiator: 'pete@test', reason: 'mutation test', source_system: 'test')
+      <<~GQL
+        mutation {
+          createTask(input: {
+            name: "#{task_request.name}"
+            context: #{JSON.generate(task_request.context.to_json)}
+            initiator: "#{task_request.initiator}"
+            reason: "#{task_request.reason}"
+            sourceSystem: "#{task_request.source_system}"
+          }) {
+            taskId
+            status
+          }
+        }
+      GQL
     end
 
     def all_tasks_query
