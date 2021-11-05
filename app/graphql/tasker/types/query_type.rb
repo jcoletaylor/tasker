@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 module Tasker
@@ -11,8 +11,10 @@ module Tasker
 
       field :tasks, resolver: Queries::AllTasks
       field :tasks_by_status, resolver: Queries::TasksByStatus
+      field :tasks_by_annotation, resolver: Queries::TasksByAnnotation
       field :task, resolver: Queries::OneTask
       field :step, resolver: Queries::OneStep
+      field :annotation_types, resolver: Queries::AllAnnotationTypes
     end
   end
 end

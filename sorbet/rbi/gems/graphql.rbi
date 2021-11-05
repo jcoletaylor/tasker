@@ -7,7 +7,7 @@
 #
 #   https://github.com/sorbet/sorbet-typed/new/master?filename=lib/graphql/all/graphql.rbi
 #
-# graphql-1.12.17
+# graphql-1.12.19
 
 module GraphQL
   def self.const_missing(const_name); end
@@ -70,11 +70,15 @@ class GraphQL::IntegerDecodingError < GraphQL::RuntimeTypeError
   def integer_value; end
 end
 class GraphQL::IntegerEncodingError < GraphQL::RuntimeTypeError
-  def initialize(value); end
+  def field; end
+  def initialize(value, context:); end
   def integer_value; end
+  def path; end
 end
 class GraphQL::StringEncodingError < GraphQL::RuntimeTypeError
-  def initialize(str); end
+  def field; end
+  def initialize(str, context:); end
+  def path; end
   def string; end
 end
 module GraphQL::Define
@@ -1558,6 +1562,7 @@ class GraphQL::Tracing::AppOpticsTracing < GraphQL::Tracing::PlatformTracing
   def transaction_name(query); end
 end
 class GraphQL::Tracing::AppsignalTracing < GraphQL::Tracing::PlatformTracing
+  def initialize(options = nil); end
   def platform_authorized_key(type); end
   def platform_field_key(type, field); end
   def platform_resolve_type_key(type); end
@@ -2220,6 +2225,8 @@ class GraphQL::Schema
   def self.use(plugin, **kwargs); end
   def self.using_ast_analysis?; end
   def self.validate(string_or_document, rules: nil, context: nil); end
+  def self.validate_max_errors(new_validate_max_errors = nil); end
+  def self.validate_max_errors=(arg0); end
   def self.validate_timeout(new_validate_timeout = nil); end
   def self.validate_timeout=(arg0); end
   def self.visible?(member, ctx); end
@@ -2243,6 +2250,8 @@ class GraphQL::Schema
   def union_memberships(type); end
   def using_ast_analysis?; end
   def validate(*args, &block); end
+  def validate_max_errors; end
+  def validate_max_errors=(arg0); end
   def validate_timeout; end
   def validate_timeout=(arg0); end
   def visible?(member, context); end
@@ -2513,9 +2522,9 @@ module GraphQL::Schema::BuildFromDefinition::Builder
   extend GraphQL::Schema::BuildFromDefinition::Builder
 end
 class GraphQL::Schema::Validator
-  def apply(object, context, value); end
   def initialize(validated:, allow_blank: nil, allow_null: nil); end
   def partial_format(string, substitutions); end
+  def permitted_empty_value?(value); end
   def self.all_validators; end
   def self.all_validators=(arg0); end
   def self.from_config(schema_member, validates_hash); end
@@ -2531,7 +2540,7 @@ class GraphQL::Schema::Validator::LengthValidator < GraphQL::Schema::Validator
   def validate(_object, _context, value); end
 end
 class GraphQL::Schema::Validator::NumericalityValidator < GraphQL::Schema::Validator
-  def initialize(greater_than: nil, greater_than_or_equal_to: nil, less_than: nil, less_than_or_equal_to: nil, equal_to: nil, other_than: nil, odd: nil, even: nil, within: nil, message: nil, **default_options); end
+  def initialize(greater_than: nil, greater_than_or_equal_to: nil, less_than: nil, less_than_or_equal_to: nil, equal_to: nil, other_than: nil, odd: nil, even: nil, within: nil, message: nil, null_message: nil, **default_options); end
   def validate(object, context, value); end
 end
 class GraphQL::Schema::Validator::FormatValidator < GraphQL::Schema::Validator
@@ -2548,6 +2557,14 @@ class GraphQL::Schema::Validator::ExclusionValidator < GraphQL::Schema::Validato
 end
 class GraphQL::Schema::Validator::RequiredValidator < GraphQL::Schema::Validator
   def initialize(one_of:, message: nil, **default_options); end
+  def validate(_object, _context, value); end
+end
+class GraphQL::Schema::Validator::AllowNullValidator < GraphQL::Schema::Validator
+  def initialize(allow_null_positional, allow_null: nil, message: nil, **default_options); end
+  def validate(_object, _context, value); end
+end
+class GraphQL::Schema::Validator::AllowBlankValidator < GraphQL::Schema::Validator
+  def initialize(allow_blank_positional, allow_blank: nil, message: nil, **default_options); end
   def validate(_object, _context, value); end
 end
 class GraphQL::Schema::Validator::ValidationFailedError < GraphQL::ExecutionError
@@ -2676,7 +2693,9 @@ module GraphQL::Schema::Member::HasArguments::ArgumentClassAccessor
   def argument_class(new_arg_class = nil); end
 end
 module GraphQL::Schema::Member::HasArguments::ArgumentObjectLoader
-  def load_application_object(argument, lookup_as_type, id, context); end
+  def authorize_application_object(argument, id, context, loaded_application_object); end
+  def load_and_authorize_application_object(argument, id, context); end
+  def load_application_object(argument, id, context); end
   def load_application_object_failed(err); end
   def object_from_id(type, id, context); end
 end
@@ -2771,6 +2790,7 @@ class GraphQL::Schema::Argument
   def graphql_name; end
   def initialize(*args, **kwargs, &block); end
   def keyword; end
+  def load_and_authorize_value(load_method_owner, coerced_value, context); end
   def loads; end
   def name; end
   def owner; end
@@ -2908,6 +2928,8 @@ class GraphQL::Schema::Field::ConnectionExtension < GraphQL::Schema::FieldExtens
 end
 class GraphQL::Schema::Field::ScopeExtension < GraphQL::Schema::FieldExtension
   def after_resolve(object:, arguments:, context:, value:, memo:); end
+end
+class GraphQL::Schema::Field::MissingReturnTypeError < GraphQL::Error
 end
 class GraphQL::Schema::InputObject < GraphQL::Schema::Member
   def [](key); end
@@ -3134,25 +3156,31 @@ class GraphQL::Schema::Directive < GraphQL::Schema::Member
   include GraphQL::Schema::Member::HasArguments::ArgumentObjectLoader
 end
 class GraphQL::Schema::Directive::Deprecated < GraphQL::Schema::Directive
+  def self.load_reason(value, _context = nil); end
 end
 class GraphQL::Schema::Directive::Include < GraphQL::Schema::Directive
+  def self.load_if(value, _context = nil); end
   def self.static_include?(args, ctx); end
 end
 class GraphQL::Schema::Directive::Skip < GraphQL::Schema::Directive
+  def self.load_if(value, _context = nil); end
   def self.static_include?(args, ctx); end
 end
 class GraphQL::Schema::Directive::Feature < GraphQL::Schema::Directive
   def self.enabled?(flag_name, object, context); end
   def self.include?(object, arguments, context); end
+  def self.load_flag(value, _context = nil); end
 end
 class GraphQL::Schema::Directive::Flagged < GraphQL::Schema::Directive
   def initialize(target, **options); end
+  def self.load_by(value, _context = nil); end
 end
 module GraphQL::Schema::Directive::Flagged::VisibleByFlag
   def self.included(schema_class); end
   def visible?(context); end
 end
 class GraphQL::Schema::Directive::Transform < GraphQL::Schema::Directive
+  def self.load_by(value, _context = nil); end
   def self.resolve(object, arguments, context); end
 end
 class GraphQL::Schema::TypeMembership
@@ -3168,15 +3196,14 @@ class GraphQL::Schema::Resolver
   def context; end
   def dataloader; end
   def field; end
+  def get_argument(name); end
   def initialize(object:, context:, field:); end
-  def load_argument(name, value); end
   def load_arguments(args); end
   def object; end
   def ready?(**args); end
   def resolve(**args); end
   def resolve_with_support(**args); end
   def self.argument(*args, **kwargs, &block); end
-  def self.arguments_loads_as_type; end
   def self.broadcastable(new_broadcastable); end
   def self.broadcastable?; end
   def self.complexity(new_complexity = nil); end
@@ -3187,11 +3214,11 @@ class GraphQL::Schema::Resolver
   def self.has_max_page_size?; end
   def self.max_page_size(new_max_page_size = nil); end
   def self.null(allow_null = nil); end
-  def self.own_arguments_loads_as_type; end
   def self.own_extensions; end
   def self.resolve_method(new_method = nil); end
   def self.type(new_type = nil, null: nil); end
   def self.type_expr; end
+  def unauthorized_object(err); end
   extend GraphQL::Schema::Member::BaseDSLMethods
   extend GraphQL::Schema::Member::HasArguments
   extend GraphQL::Schema::Member::HasArguments::ArgumentClassAccessor
@@ -3262,7 +3289,7 @@ module GraphQL::Schema::LazyHandlingMethods
 end
 class GraphQL::Schema::InvalidDocumentError < GraphQL::Error
 end
-module InvalidName___Class_0x00___ResolveTypeWithType_18
+module InvalidName___Class_0x00___ResolveTypeWithType_15
   def resolve_type(type, obj, ctx); end
 end
 class GraphQL::Schema::CyclicalDefinitionError < GraphQL::Error
@@ -4007,7 +4034,7 @@ end
 class GraphQL::StaticValidation::Validator
   def handle_timeout(query, context); end
   def initialize(schema:, rules: nil); end
-  def validate(query, validate: nil, timeout: nil); end
+  def validate(query, validate: nil, timeout: nil, max_errors: nil); end
 end
 class GraphQL::StaticValidation::ValidationContext
   def argument_definition(*args, &block); end
@@ -4017,7 +4044,7 @@ class GraphQL::StaticValidation::ValidationContext
   def errors; end
   def field_definition(*args, &block); end
   def fragments(*args, &block); end
-  def initialize(query, visitor_class); end
+  def initialize(query, visitor_class, max_errors); end
   def object_types(*args, &block); end
   def on_dependency_resolve(&handler); end
   def on_dependency_resolve_handlers; end
@@ -4026,6 +4053,7 @@ class GraphQL::StaticValidation::ValidationContext
   def path(*args, &block); end
   def query; end
   def schema(*args, &block); end
+  def too_many_errors?; end
   def type_definition(*args, &block); end
   def validate_literal(ast_value, type); end
   def visitor; end
@@ -4585,6 +4613,7 @@ class GraphQL::Dataloader::Source
   def load(key); end
   def load_all(keys); end
   def pending?; end
+  def pending_keys; end
   def request(key); end
   def request_all(keys); end
   def result_for(key); end
@@ -4916,6 +4945,7 @@ module GraphQL::Authorization::Analyzer
 end
 class GraphQL::UnauthorizedError < GraphQL::Error
   def context; end
+  def context=(arg0); end
   def initialize(message = nil, object: nil, type: nil, context: nil); end
   def object; end
   def type; end

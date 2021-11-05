@@ -43,11 +43,14 @@ module Tasker
   class Task < ApplicationRecord
     extend T::Sig
 
+    ALPHANUM_PLUS_HYPHEN_DASH = /[^0-9a-z\-\_]/i.freeze
+
     self.primary_key = :task_id
     after_initialize :init_defaults, if: :new_record?
     belongs_to :named_task
     has_many :workflow_steps, dependent: :destroy
     has_many :task_annotations, dependent: :destroy
+    has_many :annotation_types, through: :task_annotations
 
     validates :named_task_id, presence: true
     validates :context, presence: true
@@ -56,6 +59,13 @@ module Tasker
     validate :unique_identity_hash, on: :create
 
     delegate :name, to: :named_task
+
+    scope :by_annotation, lambda { |name, key, value|
+      clean_key = key.to_s.gsub(ALPHANUM_PLUS_HYPHEN_DASH, '')
+      joins(:task_annotations, :annotation_types)
+        .where({ annotation_types: { name: name.to_s.strip } })
+        .where("tasker_task_annotations.annotation->>'#{clean_key}' = :value", value: value)
+    }
 
     # typed: true
     sig { params(task_request: TaskRequest).returns(Task) }

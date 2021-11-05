@@ -13,38 +13,61 @@ module Tasker
       @task = @handler.initialize_task!(task_request)
     end
 
+    def shared_task_expectations(task_data)
+      task_data.each do |task|
+        expect(task[:status]).not_to be_nil
+        task[:workflowSteps].each do |step|
+          expect(step[:status]).not_to be_nil
+        end
+        task[:taskAnnotations].each do |annotation|
+          expect(annotation[:annotationType][:name]).not_to be_nil
+          expect(annotation[:annotation]).not_to be_nil
+        end
+      end
+    end
+
     context 'queries' do
-      it 'should get all tasks' do
-        post '/tasker/graphql', params: { query: all_tasks_query }
-        json = JSON.parse(response.body).deep_symbolize_keys
-        task_data = json[:data][:tasks]
-        expect(task_data.length.positive?).to be_truthy
-        task_data.each do |task|
-          expect(task[:status]).not_to be_nil
-          task[:workflowSteps].each do |step|
-            expect(step[:status]).not_to be_nil
-          end
-          task[:taskAnnotations].each do |annotation|
-            expect(annotation[:annotationType][:name]).not_to be_nil
-            expect(annotation[:annotation]).not_to be_nil
+      context 'basic tasks' do
+        it 'should get all tasks' do
+          post '/tasker/graphql', params: { query: all_tasks_query }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:tasks]
+          expect(task_data.length.positive?).to be_truthy
+          shared_task_expectations(task_data)
+        end
+
+        it 'should get pending tasks' do
+          post '/tasker/graphql', params: { query: task_status_query(:pending) }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:tasksByStatus]
+          expect(task_data.length.positive?).to be_truthy
+          shared_task_expectations(task_data)
+          task_data.each do |task|
+            expect(task[:status]).to eq('pending')
           end
         end
       end
 
-      it 'should get pending tasks' do
-        post '/tasker/graphql', params: { query: pending_tasks_query }
-        json = JSON.parse(response.body).deep_symbolize_keys
-        task_data = json[:data][:tasksByStatus]
-        expect(task_data.length.positive?).to be_truthy
-        task_data.each do |task|
-          expect(task[:status]).to eq('pending')
-          task[:workflowSteps].each do |step|
-            expect(step[:status]).not_to be_nil
-          end
-          task[:taskAnnotations].each do |annotation|
-            expect(annotation[:annotationType][:name]).not_to be_nil
-            expect(annotation[:annotation]).not_to be_nil
-          end
+      context 'annotations' do
+        before(:all) do
+          task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }, initiator: 'pete@test', reason: 'setup annotations test', source_system: 'test')
+          @task = @handler.initialize_task!(task_request)
+          @handler.handle(@task)
+        end
+        it 'should get tasks by annotation when annotation exists' do
+          query = tasks_by_annotation_query(annotation_type: 'dummy-annotation', annotation_key: 'step_name', annotation_value: 'step-one')
+          post '/tasker/graphql', params: { query: query }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:tasksByAnnotation]
+          expect(task_data.length.positive?).to be_truthy
+          shared_task_expectations(task_data)
+        end
+        it 'should NOT get tasks by annotation when annotation does not exist' do
+          query = tasks_by_annotation_query(annotation_type: 'nope', annotation_key: 'nope', annotation_value: 'nope')
+          post '/tasker/graphql', params: { query: query }
+          json = JSON.parse(response.body).deep_symbolize_keys
+          task_data = json[:data][:tasksByAnnotation]
+          expect(task_data.length.positive?).not_to be_truthy
         end
       end
     end
@@ -138,7 +161,7 @@ module Tasker
       GQL
     end
 
-    def pending_tasks_query
+    def task_status_query(status)
       <<~GQL
         query PendingTasks($limit: Int, $offset: Int, $sort_by: String, $sort_order: String) {
           tasksByStatus(
@@ -146,7 +169,25 @@ module Tasker
             offset: $offset,
             sortBy: $sort_by,
             sortOrder: $sort_order,
-            status: "pending"
+            status: "#{status}"
+          ) {
+            #{task_fields}
+          }
+        }
+      GQL
+    end
+
+    def tasks_by_annotation_query(annotation_type:, annotation_key:, annotation_value:)
+      <<~GQL
+        query TasksByAnnotation($limit: Int, $offset: Int, $sort_by: String, $sort_order: String) {
+          tasksByAnnotation(
+            limit: $limit,
+            offset: $offset,
+            sortBy: $sort_by,
+            sortOrder: $sort_order,
+            annotationType: "#{annotation_type}",
+            annotationKey: "#{annotation_key}",
+            annotationValue: "#{annotation_value}"
           ) {
             #{task_fields}
           }

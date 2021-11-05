@@ -360,7 +360,7 @@ class ActionMailer::Base < AbstractController::Base
   extend ActiveSupport::Callbacks::ClassMethods
   extend ActiveSupport::DescendantsTracker
   extend ActiveSupport::Rescuable::ClassMethods
-  extend Anonymous_Module_22
+  extend Anonymous_Module_19
   include AbstractController::AssetPaths
   include AbstractController::Caching
   include AbstractController::Caching::Fragments
@@ -389,7 +389,7 @@ module ActionMailer::Base::HelperMethods
   def combined_fragment_cache_key(*args, &block); end
   def view_cache_dependencies(*args, &block); end
   include ActionMailer::MailHelper
-  include Anonymous_Module_23
+  include Anonymous_Module_20
 end
 class ActionMailer::Base::NullMail
   def body; end
@@ -402,6 +402,6 @@ class ActionMailer::Base::LateAttachmentsProxy < SimpleDelegator
   def _raise_error; end
   def inline; end
 end
-module Anonymous_Module_22
+module Anonymous_Module_19
   def inherited(klass); end
 end

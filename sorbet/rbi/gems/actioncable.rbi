@@ -24,6 +24,7 @@ module ActionCable::Helpers::ActionCableHelper
   def action_cable_meta_tag; end
 end
 class ActionCable::Engine < Rails::Engine
+  def self.__callbacks; end
 end
 module ActionCable::Server
   extend ActiveSupport::Autoload
@@ -246,6 +247,170 @@ class ActionCable::Server::Base
   def worker_pool; end
   include ActionCable::Server::Broadcasting
   include ActionCable::Server::Connections
+end
+class ActiveSupport::TestCase < Minitest::Test
+  include ActiveSupport::CurrentAttributes::TestHelper
+end
+class ActionController::Base < ActionController::Metal
+  def _serialization_scope; end
+  def _serialization_scope=(arg0); end
+  def _serialization_scope?; end
+  def namespace_for_serializer=(arg0); end
+  def self._serialization_scope; end
+  def self._serialization_scope=(value); end
+  def self._serialization_scope?; end
+  extend ActionController::Railties::Helpers
+  extend ActionController::Serialization::ClassMethods
+  extend ActiveRecord::Railties::ControllerRuntime::ClassMethods
+  extend Anonymous_Module_25
+  include ActionController::Renderers
+  include ActionController::Serialization
+  include ActionDispatch::Routing::RouteSet::MountedHelpers
+  include ActionDispatch::Routing::UrlFor
+  include ActiveRecord::Railties::ControllerRuntime
+end
+module Anonymous_Module_25
+  def inherited(klass); end
+end
+class ActionController::API < ActionController::Metal
+  def _serialization_scope; end
+  def _serialization_scope=(arg0); end
+  def _serialization_scope?; end
+  def namespace_for_serializer=(arg0); end
+  def self._serialization_scope; end
+  def self._serialization_scope=(value); end
+  def self._serialization_scope?; end
+  extend ActionController::Railties::Helpers
+  extend ActionController::Serialization::ClassMethods
+  extend ActiveRecord::Railties::ControllerRuntime::ClassMethods
+  extend Anonymous_Module_26
+  include ActionController::Renderers
+  include ActionController::Serialization
+  include ActionDispatch::Routing::RouteSet::MountedHelpers
+  include ActionDispatch::Routing::UrlFor
+  include ActiveRecord::Railties::ControllerRuntime
+end
+module Anonymous_Module_26
+  def inherited(klass); end
+end
+class ActiveSupport::Executor < ActiveSupport::ExecutionWrapper
+  def self.__callbacks; end
+end
+class ActiveRecord::Base
+  def attachment_reflections; end
+  def attachment_reflections?; end
+  extend ActionText::Attribute::ClassMethods
+  extend ActiveStorage::Attached::Model::ClassMethods
+  extend ActiveStorage::Reflection::ActiveRecordExtensions::ClassMethods
+  include ActionText::Attribute
+  include ActiveStorage::Attached::Model
+  include ActiveStorage::Reflection::ActiveRecordExtensions
+  include GlobalID::Identification
+end
+class ActionView::Railtie < Rails::Engine
+  def self.__callbacks; end
+end
+class Sidekiq::Rails < Rails::Engine
+  def self.__callbacks; end
+end
+class Tasker::Engine < Rails::Engine
+  def self.__callbacks; end
+end
+class ActiveStorage::Engine < Rails::Engine
+  def self.__callbacks; end
+end
+class ActionMailbox::Engine < Rails::Engine
+  def self.__callbacks; end
+end
+class ActionText::Engine < Rails::Engine
+  def self.__callbacks; end
+end
+class Dummy::Application < Rails::Application
+  def self.__callbacks; end
+end
+module ActionView::RoutingUrlFor
+  def default_url_options=(val); end
+  def self.default_url_options=(val); end
+  include ActionDispatch::Routing::UrlFor
+  include ActionDispatch::Routing::UrlFor
+end
+class ActiveJob::Base
+  def self.__synchronized_sidekiq_options_hash; end
+  def self.__synchronized_sidekiq_retries_exhausted_block; end
+  def self.__synchronized_sidekiq_retry_in_block; end
+  def self.sidekiq_options_hash; end
+  def self.sidekiq_options_hash=(val); end
+  def self.sidekiq_retries_exhausted_block; end
+  def self.sidekiq_retries_exhausted_block=(val); end
+  def self.sidekiq_retry_in_block; end
+  def self.sidekiq_retry_in_block=(val); end
+  def sidekiq_options_hash; end
+  def sidekiq_options_hash=(arg0); end
+  def sidekiq_retries_exhausted_block; end
+  def sidekiq_retries_exhausted_block=(arg0); end
+  def sidekiq_retry_in_block; end
+  def sidekiq_retry_in_block=(arg0); end
+  extend Sidekiq::Worker::Options::ClassMethods
+  include Sidekiq::Worker::Options
+end
+module Anonymous_Module_20
+  include ActionText::ContentHelper
+  include ActionText::TagHelper
+end
+module ActionText
+end
+module ActionText::ContentHelper
+  def allowed_attributes; end
+  def allowed_attributes=(val); end
+  def allowed_tags; end
+  def allowed_tags=(val); end
+  def render_action_text_attachments(content); end
+  def render_action_text_content(content); end
+  def sanitize_action_text_content(content); end
+  def sanitizer; end
+  def sanitizer=(val); end
+  def scrubber; end
+  def scrubber=(val); end
+  def self.allowed_attributes; end
+  def self.allowed_attributes=(val); end
+  def self.allowed_tags; end
+  def self.allowed_tags=(val); end
+  def self.sanitizer; end
+  def self.sanitizer=(val); end
+  def self.scrubber; end
+  def self.scrubber=(val); end
+end
+module ActionText::TagHelper
+  def rich_text_area_tag(name, value = nil, options = nil); end
+  def self.id; end
+  def self.id=(val); end
+end
+module ActionView::Helpers
+end
+class ActionView::Helpers::Tags::ActionText < ActionView::Helpers::Tags::Base
+  def dom_id(**, &&); end
+  def editable_value; end
+  def render; end
+  include ActionView::Helpers::Tags::Placeholderable
+end
+module ActionView::Helpers::FormHelper
+  def rich_text_area(object_name, method, options = nil); end
+end
+class ActionView::Helpers::FormBuilder
+  def rich_text_area(method, options = nil); end
+end
+module ActionController::Base::HelperMethods
+  include Anonymous_Module_20
+end
+class Object < BasicObject
+  def load(*arg0); end
+  def require(path); end
+end
+module ActionDispatch::Routing::RouteSet::MountedHelpers
+  def _main_app; end
+  def _tasker; end
+  def main_app; end
+  def tasker; end
 end
 module ActionCable::Connection
   extend ActiveSupport::Autoload
