@@ -17,5 +17,12 @@ module Tasker
     isolate_namespace Tasker
     config.generators.api_only = true
     config.generators.test_framework = :rspec
+    config.application_controller = 'ActionController::API'
+
+    class << self
+      def configure
+        yield Engine.config
+      end
+    end
   end
 end

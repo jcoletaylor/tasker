@@ -2,6 +2,6 @@
 
 # typed: strict
 module Tasker
-  class ApplicationController < ActionController::API
+  class ApplicationController < Tasker::Engine.config.application_controller.constantize
   end
 end
