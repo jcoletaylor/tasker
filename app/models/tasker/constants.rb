@@ -47,5 +47,6 @@ module Tasker
 
     VALID_STEP_STILL_WORKING_STATES = [WorkflowStepStatuses::PENDING, WorkflowStepStatuses::IN_PROGRESS].freeze
     UNKNOWN = 'unknown'
+    DEFAULT_RETRY_LIMIT = 3
   end
 end

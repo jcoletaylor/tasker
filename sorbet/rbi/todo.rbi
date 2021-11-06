@@ -8,8 +8,6 @@ module Mail::Ruby19; end
 module PG::TextDecoder::TimestampLocal; end
 module PG::TypeMap::DefaultTypeMappable; end
 module Rails::Application::Configuration; end
-module Rswag::Api::Engine; end
-module Rswag::Ui::Engine; end
 module T::CompatibilityPatches::RSpecCompatibility::MethodDoubleExtensions; end
 module T::CompatibilityPatches::RSpecCompatibility::RecorderExtensions; end
 module T::Private::Methods::MethodHooks; end

@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require 'json-schema'
@@ -16,24 +16,16 @@ module Tasker
         end
 
         def define(**kwargs)
-          dependent_system = kwargs.fetch(:dependent_system, Tasker::Constants::UNKNOWN)
           name = kwargs.fetch(:name)
-          handler_class = kwargs.fetch(:handler_class)
-          description = kwargs.fetch(:description, name)
-          default_retryable = kwargs.fetch(:default_retryable, true)
-          default_retry_limit = kwargs.fetch(:default_retry_limit, 3)
-          skippable = kwargs.fetch(:skippable, false)
-          depends_on_step = kwargs.fetch(:depends_on_step, nil)
-
           @step_templates << Tasker::StepTemplate.new(
-            dependent_system: dependent_system,
+            dependent_system: kwargs.fetch(:dependent_system, Tasker::Constants::UNKNOWN),
             name: name,
-            description: description,
-            default_retryable: default_retryable,
-            default_retry_limit: default_retry_limit,
-            skippable: skippable,
-            handler_class: handler_class,
-            depends_on_step: depends_on_step
+            description: kwargs.fetch(:description, name),
+            default_retryable: kwargs.fetch(:default_retryable, true),
+            default_retry_limit: kwargs.fetch(:default_retry_limit, Tasker::Constants::DEFAULT_RETRY_LIMIT),
+            skippable: kwargs.fetch(:skippable, false),
+            handler_class: kwargs.fetch(:handler_class),
+            depends_on_step: kwargs.fetch(:depends_on_step, nil)
           )
         end
 

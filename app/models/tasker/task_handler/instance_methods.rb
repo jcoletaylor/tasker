@@ -205,6 +205,11 @@ module Tasker
           # was the processed step in error still
           error_steps << step if processed_step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
         end
+        steps.each do |processed_step|
+          if processed_step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
+            error_steps << processed_step unless error_steps.map(&:workflow_step_id).include?(processed_step.workflow_step_id)
+          end
+        end
         error_steps
       end
 
