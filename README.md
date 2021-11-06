@@ -1,5 +1,6 @@
 [![CI](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg)](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml)
-
+![GitHub](https://img.shields.io/github/license/jcoletaylor/tasker)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&sort=semver)
 # Tasker: Queable Multi-Step Tasks Made Easy-ish
 
 ## *Designed to make developing queuable multi-step tasks easier to reason about*
