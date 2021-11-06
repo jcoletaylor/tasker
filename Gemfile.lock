@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    tasker (0.2.2)
+    tasker (0.2.3)
       active_model_serializers (>= 0.10.0)
       graphql
       json-schema (>= 2.4.0)
