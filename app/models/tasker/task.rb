@@ -67,6 +67,8 @@ module Tasker
         .where("tasker_task_annotations.annotation->>'#{clean_key}' = :value", value: value)
     }
 
+    scope :with_all_associated, -> { includes(:named_task).includes(workflow_steps: %i[named_step depends_on_step]).includes(task_annotations: %i[annotation_type]) }
+
     # typed: true
     sig { params(task_request: TaskRequest).returns(Task) }
     def self.create_with_defaults!(task_request)

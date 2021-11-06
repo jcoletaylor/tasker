@@ -17,7 +17,7 @@ module Tasker
       sig { params(limit: T.nilable(Integer), offset: T.nilable(Integer), sort_by: T.nilable(T.any(String, Symbol)), sort_order: T.nilable(T.any(String, Symbol)), status: T.any(String, Symbol)).returns(ActiveRecord::Relation) }
       def resolve(limit:, offset:, sort_by:, sort_order:, status:)
         sorts = page_sort_params(Task, limit, offset, sort_by, sort_order)
-        task_query_base.where(status: status).limit(sorts[:limit]).offset(sorts[:offset]).order(sorts[:order])
+        Tasker::Task.with_all_associated.where(status: status).limit(sorts[:limit]).offset(sorts[:offset]).order(sorts[:order])
       end
     end
   end
