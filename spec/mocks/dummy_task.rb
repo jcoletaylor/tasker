@@ -18,26 +18,18 @@ class DummyTask
   class Handler
     # the handle method is only expected to catch around recoverable errors
     # it is responsible for setting results back on the step
-    # anything that raises StandardError or subclass will be caught
-    # by the wrapper logic in TaskHandler
     def handle(_task, _sequence, step)
-      # task and sequence are passed in
-      # in case the task context or the sequence's prior steps
+      # task and sequence are passed in case the task context or the sequence's prior steps
       # may contain data that is necessary for the handling of this step
       step.results = { dummy: true }
     end
   end
 
-  # this is critical - if the handler factory does not register your task handler
-  # the Tasker system will not know how to either validate a request
-  # or ultimately handle the steps
+  # register the task handler with the handler factory
   register_handler(TASK_REGISTRY_NAME)
 
-  # this makes it easier to define step templates for a handler
-  # you could alternatively create an instance method `step_templates`
-  # that returns an array of Tasker::StepTemplate's
-  # only name and handler_class are required, but others help with
-  # visibility and findability
+  # define steps for the step handlers
+  # only name and handler_class are required, but others help with visibility and findability
   define_step_templates do |templates|
     templates.define(
       dependent_system: DUMMY_SYSTEM,

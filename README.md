@@ -14,7 +14,7 @@ Add to your Rails `Gemfile`
 ```ruby
 # add to your Gemfile
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 0.1.1'
+  gem 'tasker', '~> 0.2.1'
 end
 ```
 
@@ -31,7 +31,7 @@ And then mount it where you'd like in `config/routes.rb` with:
 # config/routes.rb
 
 Rails.application.routes.draw do
-  mount Tasker::Engine, at: '/tasker'
+  mount Tasker::Engine, at: '/tasker', as: 'tasker'
 end
 ```
 
@@ -74,33 +74,24 @@ class DummyTask
   STEP_THREE = 'step-three'
   STEP_FOUR = 'step-four'
   STEP_FIVE = 'step-five'
-  ANNOTATION_TYPE = 'dummy-annotation'
   TASK_REGISTRY_NAME = 'dummy_task'
 
   # this is for convenience to read, it could be any class that has a handle method with this signature
   class Handler
     # the handle method is only expected to catch around recoverable errors
     # it is responsible for setting results back on the step
-    # anything that raises StandardError or subclass will be caught
-    # by the wrapper logic in TaskHandler
     def handle(_task, _sequence, step)
-      # task and sequence are passed in
-      # in case the task context or the sequence's prior steps
+      # task and sequence are passed in case the task context or the sequence's prior steps
       # may contain data that is necessary for the handling of this step
       step.results = { dummy: true }
     end
   end
 
-  # this is critical - if the handler factory does not register your task handler
-  # the Tasker system will not know how to either validate a request
-  # or ultimately handle the steps
+  # register the task handler with the handler factory
   register_handler(TASK_REGISTRY_NAME)
 
-  # this makes it easier to define step templates for a handler
-  # you could alternatively create an instance method `step_templates`
-  # that returns an array of Tasker::StepTemplate's
-  # only name and handler_class are required, but others help with
-  # visibility and findability
+  # define steps for the step handlers
+  # only name and handler_class are required, but others help with visibility and findability
   define_step_templates do |templates|
     templates.define(
       dependent_system: DUMMY_SYSTEM,
@@ -151,6 +142,8 @@ A full [TODO](./TODO.md).
 * Ruby version - 2.7
 
 * System dependencies - Postgres, Redis, and Sidekiq
+
+## Development
 
 * Database - `bundle exec rake db:schema:load`
 

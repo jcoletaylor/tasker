@@ -14,7 +14,11 @@ module Tasker
 
       sig { params(task_id: T.any(Integer, String), step_id: T.any(Integer, String)).returns(Tasker::WorkflowStep) }
       def resolve(task_id:, step_id:)
-        step_query_base.where({ task_id: task_id, workflow_step_id: step_id }).first
+        Tasker::WorkflowStep
+          .includes(:named_step)
+          .includes(:task)
+          .where({ task_id: task_id, workflow_step_id: step_id })
+          .first
       end
     end
   end

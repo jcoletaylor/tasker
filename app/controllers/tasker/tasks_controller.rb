@@ -87,9 +87,7 @@ module Tasker
     end
 
     def query_base
-      Tasker::Task.includes(:named_task)
-                  .includes(workflow_steps: %i[named_step depends_on_step])
-                  .includes(task_annotations: %i[annotation_type])
+      Tasker::Task.with_all_associated
     end
   end
 end
