@@ -12,7 +12,6 @@ module Tasker
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
       field :task, Types::TaskType, null: true
       field :annotation_type, Types::AnnotationType, null: true
-      field :annotation, GraphQL::Types::JSON, null: true
     end
   end
 end

@@ -108,6 +108,43 @@ module Tasker
       # typed: true
       sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).void }
       def finalize(task, sequence, steps)
+        return if blocked_by_errors?(task, sequence, steps)
+
+        step_group = StepGroup.build(task, sequence, steps)
+
+        if step_group.complete?
+          task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+          return
+        end
+
+        # if we have steps that still need to be completed and in valid states
+        # set the status of the task back to pending, update it,
+        # and re-enqueue the task for processing
+        if step_group.pending?
+          task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
+          enqueue_task(task)
+          return
+        end
+        # if we reach the end and have not re-enqueued the task
+        # then we mark it complete since none of the above proved true
+        task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+        return
+      end
+
+      # typed: true
+      sig { params(error_steps: T::Array[WorkflowStep]).returns(T::Boolean) }
+      def too_many_attempts?(error_steps)
+        too_many_attempts_steps = []
+        error_steps.each do |err_step|
+          too_many_attempts_steps << err_step if err_step.attempts.positive? && !err_step.retryable
+          too_many_attempts_steps << err_step if err_step.attempts >= err_step.retry_limit
+        end
+        too_many_attempts_steps.length.positive?
+      end
+
+      # typed: true
+      sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean) }
+      def blocked_by_errors?(task, sequence, steps)
         # how many steps in this round are in an error state before, and based on
         # being processed in this round of handling, is it still in an error state
         error_steps = get_error_steps(steps, sequence)
@@ -117,65 +154,15 @@ module Tasker
         # if we have not, then we need to re-enqueue the task
 
         if error_steps.length.positive?
-          too_many_attempts_steps = []
-          error_steps.each do |err_step|
-            too_many_attempts_steps << err_step if err_step.attempts.positive? && !err_step.retryable
-            too_many_attempts_steps << err_step if err_step.attempts >= err_step.retry_limit
-          end
-          if too_many_attempts_steps.length.positive?
+          if too_many_attempts?(error_steps)
             task.update({ status: Tasker::Constants::TaskStatuses::ERROR })
-            return
+            return true
           end
           task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
           enqueue_task(task)
-          return
+          return true
         end
-        # determine which states were incomplete for the whole sequence before this round
-        prior_incomplete_steps = []
-        sequence.steps.each do |step|
-          prior_incomplete_steps << step unless Tasker::Constants::VALID_STEP_COMPLETION_STATES.include?(step.status)
-        end
-        # if nothing was incomplete, set the task to complete and save, and return
-        if prior_incomplete_steps.length.zero?
-          task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-          return
-        end
-        # the steps that are passed into finalize are not the whole sequence
-        # just what has been worked on in this pass, so we need to see what completed
-        # in a valid state, and what has still to be done
-        this_pass_complete_steps = []
-        steps.each do |step|
-          this_pass_complete_steps << step if Tasker::Constants::VALID_STEP_COMPLETION_STATES.include?(step.status)
-        end
-        this_pass_complete_step_ids = this_pass_complete_steps.map(&:workflow_step_id)
-        # what was incomplete from the prior pass that is still incopmlete now
-        still_incomplete_steps = []
-        prior_incomplete_steps.each do |step|
-          still_incomplete_steps << step unless this_pass_complete_step_ids.include?(step.workflow_step_id)
-        end
-        # if nothing is still incomplete after this pass
-        # mark the task complete, update it, and return
-        if still_incomplete_steps.length.zero?
-          task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-          return
-        end
-        # what is still working but in a valid, retryable state
-        still_working_steps = []
-        still_incomplete_steps.each do |step|
-          still_working_steps << step if Tasker::Constants::VALID_STEP_STILL_WORKING_STATES.include?(step.status)
-        end
-        # if we have steps that still need to be completed and in valid states
-        # set the status of the task back to pending, update it,
-        # and re-enqueue the task for processing
-        if still_working_steps.length.positive?
-          task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
-          enqueue_task(task)
-          return
-        end
-        # if we reach the end and have not re-enqueued the task
-        # then we mark it complete since none of the above proved true
-        task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-        return
+        return false
       end
 
       def get_step_handler(step)
