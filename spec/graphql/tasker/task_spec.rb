@@ -28,19 +28,19 @@ module Tasker
 
     context 'queries' do
       context 'basic tasks' do
-        it 'should get all tasks' do
+        it 'gets all tasks' do
           post '/tasker/graphql', params: { query: all_tasks_query }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasks]
-          expect(task_data.length.positive?).to be_truthy
+          expect(task_data.length).to be_positive
           shared_task_expectations(task_data)
         end
 
-        it 'should get pending tasks' do
+        it 'gets pending tasks' do
           post '/tasker/graphql', params: { query: task_status_query(:pending) }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasksByStatus]
-          expect(task_data.length.positive?).to be_truthy
+          expect(task_data.length).to be_positive
           shared_task_expectations(task_data)
           task_data.each do |task|
             expect(task[:status]).to eq('pending')
@@ -54,27 +54,29 @@ module Tasker
           @task = @handler.initialize_task!(task_request)
           @handler.handle(@task)
         end
-        it 'should get tasks by annotation when annotation exists' do
+
+        it 'gets tasks by annotation when annotation exists' do
           query = tasks_by_annotation_query(annotation_type: 'dummy-annotation', annotation_key: 'step_name', annotation_value: 'step-one')
           post '/tasker/graphql', params: { query: query }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasksByAnnotation]
-          expect(task_data.length.positive?).to be_truthy
+          expect(task_data.length).to be_positive
           shared_task_expectations(task_data)
         end
-        it 'should NOT get tasks by annotation when annotation does not exist' do
+
+        it 'does not get tasks by annotation when annotation does not exist' do
           query = tasks_by_annotation_query(annotation_type: 'nope', annotation_key: 'nope', annotation_value: 'nope')
           post '/tasker/graphql', params: { query: query }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasksByAnnotation]
-          expect(task_data.length.positive?).not_to be_truthy
+          expect(task_data.length).not_to be_positive
         end
       end
     end
 
     context 'mutations' do
       context 'create' do
-        it 'should be able to create a task' do
+        it 'is able to create a task' do
           post '/tasker/graphql', params: { query: create_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:createTask]
@@ -82,8 +84,9 @@ module Tasker
           expect(task_data[:status]).to eq('pending')
         end
       end
+
       context 'update' do
-        it 'should be able to update a task' do
+        it 'is able to update a task' do
           post '/tasker/graphql', params: { query: update_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:updateTask]
@@ -92,8 +95,9 @@ module Tasker
           expect(task_data[:tags]).to match_array(%w[some great set of tags])
         end
       end
+
       context 'cancel' do
-        it 'should be able to cancel a task' do
+        it 'is able to cancel a task' do
           post '/tasker/graphql', params: { query: cancel_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:cancelTask]

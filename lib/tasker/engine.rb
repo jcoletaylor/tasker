@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
+require 'active_model_serializers'
+require 'graphql'
+require 'json-schema'
+require 'pg'
 # typed: strict
 
 require 'rails'
-require 'pg'
 require 'sidekiq'
 require 'sorbet-runtime'
-require 'active_model_serializers'
-require 'json-schema'
-require 'graphql'
 # require 'rswag-api'
 # require 'rswag-ui'
 

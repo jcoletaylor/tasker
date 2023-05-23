@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # typed: false
+
 Tasker::Engine.routes.draw do
   post '/graphql', to: 'graphql#execute'
   # mount Rswag::Ui::Engine => '/api-docs'

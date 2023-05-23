@@ -46,8 +46,6 @@ module Tasker
     belongs_to :named_step
     belongs_to :depends_on_step, class_name: 'WorkflowStep', optional: true
 
-    validates :task_id, presence: true
-    validates :named_step_id, presence: true
     validates :status, presence: true, inclusion: { in: Constants::VALID_WORKFLOW_STEP_STATUSES }
 
     delegate :name, to: :named_step

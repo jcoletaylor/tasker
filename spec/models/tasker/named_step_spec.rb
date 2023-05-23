@@ -26,9 +26,9 @@ require 'rails_helper'
 require_relative '../../mocks/dummy_task'
 
 module Tasker
-  RSpec.describe NamedStep, type: :model do
+  RSpec.describe NamedStep do
     context 'class methods' do
-      it 'should be able to create named steps from step templates' do
+      it 'is able to create named steps from step templates' do
         templates = [
           StepTemplate.new(
             dependent_system: 'dummy-system',
@@ -49,8 +49,8 @@ module Tasker
             handler_class: DummyTask::Handler
           )
         ]
-        named_steps = NamedStep.create_named_steps_from_templates(templates)
-        expect(named_steps.length.positive?).to be_truthy
+        named_steps = described_class.create_named_steps_from_templates(templates)
+        expect(named_steps.length).to be_positive
         expect(named_steps.map(&:name)).to eq(%w[step-one step-two])
       end
     end

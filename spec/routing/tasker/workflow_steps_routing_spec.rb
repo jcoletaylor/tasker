@@ -4,7 +4,7 @@
 require 'rails_helper'
 
 module Tasker
-  RSpec.describe WorkflowStepsController, type: :routing do
+  RSpec.describe WorkflowStepsController do
     describe 'routing' do
       it 'routes to #index' do
         expect(get: '/tasker/tasks/1/workflow_steps').to route_to('tasker/workflow_steps#index', task_id: '1')

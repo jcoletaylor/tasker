@@ -5,19 +5,21 @@ require 'rails_helper'
 require_relative '../../mocks/dummy_task'
 
 module Tasker
-  RSpec.describe TaskHandler, type: :model do
+  RSpec.describe TaskHandler do
     describe 'DummyTask' do
-      let(:factory) { Tasker::HandlerFactory.instance }
+      let(:factory)      { Tasker::HandlerFactory.instance            }
       let(:task_handler) { factory.get(DummyTask::TASK_REGISTRY_NAME) }
 
-      it 'should be able to initialize a dummy task and get the handler' do
+      it 'is able to initialize a dummy task and get the handler' do
         generic_task_handler = DummyTask.new
         expect(generic_task_handler.step_templates.first.handler_class).to eq(DummyTask::Handler)
       end
+
       it 'handler factory should be able to find the correct handler' do
         expect(task_handler.step_templates.first.handler_class).to eq(DummyTask::Handler)
       end
-      it 'should be able to initialize a task' do
+
+      it 'is able to initialize a task' do
         task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
         task = task_handler.initialize_task!(task_request)
         expect(task).to be_valid
@@ -25,13 +27,15 @@ module Tasker
         task.reload
         expect(task.workflow_steps.count).to eq(4)
       end
-      it 'should not be able to initialize a task if the context is invalid' do
+
+      it 'is not able to initialize a task if the context is invalid' do
         task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { bad_param: true, dummy: 12 })
         task = task_handler.initialize_task!(task_request)
         # bad param and wrong type, two errors
         expect(task.errors[:context].length).to eq(2)
       end
-      it 'should be able to initialize and handle a task' do
+
+      it 'is able to initialize and handle a task' do
         task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
         task = task_handler.initialize_task!(task_request)
         task_handler.handle(task)

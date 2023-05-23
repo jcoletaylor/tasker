@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-# typed: strict
-require 'tasker/version'
 require 'tasker/engine'
+# typed: strict
+
+require 'tasker/version'
 
 module Tasker
   # Your code goes here...

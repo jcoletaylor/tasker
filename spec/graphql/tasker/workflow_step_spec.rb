@@ -17,7 +17,7 @@ module Tasker
     end
 
     context 'queries' do
-      it 'should get a step' do
+      it 'gets a step' do
         post '/tasker/graphql', params: { query: step_query }
         json = JSON.parse(response.body).deep_symbolize_keys
         data = json[:data][:step]
@@ -30,15 +30,16 @@ module Tasker
 
     context 'mutations' do
       context 'update' do
-        it 'should be able to update a task' do
+        it 'is able to update a task' do
           post '/tasker/graphql', params: { query: update_step_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           data = json[:data][:updateStep]
           expect(data[:retryLimit]).to eq(22)
         end
       end
+
       context 'cancel' do
-        it 'should be able to cancel a task' do
+        it 'is able to cancel a task' do
           post '/tasker/graphql', params: { query: cancel_step_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           data = json[:data][:cancelStep]

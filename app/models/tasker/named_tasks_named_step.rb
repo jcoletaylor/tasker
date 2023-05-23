@@ -31,8 +31,8 @@ module Tasker
 
     belongs_to :named_task
     belongs_to :named_step
-    validates :named_task_id, presence: true, uniqueness: { scope: :named_step_id }
-    validates :named_step_id, presence: true, uniqueness: { scope: :named_task_id }
+    validates :named_task_id, uniqueness: { scope: :named_step_id }
+    validates :named_step_id, uniqueness: { scope: :named_task_id }
 
     scope :named_steps_for_named_task, ->(named_task_id) { where(named_task_id: named_task_id).includes(:named_task).includes(:named_step) }
 

@@ -4,7 +4,7 @@
 require 'rails_helper'
 
 module Tasker
-  RSpec.describe TasksController, type: :routing do
+  RSpec.describe TasksController do
     describe 'routing' do
       it 'routes to #index' do
         expect(get: '/tasker/tasks').to route_to('tasker/tasks#index')

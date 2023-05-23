@@ -52,7 +52,6 @@ module Tasker
     has_many :task_annotations, dependent: :destroy
     has_many :annotation_types, through: :task_annotations
 
-    validates :named_task_id, presence: true
     validates :context, presence: true
     validates :requested_at, presence: true
     validates :status, presence: true, inclusion: { in: Tasker::Constants::VALID_TASK_STATUSES }

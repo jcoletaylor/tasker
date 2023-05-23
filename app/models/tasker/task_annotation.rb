@@ -31,9 +31,6 @@ module Tasker
     belongs_to :task
     belongs_to :annotation_type
 
-    validates :annotation_type_id, presence: true
-    validates :task_id, presence: true
-
     delegate :name, to: :annotation_type, prefix: true
   end
 end

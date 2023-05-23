@@ -11,7 +11,7 @@ module Tasker
     end
 
     context 'queries' do
-      it 'should get annotation types' do
+      it 'gets annotation types' do
         post '/tasker/graphql', params: { query: annotation_type_query }
         json = JSON.parse(response.body).deep_symbolize_keys
         data = json[:data][:annotationTypes]

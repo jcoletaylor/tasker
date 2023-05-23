@@ -97,13 +97,10 @@ module Tasker
         steps
       end
 
-      # this is a long method, there's no real way around it
       # we are finalizing whether a task is complete
       # whether it is in error, or whether we can still retry it
       # or whether no errors exist but if we should re-enqueue
       # if there are still valid workable steps
-      # we could break it down into components, but I think it may be
-      # harder to reason about
 
       # typed: true
       sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).void }
