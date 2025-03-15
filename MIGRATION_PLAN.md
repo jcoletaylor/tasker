@@ -11,7 +11,7 @@ This document outlines the step-by-step plan for upgrading our application from 
       - RSpec: 6.1.5 (rspec-rails)
       - RuboCop: 1.74.0
       - Sorbet: 0.5.11934
-      - Sidekiq: 7.1.0
+      - Sidekiq: 7.3.9
       - GraphQL: 2.4.14
       - PostgreSQL Adapter: 1.5.3 (pg)
       - Puma: 5.6.9
@@ -53,7 +53,7 @@ This document outlines the step-by-step plan for upgrading our application from 
     - [x] Update rubocop-performance
     - [x] Add rubocop-factory_bot for FactoryBot cops
 - [ ] Update development dependencies
-    - [ ] Update RSpec Rails (6.1.5 → 7.1.1)
+    - [x] Update RSpec Rails (6.1.5 → 7.1.1) ✓
     - [ ] Configure Sidekiq test environment
     - [ ] Update SQLite3 (1.6.3 → 2.6.0)
     - [ ] Update testing tools (factory_bot, etc.)
@@ -61,7 +61,7 @@ This document outlines the step-by-step plan for upgrading our application from 
     - [x] Update GraphQL (2.0.22 → 2.4.14) ✓
     - [ ] Fix GraphQL pagination helper issues
     - [ ] Update Puma (5.6.9 → 6.6.0)
-    - [ ] Update Sidekiq (7.1.0 → 8.0.1)
+    - [ ] Update Sidekiq (7.3.9 → 8.0.1)
     - [x] Update Active Model Serializers (0.10.13 → 0.10.15) ✓
     - [ ] Address RSwag deprecation warnings
 
@@ -135,9 +135,10 @@ In case of critical issues during or after migration:
 ## Progress Tracking
 - Start Date: 2025-03-15
 - Current Phase: 4
-- Completed Items: 24
-- Next Action Item: Upgrade remaining dependencies (RSpec Rails, Puma, Sidekiq, SQLite3)
+- Completed Items: 25
+- Next Action Item: Upgrade remaining dependencies (Puma, Sidekiq, SQLite3)
 - Recent Progress:
+    - 2025-03-19: Successfully upgraded RSpec Rails to 7.1.1, all tests passing
     - 2025-03-18: Successfully upgraded to Rails 7.0.8.7, all tests passing
     - 2025-03-15: Moved files from app/models/tasker to lib/tasker and removed redundant copies
     - 2025-03-16: Successfully upgraded to Rails 6.1.7.10, all tests passing

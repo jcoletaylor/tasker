@@ -23,9 +23,9 @@ Gem::Specification.new do |spec|
   # Use postgresql as the database for Active Record
   spec.add_dependency 'pg', '~> 1.1'
   # Use Puma as the app server
-  spec.add_dependency 'puma', '~> 5.0'
+  spec.add_dependency 'puma', '~> 6.6.0'
 
-  spec.add_dependency 'sidekiq'
+  spec.add_dependency 'sidekiq', '>= 5'
 
   # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
   spec.add_dependency 'rack-cors'
