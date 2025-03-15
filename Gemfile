@@ -23,7 +23,7 @@ end
 
 group :test do
   gem 'rspec-json_expectations', '~> 2.2'
-  gem 'rspec-rails', '~> 6.1'
+  gem 'rspec-rails', '~> 7.1'
   gem 'rspec-sidekiq', '~> 4.0'
   gem 'rspec-sorbet', '~> 1.9'
   gem 'rswag-specs', '~> 2.11'

@@ -10,7 +10,7 @@ module Tasker
       @factory = Tasker::HandlerFactory.instance
       @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
       task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                     initiator: 'pete@test', reason: 'setup workflow step test', source_system: 'test')
+                                     initiator: 'pete@test', reason: "setup workflow step test #{Time.now.to_f}", source_system: 'test')
       @task = @handler.initialize_task!(task_request)
       @handler.handle(@task)
       @task.reload

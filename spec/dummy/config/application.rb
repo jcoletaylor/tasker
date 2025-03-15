@@ -1,9 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+require 'logger'
 require_relative 'boot'
 
-require 'logger'
 require 'rails'
 require 'active_model/railtie'
 require 'active_job/railtie'
@@ -24,7 +24,6 @@ require 'bundler/setup'
 Bundler.require(*Rails.groups)
 require 'tasker'
 
-require 'logger'
 require 'active_support'
 require 'active_support/logger'
 require 'active_support/tagged_logging'
@@ -36,6 +35,9 @@ Rails.logger = logger
 
 module Dummy
   class Application < Rails::Application
+    # Load Rails 7.0 defaults first, before any other configuration
+    config.load_defaults 7.0
+    
     # Prevent the framework from freezing configurations too early
     config.before_initialize do
       # Ensure test environment settings
@@ -49,8 +51,7 @@ module Dummy
       end
     end
 
-    # Load defaults but allow for modifications
-    config.load_defaults '7.0'
+    # Rails 7.0 defaults are loaded at the beginning of the configuration
     
     # Allow concurrency in all environments
     config.allow_concurrency = true
