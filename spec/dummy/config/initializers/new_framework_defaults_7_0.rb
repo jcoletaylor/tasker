@@ -23,8 +23,6 @@ Rails.application.config.after_initialize do
   # ActionPack
 
   # Makes CSRF tokens authenticity work via session instead of via cookies
-  Rails.application.config.action_controller.urlsafe_csrf_tokens = true
-
   # Sets cookies to SameSite=Lax by default (instead of nil), and allows setting SameSite: :strict
   # Rails.application.config.action_dispatch.cookies_same_site_protection = :lax
 

@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary     = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
   spec.description = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
   spec.license     = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.7.3')
+  spec.required_ruby_version = Gem::Requirement.new('>= 3.2.0')
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
   spec.add_dependency 'logger', '~> 1.6.0'
-  spec.add_dependency 'rails', '~> 7.0.0'
+  spec.add_dependency 'rails', '~> 7.2.2'
   # Use postgresql as the database for Active Record
   spec.add_dependency 'pg', '~> 1.1'
   # Use Puma as the app server

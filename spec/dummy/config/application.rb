@@ -35,8 +35,8 @@ Rails.logger = logger
 
 module Dummy
   class Application < Rails::Application
-    # Load Rails 7.0 defaults first, before any other configuration
-    config.load_defaults 7.0
+    # Load Rails 7.2 defaults first, before any other configuration
+    config.load_defaults 7.2
     
     # Prevent the framework from freezing configurations too early
     config.before_initialize do
@@ -75,7 +75,7 @@ module Dummy
 
     # Defaults to true in Rails 7 - makes CSRF tokens store SameSite
     # as they are cookie-adjacent
-    config.action_controller.urlsafe_csrf_tokens = true
+    # This option is removed in Rails 7.2 as it's the default behavior
 
     # Defaults to true in Rails 7 - makes cookies use SameSite=Lax
     # by default, and changes the default value of the
