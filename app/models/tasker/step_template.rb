@@ -15,7 +15,7 @@ module Tasker
     ) do
       def initialize(options)
         options.each do |key, value|
-          __send__("#{key}=".to_sym, value) if value.present?
+          __send__(:"#{key}=", value) if value.present?
         end
         self.default_retry_limit ||= 3
         self.default_retryable ||= true

@@ -21,11 +21,9 @@ module Tasker
 
         params = {}
         args.each do |key, val|
-          if key.to_sym.in?(ALLOWED_UPDATE_FIELDS)
-            params[key] = val
-          end
+          params[key] = val if key.to_sym.in?(ALLOWED_UPDATE_FIELDS)
         end
-        step.update(params) unless params.empty?
+        step.update!(params) unless params.empty?
 
         if step.errors.empty?
           Tasker::WorkflowStepSerializer.new(step).to_hash

@@ -40,25 +40,26 @@
 require 'rails_helper'
 
 module Tasker
-  RSpec.describe Task do
+  RSpec.describe(Task) do
     describe 'task creation' do
       let(:task_request) { TaskRequest.new(name: 'dummy_action', context: { dummy: true }) }
       let(:task)         { described_class.create_with_defaults!(task_request)             }
 
       it 'is able to create with defaults' do
-        expect(task.save).to be_truthy
-        expect(task.task_id).not_to be_nil
-        expect(task.identity_hash).not_to be_nil
+        expect(task.save).to(be_truthy)
+        expect(task.task_id).not_to(be_nil)
+        expect(task.identity_hash).not_to(be_nil)
         # should not be able to do the same thing again instantly
         expect do
           described_class.create_with_defaults!(task_request)
-        end.to raise_error(ActiveRecord::RecordInvalid)
+        end.to(raise_error(ActiveRecord::RecordInvalid))
 
-        next_task_request = TaskRequest.new(name: 'dummy_action', context: { dummy: true }, requested_at: 2.minutes.from_now)
+        next_task_request = TaskRequest.new(name: 'dummy_action', context: { dummy: true },
+                                            requested_at: 2.minutes.from_now)
         # but should be able to do it if it is requested far enough apart
         expect do
           described_class.create_with_defaults!(next_task_request)
-        end.not_to raise_error
+        end.not_to(raise_error)
       end
     end
   end

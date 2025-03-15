@@ -38,11 +38,14 @@ module Tasker
       # typed: true
       sig { params(task: Task).returns(T::Boolean) }
       def start_task(task)
-        raise Tasker::ProceduralError, "task already complete for task #{task.task_id}" if task.complete
+        raise(Tasker::ProceduralError, "task already complete for task #{task.task_id}") if task.complete
 
-        raise Tasker::ProceduralError, "task is not pending for task #{task.task_id}, status is #{task.status}" unless task.status == Tasker::Constants::TaskStatuses::PENDING
+        unless task.status == Tasker::Constants::TaskStatuses::PENDING
+          raise(Tasker::ProceduralError,
+                "task is not pending for task #{task.task_id}, status is #{task.status}")
+        end
 
-        task.update({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
+        task.update!({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
       end
 
       # typed: true
@@ -56,7 +59,7 @@ module Tasker
         sequence = get_sequence(task)
         more_viable_steps = Tasker::WorkflowStep.get_viable_steps(task, sequence)
         if more_viable_steps.length.positive?
-          task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
+          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
           # if there are more viable steps that we can handle now
           # that we are not waiting on, then just recursively call handle again
           return handle(task)
@@ -110,7 +113,7 @@ module Tasker
         step_group = StepGroup.build(task, sequence, steps)
 
         if step_group.complete?
-          task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+          task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
           return
         end
 
@@ -118,14 +121,14 @@ module Tasker
         # set the status of the task back to pending, update it,
         # and re-enqueue the task for processing
         if step_group.pending?
-          task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
+          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
           enqueue_task(task)
           return
         end
         # if we reach the end and have not re-enqueued the task
         # then we mark it complete since none of the above proved true
-        task.update({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-        return
+        task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+        nil
       end
 
       # typed: true
@@ -152,18 +155,18 @@ module Tasker
 
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
-            task.update({ status: Tasker::Constants::TaskStatuses::ERROR })
+            task.update!({ status: Tasker::Constants::TaskStatuses::ERROR })
             return true
           end
-          task.update({ status: Tasker::Constants::TaskStatuses::PENDING })
+          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
           enqueue_task(task)
           return true
         end
-        return false
+        false
       end
 
       def get_step_handler(step)
-        raise Tasker::ProceduralError, "No registered class for #{step.name}" unless step_handler_class_map[step.name]
+        raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless step_handler_class_map[step.name]
 
         step_handler_class_map[step.name].to_s.camelize.constantize.new
       end
@@ -217,8 +220,7 @@ module Tasker
         return [] unless schema
 
         data = context.to_hash.deep_symbolize_keys
-        errors = JSON::Validator.fully_validate(schema, data, strict: true, insert_defaults: true)
-        errors
+        JSON::Validator.fully_validate(schema, data, strict: true, insert_defaults: true)
       end
     end
   end

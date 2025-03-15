@@ -18,11 +18,9 @@ module Tasker
         task = Tasker::Task.find(task_id)
         params = {}
         args.each do |key, val|
-          if key.to_sym.in?(ALLOWED_UPDATE_FIELDS)
-            params[key] = val
-          end
+          params[key] = val if key.to_sym.in?(ALLOWED_UPDATE_FIELDS)
         end
-        task.update(params) unless params.empty?
+        task.update!(params) unless params.empty?
 
         # we don't want to re-run save here because it will remove the
         # context validation from the handler and check "valid?"

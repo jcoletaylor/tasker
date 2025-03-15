@@ -6,7 +6,7 @@ require_relative '../../helpers/task_helpers'
 require_relative '../../mocks/dummy_task'
 
 module Tasker
-  RSpec.describe TaskRunnerJob do
+  RSpec.describe(TaskRunnerJob) do
     context 'perform a task runner job' do
       let(:helper)       { Helpers::TaskHelpers.new                                                               }
       let(:task_handler) { helper.factory.get(DummyTask::TASK_REGISTRY_NAME)                                      }
@@ -21,7 +21,7 @@ module Tasker
         runner = described_class.new
         runner.perform(task.task_id)
         task.reload
-        expect(task.status).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
+        expect(task.status).to(eq(Tasker::Constants::TaskStatuses::COMPLETE))
       end
     end
   end

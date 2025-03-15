@@ -1,220 +1,27 @@
-# Rubocop configuration
-
 require:
-  - rubocop-performance
-  - rubocop-rails
   - rubocop-rspec
 
-AllCops:
-  EnabledByDefault: true
-  TargetRubyVersion: 2.7
-  DisplayCopNames: true
-  DisplayStyleGuide: true
-  Include:
-    - '**/*.rb'
-    - '**/*.pryrc'
-    - '**/*.rake'
-    - '.env'
-    - '.simplecov'
-    - '**/config.ru'
-    - '**/Gemfile'
-    - '**/Guardfile'
-    - '**/Rakefile'
-  Exclude:
-    - 'tmp/**/*'
-    - 'lib/.git/**/*'
-    - 'db/**/*'
-    - 'db/migrate/**'
-    - 'bin/**/*'
-    - 'node_modules/**/*'
-    - 'railroader/**/*'
-    - '.pryrc'
-    - 'license_okay'
+plugins:
+  - rubocop-rails
+  - rubocop-performance
+  - rubocop-factory_bot
 
-# This will ALWAYS be disabled. We *want* to be able disable cops.
-Style/DisableCopsWithinSourceCodeDirective:
-  Enabled: false
-# This is a terrible idea and will never happen. Sometimes there's
-# no need for a full Rails environment; we only want to bring in a
-# Rails environment when it's encessary.
-Rails/RakeEnvironment:
-  Enabled: false
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+  SuggestExtensions: false
 
 Style/Documentation:
   Enabled: false
-Lint/SuppressedException:
-  Enabled: false
-# Exclude:
-#   - 'bin/*'
-Style/RescueStandardError:
-  Exclude:
-    # When getting evidence from external sources there are
-    # many possible problems, and we don't care - if there's
-    # an error getting evidence, we treat it as no evidence.
-    - 'app/lib/evidence.rb'
-Metrics/AbcSize:
-  Max: 30
-  Exclude:
-    - 'db/migrate/*'
-Metrics/ModuleLength:
-  Max: 250
-Metrics/ClassLength:
-  Exclude:
-    - 'db/migrate/*'
-# Weird failures on this, disabled for now.
-Layout/LineLength:
-  Enabled: false
-  # Exclude:
-  #   - 'db/migrate/*'
-Metrics/MethodLength:
-  Max: 30
-  Exclude:
-    - 'db/migrate/*'
+
 Metrics/BlockLength:
-  Max: 30
   Exclude:
-    - 'db/migrate/*'
-    - 'db/schema.rb'
-    - 'spec/**/*.rb'
-Rails/SkipsModelValidations:
-  Exclude:
-    - 'spec/**/*.rb'
-Style/MethodCalledOnDoEndBlock:
-  Exclude:
-    - 'spec/**/*.rb'
-Style/Copyright:
+    - 'spec/**/*'
+    - 'lib/tasks/**/*'
+
+Capybara/RSpec/PredicateMatcher:
   Enabled: false
-Style/InlineComment:
-  Enabled: false
-Style/DocumentationMethod:
-  Enabled: false
-Style/MethodCallWithArgsParentheses:
-  Enabled: false
-Style/MissingElse:
-  Enabled: false
-Style/NegatedIf:
+
+RSpec/MultipleExpectations:
   Enabled: true
-  EnforcedStyle: postfix
-Style/Send:
-  Exclude:
-    - 'test/**/*.rb'
-#
-# Historical systems could only reliably handle comments if they were ASCII.
-# But UTF-8 has essentially "taken over", so there's no reason to limit
-# ourselves to ASCII. Having ASCII-only comments makes it unnecessarily
-# difficult to discuss/describe locale issues.  *Code* handles UTF-8
-# without incident, so there's no reason to limit comments to ASCII.
-#
-Style/AsciiComments:
-  Enabled: false
-#
-# The following are newer cops which have disabled because
-# we aren't ready for them right now. It's diffult to do things "all at once".
-# Instead, we'll get things running first (ignoring these cops), and
-# later try to slowly comply with them or reject them.
-# See issue #1069, which tracks this decision.
-#
-Style/StringHashKeys:
-  Enabled: false
-Naming/ConstantName:
-  Enabled: false
-Style/MixinUsage:
-  Enabled: false
-Rails/EnvironmentComparison:
-  Enabled: false
-Lint/MissingCopEnableDirective:
-  Enabled: false
-Lint/NumberConversion:
-  Enabled: false
-Layout/ClassStructure:
-  Enabled: false
-Rails/Presence:
-  Enabled: false
-Naming/MethodParameterName:
-  Enabled: false
-Style/IpAddresses:
-  Enabled: false
-# Rubocop 0.59.0 doesn't notice same-line comments (whup!), so disable
-Bundler/GemComment:
-  Enabled: false
-# Re-enable and try these out later
-Performance/ChainArrayAllocation:
-  Enabled: false
-Layout/HashAlignment:
-  Enabled: false
-Rails/SaveBang:
-  Enabled: false
-Rails/FindEach:
-  Enabled: false
-Lint/RedundantCopDisableDirective:
-  Enabled: false
-Layout/MultilineArrayLineBreaks:
-  Enabled: false
-Layout/MultilineHashKeyLineBreaks:
-  Enabled: false
-Layout/MultilineMethodArgumentLineBreaks:
-  Enabled: false
-Style/StderrPuts:
-  Enabled: false
-Rails/HelperInstanceVariable:
-  Enabled: false
-Style/MultilineWhenThen:
-  Enabled: false
-Style/ConstantVisibility:
-  Enabled: false
-Style/RedundantReturn:
-  Enabled: false
-Rails/FilePath:
-  Enabled: false
-Rails/UnknownEnv:
-  Enabled: false
-Performance/IoReadlines:
-  Enabled: false
-Layout/FirstMethodArgumentLineBreak:
-  Enabled: false
-Style/IfUnlessModifier:
-  Enabled: false
-Style/MultilineMethodSignature:
-  Enabled: false
-Lint/ConstantResolution:
-  Enabled: false
-Style/RedundantRegexpEscape:
-  Enabled: false
-Style/CaseLikeIf:
-  Enabled: false
-Style/ExpandPathArguments:
-  Enabled: false
-Style/RedundantFetchBlock:
-  Enabled: false
-Metrics/CyclomaticComplexity:
-  Enabled: false
-Style/RedundantAssignment:
-  Enabled: false
-Bundler/OrderedGems:
-  Enabled: false
-Layout/EmptyLineAfterMultilineCondition:
-  Enabled: false
-Style/StringConcatenation:
-  Enabled: false
-Style/ClassMethodsDefinitions:
-  Enabled: false
-Style/GlobalStdStream:
-  Enabled: false
-Lint/UselessMethodDefinition:
-  Enabled: false
-Style/OptionalBooleanParameter:
-  Enabled: false
-Metrics/PerceivedComplexity:
-  Enabled: false
-Style/SoleNestedConditional:
-  Enabled: false
-Lint/EmptyConditionalBody:
-  Enabled: false
-Style/ExplicitBlockArgument:
-  Enabled: false
-Rails/DefaultScope:
-  Enabled: false
-Rails/WhereNot:
-  Enabled: false
-Rails/NegateInclude:
-  Enabled: false
+  exclude_limit: example

@@ -6,13 +6,19 @@ module Tasker
     module Helpers
       extend T::Sig
 
-      sig { params(model: T.untyped, limit: T.nilable(Integer), offset: T.nilable(Integer), sort_by: T.nilable(T.any(String, Symbol)), sort_order: T.nilable(T.any(String, Symbol))).returns(T::Hash[Symbol, T.any(Integer, String, Symbol)]) }
-      def page_sort_params(model, limit, offset, sort_by, sort_order)
+      sig do
+        params(model: T.untyped, limit: T.nilable(Integer), offset: T.nilable(Integer),
+               sort_by: T.nilable(T.any(String, Symbol)), sort_order: T.nilable(T.any(String, Symbol))).returns(T::Hash[Symbol,
+                                                                                                                        T.any(
+                                                                                                                          Integer, String, Symbol
+                                                                                                                        )])
+      end
+      def page_sort_params(model:, limit:, offset:, sort_by:, sort_order:)
         valid_sorts = model.column_names.map(&:to_sym)
-        sort_by = :created_at unless valid_sorts.include?(sort_by.to_s.to_sym)
-        sort_order = :asc unless %i[asc desc].include?(sort_order.to_s.to_sym)
+        sort_by = :created_at if valid_sorts.exclude?(sort_by.to_s.to_sym)
+        sort_order = :asc if %i[asc desc].exclude?(sort_order.to_s.to_sym)
         order = { sort_by => sort_order }
-        { limit: (limit || 20).to_i, offset: (offset || 0).to_i, order: order }
+        { limit: limit.presence || 20, offset: offset.presence || 0, order: order }
       end
     end
   end

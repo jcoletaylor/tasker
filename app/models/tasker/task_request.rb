@@ -17,7 +17,7 @@ module Tasker
     ) do
       def initialize(options)
         options.each do |key, value|
-          __send__("#{key}=".to_sym, value) if value.present?
+          __send__(:"#{key}=", value) if value.present?
         end
         self.status ||= Constants::TaskStatuses::PENDING
         self.requested_at ||= Time.zone.now

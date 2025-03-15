@@ -46,12 +46,12 @@ module Tasker
 
       def define_step_templates
         definer = StepTemplateDefiner.new(self)
-        yield definer
-        definer.klass.define_method :step_templates do
+        yield(definer)
+        definer.klass.define_method(:step_templates) do
           definer.step_templates
         end
         definer.register_class_map
-        definer.klass.define_method :step_handler_class_map do
+        definer.klass.define_method(:step_handler_class_map) do
           definer.step_handler_class_map
         end
       end

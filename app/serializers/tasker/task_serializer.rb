@@ -40,7 +40,8 @@
 
 module Tasker
   class TaskSerializer < ActiveModel::Serializer
-    attributes :task_id, :name, :initiator, :source_system, :context, :reason, :bypass_steps, :tags, :requested_at, :complete, :status
+    attributes :task_id, :name, :initiator, :source_system, :context, :reason, :bypass_steps, :tags, :requested_at,
+               :complete, :status
     has_many :workflow_steps
     has_many :task_annotations
   end

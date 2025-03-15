@@ -29,7 +29,7 @@ require 'rails_helper'
 require_relative '../../mocks/dummy_task'
 
 module Tasker
-  RSpec.describe NamedTasksNamedStep do
+  RSpec.describe(NamedTasksNamedStep) do
     context 'class methods' do
       let(:task_request) { TaskRequest.new(name: 'dummy_action', context: { some: :value, it_is: :great }) }
       let(:task)         { Task.create_with_defaults!(task_request)                                        }
@@ -49,11 +49,11 @@ module Tasker
       it 'is able to associate named tasks and named steps' do
         named_step = named_steps.first
         ntns = described_class.associate_named_step_with_named_task(task, template, named_step)
-        expect(ntns.named_step).to eq(named_step)
-        expect(ntns.named_task).to eq(task.named_task)
-        expect(ntns.default_retry_limit).to eq(template.default_retry_limit)
-        expect(ntns.default_retryable).to eq(template.default_retryable)
-        expect(ntns.skippable).to eq(template.skippable)
+        expect(ntns.named_step).to(eq(named_step))
+        expect(ntns.named_task).to(eq(task.named_task))
+        expect(ntns.default_retry_limit).to(eq(template.default_retry_limit))
+        expect(ntns.default_retryable).to(eq(template.default_retryable))
+        expect(ntns.skippable).to(eq(template.skippable))
       end
     end
   end

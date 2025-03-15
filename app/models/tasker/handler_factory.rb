@@ -11,7 +11,7 @@ module Tasker
     end
 
     def get(name)
-      raise Tasker::ProceduralError, "No task handler for #{name}" unless handler_classes[name.to_sym]
+      raise(Tasker::ProceduralError, "No task handler for #{name}") unless handler_classes[name.to_sym]
 
       handler_classes[name.to_sym].to_s.camelize.constantize.new
     end

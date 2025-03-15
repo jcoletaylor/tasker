@@ -18,7 +18,8 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
-  spec.add_dependency 'rails', '~> 6.1.4', '>= 6.1.4.1'
+  spec.add_dependency 'logger', '~> 1.6.0'
+  spec.add_dependency 'rails', '~> 7.0.0'
   # Use postgresql as the database for Active Record
   spec.add_dependency 'pg', '~> 1.1'
   # Use Puma as the app server
@@ -35,12 +36,13 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'json-schema', '>= 2.4.0'
 
-  spec.add_dependency 'rswag-api'
-  spec.add_dependency 'rswag-ui'
+  spec.add_development_dependency 'rswag-api'
+  spec.add_development_dependency 'rswag-ui'
 
   spec.add_dependency 'graphql'
 
   spec.add_development_dependency 'rspec-rails'
   spec.add_development_dependency 'sorbet'
   spec.add_development_dependency 'sqlite3'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

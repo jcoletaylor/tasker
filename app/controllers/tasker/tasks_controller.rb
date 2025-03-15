@@ -15,17 +15,20 @@ module Tasker
     def index
       @tasks =
         query_base.limit(page_sort_params[:limit]).offset(page_sort_params[:offset]).order(page_sort_params[:order]).all
-      render json: @tasks, status: :ok, adapter: :json, root: :tasks, each_serializer: Tasker::TaskSerializer
+      render(json: @tasks, status: :ok, adapter: :json, root: :tasks, each_serializer: Tasker::TaskSerializer)
     end
 
     # GET /tasks/1
     def show
-      render json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
+      render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
     end
 
     # POST /tasks
     def create
-      return render status: :bad_request, json: { error: 'invalid parameters: requires task name' } if task_params[:name].blank?
+      if task_params[:name].blank?
+        return render(status: :bad_request,
+                      json: { error: 'invalid parameters: requires task name' })
+      end
 
       task_request = Tasker::TaskRequest.new(task_params)
       begin
@@ -39,25 +42,25 @@ module Tasker
       # we don't want to re-run save here because it will remove the
       # context validation from the handler and check "valid?"
       if @task.errors.empty?
-        render json: @task, status: :created, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
+        render(json: @task, status: :created, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
       else
-        render status: :bad_request, json: { error: @task.errors }
+        render(status: :bad_request, json: { error: @task.errors })
       end
     end
 
     # PATCH/PUT /tasks/1
     def update
       if @task.update(update_task_params)
-        render json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer
+        render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
       else
-        render json: { error: @task.errors }, status: :unprocessable_entity
+        render(json: { error: @task.errors }, status: :unprocessable_entity)
       end
     end
 
     # DELETE /tasks/1
     def destroy
-      @task.update({ status: Tasker::Constants::TaskStatuses::CANCELLED })
-      render status: :ok, json: { cancelled: true }
+      @task.update!({ status: Tasker::Constants::TaskStatuses::CANCELLED })
+      render(status: :ok, json: { cancelled: true })
     end
 
     private

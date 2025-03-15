@@ -5,11 +5,12 @@ require 'rails_helper'
 require_relative '../../mocks/dummy_task'
 
 module Tasker
-  RSpec.describe 'graphql steps', type: :request do
+  RSpec.describe('graphql steps', type: :request) do
     before(:all) do
       @factory = Tasker::HandlerFactory.instance
       @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
-      task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }, initiator: 'pete@test', reason: 'setup workflow step test', source_system: 'test')
+      task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
+                                     initiator: 'pete@test', reason: 'setup workflow step test', source_system: 'test')
       @task = @handler.initialize_task!(task_request)
       @handler.handle(@task)
       @task.reload
@@ -21,10 +22,10 @@ module Tasker
         post '/tasker/graphql', params: { query: step_query }
         json = JSON.parse(response.body).deep_symbolize_keys
         data = json[:data][:step]
-        expect(data[:taskId]).to eq(@task.task_id)
-        expect(data[:workflowStepId].to_i).to eq(@step.workflow_step_id)
-        expect(data[:processed]).to be_truthy
-        expect(data[:inProcess]).not_to be_truthy
+        expect(data[:taskId]).to(eq(@task.task_id))
+        expect(Integer(data[:workflowStepId], 10)).to(eq(@step.workflow_step_id))
+        expect(data[:processed]).to(be_truthy)
+        expect(data[:inProcess]).not_to(be_truthy)
       end
     end
 
@@ -34,7 +35,7 @@ module Tasker
           post '/tasker/graphql', params: { query: update_step_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           data = json[:data][:updateStep]
-          expect(data[:retryLimit]).to eq(22)
+          expect(data[:retryLimit]).to(eq(22))
         end
       end
 
@@ -43,7 +44,7 @@ module Tasker
           post '/tasker/graphql', params: { query: cancel_step_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           data = json[:data][:cancelStep]
-          expect(data[:status]).to eq('cancelled')
+          expect(data[:status]).to(eq('cancelled'))
         end
       end
     end

@@ -13,9 +13,13 @@ module Tasker
       argument :sort_by, String, default_value: :requested_at, required: false
       argument :sort_order, String, default_value: :desc, required: false
 
-      sig { params(limit: T.nilable(Integer), offset: T.nilable(Integer), sort_by: T.nilable(T.any(String, Symbol)), sort_order: T.nilable(T.any(String, Symbol))).returns(ActiveRecord::Relation) }
+      sig do
+        params(limit: T.nilable(Integer), offset: T.nilable(Integer), sort_by: T.nilable(T.any(String, Symbol)),
+               sort_order: T.nilable(T.any(String, Symbol))).returns(T.untyped)
+      end
       def resolve(limit:, offset:, sort_by:, sort_order:)
-        sorts = page_sort_params(Tasker::Task, limit, offset, sort_by, sort_order)
+        sorts = page_sort_params(model: Tasker::Task, limit: limit, offset: offset, sort_by: sort_by,
+                                 sort_order: sort_order)
         Tasker::Task.with_all_associated.limit(sorts[:limit]).offset(sorts[:offset]).order(sorts[:order])
       end
     end

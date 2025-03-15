@@ -60,8 +60,7 @@ module Tasker
           step ||= build_default_step!(task, template, named_step)
           step
         end
-      steps = set_up_dependent_steps(steps, templates)
-      steps
+      set_up_dependent_steps(steps, templates)
     end
 
     def self.set_up_dependent_steps(steps, templates)
@@ -71,7 +70,7 @@ module Tasker
         dependent_step = steps.find { |step| step.name == template.name }
         depends_on_step = steps.find { |step| step.name == template.depends_on_step }
         dependent_step.depends_on_step_id = depends_on_step.workflow_step_id
-        dependent_step.save
+        dependent_step.save!
       end
       steps
     end
@@ -125,13 +124,25 @@ module Tasker
     )
       dependent_step = sequence.steps.find { |sibling_step| step.depends_on_step_id == sibling_step.workflow_step_id }
 
-      raise Tasker::ProceduralError, "required dependent step for #{step.workflow_step_id} not found" unless dependent_step
+      unless dependent_step
+        raise(Tasker::ProceduralError,
+              "required dependent step for #{step.workflow_step_id} not found")
+      end
 
-      raise Tasker::ProceduralError, "required dependent step #{dependent_step.workflow_step_id} incomplete" unless dependent_step.processed
+      unless dependent_step.processed
+        raise(Tasker::ProceduralError,
+              "required dependent step #{dependent_step.workflow_step_id} incomplete")
+      end
 
-      raise Tasker::ProceduralError, "dependent step #{dependent_step.workflow_step_id} does not have viable results" if require_results && !dependendent_step.results
+      if require_results && !dependent_step.results
+        raise(Tasker::ProceduralError,
+              "dependent step #{dependent_step.workflow_step_id} does not have viable results")
+      end
 
-      raise Tasker::ProceduralError, "dependent step #{dependent_step.workflow_step_id} does not have viable inputs" if require_inputs && !dependendent_step.inputs
+      if require_inputs && !dependent_step.inputs
+        raise(Tasker::ProceduralError,
+              "dependent step #{dependent_step.workflow_step_id} does not have viable inputs")
+      end
 
       dependent_step
     end

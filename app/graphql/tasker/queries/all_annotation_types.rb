@@ -9,7 +9,7 @@ module Tasker
 
       description 'List Annotation Types'
 
-      sig { returns(ActiveRecord::Relation) }
+      sig { returns(T.untyped) }
       def resolve
         AnnotationType.order('name asc')
       end

@@ -34,7 +34,7 @@ module Tasker
         # determine which states were incomplete for the whole sequence before this round
         self.prior_incomplete_steps = []
         @sequence.steps.each do |step|
-          prior_incomplete_steps << step unless Tasker::Constants::VALID_STEP_COMPLETION_STATES.include?(step.status)
+          prior_incomplete_steps << step if Tasker::Constants::VALID_STEP_COMPLETION_STATES.exclude?(step.status)
         end
       end
 
@@ -53,7 +53,7 @@ module Tasker
         # what was incomplete from the prior pass that is still incopmlete now
         self.still_incomplete_steps = []
         prior_incomplete_steps.each do |step|
-          still_incomplete_steps << step unless this_pass_complete_step_ids.include?(step.workflow_step_id)
+          still_incomplete_steps << step if this_pass_complete_step_ids.exclude?(step.workflow_step_id)
         end
       end
 

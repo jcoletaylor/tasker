@@ -11,21 +11,23 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['name'], name: 'annotation_types_name_index'
       t.index ['name'], name: 'annotation_types_name_unique', unique: true
     end
-  
-    create_table 'tasker_dependent_system_object_maps', primary_key: 'dependent_system_object_map_id', force: :cascade do |t|
+
+    create_table 'tasker_dependent_system_object_maps', primary_key: 'dependent_system_object_map_id',
+                                                        force: :cascade do |t|
       t.integer 'dependent_system_one_id', null: false
       t.integer 'dependent_system_two_id', null: false
       t.string 'remote_id_one', limit: 128, null: false
       t.string 'remote_id_two', limit: 128, null: false
       t.datetime 'created_at', precision: 6, null: false
       t.datetime 'updated_at', precision: 6, null: false
-      t.index %w[dependent_system_one_id dependent_system_two_id remote_id_one remote_id_two], name: 'dependent_system_object_maps_dependent_system_one_id_dependent_', unique: true
+      t.index %w[dependent_system_one_id dependent_system_two_id remote_id_one remote_id_two],
+              name: 'dependent_system_object_maps_dependent_system_one_id_dependent_', unique: true
       t.index ['dependent_system_one_id'], name: 'dependent_system_object_maps_dependent_system_one_id_index'
       t.index ['dependent_system_two_id'], name: 'dependent_system_object_maps_dependent_system_two_id_index'
       t.index ['remote_id_one'], name: 'dependent_system_object_maps_remote_id_one_index'
       t.index ['remote_id_two'], name: 'dependent_system_object_maps_remote_id_two_index'
     end
-  
+
     create_table 'tasker_dependent_systems', primary_key: 'dependent_system_id', id: :serial, force: :cascade do |t|
       t.string 'name', limit: 64, null: false
       t.string 'description', limit: 255
@@ -34,7 +36,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['name'], name: 'dependent_systems_name_index'
       t.index ['name'], name: 'dependent_systems_name_unique', unique: true
     end
-  
+
     create_table 'tasker_named_steps', primary_key: 'named_step_id', id: :serial, force: :cascade do |t|
       t.integer 'dependent_system_id', null: false
       t.string 'name', limit: 128, null: false
@@ -45,7 +47,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['dependent_system_id'], name: 'named_steps_dependent_system_id_index'
       t.index ['name'], name: 'named_steps_name_index'
     end
-  
+
     create_table 'tasker_named_tasks', primary_key: 'named_task_id', id: :serial, force: :cascade do |t|
       t.string 'name', limit: 64, null: false
       t.string 'description', limit: 255
@@ -54,7 +56,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['name'], name: 'named_tasks_name_index'
       t.index ['name'], name: 'named_tasks_name_unique', unique: true
     end
-  
+
     create_table 'tasker_named_tasks_named_steps', id: :serial, force: :cascade do |t|
       t.integer 'named_task_id', null: false
       t.integer 'named_step_id', null: false
@@ -67,7 +69,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index %w[named_task_id named_step_id], name: 'named_tasks_steps_ids_unique', unique: true
       t.index ['named_task_id'], name: 'named_tasks_named_steps_named_task_id_index'
     end
-  
+
     create_table 'tasker_task_annotations', primary_key: 'task_annotation_id', force: :cascade do |t|
       t.bigint 'task_id', null: false
       t.integer 'annotation_type_id', null: false
@@ -79,7 +81,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['annotation_type_id'], name: 'task_annotations_annotation_type_id_index'
       t.index ['task_id'], name: 'task_annotations_task_id_index'
     end
-  
+
     create_table 'tasker_tasks', primary_key: 'task_id', force: :cascade do |t|
       t.integer 'named_task_id', null: false
       t.string 'status', limit: 64, null: false
@@ -105,7 +107,7 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['tags'], name: 'tasks_tags_idx', using: :gin
       t.index ['tags'], name: 'tasks_tags_idx1', opclass: :jsonb_path_ops, using: :gin
     end
-  
+
     create_table 'tasker_workflow_steps', primary_key: 'workflow_step_id', force: :cascade do |t|
       t.bigint 'task_id', null: false
       t.integer 'named_step_id', null: false
@@ -131,17 +133,28 @@ class InitialSchema < ActiveRecord::Migration[6.1]
       t.index ['status'], name: 'workflow_steps_status_index'
       t.index ['task_id'], name: 'workflow_steps_task_id_index'
     end
-  
-    add_foreign_key 'tasker_dependent_system_object_maps', 'tasker_dependent_systems', column: 'dependent_system_one_id', primary_key: 'dependent_system_id', name: 'dependent_system_object_maps_dependent_system_one_id_foreign'
-    add_foreign_key 'tasker_dependent_system_object_maps', 'tasker_dependent_systems', column: 'dependent_system_two_id', primary_key: 'dependent_system_id', name: 'dependent_system_object_maps_dependent_system_two_id_foreign'
-    add_foreign_key 'tasker_named_steps', 'tasker_dependent_systems', column: 'dependent_system_id', primary_key: 'dependent_system_id', name: 'named_steps_dependent_system_id_foreign'
-    add_foreign_key 'tasker_named_tasks_named_steps', 'tasker_named_steps', column: 'named_step_id', primary_key: 'named_step_id', name: 'named_tasks_named_steps_named_step_id_foreign'
-    add_foreign_key 'tasker_named_tasks_named_steps', 'tasker_named_tasks', column: 'named_task_id', primary_key: 'named_task_id', name: 'named_tasks_named_steps_named_task_id_foreign'
-    add_foreign_key 'tasker_task_annotations', 'tasker_annotation_types', column: 'annotation_type_id', primary_key: 'annotation_type_id', name: 'task_annotations_annotation_type_id_foreign'
-    add_foreign_key 'tasker_task_annotations', 'tasker_tasks', column: 'task_id', primary_key: 'task_id', name: 'task_annotations_task_id_foreign'
-    add_foreign_key 'tasker_tasks', 'tasker_named_tasks', column: 'named_task_id', primary_key: 'named_task_id', name: 'tasks_named_task_id_foreign'
-    add_foreign_key 'tasker_workflow_steps', 'tasker_named_steps', column: 'named_step_id', primary_key: 'named_step_id', name: 'workflow_steps_named_step_id_foreign'
-    add_foreign_key 'tasker_workflow_steps', 'tasker_tasks', column: 'task_id', primary_key: 'task_id', name: 'workflow_steps_task_id_foreign'
-    add_foreign_key 'tasker_workflow_steps', 'tasker_workflow_steps', column: 'depends_on_step_id', primary_key: 'workflow_step_id', name: 'workflow_steps_depends_on_step_id_foreign'
+
+    add_foreign_key 'tasker_dependent_system_object_maps', 'tasker_dependent_systems',
+                    column: 'dependent_system_one_id', primary_key: 'dependent_system_id', name: 'dependent_system_object_maps_dependent_system_one_id_foreign'
+    add_foreign_key 'tasker_dependent_system_object_maps', 'tasker_dependent_systems',
+                    column: 'dependent_system_two_id', primary_key: 'dependent_system_id', name: 'dependent_system_object_maps_dependent_system_two_id_foreign'
+    add_foreign_key 'tasker_named_steps', 'tasker_dependent_systems', column: 'dependent_system_id',
+                                                                      primary_key: 'dependent_system_id', name: 'named_steps_dependent_system_id_foreign'
+    add_foreign_key 'tasker_named_tasks_named_steps', 'tasker_named_steps', column: 'named_step_id',
+                                                                            primary_key: 'named_step_id', name: 'named_tasks_named_steps_named_step_id_foreign'
+    add_foreign_key 'tasker_named_tasks_named_steps', 'tasker_named_tasks', column: 'named_task_id',
+                                                                            primary_key: 'named_task_id', name: 'named_tasks_named_steps_named_task_id_foreign'
+    add_foreign_key 'tasker_task_annotations', 'tasker_annotation_types', column: 'annotation_type_id',
+                                                                          primary_key: 'annotation_type_id', name: 'task_annotations_annotation_type_id_foreign'
+    add_foreign_key 'tasker_task_annotations', 'tasker_tasks', column: 'task_id', primary_key: 'task_id',
+                                                               name: 'task_annotations_task_id_foreign'
+    add_foreign_key 'tasker_tasks', 'tasker_named_tasks', column: 'named_task_id', primary_key: 'named_task_id',
+                                                          name: 'tasks_named_task_id_foreign'
+    add_foreign_key 'tasker_workflow_steps', 'tasker_named_steps', column: 'named_step_id',
+                                                                   primary_key: 'named_step_id', name: 'workflow_steps_named_step_id_foreign'
+    add_foreign_key 'tasker_workflow_steps', 'tasker_tasks', column: 'task_id', primary_key: 'task_id',
+                                                             name: 'workflow_steps_task_id_foreign'
+    add_foreign_key 'tasker_workflow_steps', 'tasker_workflow_steps', column: 'depends_on_step_id',
+                                                                      primary_key: 'workflow_step_id', name: 'workflow_steps_depends_on_step_id_foreign'
   end
 end

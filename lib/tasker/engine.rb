@@ -9,19 +9,35 @@ require 'pg'
 require 'rails'
 require 'sidekiq'
 require 'sorbet-runtime'
-# require 'rswag-api'
-# require 'rswag-ui'
 
 module Tasker
   class Engine < ::Rails::Engine
     isolate_namespace Tasker
+
+    # Configure paths before initialization
+    config.before_configuration do |app|
+      app.config.autoload_paths << root.join('lib')
+      app.config.eager_load_paths << root.join('lib')
+    end
+
+    # Initialize components before app initialization
+    initializer 'tasker.setup', before: :load_config_initializers do |app|
+      # Load required components
+      require 'tasker/constants'
+      require 'tasker/handler_factory'
+      require 'tasker/step_template'
+      require 'tasker/task_handler'
+    end
     config.generators.api_only = true
     config.generators.test_framework = :rspec
     config.application_controller = 'ActionController::API'
 
     class << self
-      def configure
-        yield Engine.config
+      extend T::Sig
+
+      sig { params(_block: T.proc.params(config: Rails::Configuration).void).void }
+      def configure(&_block)
+        yield(Engine.config)
       end
     end
   end
