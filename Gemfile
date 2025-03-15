@@ -14,11 +14,11 @@ group :development do
   gem 'annotate', '~> 3.2'
   gem 'byebug', '~> 11.1'
   gem 'listen', '~> 3.8'
-  gem 'rubocop', '~> 1.56', require: false
-  gem 'rubocop-factory_bot', '~> 2.24', require: false
-  gem 'rubocop-performance', '~> 1.19', require: false
-  gem 'rubocop-rails', '~> 2.21', require: false
-  gem 'rubocop-rspec', '~> 2.24', require: false
+  gem 'rubocop', '~> 1.74', require: false
+  gem 'rubocop-factory_bot', '~> 2.27', require: false
+  gem 'rubocop-performance', '~> 1.24', require: false
+  gem 'rubocop-rails', '~> 2.30', require: false
+  gem 'rubocop-rspec', '~> 2.31', require: false
 end
 
 group :test do
@@ -26,13 +26,13 @@ group :test do
   gem 'rspec-rails', '~> 7.1'
   gem 'rspec-sidekiq', '~> 4.0'
   gem 'rspec-sorbet', '~> 1.9'
-  gem 'rswag-specs', '~> 2.11'
+  gem 'rswag-specs', '~> 2.16'
   gem 'simplecov', '~> 0.22', require: false
 end
 
 group :development, :test do
   gem 'dotenv-rails', '~> 2.8'
-  gem 'sorbet', '~> 0.5.11000'
-  gem 'sorbet-runtime', '~> 0.5.11000'
-  gem 'sorbet-static', '~> 0.5.11000'
+  gem 'sorbet', '~> 0.5.11934'
+  gem 'sorbet-runtime', '~> 0.5.11934'
+  gem 'sorbet-static', '~> 0.5.11934'
 end

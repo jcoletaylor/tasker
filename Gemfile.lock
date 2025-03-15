@@ -5,12 +5,12 @@ PATH
       active_model_serializers (>= 0.10.0)
       graphql
       json-schema (>= 2.4.0)
-      logger (~> 1.6.0)
-      pg (~> 1.1)
-      puma (~> 6.6.0)
+      logger (~> 1.6)
+      pg (~> 1.5)
+      puma (~> 6.6)
       rack-cors
       rails (~> 7.2.2)
-      sidekiq (>= 5)
+      sidekiq (~> 7.3)
       sorbet-runtime
 
 GEM
@@ -356,17 +356,17 @@ DEPENDENCIES
   rspec-sidekiq (~> 4.0)
   rspec-sorbet (~> 1.9)
   rswag-api
-  rswag-specs (~> 2.11)
+  rswag-specs (~> 2.16)
   rswag-ui
-  rubocop (~> 1.56)
-  rubocop-factory_bot (~> 2.24)
-  rubocop-performance (~> 1.19)
-  rubocop-rails (~> 2.21)
-  rubocop-rspec (~> 2.24)
+  rubocop (~> 1.74)
+  rubocop-factory_bot (~> 2.27)
+  rubocop-performance (~> 1.24)
+  rubocop-rails (~> 2.30)
+  rubocop-rspec (~> 2.31)
   simplecov (~> 0.22)
-  sorbet (~> 0.5.11000)
-  sorbet-runtime (~> 0.5.11000)
-  sorbet-static (~> 0.5.11000)
+  sorbet (~> 0.5.11934)
+  sorbet-runtime (~> 0.5.11934)
+  sorbet-static (~> 0.5.11934)
   sqlite3
   tasker!
 

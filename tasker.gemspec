@@ -18,14 +18,14 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
-  spec.add_dependency 'logger', '~> 1.6.0'
+  spec.add_dependency 'logger', '~> 1.6'
   spec.add_dependency 'rails', '~> 7.2.2'
   # Use postgresql as the database for Active Record
-  spec.add_dependency 'pg', '~> 1.1'
+  spec.add_dependency 'pg', '~> 1.5'
   # Use Puma as the app server
-  spec.add_dependency 'puma', '~> 6.6.0'
+  spec.add_dependency 'puma', '~> 6.6'
 
-  spec.add_dependency 'sidekiq', '>= 5'
+  spec.add_dependency 'sidekiq', '~> 7.3'
 
   # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
   spec.add_dependency 'rack-cors'
