@@ -43,7 +43,7 @@ module Tasker
   class Task < ApplicationRecord
     extend T::Sig
 
-    ALPHANUM_PLUS_HYPHEN_DASH = /[^0-9a-z\-\_]/i.freeze
+    ALPHANUM_PLUS_HYPHEN_DASH = /[^0-9a-z\-\_]/i
 
     self.primary_key = :task_id
     after_initialize :init_defaults, if: :new_record?

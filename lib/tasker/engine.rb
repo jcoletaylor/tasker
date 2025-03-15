@@ -21,7 +21,7 @@ module Tasker
     end
 
     # Initialize components before app initialization
-    initializer 'tasker.setup', before: :load_config_initializers do |app|
+    initializer 'tasker.setup', before: :load_config_initializers do |_app|
       # Load required components
       require 'tasker/constants'
       require 'tasker/handler_factory'
@@ -36,7 +36,7 @@ module Tasker
       extend T::Sig
 
       sig { params(_block: T.proc.params(config: Rails::Configuration).void).void }
-      def configure(&_block)
+      def configure(&)
         yield(Engine.config)
       end
     end

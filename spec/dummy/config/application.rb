@@ -37,7 +37,7 @@ module Dummy
   class Application < Rails::Application
     # Load Rails 7.2 defaults first, before any other configuration
     config.load_defaults 7.2
-    
+
     # Prevent the framework from freezing configurations too early
     config.before_initialize do
       # Ensure test environment settings
@@ -52,7 +52,7 @@ module Dummy
     end
 
     # Rails 7.0 defaults are loaded at the beginning of the configuration
-    
+
     # Allow concurrency in all environments
     config.allow_concurrency = true
 

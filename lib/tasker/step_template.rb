@@ -23,4 +23,3 @@ module Tasker
       end
     end
 end
-

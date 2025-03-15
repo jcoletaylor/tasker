@@ -8,7 +8,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 # Security updates
-gem 'nokogiri', '~> 1.15.7' 
+gem 'nokogiri', '~> 1.15.7'
 gem 'rails-html-sanitizer', '>= 1.6.2'
 group :development do
   gem 'annotate', '~> 3.2'

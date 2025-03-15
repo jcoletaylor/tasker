@@ -10,7 +10,7 @@
 # Rails 7.0 defaults
 Rails.application.config.after_initialize do
   # ActiveSupport
-  
+
   # Controls whether to use TimeZone.utc_to_local with a :utc offset for utc times
   # Rails.application.config.utc_to_local_returns_utc_offset_times = true
 
@@ -54,4 +54,3 @@ Rails.application.config.after_initialize do
   # Configure queues specified by a symbol to be treated as if a string
   # Rails.application.config.active_job.use_big_decimal_serialize = true
 end
-

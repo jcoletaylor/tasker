@@ -17,7 +17,7 @@ require 'active_job/railtie'
 require 'active_record/railtie'
 
 # Load dummy application
-require_relative './dummy/config/environment'
+require_relative 'dummy/config/environment'
 
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
@@ -26,7 +26,7 @@ require 'rspec/rails'
 # Add additional requires below this line
 
 # Requires supporting ruby files with custom matchers and macros, etc
-Dir[Rails.root.join('spec/support/**/*.rb')].sort.each { |f| require f }
+Rails.root.glob('spec/support/**/*.rb').each { |f| require f }
 
 # Checks for pending migrations and applies them before tests are run.
 begin
