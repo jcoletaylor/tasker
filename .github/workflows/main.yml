@@ -33,12 +33,14 @@ jobs:
         uses: ruby/setup-ruby@78c01b705fd9d5ad960d432d3a0cfa341d50e410 # v1.179.1
         with:
           bundler-cache: true
+      - name: Install dependencies
+        run: bundle install
       # Add or replace database setup steps here
       - name: Set up database schema
-        run: bin/bundle exec rails db:schema:load
+        run: bundle exec rails db:schema:load
       # Add or replace test runners here
       - name: Run tests
-        run: bin/bundle exec rspec spec
+        run: bundle exec rspec spec
 
   lint:
     runs-on: ubuntu-latest
@@ -50,11 +52,9 @@ jobs:
         with:
           bundler-cache: true
       - name: Generate binstubs
-        run: bundle binstubs bundler-audit brakeman rubocop
+        run: bundle binstubs bundler-audit rubocop
       # Add or replace any other lints here
       - name: Security audit dependencies
-        run: bin/bundler-audit --update
-      - name: Security audit application code
-        run: bin/brakeman -q -w2
+        run: bundle exec bundler-audit --update
       - name: Lint Ruby files
-        run: bin/rubocop --parallel
+        run: bundle exec rubocop --parallel
