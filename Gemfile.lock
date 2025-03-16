@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    tasker (0.2.3)
+    tasker (1.0.1)
       active_model_serializers (>= 0.10.0)
       dry-struct (~> 1.8)
       graphql
@@ -397,7 +397,7 @@ DEPENDENCIES
   tasker!
 
 RUBY VERSION
-   ruby 3.2.7p253
+   ruby 3.2.4p170
 
 BUNDLED WITH
    2.1.4

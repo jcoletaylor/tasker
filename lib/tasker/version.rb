@@ -3,5 +3,5 @@
 # typed: strict
 
 module Tasker
-  VERSION = '0.2.3'
+  VERSION = '1.0.1'
 end
