@@ -4,17 +4,17 @@
 module Tasker
   module Mutations
     class CancelTask < BaseMutation
-      type Types::TaskType
+      type Tasker::GraphQLTypes::TaskType
 
       argument :task_id, ID, required: true
 
-      field :task, Types::TaskType, null: false
+      field :task, Tasker::GraphQLTypes::TaskType, null: false
       field :errors, [String], null: false
 
       sig { params(task_id: T.any(Integer, String)).returns(T::Hash[Symbol, T.untyped]) }
       def resolve(task_id:)
         task = Tasker::Task.find(task_id)
-        task.update({ status: Tasker::Constants::TaskStatuses::CANCELLED })
+        task.update!({ status: Tasker::Constants::TaskStatuses::CANCELLED })
 
         # we don't want to re-run save here because it will remove the
         # context validation from the handler and check "valid?"

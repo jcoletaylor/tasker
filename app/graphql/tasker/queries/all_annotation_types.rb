@@ -5,11 +5,11 @@ module Tasker
   module Queries
     class AllAnnotationTypes < BaseQuery
       include Helpers
-      type [Types::AnnotationType], null: true
+      type [Tasker::GraphQLTypes::AnnotationType], null: true
 
       description 'List Annotation Types'
 
-      sig { returns(ActiveRecord::Relation) }
+      sig { returns(T.untyped) }
       def resolve
         AnnotationType.order('name asc')
       end

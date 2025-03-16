@@ -41,6 +41,7 @@
 #
 module Tasker
   class WorkflowStepSerializer < ActiveModel::Serializer
-    attributes :task_id, :workflow_step_id, :name, :named_step_id, :depends_on_step_id, :status, :attempts, :skippable, :retryable, :retry_limit, :processed, :processed_at, :in_process, :backoff_request_seconds, :last_attempted_at, :inputs, :results
+    attributes :task_id, :workflow_step_id, :name, :named_step_id, :depends_on_step_id, :status, :attempts, :skippable,
+               :retryable, :retry_limit, :processed, :processed_at, :in_process, :backoff_request_seconds, :last_attempted_at, :inputs, :results
   end
 end

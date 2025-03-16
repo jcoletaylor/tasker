@@ -9,8 +9,12 @@ require 'active_support/core_ext/integer/time'
 # and recreated between test runs. Don't rely on the data there!
 
 Rails.application.configure do
-  # Settings specified here will take precedence over those in config/application.rb.
+  # Ensure logger is properly configured for ActiveSupport
+  require 'logger'
+  config.logger = ActiveSupport::TaggedLogging.new(Logger.new($stdout))
+  config.log_level = :info
 
+  # Settings specified here will take precedence over those in config/application.rb.
   config.cache_classes = true
 
   # Do not eager load code on boot. This avoids loading your whole application
@@ -20,7 +24,7 @@ Rails.application.configure do
 
   # Configure public file server for tests with Cache-Control for performance.
   config.public_file_server.enabled = true
-  config.public_file_server.headers = { 'Cache-Control' => "public, max-age=#{1.hour.to_i}" }
+  config.public_file_server.headers = { 'Cache-Control': "public, max-age=#{1.hour.to_i}" }
 
   # Show full error reports and disable caching.
   config.consider_all_requests_local       = true

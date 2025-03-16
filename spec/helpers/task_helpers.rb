@@ -24,28 +24,32 @@ module Helpers
     end
 
     def step_defaults(options = {})
-      Tasker::StepTemplate.new({
-        name: STEP_ONE,
-        status: Tasker::Constants::WorkflowStepStatuses::PENDING,
-        retryable: true,
-        retry_limit: 3,
-        in_process: false,
-        processed: false,
-        attempts: 0,
-        inputs: { dummy: true }
-      }.merge(options))
+      Tasker::Types::StepTemplate.new(
+        {
+          name: STEP_ONE,
+          status: Tasker::Constants::WorkflowStepStatuses::PENDING,
+          retryable: true,
+          retry_limit: 3,
+          in_process: false,
+          processed: false,
+          attempts: 0,
+          inputs: { dummy: true }
+        }.merge(options)
+      )
     end
 
     def task_request(options = {})
-      Tasker::TaskRequest.new({
-        name: DUMMY_TASK,
-        initiator: 'pete@test',
-        reason: 'testing!',
-        bypass_steps: [],
-        source_system: 'test-system',
-        context: { dummy: true },
-        tags: %w[dummy testing]
-      }.merge(options))
+      Tasker::Types::TaskRequest.new(
+        {
+          name: DUMMY_TASK,
+          initiator: 'pete@test',
+          reason: 'testing!',
+          bypass_steps: [],
+          source_system: 'test-system',
+          context: { dummy: true },
+          tags: %w[dummy testing]
+        }.merge(options)
+      )
     end
 
     def mark_step_complete(step)
@@ -54,7 +58,7 @@ module Helpers
       step.processed = true
       step.processed_at = Time.zone.now
       step.in_process = false
-      step.save
+      step.save!
       step
     end
 
@@ -64,7 +68,7 @@ module Helpers
       step.processed = false
       step.processed_at = nil
       step.in_process = false
-      step.save
+      step.save!
       step
     end
   end

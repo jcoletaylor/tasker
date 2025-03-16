@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-# typed: ignore
+# typed: strict
+
 module Tasker
-  class ApplicationController < Tasker::Engine.config.application_controller.constantize
+  class ApplicationController < ActionController::API
+    extend T::Sig
   end
 end

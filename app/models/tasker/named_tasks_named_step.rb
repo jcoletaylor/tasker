@@ -31,18 +31,12 @@ module Tasker
 
     belongs_to :named_task
     belongs_to :named_step
-    validates :named_task_id, presence: true, uniqueness: { scope: :named_step_id }
-    validates :named_step_id, presence: true, uniqueness: { scope: :named_task_id }
+    validates :named_task_id, uniqueness: { scope: :named_step_id }
+    validates :named_step_id, uniqueness: { scope: :named_task_id }
 
-    scope :named_steps_for_named_task, ->(named_task_id) { where(named_task_id: named_task_id).includes(:named_task).includes(:named_step) }
-
-    def task_name
-      named_task.name
-    end
-
-    def step_name
-      named_step.name
-    end
+    scope :named_steps_for_named_task, lambda { |named_task_id|
+      where(named_task_id: named_task_id).includes(:named_task).includes(:named_step)
+    }
 
     def self.find_or_create(
       named_task,
@@ -55,7 +49,8 @@ module Tasker
     )
       inst = where(named_task_id: named_task.named_task_id, named_step_id: named_step.named_step_id).first
 
-      inst ||= create({ named_task_id: named_task.named_task_id, named_step_id: named_step.named_step_id }.merge(options))
+      inst ||= create({ named_task_id: named_task.named_task_id,
+                        named_step_id: named_step.named_step_id }.merge(options))
 
       inst
     end
@@ -66,8 +61,9 @@ module Tasker
       return ntns if ntns
 
       dependent_system = Tasker::DependentSystem.find_or_create_by!(name: template.dependent_system)
-      named_step = Tasker::NamedStep.find_or_create_by!(name: template.name, dependent_system_id: dependent_system.dependent_system_id)
-      ntns = find_or_create(
+      named_step = Tasker::NamedStep.find_or_create_by!(name: template.name,
+                                                        dependent_system_id: dependent_system.dependent_system_id)
+      find_or_create(
         named_task,
         named_step,
         {
@@ -76,7 +72,14 @@ module Tasker
           skippable: template.skippable
         }
       )
-      ntns
+    end
+
+    def task_name
+      named_task.name
+    end
+
+    def step_name
+      named_step.name
     end
   end
 end

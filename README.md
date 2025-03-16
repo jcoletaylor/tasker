@@ -138,6 +138,7 @@ end
 ## TODO
 
 A full [TODO](./TODO.md).
+
 ## Dependencies
 
 * Ruby version - 2.7
@@ -153,9 +154,11 @@ A full [TODO](./TODO.md).
 * Lint: `bundle exec rake lint`
 
 * Typecheck with Sorbet: `bundle exec srb tc`
+
 ## Gratitude
 
-Flowchart PNG by [xnimrodx](https://www.flaticon.com/authors/xnimrodx) from [Flaticon](https://www.flaticon.com/) 
+Flowchart PNG by [xnimrodx](https://www.flaticon.com/authors/xnimrodx) from [Flaticon](https://www.flaticon.com/)
 
 ## License
+
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

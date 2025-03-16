@@ -1,10 +1,12 @@
 # typed: true
 # frozen_string_literal: true
 
+require_relative 'graph_ql_types'
+
 module Tasker
   class TaskerRailsSchema < GraphQL::Schema
-    mutation(Types::MutationType)
-    query(Types::QueryType)
+    mutation(Tasker::GraphQLTypes::MutationType)
+    query(Tasker::GraphQLTypes::QueryType)
 
     # Union and Interface Resolution
     def self.resolve_type(_abstract_type, _obj, _ctx)

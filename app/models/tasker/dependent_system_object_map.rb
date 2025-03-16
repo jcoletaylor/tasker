@@ -34,13 +34,8 @@ module Tasker
     belongs_to :dependent_system_two, class_name: 'Tasker::DependentSystem'
     validates :remote_id_one, presence: true
     validates :remote_id_two, presence: true
-    validates :dependent_system_one_id, presence: true
-    validates :dependent_system_two_id, presence: true
 
-    def self.find_or_create(
-      system_one_name, system_one_id,
-      system_two_name, system_two_id
-    )
+    def self.find_or_create(system_one_name, system_one_id, system_two_name, system_two_id)
       system_one = Tasker::DependentSystem.find_or_create_by!(name: system_one_name)
       system_two = Tasker::DependentSystem.find_or_create_by!(name: system_two_name)
       # these could be in either order

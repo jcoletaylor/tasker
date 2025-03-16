@@ -18,10 +18,11 @@ module Tasker
         # Query context goes here, for example:
         # current_user: current_user,
       }
-      result = Tasker::TaskerRailsSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
-      render json: result
+      result = Tasker::TaskerRailsSchema.execute(query, variables: variables, context: context,
+                                                        operation_name: operation_name)
+      render(json: result)
     rescue StandardError => e
-      raise e unless Rails.env.development?
+      raise(e) unless Rails.env.development?
 
       handle_error_in_development(e)
     end
@@ -44,15 +45,16 @@ module Tasker
       when nil
         {}
       else
-        raise ArgumentError, "Unexpected parameter: #{variables_param}"
+        raise(ArgumentError, "Unexpected parameter: #{variables_param}")
       end
     end
 
     def handle_error_in_development(e)
-      logger.error e.message
-      logger.error e.backtrace.join("\n")
+      logger.error(e.message)
+      logger.error(e.backtrace.join("\n"))
 
-      render json: { errors: [{ message: e.message, backtrace: e.backtrace }], data: {} }, status: :internal_server_error
+      render(json: { errors: [{ message: e.message, backtrace: e.backtrace }], data: {} },
+             status: :internal_server_error)
     end
   end
 end
