@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
-    class WorkflowStepType < Types::BaseObject
+  module GraphQLTypes
+    class WorkflowStepType < GraphQLTypes::BaseObject
       field :workflow_step_id, ID, null: false
       field :task_id, Integer, null: false
       field :named_step_id, Integer, null: false
@@ -22,9 +22,9 @@ module Tasker
       field :created_at, GraphQL::Types::ISO8601DateTime, null: false
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
       field :skippable, Boolean, null: false
-      field :task, Types::TaskType, null: true
-      field :named_step, [Types::NamedStepType], null: true
-      field :depends_on_step, [Types::WorkflowStepType], null: true
+      field :task, GraphQLTypes::TaskInterface, null: true
+      field :named_step, [GraphQLTypes::NamedStepType], null: true
+      field :depends_on_step, [GraphQLTypes::WorkflowStepType], null: true
     end
   end
 end

@@ -5,14 +5,14 @@ module Tasker
   module Mutations
     class UpdateStep < BaseMutation
       ALLOWED_UPDATE_FIELDS = T.let(%i[retry_limit inputs].freeze, T::Array[Symbol])
-      type Types::WorkflowStepType
+      type Tasker::GraphQLTypes::WorkflowStepType
 
       argument :step_id, ID, required: true
       argument :task_id, Integer, required: true
       argument :retry_limit, Integer, required: false
       argument :inputs, GraphQL::Types::JSON, required: false
 
-      field :step, Types::WorkflowStepType, null: false
+      field :step, Tasker::GraphQLTypes::WorkflowStepType, null: false
       field :errors, [String], null: false
 
       def resolve(task_id:, step_id:, **args)

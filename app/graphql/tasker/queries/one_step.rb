@@ -5,7 +5,7 @@ module Tasker
   module Queries
     class OneStep < BaseQuery
       include Helpers
-      type Types::WorkflowStepType, null: true
+      type Tasker::GraphQLTypes::WorkflowStepType, null: true
 
       description 'Find a task by ID'
       description 'Find a step by taskId and ID'

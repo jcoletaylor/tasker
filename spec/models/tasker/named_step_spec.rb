@@ -30,7 +30,7 @@ module Tasker
     context 'class methods' do
       it 'is able to create named steps from step templates' do
         templates = [
-          StepTemplate.new(
+          Tasker::Types::StepTemplate.new(
             dependent_system: 'dummy-system',
             name: 'step-one',
             description: 'Independent Step One',
@@ -39,7 +39,7 @@ module Tasker
             skippable: false,
             handler_class: DummyTask::Handler
           ),
-          StepTemplate.new(
+          Tasker::Types::StepTemplate.new(
             dependent_system: 'dummy-system',
             name: 'step-two',
             description: 'Independent Step Two',

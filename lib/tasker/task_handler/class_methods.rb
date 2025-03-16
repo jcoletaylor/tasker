@@ -25,7 +25,7 @@ module Tasker
           skippable = kwargs.fetch(:skippable, false)
           depends_on_step = kwargs.fetch(:depends_on_step, nil)
 
-          @step_templates << Tasker::StepTemplate.new(
+          @step_templates << Tasker::Types::StepTemplate.new(
             dependent_system: dependent_system,
             name: name,
             description: description,

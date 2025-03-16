@@ -4,7 +4,7 @@
 module Tasker
   module Mutations
     class CreateTask < BaseMutation
-      type Types::TaskType
+      type Tasker::GraphQLTypes::TaskType
 
       argument :name, String, required: true
       argument :context, GraphQL::Types::JSON, required: true
@@ -14,12 +14,12 @@ module Tasker
       argument :tags, [String], required: false
       argument :bypass_steps, [String], required: false
 
-      field :task, Types::TaskType, null: false
+      field :task, Tasker::GraphQLTypes::TaskType, null: false
       field :errors, [String], null: false
 
       def resolve(**task_params)
         context = JSON.parse(task_params.fetch(:context, '{}'))
-        task_request = Tasker::TaskRequest.new(task_params.merge({ context: context }))
+        task_request = Tasker::Types::TaskRequest.new(task_params.merge({ context: context }))
         task = nil
         begin
           handler = handler_factory.get(task_request.name)

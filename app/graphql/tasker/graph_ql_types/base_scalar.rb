@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
-    class BaseArgument < GraphQL::Schema::Argument
+  module GraphQLTypes
+    class BaseScalar < GraphQL::Schema::Scalar
     end
   end
 end

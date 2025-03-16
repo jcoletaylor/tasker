@@ -61,7 +61,7 @@ class ExampleTaskHandler
 
   # Override to update annotations
   sig do
-    override.params(task: Tasker::Task, sequence: Tasker::StepSequence, steps: T::Array[Tasker::WorkflowStep]).void
+    override.params(task: Tasker::Task, sequence: Tasker::Types::StepSequence, steps: T::Array[Tasker::WorkflowStep]).void
   end
   def update_annotations(task, sequence, steps)
     # This method can be used to add annotations to the task based on step results
@@ -72,7 +72,7 @@ end
 class FirstStepHandler
   extend T::Sig
 
-  sig { params(task: Tasker::Task, sequence: Tasker::StepSequence, step: Tasker::WorkflowStep).void }
+  sig { params(task: Tasker::Task, sequence: Tasker::Types::StepSequence, step: Tasker::WorkflowStep).void }
   def handle(_task, _sequence, step)
     # Example implementation that processes the first step
     # In a real implementation, this would do something with task.context
@@ -83,7 +83,7 @@ end
 class SecondStepHandler
   extend T::Sig
 
-  sig { params(task: Tasker::Task, sequence: Tasker::StepSequence, step: Tasker::WorkflowStep).void }
+  sig { params(task: Tasker::Task, sequence: Tasker::Types::StepSequence, step: Tasker::WorkflowStep).void }
   def handle(_task, sequence, step)
     # Example implementation that processes the second step
     # This would typically use results from the first step

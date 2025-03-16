@@ -20,7 +20,7 @@ module Tasker
       end
 
       it 'is able to initialize a task' do
-        task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
+        task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
         task = task_handler.initialize_task!(task_request)
         expect(task).to(be_valid)
         expect(task.save).to(be_truthy)
@@ -29,14 +29,14 @@ module Tasker
       end
 
       it 'is not able to initialize a task if the context is invalid' do
-        task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { bad_param: true, dummy: 12 })
+        task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { bad_param: true, dummy: 12 })
         task = task_handler.initialize_task!(task_request)
         # bad param and wrong type, two errors
         expect(task.errors[:context].length).to(eq(2))
       end
 
       it 'is able to initialize and handle a task' do
-        task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
+        task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
         task = task_handler.initialize_task!(task_request)
         task_handler.handle(task)
         task.reload

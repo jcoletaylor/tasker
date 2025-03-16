@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
+  module GraphQLTypes
     class BaseField < GraphQL::Schema::Field
-      argument_class Types::BaseArgument
+      argument_class GraphQLTypes::BaseArgument
     end
   end
 end

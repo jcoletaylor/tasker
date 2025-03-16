@@ -3,6 +3,8 @@
 
 require 'json-schema'
 require 'tasker/task_handler/instance_methods'
+require 'tasker/task_handler/class_methods'
+
 module Tasker
   module TaskHandler
     def self.included(klass)

@@ -30,7 +30,7 @@ module Tasker
                       json: { error: 'invalid parameters: requires task name' })
       end
 
-      task_request = Tasker::TaskRequest.new(task_params)
+      task_request = Tasker::Types::TaskRequest.new(task_params)
       begin
         handler = handler_factory.get(task_request.name)
         @task = handler.initialize_task!(task_request)

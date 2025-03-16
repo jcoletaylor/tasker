@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
+  module GraphQLTypes
     module NodeType
-      include Types::BaseInterface
+      include GraphQLTypes::BaseInterface
       # Add the `id` field
       include GraphQL::Types::Relay::NodeBehaviors
     end

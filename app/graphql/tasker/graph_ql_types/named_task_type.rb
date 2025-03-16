@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
-    class AnnotationType < Types::BaseObject
-      field :annotation_type_id, ID, null: false
+  module GraphQLTypes
+    class NamedTaskType < GraphQLTypes::BaseObject
+      field :named_task_id, ID, null: false
       field :name, String, null: false
       field :description, String, null: true
       field :created_at, GraphQL::Types::ISO8601DateTime, null: false

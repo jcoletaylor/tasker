@@ -36,6 +36,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'json-schema', '>= 2.4.0'
 
+  spec.add_dependency 'dry-struct', '~> 1.8'
+
   spec.add_development_dependency 'rswag-api'
   spec.add_development_dependency 'rswag-ui'
 

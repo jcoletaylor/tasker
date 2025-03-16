@@ -4,12 +4,12 @@
 module Tasker
   module Mutations
     class CancelStep < BaseMutation
-      type Types::WorkflowStepType
+      type Tasker::GraphQLTypes::WorkflowStepType
 
       argument :task_id, ID, required: true
       argument :step_id, ID, required: true
 
-      field :step, Types::WorkflowStepType, null: false
+      field :step, Tasker::GraphQLTypes::WorkflowStepType, null: false
       field :errors, [String], null: false
 
       sig do

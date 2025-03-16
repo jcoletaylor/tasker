@@ -5,7 +5,7 @@ module Tasker
   module Queries
     class AllTasks < BaseQuery
       include Helpers
-      type [Types::TaskType], null: true
+      type [Tasker::GraphQLTypes::TaskType], null: true
 
       description 'Find and sort tasks'
       argument :limit, Integer, default_value: 20, prepare: ->(limit, _ctx) { [limit, 100].min }, required: false

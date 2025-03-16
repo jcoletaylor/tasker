@@ -5,7 +5,7 @@ module Tasker
   module Queries
     class OneTask < BaseQuery
       include Helpers
-      type Types::TaskType, null: true
+      type Tasker::GraphQLTypes::TaskType, null: true
 
       description 'Find a task by ID'
       argument :task_id, ID, required: true

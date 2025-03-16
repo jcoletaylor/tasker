@@ -72,7 +72,7 @@ module Tasker
     }
 
     # typed: true
-    sig { params(task_request: TaskRequest).returns(Task) }
+    sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
     def self.create_with_defaults!(task_request)
       task = from_task_request(task_request)
       task.save!
@@ -80,7 +80,7 @@ module Tasker
     end
 
     # typed: true
-    sig { params(task_request: TaskRequest).returns(Task) }
+    sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
     def self.from_task_request(task_request)
       named_task = Tasker::NamedTask.find_or_create_by!(name: task_request.name)
       options = {

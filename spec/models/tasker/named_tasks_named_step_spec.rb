@@ -31,10 +31,12 @@ require_relative '../../mocks/dummy_task'
 module Tasker
   RSpec.describe(NamedTasksNamedStep) do
     context 'class methods' do
-      let(:task_request) { TaskRequest.new(name: 'dummy_action', context: { some: :value, it_is: :great }) }
-      let(:task)         { Task.create_with_defaults!(task_request)                                        }
+      let(:task_request) do
+        Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { some: :value, it_is: :great })
+      end
+      let(:task) { Task.create_with_defaults!(task_request) }
       let(:template) do
-        StepTemplate.new(
+        Tasker::Types::StepTemplate.new(
           dependent_system: 'dummy-system',
           name: 'step-one',
           description: 'Independent Step One',

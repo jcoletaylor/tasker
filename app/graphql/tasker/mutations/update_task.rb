@@ -5,13 +5,13 @@ module Tasker
   module Mutations
     class UpdateTask < BaseMutation
       ALLOWED_UPDATE_FIELDS = T.let(%i[reason tags].freeze, T::Array[Symbol])
-      type Types::TaskType
+      type Tasker::GraphQLTypes::TaskType
 
       argument :task_id, ID, required: true
       argument :reason, String, required: false
       argument :tags, [String], required: false
 
-      field :task, Types::TaskType, null: false
+      field :task, Tasker::GraphQLTypes::TaskType, null: false
       field :errors, [String], null: false
 
       def resolve(task_id:, **args)

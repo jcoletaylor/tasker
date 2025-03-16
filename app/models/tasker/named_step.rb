@@ -32,7 +32,7 @@ module Tasker
     validates :name, presence: true, uniqueness: { scope: :dependent_system_id }
 
     # typed: true
-    sig { params(templates: T::Array[Tasker::StepTemplate]).returns(T::Array[Tasker::NamedStep]) }
+    sig { params(templates: T::Array[Tasker::Types::StepTemplate]).returns(T::Array[Tasker::NamedStep]) }
     def self.create_named_steps_from_templates(templates)
       templates.map do |template|
         dependent_system = Tasker::DependentSystem.find_or_create_by!(name: template.dependent_system)

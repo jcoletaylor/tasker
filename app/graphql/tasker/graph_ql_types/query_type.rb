@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
-    class QueryType < Types::BaseObject
+  module GraphQLTypes
+    class QueryType < GraphQLTypes::BaseObject
       description 'The query root of the Tasker schema'
 
       include GraphQL::Types::Relay::HasNodeField

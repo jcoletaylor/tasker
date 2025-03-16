@@ -5,7 +5,7 @@ module Tasker
   module Queries
     class TasksByAnnotation < BaseQuery
       include Helpers
-      type [Types::TaskType], null: true
+      type [Tasker::GraphQLTypes::TaskType], null: true
 
       description 'Find and sort tasks by status'
       argument :annotation_type, String, required: true

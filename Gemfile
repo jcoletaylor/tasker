@@ -8,6 +8,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 # Security updates
+gem 'dry-struct', '~> 1.8'
+gem 'dry-types', '~> 1.8'
 gem 'nokogiri', '~> 1.15.7'
 gem 'rails-html-sanitizer', '>= 1.6.2'
 group :development do

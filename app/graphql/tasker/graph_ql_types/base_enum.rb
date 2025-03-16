@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Types
-    class BaseScalar < GraphQL::Schema::Scalar
+  module GraphQLTypes
+    class BaseEnum < GraphQL::Schema::Enum
     end
   end
 end

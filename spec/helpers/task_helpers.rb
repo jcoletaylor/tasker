@@ -24,7 +24,7 @@ module Helpers
     end
 
     def step_defaults(options = {})
-      Tasker::StepTemplate.new(
+      Tasker::Types::StepTemplate.new(
         {
           name: STEP_ONE,
           status: Tasker::Constants::WorkflowStepStatuses::PENDING,
@@ -39,7 +39,7 @@ module Helpers
     end
 
     def task_request(options = {})
-      Tasker::TaskRequest.new(
+      Tasker::Types::TaskRequest.new(
         {
           name: DUMMY_TASK,
           initiator: 'pete@test',

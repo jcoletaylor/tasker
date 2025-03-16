@@ -9,8 +9,8 @@ module Tasker
     before(:all) do
       @factory = Tasker::HandlerFactory.instance
       @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
-      task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                     initiator: 'pete@test', reason: "setup test #{Time.now.to_f}", source_system: 'test')
+      task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
+                                                    initiator: 'pete@test', reason: "setup test #{Time.now.to_f}", source_system: 'test')
       @task = @handler.initialize_task!(task_request)
     end
 
@@ -51,8 +51,8 @@ module Tasker
 
       context 'annotations' do
         before(:all) do
-          task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                         initiator: 'pete@test', reason: "setup annotations test #{Time.now.to_f}", source_system: 'test')
+          task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
+                                                        initiator: 'pete@test', reason: "setup annotations test #{Time.now.to_f}", source_system: 'test')
           @task = @handler.initialize_task!(task_request)
           @handler.handle(@task)
         end
@@ -137,8 +137,8 @@ module Tasker
     end
 
     def create_task_mutation
-      task_request = TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                     initiator: 'pete@test', reason: "mutation test #{Time.now.to_f}", source_system: 'test')
+      task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
+                                                    initiator: 'pete@test', reason: "mutation test #{Time.now.to_f}", source_system: 'test')
       <<~GQL
         mutation {
           createTask(input: {

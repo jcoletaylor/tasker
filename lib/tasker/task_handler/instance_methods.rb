@@ -8,7 +8,7 @@ module Tasker
     module InstanceMethods
       extend T::Sig
       # typed: true
-      sig { params(task_request: TaskRequest).returns(Task) }
+      sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
       def initialize_task!(task_request)
         task = nil
         context_errors = validate_context(task_request.context)
@@ -28,11 +28,11 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task).returns(StepSequence) }
+      sig { params(task: Task).returns(Tasker::Types::StepSequence) }
       def get_sequence(task)
         steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
         establish_step_dependencies_and_defaults(task, steps)
-        Tasker::StepSequence.new(steps: steps)
+        Tasker::Types::StepSequence.new(steps: steps)
       end
 
       # typed: true
@@ -68,7 +68,7 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task, sequence: StepSequence, step: WorkflowStep).returns(WorkflowStep) }
+      sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
       def handle_one_step(task, sequence, step)
         handler = get_step_handler(step)
         attempts = step.attempts || 0
@@ -90,7 +90,7 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep]) }
+      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep]) }
       def handle_viable_steps(task, sequence, steps)
         steps.each do |step|
           handle_one_step(task, sequence, step)
@@ -106,7 +106,7 @@ module Tasker
       # if there are still valid workable steps
 
       # typed: true
-      sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).void }
+      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
       def finalize(task, sequence, steps)
         return if blocked_by_errors?(task, sequence, steps)
 
@@ -143,7 +143,7 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean) }
+      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean) }
       def blocked_by_errors?(task, sequence, steps)
         # how many steps in this round are in an error state before, and based on
         # being processed in this round of handling, is it still in an error state
@@ -208,7 +208,7 @@ module Tasker
 
       # override in implementing class
       # typed: true
-      sig { params(task: Task, sequence: StepSequence, steps: T::Array[WorkflowStep]).void }
+      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
       def update_annotations(task, sequence, steps); end
 
       # override in implementing class

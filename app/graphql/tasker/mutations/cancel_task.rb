@@ -4,11 +4,11 @@
 module Tasker
   module Mutations
     class CancelTask < BaseMutation
-      type Types::TaskType
+      type Tasker::GraphQLTypes::TaskType
 
       argument :task_id, ID, required: true
 
-      field :task, Types::TaskType, null: false
+      field :task, Tasker::GraphQLTypes::TaskType, null: false
       field :errors, [String], null: false
 
       sig { params(task_id: T.any(Integer, String)).returns(T::Hash[Symbol, T.untyped]) }
