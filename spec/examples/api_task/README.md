@@ -100,7 +100,7 @@ task_request = Tasker::Types::TaskRequest.new(
 )
 
 # Initialize and execute task
-task_handler = ApiTask::IntegrationTask.new
+task_handler = ApiTask::IntegrationExample.new
 task = task_handler.initialize_task!(task_request)
 task_handler.handle(task)
 ```
@@ -117,5 +117,5 @@ The implementation includes comprehensive tests:
 Run tests with:
 
 ```bash
-bundle exec rspec spec/examples/api_task/integration_task_spec.rb
+bundle exec rspec spec/examples/api_task/integration_example_spec.rb
 ```

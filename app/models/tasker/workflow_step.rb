@@ -147,7 +147,7 @@ module Tasker
       dependent_step
     end
 
-    def completed?
+    def complete?
       status == Constants::WorkflowStepStatuses::COMPLETE
     end
 

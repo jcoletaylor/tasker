@@ -3,7 +3,7 @@
 require 'dry-struct'
 require 'dry-types'
 
-module Api
+module ApiTask
   module Types
     include Dry.Types()
 

@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
-require_relative '../models/api/types'
-require_relative '../models/api/actions'
-require_relative '../models/example_order'
+require_relative 'models/types'
+require_relative 'models/actions'
+require_relative 'models/example_order'
+require_relative 'events/event_bus'
 
 module ApiTask
   module StepHandler
     class CartFetchStepHandler
       def handle(task, _sequence, step)
         cart_id = task.context['cart_id']
-        cart = Api::Cart.find(cart_id)
+        cart = ApiTask::Actions::Cart.find(cart_id)
         raise "Cart not found: #{cart_id}" if cart.nil?
 
         step.results = { cart: cart.to_h }
@@ -18,14 +19,15 @@ module ApiTask
 
     class ProductsFetchStepHandler
       def handle(_task, _sequence, step)
-        products = Api::Product.all
+        products = ApiTask::Actions::Product.all
         step.results = { products: products.map(&:to_h) }
       end
     end
 
     class ProductsValidateStepHandler
       def handle(_task, sequence, step)
-        cart, products = _get_cart_and_products(sequence)
+        cart = _get_cart(sequence)
+        products = _get_products(sequence)
         valid_products = _valid_cart_products(cart, products)
 
         raise "No valid products found for cart: #{cart.id}" if valid_products.empty?
@@ -33,19 +35,23 @@ module ApiTask
         step.results = { valid_products: valid_products.map(&:to_h) }
       end
 
-      def _get_cart_and_products(sequence)
-        cart_step = sequence.find_step_by_name(ApiTask::IntegrationTask::STEP_FETCH_CART)
-        products_step = sequence.find_step_by_name(ApiTask::IntegrationTask::STEP_FETCH_PRODUCTS)
+      def _get_cart(sequence)
+        cart = _get_valid_step_and_results(sequence, ApiTask::IntegrationExample::STEP_FETCH_CART, :cart)
+        ApiTask::Cart.new(cart)
+      end
 
-        results = [[cart_step, :cart], [products_step, :products]].map do |step, key|
-          if step.nil? || step.results.empty?
-            raise "Cart or products step not found or are incomplete in sequence: #{sequence.inspect}"
-          end
+      def _get_products(sequence)
+        products = _get_valid_step_and_results(sequence, ApiTask::IntegrationExample::STEP_FETCH_PRODUCTS, :products)
+        products.map { |p| ApiTask::Product.new(p) }
+      end
 
-          step.results.deep_symbolize_keys[key]
+      def _get_valid_step_and_results(sequence, step_name, key)
+        step = sequence.find_step_by_name(step_name)
+        if step.nil? || step.results.empty?
+          raise "Step or results not found or are incomplete in sequence: #{sequence.inspect}"
         end
 
-        [Api::Cart.new(results[0]), results[1].map { |p| Api::Product.new(p) }]
+        step.results.deep_symbolize_keys[key]
       end
 
       def _valid_cart_products(cart, products)
@@ -75,19 +81,19 @@ module ApiTask
       end
 
       def _get_cart(sequence)
-        cart_step = sequence.find_step_by_name(ApiTask::IntegrationTask::STEP_FETCH_CART)
+        cart_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_FETCH_CART)
         results = cart_step.results.deep_symbolize_keys
-        Api::Cart.new(results[:cart])
+        ApiTask::Cart.new(results[:cart])
       end
 
       def _get_valid_products(sequence)
-        valid_products_step = sequence.find_step_by_name(ApiTask::IntegrationTask::STEP_VALIDATE_PRODUCTS)
+        valid_products_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_VALIDATE_PRODUCTS)
         results = valid_products_step.results.deep_symbolize_keys
-        results[:valid_products].map { |p| Api::Product.new(p) }
+        results[:valid_products].map { |p| ApiTask::Product.new(p) }
       end
 
       def _build_order(cart, valid_products)
-        ExampleOrder.new(
+        ApiTask::ExampleOrder.new(
           id: cart.id,
           products: valid_products.map(&:to_h),
           total: _calculate_total(cart),
@@ -98,13 +104,13 @@ module ApiTask
 
       def _calculate_total(cart)
         cart.products.sum do |product|
-          product.quantity * Api::Product.find(product.id).price
+          product.quantity * ApiTask::Actions::Product.find(product.id).price
         end
       end
 
       def _calculate_discounted_total(cart)
         cart.products.sum do |product|
-          base_price = Api::Product.find(product.id).price
+          base_price = ApiTask::Actions::Product.find(product.id).price
           discount = product.discount_percentage / 100
           product.quantity * (base_price * (1 - discount))
         end
@@ -113,10 +119,10 @@ module ApiTask
 
     class PublishEventStepHandler
       def handle(_task, sequence, step)
-        order_step = sequence.find_step_by_name(ApiTask::IntegrationTask::STEP_CREATE_ORDER)
+        order_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_CREATE_ORDER)
         order_id = order_step.results.deep_symbolize_keys[:order_id]
 
-        publish_results = EventBus.publish('ExampleOrderCreated', order_id)
+        publish_results = ApiTask::EventBus.publish('ExampleOrderCreated', order_id)
         step.results = { published: true, publish_results: publish_results }
       end
     end

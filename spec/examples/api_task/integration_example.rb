@@ -2,7 +2,7 @@
 
 require_relative 'step_handler'
 module ApiTask
-  class IntegrationTask
+  class IntegrationExample
     include Tasker::TaskHandler
 
     # Constants for step names and systems

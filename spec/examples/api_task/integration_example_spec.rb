@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../models/example_order'
-require_relative '../events/event_bus'
-require_relative 'integration_task'
+require_relative 'integration_example'
 
-RSpec.describe ApiTask::IntegrationTask do
+RSpec.describe ApiTask::IntegrationExample do
   let(:task_handler) { described_class.new }
   let(:cart_id) { 1 }
   let(:task_request) do
@@ -26,12 +24,14 @@ RSpec.describe ApiTask::IntegrationTask do
     step_names.each do |step_name|
       step = step_sequence.find_step_by_name(step_name)
       task_handler.handle_one_step(task, step_sequence, step)
-      unless step.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
-        logger.error("Step #{step_name} failed with status #{step.status}")
-        logger.error("Results: #{step.results.inspect}")
-      end
+      _log_step_results(step) unless step.complete?
       expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
     end
+  end
+
+  def _log_step_results(step)
+    Rails.logger.error("Step #{step.name} failed with status #{step.status}")
+    Rails.logger.error("Results: #{step.results.inspect}")
   end
 
   describe 'task initialization' do
@@ -140,6 +140,8 @@ RSpec.describe ApiTask::IntegrationTask do
         create_order_step = step_sequence.find_step_by_name(described_class::STEP_CREATE_ORDER)
         task_handler.handle_one_step(task, step_sequence, create_order_step)
 
+        _log_step_results(create_order_step) unless create_order_step.complete?
+
         expect(create_order_step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
         expect(create_order_step.results['order_id']).to be_present
       end
@@ -164,6 +166,8 @@ RSpec.describe ApiTask::IntegrationTask do
         # Publish event
         publish_step = step_sequence.find_step_by_name(described_class::STEP_PUBLISH_EVENT)
         task_handler.handle_one_step(task, step_sequence, publish_step)
+
+        _log_step_results(publish_step) unless publish_step.complete?
 
         expect(publish_step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
         expect(publish_step.results['published']).to be true
