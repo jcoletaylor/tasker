@@ -83,7 +83,7 @@ graph LR
 The system implements automatic retry logic for failed steps:
 
 - Configurable retry attempts
-- Exponential backoff
+- Can triviallymanage exponential backoff in implementing class
 - Step-specific error handling
 - State preservation between retries
 
