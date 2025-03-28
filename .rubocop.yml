@@ -18,10 +18,20 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'lib/tasks/**/*'
+  Max: 120
+
+Metrics/MethodLength:
+  Max: 16
 
 Capybara/RSpec/PredicateMatcher:
   Enabled: false
 
 RSpec/MultipleExpectations:
-  Enabled: true
+  Enabled: false
   exclude_limit: example
+
+Rspec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false

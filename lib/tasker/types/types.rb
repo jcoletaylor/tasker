@@ -8,4 +8,3 @@ module Tasker
     include Dry.Types()
   end
 end
-

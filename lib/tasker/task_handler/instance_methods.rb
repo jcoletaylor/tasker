@@ -45,6 +45,8 @@ module Tasker
                 "task is not pending for task #{task.task_id}, status is #{task.status}")
         end
 
+        task.context = ActiveSupport::HashWithIndifferentAccess.new(task.context)
+
         task.update!({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
       end
 
@@ -81,7 +83,7 @@ module Tasker
           step.processed = false
           step.processed_at = nil
           step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
-          step.results = { error: e.to_s }
+          step.results = { error: e.to_s, backtrace: e.backtrace.join("\n") }
         end
         step.attempts = attempts + 1
         step.last_attempted_at = Time.zone.now
@@ -90,7 +92,10 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep]) }
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence,
+               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+      end
       def handle_viable_steps(task, sequence, steps)
         steps.each do |step|
           handle_one_step(task, sequence, step)
@@ -143,7 +148,9 @@ module Tasker
       end
 
       # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean) }
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean)
+      end
       def blocked_by_errors?(task, sequence, steps)
         # how many steps in this round are in an error state before, and based on
         # being processed in this round of handling, is it still in an error state

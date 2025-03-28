@@ -1,0 +1,699 @@
+{
+  "carts": [
+    {
+      "id": 1,
+      "products": [
+        {
+          "id": 4,
+          "quantity": 2,
+          "discount_percentage": 14.12
+        },
+        {
+          "id": 6,
+          "quantity": 3,
+          "discount_percentage": 5.39
+        }
+      ],
+      "user_id": 102,
+      "total_products": 2,
+      "total_quantity": 5
+    },
+    {
+      "id": 2,
+      "products": [
+        {
+          "id": 25,
+          "quantity": 2,
+          "discount_percentage": 19.73
+        }
+      ],
+      "user_id": 62,
+      "total_products": 1,
+      "total_quantity": 2
+    },
+    {
+      "id": 3,
+      "products": [
+        {
+          "id": 29,
+          "quantity": 3,
+          "discount_percentage": 13.67
+        },
+        {
+          "id": 14,
+          "quantity": 3,
+          "discount_percentage": 3.94
+        },
+        {
+          "id": 13,
+          "quantity": 2,
+          "discount_percentage": 3.81
+        },
+        {
+          "id": 29,
+          "quantity": 1,
+          "discount_percentage": 13.67
+        }
+      ],
+      "user_id": 83,
+      "total_products": 4,
+      "total_quantity": 9
+    },
+    {
+      "id": 4,
+      "products": [
+        {
+          "id": 14,
+          "quantity": 3,
+          "discount_percentage": 5.82
+        },
+        {
+          "id": 18,
+          "quantity": 5,
+          "discount_percentage": 10.31
+        },
+        {
+          "id": 16,
+          "quantity": 4,
+          "discount_percentage": 5.89
+        },
+        {
+          "id": 22,
+          "quantity": 2,
+          "discount_percentage": 16.73
+        }
+      ],
+      "user_id": 56,
+      "total_products": 4,
+      "total_quantity": 14
+    },
+    {
+      "id": 5,
+      "products": [
+        {
+          "id": 18,
+          "quantity": 5,
+          "discount_percentage": 4.24
+        },
+        {
+          "id": 15,
+          "quantity": 3,
+          "discount_percentage": 4.74
+        },
+        {
+          "id": 4,
+          "quantity": 3,
+          "discount_percentage": 2.05
+        }
+      ],
+      "user_id": 133,
+      "total_products": 3,
+      "total_quantity": 11
+    },
+    {
+      "id": 6,
+      "products": [
+        {
+          "id": 16,
+          "quantity": 1,
+          "discount_percentage": 7.92
+        },
+        {
+          "id": 9,
+          "quantity": 1,
+          "discount_percentage": 14.79
+        }
+      ],
+      "user_id": 100,
+      "total_products": 2,
+      "total_quantity": 2
+    },
+    {
+      "id": 7,
+      "products": [
+        {
+          "id": 23,
+          "quantity": 5,
+          "discount_percentage": 16.21
+        },
+        {
+          "id": 10,
+          "quantity": 4,
+          "discount_percentage": 17.64
+        },
+        {
+          "id": 18,
+          "quantity": 3,
+          "discount_percentage": 6.98
+        },
+        {
+          "id": 22,
+          "quantity": 4,
+          "discount_percentage": 0.06
+        }
+      ],
+      "user_id": 29,
+      "total_products": 4,
+      "total_quantity": 16
+    },
+    {
+      "id": 8,
+      "products": [
+        {
+          "id": 28,
+          "quantity": 4,
+          "discount_percentage": 0.54
+        },
+        {
+          "id": 7,
+          "quantity": 4,
+          "discount_percentage": 12.99
+        },
+        {
+          "id": 5,
+          "quantity": 2,
+          "discount_percentage": 18.1
+        },
+        {
+          "id": 24,
+          "quantity": 2,
+          "discount_percentage": 4.4
+        },
+        {
+          "id": 30,
+          "quantity": 1,
+          "discount_percentage": 12.5
+        }
+      ],
+      "user_id": 176,
+      "total_products": 5,
+      "total_quantity": 13
+    },
+    {
+      "id": 9,
+      "products": [
+        {
+          "id": 16,
+          "quantity": 3,
+          "discount_percentage": 10.05
+        }
+      ],
+      "user_id": 168,
+      "total_products": 1,
+      "total_quantity": 3
+    },
+    {
+      "id": 10,
+      "products": [
+        {
+          "id": 5,
+          "quantity": 4,
+          "discount_percentage": 2.46
+        },
+        {
+          "id": 5,
+          "quantity": 5,
+          "discount_percentage": 1.68
+        }
+      ],
+      "user_id": 138,
+      "total_products": 2,
+      "total_quantity": 9
+    },
+    {
+      "id": 11,
+      "products": [
+        {
+          "id": 9,
+          "quantity": 2,
+          "discount_percentage": 8.87
+        },
+        {
+          "id": 21,
+          "quantity": 3,
+          "discount_percentage": 18.8
+        },
+        {
+          "id": 11,
+          "quantity": 3,
+          "discount_percentage": 4.56
+        },
+        {
+          "id": 29,
+          "quantity": 2,
+          "discount_percentage": 12.43
+        },
+        {
+          "id": 22,
+          "quantity": 2,
+          "discount_percentage": 10.77
+        }
+      ],
+      "user_id": 81,
+      "total_products": 5,
+      "total_quantity": 12
+    },
+    {
+      "id": 12,
+      "products": [
+        {
+          "id": 15,
+          "quantity": 3,
+          "discount_percentage": 7.71
+        },
+        {
+          "id": 18,
+          "quantity": 1,
+          "discount_percentage": 19.11
+        },
+        {
+          "id": 28,
+          "quantity": 2,
+          "discount_percentage": 10.08
+        },
+        {
+          "id": 7,
+          "quantity": 3,
+          "discount_percentage": 0.54
+        },
+        {
+          "id": 1,
+          "quantity": 5,
+          "discount_percentage": 15.45
+        }
+      ],
+      "user_id": 21,
+      "total_products": 5,
+      "total_quantity": 14
+    },
+    {
+      "id": 13,
+      "products": [
+        {
+          "id": 13,
+          "quantity": 1,
+          "discount_percentage": 7.9
+        },
+        {
+          "id": 10,
+          "quantity": 2,
+          "discount_percentage": 17.14
+        },
+        {
+          "id": 21,
+          "quantity": 1,
+          "discount_percentage": 9.83
+        },
+        {
+          "id": 22,
+          "quantity": 1,
+          "discount_percentage": 2.48
+        },
+        {
+          "id": 20,
+          "quantity": 4,
+          "discount_percentage": 19.0
+        }
+      ],
+      "user_id": 95,
+      "total_products": 5,
+      "total_quantity": 9
+    },
+    {
+      "id": 14,
+      "products": [
+        {
+          "id": 23,
+          "quantity": 1,
+          "discount_percentage": 2.68
+        },
+        {
+          "id": 19,
+          "quantity": 2,
+          "discount_percentage": 2.2
+        },
+        {
+          "id": 27,
+          "quantity": 4,
+          "discount_percentage": 11.31
+        }
+      ],
+      "user_id": 82,
+      "total_products": 3,
+      "total_quantity": 7
+    },
+    {
+      "id": 15,
+      "products": [
+        {
+          "id": 7,
+          "quantity": 3,
+          "discount_percentage": 3.33
+        },
+        {
+          "id": 9,
+          "quantity": 5,
+          "discount_percentage": 19.88
+        },
+        {
+          "id": 16,
+          "quantity": 3,
+          "discount_percentage": 17.85
+        }
+      ],
+      "user_id": 188,
+      "total_products": 3,
+      "total_quantity": 11
+    },
+    {
+      "id": 16,
+      "products": [
+        {
+          "id": 20,
+          "quantity": 3,
+          "discount_percentage": 11.37
+        },
+        {
+          "id": 3,
+          "quantity": 2,
+          "discount_percentage": 4.91
+        },
+        {
+          "id": 17,
+          "quantity": 4,
+          "discount_percentage": 8.42
+        }
+      ],
+      "user_id": 16,
+      "total_products": 3,
+      "total_quantity": 9
+    },
+    {
+      "id": 17,
+      "products": [
+        {
+          "id": 21,
+          "quantity": 1,
+          "discount_percentage": 14.71
+        },
+        {
+          "id": 8,
+          "quantity": 4,
+          "discount_percentage": 13.79
+        }
+      ],
+      "user_id": 98,
+      "total_products": 2,
+      "total_quantity": 5
+    },
+    {
+      "id": 18,
+      "products": [
+        {
+          "id": 25,
+          "quantity": 3,
+          "discount_percentage": 17.05
+        }
+      ],
+      "user_id": 17,
+      "total_products": 1,
+      "total_quantity": 3
+    },
+    {
+      "id": 19,
+      "products": [
+        {
+          "id": 26,
+          "quantity": 3,
+          "discount_percentage": 14.2
+        },
+        {
+          "id": 16,
+          "quantity": 5,
+          "discount_percentage": 4.61
+        },
+        {
+          "id": 2,
+          "quantity": 1,
+          "discount_percentage": 13.94
+        },
+        {
+          "id": 25,
+          "quantity": 4,
+          "discount_percentage": 11.49
+        },
+        {
+          "id": 13,
+          "quantity": 3,
+          "discount_percentage": 13.67
+        }
+      ],
+      "user_id": 176,
+      "total_products": 5,
+      "total_quantity": 16
+    },
+    {
+      "id": 20,
+      "products": [
+        {
+          "id": 27,
+          "quantity": 4,
+          "discount_percentage": 12.27
+        },
+        {
+          "id": 28,
+          "quantity": 1,
+          "discount_percentage": 9.43
+        }
+      ],
+      "user_id": 96,
+      "total_products": 2,
+      "total_quantity": 5
+    },
+    {
+      "id": 21,
+      "products": [
+        {
+          "id": 25,
+          "quantity": 3,
+          "discount_percentage": 0.46
+        },
+        {
+          "id": 4,
+          "quantity": 2,
+          "discount_percentage": 3.86
+        },
+        {
+          "id": 16,
+          "quantity": 4,
+          "discount_percentage": 15.63
+        }
+      ],
+      "user_id": 188,
+      "total_products": 3,
+      "total_quantity": 9
+    },
+    {
+      "id": 22,
+      "products": [
+        {
+          "id": 21,
+          "quantity": 4,
+          "discount_percentage": 6.76
+        },
+        {
+          "id": 11,
+          "quantity": 5,
+          "discount_percentage": 2.79
+        },
+        {
+          "id": 7,
+          "quantity": 5,
+          "discount_percentage": 19.34
+        },
+        {
+          "id": 28,
+          "quantity": 1,
+          "discount_percentage": 6.73
+        },
+        {
+          "id": 25,
+          "quantity": 5,
+          "discount_percentage": 16.2
+        }
+      ],
+      "user_id": 170,
+      "total_products": 5,
+      "total_quantity": 20
+    },
+    {
+      "id": 23,
+      "products": [
+        {
+          "id": 23,
+          "quantity": 1,
+          "discount_percentage": 2.33
+        },
+        {
+          "id": 3,
+          "quantity": 1,
+          "discount_percentage": 15.45
+        },
+        {
+          "id": 14,
+          "quantity": 2,
+          "discount_percentage": 8.86
+        }
+      ],
+      "user_id": 155,
+      "total_products": 3,
+      "total_quantity": 4
+    },
+    {
+      "id": 24,
+      "products": [
+        {
+          "id": 27,
+          "quantity": 5,
+          "discount_percentage": 15.03
+        }
+      ],
+      "user_id": 112,
+      "total_products": 1,
+      "total_quantity": 5
+    },
+    {
+      "id": 25,
+      "products": [
+        {
+          "id": 18,
+          "quantity": 5,
+          "discount_percentage": 6.07
+        },
+        {
+          "id": 29,
+          "quantity": 3,
+          "discount_percentage": 3.29
+        },
+        {
+          "id": 7,
+          "quantity": 2,
+          "discount_percentage": 6.73
+        },
+        {
+          "id": 1,
+          "quantity": 3,
+          "discount_percentage": 12.3
+        },
+        {
+          "id": 30,
+          "quantity": 5,
+          "discount_percentage": 4.83
+        }
+      ],
+      "user_id": 180,
+      "total_products": 5,
+      "total_quantity": 18
+    },
+    {
+      "id": 26,
+      "products": [
+        {
+          "id": 10,
+          "quantity": 2,
+          "discount_percentage": 17.41
+        }
+      ],
+      "user_id": 118,
+      "total_products": 1,
+      "total_quantity": 2
+    },
+    {
+      "id": 27,
+      "products": [
+        {
+          "id": 15,
+          "quantity": 4,
+          "discount_percentage": 19.29
+        },
+        {
+          "id": 19,
+          "quantity": 3,
+          "discount_percentage": 13.63
+        }
+      ],
+      "user_id": 85,
+      "total_products": 2,
+      "total_quantity": 7
+    },
+    {
+      "id": 28,
+      "products": [
+        {
+          "id": 6,
+          "quantity": 2,
+          "discount_percentage": 7.7
+        },
+        {
+          "id": 7,
+          "quantity": 2,
+          "discount_percentage": 7.29
+        },
+        {
+          "id": 12,
+          "quantity": 2,
+          "discount_percentage": 0.51
+        },
+        {
+          "id": 29,
+          "quantity": 4,
+          "discount_percentage": 18.56
+        },
+        {
+          "id": 11,
+          "quantity": 1,
+          "discount_percentage": 9.21
+        }
+      ],
+      "user_id": 168,
+      "total_products": 5,
+      "total_quantity": 11
+    },
+    {
+      "id": 29,
+      "products": [
+        {
+          "id": 9,
+          "quantity": 4,
+          "discount_percentage": 7.39
+        }
+      ],
+      "user_id": 148,
+      "total_products": 1,
+      "total_quantity": 4
+    },
+    {
+      "id": 30,
+      "products": [
+        {
+          "id": 26,
+          "quantity": 1,
+          "discount_percentage": 5.87
+        },
+        {
+          "id": 26,
+          "quantity": 2,
+          "discount_percentage": 8.52
+        },
+        {
+          "id": 13,
+          "quantity": 1,
+          "discount_percentage": 2.51
+        }
+      ],
+      "user_id": 176,
+      "total_products": 3,
+      "total_quantity": 4
+    }
+  ]
+}
