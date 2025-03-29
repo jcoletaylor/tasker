@@ -25,18 +25,19 @@ module Tasker
         Faraday::Env.from(
           status: status,
           response_headers: headers,
-          body: body
+          body: body,
+          url: "http://api.example.com/?step_name=#{step.name}"
         )
       )
     end
 
     def create_error_response(status:, body: '{}', headers: {})
-      # We need to create a proper Faraday::Response with the headers in the correct location
       response = Faraday::Response.new(
         Faraday::Env.from(
           status: status,
           body: body,
-          response_headers: headers
+          response_headers: headers,
+          url: "http://api.example.com/?step_name=#{step.name}"
         )
       )
 
@@ -52,6 +53,44 @@ module Tasker
       error = error_class.new(nil, response)
       error.instance_variable_set(:@response, response)
       raise error
+    end
+
+    describe 'successful API calls' do
+      it 'processes successful responses' do
+        response = stub_response(
+          status: 200,
+          headers: { 'Content-Type' => 'application/json' },
+          body: '{"data": "successful response"}'
+        )
+
+        stubs.get("/?step_name=#{step.name}") do
+          response
+        end
+
+        handler.handle(task, sequence, step)
+        expect(step.results['status']['status']).to eq(200)
+        expect(step.results['status']['response_headers']).to eq({ 'Content-Type' => 'application/json' })
+        expect(step.results['status']['body']).to eq('{"data": "successful response"}')
+      end
+
+      it 'handles successful responses with different status codes' do
+        [200, 201, 202, 204].each do |status|
+          response = stub_response(
+            status: status,
+            headers: { 'Content-Type' => 'application/json' },
+            body: status == 204 ? nil : '{"data": "successful response"}'
+          )
+
+          stubs.get("/?step_name=#{step.name}") do
+            response
+          end
+
+          handler.handle(task, sequence, step)
+          expect(step.results['status']['status']).to eq(status)
+          expect(step.results['status']['response_headers']).to eq({ 'Content-Type' => 'application/json' })
+          expect(step.results['status']['body']).to eq(status == 204 ? nil : '{"data": "successful response"}')
+        end
+      end
     end
 
     describe 'retry and backoff behavior' do
