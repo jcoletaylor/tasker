@@ -7,20 +7,20 @@ require_relative 'events/event_bus'
 
 module ApiTask
   module StepHandler
-    class CartFetchStepHandler
-      def handle(task, _sequence, step)
+    class CartFetchStepHandler < Tasker::StepHandler::Api
+      def call(task, _sequence, _step)
         cart_id = task.context['cart_id']
         cart = ApiTask::Actions::Cart.find(cart_id)
         raise "Cart not found: #{cart_id}" if cart.nil?
 
-        step.results = { cart: cart.to_h }
+        { cart: cart.to_h }
       end
     end
 
-    class ProductsFetchStepHandler
-      def handle(_task, _sequence, step)
+    class ProductsFetchStepHandler < Tasker::StepHandler::Api
+      def call(_task, _sequence, _step)
         products = ApiTask::Actions::Product.all
-        step.results = { products: products.map(&:to_h) }
+        { products: products.map(&:to_h) }
       end
     end
 

@@ -87,7 +87,8 @@ module Tasker
           in_process: false,
           inputs: task.context,
           processed: false,
-          attempts: 0
+          attempts: 0,
+          results: {}
         }
       )
     end

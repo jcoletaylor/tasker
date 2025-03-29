@@ -21,7 +21,13 @@ module ApiTask
         dependent_system: ECOMMERCE_SYSTEM,
         name: STEP_FETCH_CART,
         description: 'Fetch cart details from e-commerce system',
-        handler_class: ApiTask::StepHandler::CartFetchStepHandler
+        handler_class: ApiTask::StepHandler::CartFetchStepHandler,
+        handler_config: Tasker::StepHandler::Api::Config.new(
+          url: 'https://api.ecommerce.com/cart',
+          params: {
+            cart_id: 1
+          }
+        )
       )
 
       templates.define(
@@ -29,7 +35,10 @@ module ApiTask
         name: STEP_FETCH_PRODUCTS,
         depends_on_step: STEP_FETCH_CART,
         description: 'Fetch product details from product catalog',
-        handler_class: ApiTask::StepHandler::ProductsFetchStepHandler
+        handler_class: ApiTask::StepHandler::ProductsFetchStepHandler,
+        handler_config: Tasker::StepHandler::Api::Config.new(
+          url: 'https://api.ecommerce.com/products'
+        )
       )
 
       templates.define(

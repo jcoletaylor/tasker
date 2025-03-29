@@ -73,7 +73,7 @@ module Tasker
       sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
       def handle_one_step(task, sequence, step)
         handler = get_step_handler(step)
-        attempts = step.attempts || 0
+        step.attempts ||= 0
         begin
           handler.handle(task, sequence, step)
           step.processed = true
@@ -83,9 +83,10 @@ module Tasker
           step.processed = false
           step.processed_at = nil
           step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
-          step.results = { error: e.to_s, backtrace: e.backtrace.join("\n") }
+          step.results ||= {}
+          step.results = step.results.merge(error: e.to_s, backtrace: e.backtrace.join("\n"))
         end
-        step.attempts = attempts + 1
+        step.attempts += 1
         step.last_attempted_at = Time.zone.now
         step.save!
         step
@@ -175,7 +176,12 @@ module Tasker
       def get_step_handler(step)
         raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless step_handler_class_map[step.name]
 
-        step_handler_class_map[step.name].to_s.camelize.constantize.new
+        handler_config = step_handler_config_map[step.name]
+        handler_class = step_handler_class_map[step.name].to_s.camelize.constantize
+
+        return handler_class.new if handler_config.nil?
+
+        handler_class.new(config: handler_config)
       end
 
       def get_error_steps(steps, sequence)

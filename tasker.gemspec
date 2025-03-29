@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
 
-  spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
+  spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md', 'TODO.md']
 
   spec.add_dependency 'logger', '~> 1.6'
   spec.add_dependency 'rails', '~> 7.2.2'
@@ -41,6 +41,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'dry-struct', '~> 1.8'
   spec.add_dependency 'dry-types', '~> 1.8'
 
+  spec.add_dependency 'faraday', '~> 2.12.2'
   spec.add_dependency 'graphql'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
