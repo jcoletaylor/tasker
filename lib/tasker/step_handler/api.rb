@@ -18,8 +18,8 @@ module Tasker
           ssl: nil,
           headers: default_headers,
           enable_exponential_backoff: true,
-          retry_delay: 2,
-          retry_delay_multiplier: 5
+          retry_delay: 5,
+          retry_delay_multiplier: 1
         )
           @url = url
           @params = params
@@ -94,7 +94,8 @@ module Tasker
 
       def _exponential_backoff(step)
         step.attempts ||= 1
-        retry_delay = @config.retry_delay * (@config.retry_delay_multiplier**step.attempts)
+        exponent = step.attempts + 1
+        retry_delay = (@config.retry_delay * @config.retry_delay_multiplier)**exponent
         step.backoff_request_seconds = retry_delay
         step.last_attempted_at = Time.zone.now
       end
