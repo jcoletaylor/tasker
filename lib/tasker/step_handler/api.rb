@@ -88,6 +88,8 @@ module Tasker
         else
           (retry_after.to_time - Time.zone.now).to_i
         end
+      rescue StandardError => e
+        raise Faraday::Error, "Failed to parse Retry-After header: #{e.message}"
       end
 
       def _exponential_backoff(step)
