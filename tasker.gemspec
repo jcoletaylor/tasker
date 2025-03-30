@@ -28,9 +28,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sidekiq', '~> 7.3'
 
   # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
-  spec.add_dependency 'rack-cors'
-
   spec.add_dependency 'active_model_serializers', '>= 0.10.0'
+  spec.add_dependency 'ancestry', '~> 4.3.3'
+  spec.add_dependency 'rack-cors'
 
   spec.add_dependency 'sorbet-runtime'
 

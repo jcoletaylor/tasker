@@ -50,6 +50,8 @@ module Tasker
 
     delegate :name, to: :named_step
 
+    has_ancestry cache_depth: true, counter_cache: true, orphan_strategy: :adopt
+
     def self.get_steps_for_task(task, templates)
       named_steps = NamedStep.create_named_steps_from_templates(templates)
       steps =
