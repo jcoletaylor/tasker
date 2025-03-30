@@ -7,12 +7,13 @@ module Tasker
   module TaskHandler
     module ClassMethods
       class StepTemplateDefiner
-        attr_reader :step_templates, :klass, :step_handler_class_map
+        attr_reader :step_templates, :klass, :step_handler_class_map, :step_handler_config_map
 
         def initialize(klass)
           @klass = klass
           @step_templates = []
           @step_handler_class_map = {}
+          @step_handler_config_map = {}
         end
 
         def define(**kwargs)
@@ -24,6 +25,7 @@ module Tasker
           default_retry_limit = kwargs.fetch(:default_retry_limit, 3)
           skippable = kwargs.fetch(:skippable, false)
           depends_on_step = kwargs.fetch(:depends_on_step, nil)
+          handler_config = kwargs.fetch(:handler_config, nil)
 
           @step_templates << Tasker::Types::StepTemplate.new(
             dependent_system: dependent_system,
@@ -33,13 +35,15 @@ module Tasker
             default_retry_limit: default_retry_limit,
             skippable: skippable,
             handler_class: handler_class,
-            depends_on_step: depends_on_step
+            depends_on_step: depends_on_step,
+            handler_config: handler_config
           )
         end
 
         def register_class_map
           @step_templates.each do |template|
             @step_handler_class_map[template.name] = template.handler_class.to_s
+            @step_handler_config_map[template.name] = template.handler_config
           end
         end
       end
@@ -53,6 +57,9 @@ module Tasker
         definer.register_class_map
         definer.klass.define_method(:step_handler_class_map) do
           definer.step_handler_class_map
+        end
+        definer.klass.define_method(:step_handler_config_map) do
+          definer.step_handler_config_map
         end
       end
 

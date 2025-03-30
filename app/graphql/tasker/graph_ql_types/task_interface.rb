@@ -5,7 +5,7 @@ module Tasker
   module GraphQLTypes
     module TaskInterface
       include GraphQL::Schema::Interface
-      
+
       field :task_id, ID, null: false
       field :status, String, null: false
       field :reason, String, null: true
@@ -15,4 +15,3 @@ module Tasker
     end
   end
 end
-

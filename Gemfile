@@ -8,14 +8,16 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gemspec
 
 # Security updates
-gem 'dry-struct', '~> 1.8'
-gem 'dry-types', '~> 1.8'
+gem 'concurrent-ruby', '~> 1.3.5', require: 'concurrent'
 gem 'nokogiri', '~> 1.15.7'
 gem 'rails-html-sanitizer', '>= 1.6.2'
+
 group :development do
   gem 'annotate', '~> 3.2'
   gem 'byebug', '~> 11.1'
   gem 'listen', '~> 3.8'
+  gem 'rswag-api', '~> 2.16'
+  gem 'rswag-ui', '~> 2.16'
   gem 'rubocop', '~> 1.74', require: false
   gem 'rubocop-factory_bot', '~> 2.27', require: false
   gem 'rubocop-performance', '~> 1.24', require: false

@@ -87,7 +87,8 @@ module Tasker
           in_process: false,
           inputs: task.context,
           processed: false,
-          attempts: 0
+          attempts: 0,
+          results: {}
         }
       )
     end
@@ -145,6 +146,26 @@ module Tasker
       end
 
       dependent_step
+    end
+
+    def complete?
+      status == Constants::WorkflowStepStatuses::COMPLETE
+    end
+
+    def in_progress?
+      status == Constants::WorkflowStepStatuses::IN_PROGRESS
+    end
+
+    def pending?
+      status == Constants::WorkflowStepStatuses::PENDING
+    end
+
+    def in_error?
+      status == Constants::WorkflowStepStatuses::ERROR
+    end
+
+    def cancelled?
+      status == Constants::WorkflowStepStatuses::CANCELLED
     end
   end
 end

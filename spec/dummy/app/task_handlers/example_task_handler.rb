@@ -61,7 +61,8 @@ class ExampleTaskHandler
 
   # Override to update annotations
   sig do
-    override.params(task: Tasker::Task, sequence: Tasker::Types::StepSequence, steps: T::Array[Tasker::WorkflowStep]).void
+    override.params(task: Tasker::Task, sequence: Tasker::Types::StepSequence,
+                    steps: T::Array[Tasker::WorkflowStep]).void
   end
   def update_annotations(task, sequence, steps)
     # This method can be used to add annotations to the task based on step results

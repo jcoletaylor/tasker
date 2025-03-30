@@ -29,7 +29,10 @@ module Tasker
       end
 
       it 'is not able to initialize a task if the context is invalid' do
-        task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { bad_param: true, dummy: 12 })
+        task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME,
+                                                      context: {
+                                                        bad_param: true, dummy: 12
+                                                      })
         task = task_handler.initialize_task!(task_request)
         # bad param and wrong type, two errors
         expect(task.errors[:context].length).to(eq(2))

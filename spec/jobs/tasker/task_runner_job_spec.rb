@@ -10,8 +10,10 @@ module Tasker
     context 'perform a task runner job' do
       let(:helper)       { Helpers::TaskHelpers.new                                                               }
       let(:task_handler) { helper.factory.get(DummyTask::TASK_REGISTRY_NAME)                                      }
-      let(:task_request) { Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }) }
-      let(:task)         { task_handler.initialize_task!(task_request)                                            }
+      let(:task_request) do
+        Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true })
+      end
+      let(:task) { task_handler.initialize_task!(task_request) }
 
       before(:all) do
         DependentSystem.find_or_create_by!(name: Helpers::TaskHelpers::DEPENDENT_SYSTEM)

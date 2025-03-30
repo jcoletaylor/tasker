@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
 
-  spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
+  spec.files = Dir['{app,config,db,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md', 'TODO.md']
 
   spec.add_dependency 'logger', '~> 1.6'
   spec.add_dependency 'rails', '~> 7.2.2'
@@ -36,15 +36,13 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'json-schema', '>= 2.4.0'
 
+  spec.add_dependency 'concurrent-ruby', '~> 1.3.5'
+  spec.add_dependency 'concurrent-ruby-ext', '~> 1.3.5'
   spec.add_dependency 'dry-struct', '~> 1.8'
+  spec.add_dependency 'dry-types', '~> 1.8'
 
-  spec.add_development_dependency 'rswag-api'
-  spec.add_development_dependency 'rswag-ui'
-
+  spec.add_dependency 'faraday', '~> 2.12.2'
   spec.add_dependency 'graphql'
 
-  spec.add_development_dependency 'rspec-rails'
-  spec.add_development_dependency 'sorbet'
-  spec.add_development_dependency 'sqlite3'
   spec.metadata['rubygems_mfa_required'] = 'true'
 end

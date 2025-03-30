@@ -5,7 +5,7 @@ module Tasker
   module GraphQLTypes
     class TaskType < GraphQLTypes::BaseObject
       implements TaskInterface
-      
+
       extend T::Sig
       field :named_task_id, Integer, null: false
       field :complete, Boolean, null: false

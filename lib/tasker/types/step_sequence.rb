@@ -9,6 +9,10 @@ module Tasker
       # @!attribute [r] steps
       #   @return [Array<Tasker::WorkflowStep>] List of workflow steps in this sequence
       attribute :steps, Types::Array.default([].freeze)
+
+      def find_step_by_name(name)
+        steps.find { |step| step.name == name }
+      end
     end
   end
 end

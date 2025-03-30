@@ -22,4 +22,3 @@ end
 require 'tasker/types/step_template'
 require 'tasker/types/step_sequence'
 require 'tasker/types/task_request'
-
