@@ -2,9 +2,22 @@
 
 require 'rails_helper'
 require_relative 'integration_example'
+require_relative 'models/actions'
 
 RSpec.describe ApiTask::IntegrationExample do
-  let(:task_handler) { described_class.new }
+  let(:stubs) { Faraday::Adapter::Test::Stubs.new }
+  let(:connection) { Faraday.new { |b| b.adapter(:test, stubs) } }
+  let(:task_handler) do
+    handler = described_class.new
+    mock_connection = connection # Capture connection in closure
+    original_get_step_handler = handler.method(:get_step_handler)
+    handler.define_singleton_method(:get_step_handler) do |step|
+      step_handler = original_get_step_handler.call(step)
+      step_handler.instance_variable_set(:@connection, mock_connection)
+      step_handler
+    end
+    handler
+  end
   let(:cart_id) { 1 }
   let(:task_request) do
     Tasker::Types::TaskRequest.new(
@@ -20,16 +33,60 @@ RSpec.describe ApiTask::IntegrationExample do
   let(:task) { task_handler.initialize_task!(task_request) }
   let(:step_sequence) { task_handler.get_sequence(task) }
 
-  def _complete_steps(step_names)
+  before do
+    factory.register(described_class::TASK_REGISTRY_NAME, described_class)
+
+    # Stub cart endpoint
+    stubs.get("/carts/#{cart_id}") do |env|
+      cart = ApiTask::Actions::Cart.find(cart_id)
+      raise Faraday::ResourceNotFound.new('Cart not found', nil) unless cart
+
+      Faraday::Response.new(
+        Faraday::Env.from(
+          status: 200,
+          response_headers: { 'Content-Type' => 'application/json' },
+          body: { cart: cart.to_h }.to_json,
+          url: env.url
+        )
+      )
+    end
+
+    stubs.get('/carts/999999') do |env|
+      response = Faraday::Response.new(
+        Faraday::Env.from(
+          status: 404,
+          response_headers: { 'Content-Type' => 'application/json' },
+          body: { error: 'Cart not found' }.to_json,
+          url: env.url
+        )
+      )
+      raise Faraday::ResourceNotFound.new('Cart not found', response)
+    end
+
+    # Stub products endpoint
+    stubs.get('/products') do |env|
+      products = ApiTask::Actions::Product.all
+      Faraday::Response.new(
+        Faraday::Env.from(
+          status: 200,
+          response_headers: { 'Content-Type' => 'application/json' },
+          body: { products: products.map(&:to_h) }.to_json,
+          url: env.url
+        )
+      )
+    end
+  end
+
+  def complete_steps(step_names)
     step_names.each do |step_name|
       step = step_sequence.find_step_by_name(step_name)
       task_handler.handle_one_step(task, step_sequence, step)
-      _log_step_results(step) unless step.complete?
+      log_step_results(step) unless step.complete?
       expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
     end
   end
 
-  def _log_step_results(step)
+  def log_step_results(step)
     Rails.logger.error("Step #{step.name} failed with status #{step.status}")
     Rails.logger.error("Results: #{step.results.inspect}")
   end
@@ -116,7 +173,7 @@ RSpec.describe ApiTask::IntegrationExample do
 
       it 'successfully validates products when all are in stock' do
         # First complete the prerequisite steps
-        _complete_steps([described_class::STEP_FETCH_CART, described_class::STEP_FETCH_PRODUCTS])
+        complete_steps([described_class::STEP_FETCH_CART, described_class::STEP_FETCH_PRODUCTS])
 
         # Then validate products
         validate_step = step_sequence.find_step_by_name(described_class::STEP_VALIDATE_PRODUCTS)
@@ -133,14 +190,14 @@ RSpec.describe ApiTask::IntegrationExample do
 
       it 'successfully creates an order from a valid cart' do
         # Complete prerequisite steps
-        _complete_steps([described_class::STEP_FETCH_CART, described_class::STEP_FETCH_PRODUCTS,
-                         described_class::STEP_VALIDATE_PRODUCTS])
+        complete_steps([described_class::STEP_FETCH_CART, described_class::STEP_FETCH_PRODUCTS,
+                        described_class::STEP_VALIDATE_PRODUCTS])
 
         # Create order
         create_order_step = step_sequence.find_step_by_name(described_class::STEP_CREATE_ORDER)
         task_handler.handle_one_step(task, step_sequence, create_order_step)
 
-        _log_step_results(create_order_step) unless create_order_step.complete?
+        log_step_results(create_order_step) unless create_order_step.complete?
 
         expect(create_order_step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
         expect(create_order_step.results['order_id']).to be_present
@@ -154,7 +211,7 @@ RSpec.describe ApiTask::IntegrationExample do
 
       it 'successfully publishes the order created event' do
         # Complete all prerequisite steps
-        _complete_steps(
+        complete_steps(
           [
             described_class::STEP_FETCH_CART,
             described_class::STEP_FETCH_PRODUCTS,
@@ -167,7 +224,7 @@ RSpec.describe ApiTask::IntegrationExample do
         publish_step = step_sequence.find_step_by_name(described_class::STEP_PUBLISH_EVENT)
         task_handler.handle_one_step(task, step_sequence, publish_step)
 
-        _log_step_results(publish_step) unless publish_step.complete?
+        log_step_results(publish_step) unless publish_step.complete?
 
         expect(publish_step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
         expect(publish_step.results['published']).to be true

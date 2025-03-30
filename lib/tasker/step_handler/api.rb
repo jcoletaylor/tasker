@@ -46,6 +46,7 @@ module Tasker
       def handle(task, sequence, step)
         response = call(task, sequence, step)
         _process_response(step, response)
+        step.results = response
       rescue Faraday::Error => e
         _handle_too_many_requests(step, e.response) if e.response && BACKOFF_ERROR_CODES.include?(e.response&.status)
         raise
@@ -65,12 +66,10 @@ module Tasker
 
       def _process_response(step, response)
         status = response.is_a?(Hash) ? response[:status] : response.status
-        if SUCCESS_CODES.exclude?(status) && BACKOFF_ERROR_CODES.include?(status)
-          _handle_too_many_requests(step, response)
-          raise Faraday::Error, "API call failed with status #{status} and body #{response.body}"
-        else
-          step.results = response
-        end
+        return unless SUCCESS_CODES.exclude?(status) && BACKOFF_ERROR_CODES.include?(status)
+
+        _handle_too_many_requests(step, response)
+        raise Faraday::Error, "API call failed with status #{status} and body #{response.body}"
       end
 
       def _handle_too_many_requests(step, response)

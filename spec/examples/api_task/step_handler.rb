@@ -4,23 +4,36 @@ require_relative 'models/types'
 require_relative 'models/actions'
 require_relative 'models/example_order'
 require_relative 'events/event_bus'
-
+require_relative 'concerns/api_utils'
 module ApiTask
   module StepHandler
     class CartFetchStepHandler < Tasker::StepHandler::Api
+      include ApiTask::ApiUtils
       def call(task, _sequence, _step)
         cart_id = task.context['cart_id']
-        cart = ApiTask::Actions::Cart.find(cart_id)
-        raise "Cart not found: #{cart_id}" if cart.nil?
+        connection.get("/carts/#{cart_id}")
+      end
 
-        { cart: cart.to_h }
+      # by using super we allow handle of the base api class to run
+      # which will set the results to the response of the api call
+      # we then use the get_from_results method to extract the cart from the results
+      # this is valuable because the handle method automates exponential backoff and retries
+      # and we don't want to have to reimplement that
+      def handle(_task, _sequence, step)
+        super
+        step.results = get_from_results(step.results, 'cart')
       end
     end
 
     class ProductsFetchStepHandler < Tasker::StepHandler::Api
+      include ApiTask::ApiUtils
       def call(_task, _sequence, _step)
-        products = ApiTask::Actions::Product.all
-        { products: products.map(&:to_h) }
+        connection.get('/products')
+      end
+
+      def handle(_task, _sequence, step)
+        super
+        step.results = get_from_results(step.results, 'products')
       end
     end
 
@@ -34,6 +47,8 @@ module ApiTask
 
         step.results = { valid_products: valid_products.map(&:to_h) }
       end
+
+      private
 
       def _get_cart(sequence)
         cart = _get_valid_step_and_results(sequence, ApiTask::IntegrationExample::STEP_FETCH_CART, :cart)
@@ -79,6 +94,8 @@ module ApiTask
 
         step.results = { order_id: order.id }
       end
+
+      private
 
       def _get_cart(sequence)
         cart_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_FETCH_CART)
