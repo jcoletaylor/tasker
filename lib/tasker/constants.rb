@@ -30,6 +30,13 @@ module Tasker
       WorkflowStepStatuses::RESOLVED_MANUALLY
     ].freeze
 
+    UNREADY_WORKFLOW_STEP_STATUSES = [
+      WorkflowStepStatuses::IN_PROGRESS,
+      WorkflowStepStatuses::COMPLETE,
+      WorkflowStepStatuses::CANCELLED,
+      WorkflowStepStatuses::RESOLVED_MANUALLY
+    ].freeze
+
     VALID_TASK_STATUSES = [
       TaskStatuses::PENDING,
       TaskStatuses::IN_PROGRESS,

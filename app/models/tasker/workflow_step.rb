@@ -41,16 +41,31 @@
 #
 module Tasker
   class WorkflowStep < ApplicationRecord
+    PROVIDES_EDGE_NAME = 'provides'
+    DEPENDS_ON_EDGE_NAME = 'depends_on'
+
     self.primary_key = :workflow_step_id
     belongs_to :task
     belongs_to :named_step
     belongs_to :depends_on_step, class_name: 'WorkflowStep', optional: true
+    has_many  :incoming_edges,
+              class_name: 'WorkflowStepEdge',
+              foreign_key: :to_step_id,
+              dependent: :destroy,
+              inverse_of: :to_step
+    has_many  :outgoing_edges,
+              class_name: 'WorkflowStepEdge',
+              foreign_key:
+              :from_step_id,
+              dependent: :destroy,
+              inverse_of: :from_step
+    has_many :parents, through: :incoming_edges, source: :from_step
+    has_many :children, through: :outgoing_edges, source: :to_step
+    has_many :siblings, through: :outgoing_edges, source: :from_step
 
     validates :status, presence: true, inclusion: { in: Constants::VALID_WORKFLOW_STEP_STATUSES }
 
     delegate :name, to: :named_step
-
-    has_ancestry cache_depth: true, counter_cache: true, orphan_strategy: :adopt
 
     def self.get_steps_for_task(task, templates)
       named_steps = NamedStep.create_named_steps_from_templates(templates)
@@ -100,12 +115,7 @@ module Tasker
       unfinished_step_ids = unfinished_steps.map(&:workflow_step_id)
       viable_steps = []
       unfinished_steps.each do |step|
-        next if step.in_process
-        next if step.processed
-        next if step.status == Constants::WorkflowStepStatuses::CANCELLED
-        next if step.status == Constants::WorkflowStepStatuses::IN_PROGRESS
-        next if step.attempts.positive? && !step.retryable
-        next if step.attempts >= step.retry_limit
+        next unless step.ready?
         next if step.depends_on_step_id && unfinished_step_ids.include?(step.depends_on_step_id)
 
         if step.backoff_request_seconds && step.last_attempted_at
@@ -119,35 +129,12 @@ module Tasker
       viable_steps
     end
 
-    def self.get_dependent_step_from_sequence(
-      step,
-      sequence,
-      require_results = true,
-      require_inputs = false
-    )
-      dependent_step = sequence.steps.find { |sibling_step| step.depends_on_step_id == sibling_step.workflow_step_id }
+    def add_provides_edge!(to_step)
+      outgoing_edges.create!(to_step: to_step, name: PROVIDES_EDGE_NAME)
+    end
 
-      unless dependent_step
-        raise(Tasker::ProceduralError,
-              "required dependent step for #{step.workflow_step_id} not found")
-      end
-
-      unless dependent_step.processed
-        raise(Tasker::ProceduralError,
-              "required dependent step #{dependent_step.workflow_step_id} incomplete")
-      end
-
-      if require_results && !dependent_step.results
-        raise(Tasker::ProceduralError,
-              "dependent step #{dependent_step.workflow_step_id} does not have viable results")
-      end
-
-      if require_inputs && !dependent_step.inputs
-        raise(Tasker::ProceduralError,
-              "dependent step #{dependent_step.workflow_step_id} does not have viable inputs")
-      end
-
-      dependent_step
+    def add_depends_on_edge!(from_step)
+      incoming_edges.create!(from_step: from_step, name: DEPENDS_ON_EDGE_NAME)
     end
 
     def complete?
@@ -168,6 +155,20 @@ module Tasker
 
     def cancelled?
       status == Constants::WorkflowStepStatuses::CANCELLED
+    end
+
+    def ready_status?
+      Constants::UNREADY_WORKFLOW_STEP_STATUSES.exclude?(status)
+    end
+
+    def ready?
+      ready = true
+      ready = false if in_process
+      ready = false if processed
+      ready = false unless ready_status?
+      ready = false if attempts.positive? && !retryable
+      ready = false if attempts >= retry_limit
+      ready
     end
   end
 end

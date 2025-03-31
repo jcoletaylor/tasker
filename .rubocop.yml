@@ -35,12 +35,14 @@ Metrics/ParameterLists:
 Metrics/AbcSize:
   Max: 100
 
+Naming/PredicateName:
+  Enabled: false
+
 Capybara/RSpec/PredicateMatcher:
   Enabled: false
 
 RSpec/MultipleExpectations:
   Enabled: false
-  exclude_limit: example
 
 Rspec/ExampleLength:
   Enabled: false

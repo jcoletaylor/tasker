@@ -100,6 +100,10 @@ module Tasker
       task
     end
 
+    def get_step_by_name(name)
+      workflow_steps.includes(:named_step).where(named_step: { name: name }).first
+    end
+
     private
 
     def unique_identity_hash

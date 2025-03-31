@@ -17,12 +17,17 @@ module Tasker
       attribute :dependent_system, Types::Strict::String
       attribute :name, Types::Strict::String
       attribute :description, Types::String
-      attribute :depends_on_step, Types::String.optional.default(nil)
       attribute :default_retryable, Types::Bool.default(true)
       attribute :default_retry_limit, Types::Integer.default(3)
       attribute :skippable, Types::Bool.default(false)
       attribute :handler_class, Types::Class
       attribute :handler_config, Types::Any.optional.default(nil)
+      attribute :depends_on_step, Types::String.optional.default(nil)
+      attribute :depends_on_steps, Types.Array(Types::String).default([].freeze)
+
+      def all_dependencies
+        [depends_on_step, *depends_on_steps].compact.uniq
+      end
     end
   end
 end
