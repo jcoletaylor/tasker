@@ -38,6 +38,45 @@ module Tasker
       end
     end
 
+    describe 'cycle prevention' do
+      it 'allows a simple edge' do
+        edge = described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        expect(edge).to be_persisted
+      end
+
+      it 'prevents direct cycles' do
+        # Create the first edge
+        described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
+
+        # Attempt to create a cycle
+        expect do
+          described_class.create!(from_step: step_two, to_step: step_one, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        end.to raise_error(ActiveRecord::RecordInvalid, 'Adding this edge would create a cycle in the workflow')
+      end
+
+      it 'prevents indirect cycles' do
+        # Create a chain: step_one -> step_two -> step_three
+        described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        described_class.create!(from_step: step_two, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
+
+        # Attempt to create a cycle: step_three -> step_one
+        expect do
+          described_class.create!(from_step: step_three, to_step: step_one, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        end.to raise_error(ActiveRecord::RecordInvalid, 'Adding this edge would create a cycle in the workflow')
+      end
+
+      it 'allows multiple paths to the same destination' do
+        # Create two paths to step_three: step_one -> step_three and step_two -> step_three
+        described_class.create!(from_step: step_one, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        described_class.create!(from_step: step_two, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
+
+        # This should be valid as it doesn't create a cycle
+        edge = described_class.create!(from_step: step_four, to_step: step_three,
+                                       name: WorkflowStep::PROVIDES_EDGE_NAME)
+        expect(edge).to be_persisted
+      end
+    end
+
     describe 'scopes' do
       it 'finds children of a step' do
         described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
