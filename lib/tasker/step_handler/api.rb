@@ -100,7 +100,7 @@ module Tasker
         base_delay = @config.retry_delay || 1.0 # Default to 1 second if not specified
 
         # Calculate exponential delay with a cap to prevent excessive waiting
-        max_delay = 30.0 # Cap maximum delay at 30 seconds        exponent = step.attempts + 1
+        max_delay = 30.0 # Cap maximum delay at 30 seconds
         exponential_delay = [base_delay * (2**exponent), max_delay].min
 
         # Add jitter (randomness) to prevent thundering herd problem
