@@ -171,7 +171,7 @@ module Tasker
 
   class InvalidTaskHandlerConfig < StandardError; end
 
-  class ConfiguredTaskBase < TaskBuilder
+  class ConfiguredTask < TaskBuilder
     include Tasker::TaskHandler
 
     def self.yaml_path

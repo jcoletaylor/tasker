@@ -44,82 +44,108 @@ First, add Tasker to your Gemfile and install it:
 gem 'tasker'
 ```
 
-### Basic Task Structure
+## Usage
 
-Building a TaskHandler looks something like this:
+### Creating a Task Handler from scratch
+
+1. Create a new task handler class in `app/task_handlers/my_task.rb`
+2. Define the steps in the task handler class
+3. Register the task handler with the Tasker registry
+
+Full examples of this can be reviewed as an [API integration example](./spec/examples/api_task/integration_example.rb).
+
+However, the most common pattern is to use a YAML file to define the task handler.
+
+### Creating a Configured Task Handler
+
+1. Create a YAML file defining your task handler following the structure above
+2. Place it in an appropriate directory, e.g., `app/task_handlers/my_task.yaml`
+3. Develop your step handlers as normal classes, and reference them in the YAML file
+4. API-backed step handlers which inherit from `Tasker::StepHandler::Api` will automatically use exponential backoff and jitter
+5. Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow
+
+### Example of creating a Configured Task Handler
 
 ```ruby
-class DummyTask
-  include Tasker::TaskHandler
-
-  # these are just for readability, they could just be strings elsewhere
-  DUMMY_SYSTEM = 'dummy-system'
-  STEP_ONE = 'step-one'
-  STEP_TWO = 'step-two'
-  STEP_THREE = 'step-three'
-  STEP_FOUR = 'step-four'
-  STEP_FIVE = 'step-five'
-  TASK_REGISTRY_NAME = 'dummy_task'
-
-  # this is for convenience to read, it could be any class that has a handle method with this signature
-  class Handler
-    # the handle method is only expected to catch around recoverable errors
-    # it is responsible for setting results back on the step
-    def handle(_task, _sequence, step)
-      # task and sequence are passed in case the task context or the sequence's prior steps
-      # may contain data that is necessary for the handling of this step
-      step.results = { dummy: true }
+module MyModule
+  class MyYamlTask < Tasker::ConfiguredTask
+    def self.yaml_path
+      Rails.root.join('app/task_handlers/my_task.yaml')
     end
-  end
-
-  # register the task handler with the handler factory
-  register_handler(TASK_REGISTRY_NAME)
-
-  # define steps for the step handlers
-  # only name and handler_class are required, but others help with visibility and findability
-  define_step_templates do |templates|
-    templates.define(
-      dependent_system: DUMMY_SYSTEM,
-      name: STEP_ONE,
-      description: 'Independent Step One',
-      # these are the defaults, omitted elsewhere for brevity
-      default_retryable: true,
-      default_retry_limit: 3,
-      skippable: false,
-      handler_class: DummyTask::Handler
-    )
-    templates.define(
-      dependent_system: DUMMY_SYSTEM,
-      name: STEP_TWO,
-      description: 'Independent Step Two',
-      handler_class: DummyTask::Handler
-    )
-    templates.define(
-      dependent_system: DUMMY_SYSTEM,
-      name: STEP_THREE,
-      depends_on_step: STEP_TWO,
-      description: 'Step Three Dependent on Step Two',
-      handler_class: DummyTask::Handler
-    )
-    templates.define(
-      dependent_system: DUMMY_SYSTEM,
-      name: STEP_FOUR,
-      depends_on_step: STEP_THREE,
-      description: 'Step Four Dependent on Step Three',
-      handler_class: DummyTask::Handler
-    )
-  end
-
-  # this should conform to the json-schema gem's expectations for how to validate json
-  # used to validate the context of a given TaskRequest whether from the API or otherwise
-  def schema
-    @schema ||= { type: :object, required: [:dummy], properties: { dummy: { type: 'boolean' } } }
   end
 end
 
+# Usage:
+handler = MyModule::MyYamlTask.new
+# The class is already built and ready to use
+# though this of course requires the step handler classes referenced in the YAML to be defined
+# as that is the core of your business logic
 ```
 
-### An Example Task Handler
+### Example of a Configured Task Handler
+
+Here's an example YAML file for an e-commerce API integration task handler:
+
+```yaml
+---
+name: api_integration_yaml_task
+module_namespace: ApiTask
+class_name: IntegrationYamlExample
+concurrent: true
+
+default_dependent_system: ecommerce_system
+
+named_steps:
+  - fetch_cart
+  - fetch_products
+  - validate_products
+  - create_order
+  - publish_event
+
+schema:
+  type: object
+  required:
+    - cart_id
+  properties:
+    cart_id:
+      type: integer
+
+step_templates:
+  - name: fetch_cart
+    description: Fetch cart details from e-commerce system
+    handler_class: ApiTask::StepHandler::CartFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/cart
+      params:
+        cart_id: 1
+
+  - name: fetch_products
+    description: Fetch product details from product catalog
+    handler_class: ApiTask::StepHandler::ProductsFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/products
+
+  - name: validate_products
+    description: Validate product availability
+    depends_on_steps:
+      - fetch_products
+      - fetch_cart
+    handler_class: ApiTask::StepHandler::ProductsValidateStepHandler
+
+  - name: create_order
+    description: Create order from validated cart
+    depends_on_step: validate_products
+    handler_class: ApiTask::StepHandler::CreateOrderStepHandler
+
+  - name: publish_event
+    description: Publish order created event
+    depends_on_step: create_order
+    handler_class: ApiTask::StepHandler::PublishEventStepHandler
+```
+
+## API Task Example
 
 See the [examples/api_task](./spec/examples/api_task) directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example [here](./spec/examples/api_task/README.md).
 
@@ -194,7 +220,7 @@ For this Rails Engine, I'm not going to include a lot of the sample lower-level 
 
 ## TODO
 
-A full [TODO](./TODO.md).
+A full [TODO](./docs/TODO.md).
 
 ## Dependencies
 
@@ -205,8 +231,7 @@ A full [TODO](./TODO.md).
 
 - Database - `bundle exec rake db:schema:load`
 - How to run the test suite - `bundle exec rspec spec`
-- Lint: `bundle exec rake lint`
-- Typecheck with Sorbet: `bundle exec srb tc`
+- Lint: `bundle exec rubocop`
 
 ## Gratitude
 

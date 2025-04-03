@@ -84,7 +84,7 @@ This ensures consistency and catches configuration errors early.
 
 ```ruby
 module MyModule
-  class MyYamlTask < Tasker::ConfiguredTaskBase
+  class MyYamlTask < Tasker::ConfiguredTask
     def self.yaml_path
       Rails.root.join('config/tasks/my_task.yaml')
     end
