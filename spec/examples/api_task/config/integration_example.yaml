@@ -1,0 +1,55 @@
+---
+name: api_integration_yaml_task
+module_namespace: ApiTask
+class_name: IntegrationYamlExample
+concurrent: true
+
+default_dependent_system: ecommerce_system
+named_steps:
+  - fetch_cart
+  - fetch_products
+  - validate_products
+  - create_order
+  - publish_event
+
+schema:
+  type: object
+  required:
+    - cart_id
+  properties:
+    cart_id:
+      type: integer
+
+step_templates:
+  - name: fetch_cart
+    description: Fetch cart details from e-commerce system
+    handler_class: ApiTask::StepHandler::CartFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/cart
+      params:
+        cart_id: 1
+
+  - name: fetch_products
+    description: Fetch product details from product catalog
+    handler_class: ApiTask::StepHandler::ProductsFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/products
+
+  - name: validate_products
+    description: Validate product availability
+    depends_on_steps:
+      - fetch_products
+      - fetch_cart
+    handler_class: ApiTask::StepHandler::ProductsValidateStepHandler
+
+  - name: create_order
+    description: Create order from validated cart
+    depends_on_step: validate_products
+    handler_class: ApiTask::StepHandler::CreateOrderStepHandler
+
+  - name: publish_event
+    description: Publish order created event
+    depends_on_step: create_order
+    handler_class: ApiTask::StepHandler::PublishEventStepHandler

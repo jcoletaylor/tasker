@@ -155,13 +155,12 @@ module Tasker
         # Wait for all futures to complete
         futures.each do |future|
           # Wait for the future to complete (with a reasonable timeout)
-          begin
-            # 30 second timeout to prevent indefinite hanging
-            result = future.value(30)
-            processed_steps << result if result
-          rescue => e
-            Rails.logger.error("Error processing step concurrently: #{e.message}")
-          end
+
+          # 30 second timeout to prevent indefinite hanging
+          result = future.value(30)
+          processed_steps << result if result
+        rescue StandardError => e
+          Rails.logger.error("Error processing step concurrently: #{e.message}")
         end
 
         # Update annotations for this batch

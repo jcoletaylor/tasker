@@ -11,7 +11,8 @@ module Tasker
     let(:task_handler) { helper.factory.get(Helpers::ApiTaskHelpers::DUMMY_API_TASK) }
     let(:stubs) { Faraday::Adapter::Test::Stubs.new }
     let(:connection) { Faraday.new { |b| b.adapter(:test, stubs) } }
-    let(:handler) { DummyApiTask::Handler.new(config: Tasker::StepHandler::Api::Config.new(url: 'https://api.example.com')) }
+    let(:handler_config) { Tasker::StepHandler::Api::Config.new(url: 'https://api.example.com', jitter_factor: 1) }
+    let(:handler) { DummyApiTask::Handler.new(config: handler_config) }
     let(:task) { task_handler.initialize_task!(helper.task_request) }
     let(:sequence) { task_handler.get_sequence(task) }
     let(:step) { sequence.steps.first }
@@ -135,7 +136,7 @@ module Tasker
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-            expect(step.backoff_request_seconds).to eq(5) # Initial delay
+            expect(step.backoff_request_seconds).to eq(4) # Initial delay
           end
 
           it 'increases backoff with each attempt' do
@@ -149,7 +150,7 @@ module Tasker
 
             step.attempts = 2
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-            expect(step.backoff_request_seconds).to eq(125) # (25 * 1)^3
+            expect(step.backoff_request_seconds).to eq(8)
           end
         end
       end
@@ -165,7 +166,7 @@ module Tasker
           end
 
           expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-          expect(step.backoff_request_seconds).to eq(5) # Initial delay
+          expect(step.backoff_request_seconds).to eq(4)
         end
       end
 

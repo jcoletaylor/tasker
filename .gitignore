@@ -8,3 +8,4 @@
 /spec/dummy/tmp/
 .byebug_history
 /coverage/**/*.*
+.vscode

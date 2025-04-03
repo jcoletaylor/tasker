@@ -3,104 +3,133 @@
 require 'rails_helper'
 
 module Tasker
+  class TestStepHandler
+    class << self
+      attr_accessor :executions, :sleep_duration
+    end
+
+    @executions = Concurrent::Array.new
+    @sleep_duration = 0.2 # Short sleep to allow for observable concurrency
+
+    def self.reset_executions
+      @executions = Concurrent::Array.new
+    end
+
+    def self.set_sleep_duration(duration)
+      @sleep_duration = duration
+    end
+
+    def handle(_task, _sequence, step)
+      # Record start time
+      start_time = Time.now.to_f
+
+      # Simulate some work
+      sleep(self.class.sleep_duration)
+
+      # Record that this step ran with timing info
+      self.class.executions << {
+        step_name: step.name,
+        thread_id: Thread.current.object_id,
+        start_time: start_time,
+        end_time: Time.now.to_f
+      }
+
+      # Update step results
+      step.results = {
+        processed_at: Time.zone.now.to_s,
+        thread_id: Thread.current.object_id
+      }
+
+      # Return step for chaining
+      step
+    end
+  end
+
+  class ConcurrentTestTask
+    include Tasker::TaskHandler
+
+    TASK_NAME = 'concurrent_test_task'
+    STEP_ONE = 'step-one'
+    STEP_TWO = 'step-two'
+    STEP_THREE = 'step-three'
+
+    # Register with concurrent processing enabled
+    register_handler(TASK_NAME, concurrent: true)
+
+    define_step_templates do |templates|
+      templates.define(
+        name: STEP_ONE,
+        description: 'Step One',
+        handler_class: TestStepHandler
+      )
+
+      templates.define(
+        name: STEP_TWO,
+        description: 'Step Two',
+        handler_class: TestStepHandler
+      )
+
+      templates.define(
+        name: STEP_THREE,
+        description: 'Step Three',
+        depends_on_steps: [STEP_ONE, STEP_TWO],
+        handler_class: TestStepHandler
+      )
+    end
+
+    # Define a schema for validation
+    def schema
+      {
+        type: 'object',
+        properties: {
+          test_id: { type: 'integer' }
+        }
+      }
+    end
+  end
+
+  class SequentialTestTask
+    include Tasker::TaskHandler
+
+    TASK_NAME = 'sequential_test_task'
+    STEP_ONE = 'step-one'
+    STEP_TWO = 'step-two'
+
+    # Register with concurrent processing disabled
+    register_handler(TASK_NAME, concurrent: false)
+
+    define_step_templates do |templates|
+      templates.define(
+        name: STEP_ONE,
+        description: 'Step One',
+        handler_class: TestStepHandler
+      )
+
+      templates.define(
+        name: STEP_TWO,
+        description: 'Step Two',
+        handler_class: TestStepHandler
+      )
+    end
+
+    def schema
+      {
+        type: 'object',
+        properties: {
+          test_id: { type: 'integer' }
+        }
+      }
+    end
+  end
+
   RSpec.describe TaskHandler do
     describe 'Concurrent Processing' do
-      # Simple test step handler that tracks execution
-      class TestStepHandler
-        @@executions = Concurrent::Array.new
-        @@sleep_duration = 0.2 # Short sleep to allow for observable concurrency
-
-        def self.executions
-          @@executions
-        end
-
-        def self.reset_executions
-          @@executions = Concurrent::Array.new
-        end
-
-        def self.set_sleep_duration(duration)
-          @@sleep_duration = duration
-        end
-
-        def handle(task, sequence, step)
-          # Record start time
-          start_time = Time.now.to_f
-
-          # Simulate some work
-          sleep(@@sleep_duration)
-
-          # Record that this step ran with timing info
-          @@executions << {
-            step_name: step.name,
-            thread_id: Thread.current.object_id,
-            start_time: start_time,
-            end_time: Time.now.to_f
-          }
-
-          # Update step results
-          step.results = {
-            processed_at: Time.now.to_s,
-            thread_id: Thread.current.object_id
-          }
-
-          # Return step for chaining
-          step
-        end
-      end
-
-      class ConcurrentTestTask
-        include Tasker::TaskHandler
-
-        TASK_NAME = 'concurrent_test_task'
-        STEP_ONE = 'step-one'
-        STEP_TWO = 'step-two'
-        STEP_THREE = 'step-three'
-
-        # Register with concurrent processing enabled
-        register_handler(TASK_NAME, concurrent: true)
-
-        define_step_templates do |templates|
-          templates.define(
-            name: STEP_ONE,
-            description: 'Step One',
-            handler_class: TestStepHandler
-          )
-
-          templates.define(
-            name: STEP_TWO,
-            description: 'Step Two',
-            handler_class: TestStepHandler
-          )
-
-          templates.define(
-            name: STEP_THREE,
-            description: 'Step Three',
-            depends_on_steps: [STEP_ONE, STEP_TWO],
-            handler_class: TestStepHandler
-          )
-        end
-
-        # Define a schema for validation
-        def schema
-          {
-            type: 'object',
-            properties: {
-              test_id: { type: 'integer' }
-            }
-          }
-        end
-      end
-
-      # Register the test handler with the factory
-      before(:all) do
-        Tasker::HandlerFactory.instance.register(ConcurrentTestTask::TASK_NAME, ConcurrentTestTask)
-      end
-
       let(:factory) { Tasker::HandlerFactory.instance }
       let(:task_handler) { factory.get(ConcurrentTestTask::TASK_NAME) }
       let(:valid_context) { { test_id: 123 } }
 
-      before(:each) do
+      before do
+        Tasker::HandlerFactory.instance.register(ConcurrentTestTask::TASK_NAME, ConcurrentTestTask)
         TestStepHandler.reset_executions
       end
 
@@ -146,7 +175,7 @@ module Tasker
         step_two_range = [step_two[:start_time], step_two[:end_time]]
 
         # Check for overlap between step-one and step-two
-        overlap_exists = (step_one_range[0] <= step_two_range[1] && step_two_range[0] <= step_one_range[1])
+        overlap_exists = step_one_range[0] <= step_two_range[1] && step_two_range[0] <= step_one_range[1]
         expect(overlap_exists).to be true
 
         # Verify that step-three ran after both step-one and step-two
@@ -171,52 +200,19 @@ module Tasker
         # Get the execution details
         executions = TestStepHandler.executions
 
+        steps_to_check = [ConcurrentTestTask::STEP_ONE, ConcurrentTestTask::STEP_TWO]
+
         # Get thread IDs from the first two steps which should run concurrently
-        thread_ids = executions
-          .select { |e| [ConcurrentTestTask::STEP_ONE, ConcurrentTestTask::STEP_TWO].include?(e[:step_name]) }
-          .map { |e| e[:thread_id] }
-          .uniq
+        thread_ids = executions.select do |e|
+          steps_to_check.include?(e[:step_name])
+        end.pluck(:thread_id).uniq
 
         # If different thread IDs were used, then parallel execution occurred
         expect(thread_ids.size).to be > 1
       end
 
       context 'when concurrent processing is disabled' do
-        class SequentialTestTask
-          include Tasker::TaskHandler
-
-          TASK_NAME = 'sequential_test_task'
-          STEP_ONE = 'step-one'
-          STEP_TWO = 'step-two'
-
-          # Register with concurrent processing disabled
-          register_handler(TASK_NAME, concurrent: false)
-
-          define_step_templates do |templates|
-            templates.define(
-              name: STEP_ONE,
-              description: 'Step One',
-              handler_class: TestStepHandler
-            )
-
-            templates.define(
-              name: STEP_TWO,
-              description: 'Step Two',
-              handler_class: TestStepHandler
-            )
-          end
-
-          def schema
-            {
-              type: 'object',
-              properties: {
-                test_id: { type: 'integer' }
-              }
-            }
-          end
-        end
-
-        before(:all) do
+        before do
           Tasker::HandlerFactory.instance.register(SequentialTestTask::TASK_NAME, SequentialTestTask)
         end
 
