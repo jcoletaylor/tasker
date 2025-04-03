@@ -36,14 +36,6 @@ Rails.application.routes.draw do
 end
 ```
 
-## How to use Tasker
-
-First, add Tasker to your Gemfile and install it:
-
-```ruby
-gem 'tasker'
-```
-
 ## Usage
 
 ### Creating a Task Handler from scratch
