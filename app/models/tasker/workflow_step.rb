@@ -1,54 +1,59 @@
 # typed: false
 # frozen_string_literal: true
 
-# == Schema Information
-#
-# Table name: workflow_steps
-#
-#  attempts                :integer
-#  backoff_request_seconds :integer
-#  in_process              :boolean          default(FALSE), not null
-#  inputs                  :jsonb
-#  last_attempted_at       :datetime
-#  processed               :boolean          default(FALSE), not null
-#  processed_at            :datetime
-#  results                 :jsonb
-#  retry_limit             :integer          default(3)
-#  retryable               :boolean          default(TRUE), not null
-#  skippable               :boolean          default(FALSE), not null
-#  status                  :string(64)       not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  depends_on_step_id      :bigint
-#  named_step_id           :integer          not null
-#  task_id                 :bigint           not null
-#  workflow_step_id        :bigint           not null, primary key
-#
-# Indexes
-#
-#  workflow_steps_depends_on_step_id_index  (depends_on_step_id)
-#  workflow_steps_last_attempted_at_index   (last_attempted_at)
-#  workflow_steps_named_step_id_index       (named_step_id)
-#  workflow_steps_processed_at_index        (processed_at)
-#  workflow_steps_status_index              (status)
-#  workflow_steps_task_id_index             (task_id)
-#
-# Foreign Keys
-#
-#  workflow_steps_depends_on_step_id_foreign  (depends_on_step_id => workflow_steps.workflow_step_id)
-#  workflow_steps_named_step_id_foreign       (named_step_id => named_steps.named_step_id)
-#  workflow_steps_task_id_foreign             (task_id => tasks.task_id)
-#
 module Tasker
   class WorkflowStep < ApplicationRecord
+    PROVIDES_EDGE_NAME = 'provides'
+
     self.primary_key = :workflow_step_id
     belongs_to :task
     belongs_to :named_step
-    belongs_to :depends_on_step, class_name: 'WorkflowStep', optional: true
+    # belongs_to :depends_on_step, class_name: 'WorkflowStep', optional: true
+    has_many  :incoming_edges,
+              class_name: 'WorkflowStepEdge',
+              foreign_key: :to_step_id,
+              dependent: :destroy,
+              inverse_of: :to_step
+    has_many  :outgoing_edges,
+              class_name: 'WorkflowStepEdge',
+              foreign_key:
+              :from_step_id,
+              dependent: :destroy,
+              inverse_of: :from_step
+    has_many :parents, through: :incoming_edges, source: :from_step
+    has_many :children, through: :outgoing_edges, source: :to_step
+    has_many :siblings, through: :outgoing_edges, source: :from_step
 
     validates :status, presence: true, inclusion: { in: Constants::VALID_WORKFLOW_STEP_STATUSES }
+    validates :named_step_id, uniqueness: { scope: :task_id, message: 'must be unique within the same task' }
+    validate :name_uniqueness_within_task
 
     delegate :name, to: :named_step
+
+    # Finds a WorkflowStep with the given name by traversing the DAG
+    # @param steps [Array<WorkflowStep>] Array of WorkflowStep instances to search through
+    # @param name [String] Name of the step to find
+    # @return [WorkflowStep, nil] The first matching step found or nil if none exists
+    def self.find_step_by_name(steps, name)
+      return nil if steps.empty? || name.nil?
+
+      # First check if any of the provided steps match the name
+      matching_step = steps.find { |step| step.name == name }
+      return matching_step if matching_step
+
+      # If not found in the provided steps, recursively search through children
+      steps.each do |step|
+        # Get all children of the current step
+        children = step.children.to_a
+
+        # Recursively search through children
+        result = find_step_by_name(children, name)
+        return result if result
+      end
+
+      # No matching step found
+      nil
+    end
 
     def self.get_steps_for_task(task, templates)
       named_steps = NamedStep.create_named_steps_from_templates(templates)
@@ -65,12 +70,15 @@ module Tasker
 
     def self.set_up_dependent_steps(steps, templates)
       templates.each do |template|
-        next unless template.depends_on_step
+        next if template.all_dependencies.empty?
 
         dependent_step = steps.find { |step| step.name == template.name }
-        depends_on_step = steps.find { |step| step.name == template.depends_on_step }
-        dependent_step.depends_on_step_id = depends_on_step.workflow_step_id
-        dependent_step.save!
+        template.all_dependencies.each do |dependency|
+          provider_step = steps.find { |step| step.name == dependency }
+          unless provider_step.outgoing_edges.exists?(to_step: dependent_step)
+            provider_step.add_provides_edge!(dependent_step)
+          end
+        end
       end
       steps
     end
@@ -94,58 +102,109 @@ module Tasker
     end
 
     def self.get_viable_steps(task, sequence)
-      unfinished_steps = sequence.steps.filter { |step| !step.processed && !step.in_process }
-      unfinished_step_ids = unfinished_steps.map(&:workflow_step_id)
-      viable_steps = []
-      unfinished_steps.each do |step|
-        next if step.in_process
-        next if step.processed
-        next if step.status == Constants::WorkflowStepStatuses::CANCELLED
-        next if step.status == Constants::WorkflowStepStatuses::IN_PROGRESS
-        next if step.attempts.positive? && !step.retryable
-        next if step.attempts >= step.retry_limit
-        next if step.depends_on_step_id && unfinished_step_ids.include?(step.depends_on_step_id)
+      # Ensure we have the latest data from the database
+      task.reload if task.persisted?
 
-        if step.backoff_request_seconds && step.last_attempted_at
-          backoff_end = step.last_attempted_at + step.backoff_request_seconds
-          next if Time.zone.now < backoff_end
-        end
-        next if task&.bypass_steps&.include?(step.name) && step.skippable
-
-        viable_steps << step
+      # Get all steps with fresh data from the database
+      fresh_steps = {}
+      sequence.steps.each do |step|
+        fresh_step = step.persisted? ? Tasker::WorkflowStep.find(step.workflow_step_id) : step
+        fresh_steps[fresh_step.workflow_step_id] = fresh_step
       end
+
+      # Get all steps that aren't processed or in_process
+      unfinished_steps = fresh_steps.values.reject { |step| step.processed || step.in_process }
+
+      # First, build a dependency map and identify root steps (those with no parents)
+      dependency_map = {}
+      root_steps = []
+
+      unfinished_steps.each do |step|
+        # Get fresh parent information
+        parent_ids = step.parents.map(&:workflow_step_id)
+        dependency_map[step.workflow_step_id] = parent_ids
+
+        # If no parents, this is a root step
+        root_steps << step if parent_ids.empty?
+      end
+
+      # Handle special case for in_progress steps
+      if unfinished_steps.any?(&:in_progress?)
+        # If any step is in_progress, only include viable root steps
+        viable_steps = root_steps.select { |step| is_step_viable?(step, task) }
+        return viable_steps
+      end
+
+      # Find all viable steps using the dependency map
+      viable_steps = []
+
+      # First add any root steps that are viable
+      root_steps.each do |step|
+        viable_steps << step if is_step_viable?(step, task)
+      end
+
+      # Then find all steps with completed parents
+      unfinished_steps.each do |step|
+        # Skip root steps (already processed) and steps already in viable_steps
+        next if dependency_map[step.workflow_step_id].empty? || viable_steps.include?(step)
+
+        # Check if all parents are complete
+        all_parents_complete = dependency_map[step.workflow_step_id].all? do |parent_id|
+          parent_step = fresh_steps[parent_id]
+          parent_step.complete?
+        end
+
+        # If all parents are complete and the step is viable, add it
+        viable_steps << step if all_parents_complete && is_step_viable?(step, task)
+      end
+
       viable_steps
     end
 
-    def self.get_dependent_step_from_sequence(
-      step,
-      sequence,
-      require_results = true,
-      require_inputs = false
-    )
-      dependent_step = sequence.steps.find { |sibling_step| step.depends_on_step_id == sibling_step.workflow_step_id }
+    def self.is_step_viable?(step, task)
+      # First check if step is ready
+      return false unless step.ready?
 
-      unless dependent_step
-        raise(Tasker::ProceduralError,
-              "required dependent step for #{step.workflow_step_id} not found")
+      # Check if all parents are complete
+      return false unless all_parents_complete?([step])
+
+      # Check backoff timing
+      return false if in_backoff?(step)
+
+      # Check if step is bypassed and skippable
+      return false if task&.bypass_steps&.include?(step.name) && step.skippable
+
+      # Step is viable
+      true
+    end
+
+    def self.all_parents_complete?(steps)
+      steps.all? do |step|
+        # If no parents, always return true (no dependencies to satisfy)
+        if step.parents.empty?
+          true # Return true for this step's evaluation in the 'all?' block
+        else
+          # Check if all parents are complete
+          step.parents.all? do |parent|
+            # Ensure we get the latest status from the database
+            fresh_parent = Tasker::WorkflowStep.find(parent.workflow_step_id)
+            fresh_parent.complete?
+          end
+        end
+      end
+    end
+
+    def self.in_backoff?(step)
+      if step.backoff_request_seconds && step.last_attempted_at
+        backoff_end = step.last_attempted_at + step.backoff_request_seconds
+        return true if Time.zone.now < backoff_end
       end
 
-      unless dependent_step.processed
-        raise(Tasker::ProceduralError,
-              "required dependent step #{dependent_step.workflow_step_id} incomplete")
-      end
+      false
+    end
 
-      if require_results && !dependent_step.results
-        raise(Tasker::ProceduralError,
-              "dependent step #{dependent_step.workflow_step_id} does not have viable results")
-      end
-
-      if require_inputs && !dependent_step.inputs
-        raise(Tasker::ProceduralError,
-              "dependent step #{dependent_step.workflow_step_id} does not have viable inputs")
-      end
-
-      dependent_step
+    def add_provides_edge!(to_step)
+      outgoing_edges.create!(to_step: to_step, name: PROVIDES_EDGE_NAME)
     end
 
     def complete?
@@ -166,6 +225,35 @@ module Tasker
 
     def cancelled?
       status == Constants::WorkflowStepStatuses::CANCELLED
+    end
+
+    def ready_status?
+      Constants::UNREADY_WORKFLOW_STEP_STATUSES.exclude?(status)
+    end
+
+    def ready?
+      ready = true
+      ready = false if in_process
+      ready = false if processed
+      ready = false unless ready_status?
+      ready = false if attempts.positive? && !retryable
+      ready = false if attempts >= retry_limit
+      ready
+    end
+
+    private
+
+    # Custom validation to ensure step names are unique within a task
+    def name_uniqueness_within_task
+      return unless named_step && task
+
+      # Find all steps within the same task that have the same name
+      matching_steps = self.class.where(task_id: task_id)
+                           .joins(:named_step)
+                           .where(named_step: { name: name })
+                           .where.not(workflow_step_id: workflow_step_id) # Exclude self when updating
+
+      errors.add(:base, "Step name '#{name}' must be unique within the same task") if matching_steps.exists?
     end
   end
 end

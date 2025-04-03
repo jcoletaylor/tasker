@@ -54,19 +54,54 @@ module Tasker
       sig { params(task: Task).void }
       def handle(task)
         start_task(task)
-        sequence = get_sequence(task)
-        viable_steps = Tasker::WorkflowStep.get_viable_steps(task, sequence)
-        steps = handle_viable_steps(task, sequence, viable_steps)
-        # get sequence again, updated
-        sequence = get_sequence(task)
-        more_viable_steps = Tasker::WorkflowStep.get_viable_steps(task, sequence)
-        if more_viable_steps.length.positive?
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
-          # if there are more viable steps that we can handle now
-          # that we are not waiting on, then just recursively call handle again
-          return handle(task)
+
+        # Process steps recursively until no more viable steps are found
+        all_processed_steps = []
+
+        loop do
+          # Get the latest sequence with up-to-date step statuses
+          task.reload
+          sequence = get_sequence(task)
+
+          # Find viable steps according to DAG traversal
+          # Force a fresh load of all steps, including children of completed steps
+          viable_steps = find_viable_steps_directly(task, sequence)
+
+          # If no viable steps found, we're done
+          break if viable_steps.empty?
+
+          # Process the viable steps
+          processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
+          all_processed_steps.concat(processed_in_this_round)
+
+          # Check if any errors occurred that would block further progress
+          break if blocked_by_errors?(task, sequence, processed_in_this_round)
         end
-        finalize(task, sequence, steps)
+
+        # Get final sequence after all processing
+        final_sequence = get_sequence(task)
+
+        # Finalize the task
+        finalize(task, final_sequence, all_processed_steps)
+      end
+
+      # Direct method to find viable steps, properly checking latest DB state
+      def find_viable_steps_directly(task, sequence)
+        unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
+
+        viable_steps = []
+        unfinished_steps.each do |step|
+          # Reload to get latest status
+          fresh_step = Tasker::WorkflowStep.find(step.workflow_step_id)
+
+          # Skip if step is now processed or in process
+          next if fresh_step.processed || fresh_step.in_process
+
+          # Check if step is viable with latest DB state
+          viable_steps << fresh_step if Tasker::WorkflowStep.is_step_viable?(fresh_step, task)
+        end
+
+        viable_steps
       end
 
       # typed: true
@@ -98,12 +133,61 @@ module Tasker
                steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
-        steps.each do |step|
-          handle_one_step(task, sequence, step)
+        # If concurrent processing is not enabled, process steps sequentially
+        unless respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
+          return handle_viable_steps_sequentially(task, sequence, steps)
         end
-        # we can update annotations in every pass
-        update_annotations(task, sequence, steps)
-        steps
+
+        # Create an array of futures and processed steps
+        futures = []
+        processed_steps = Concurrent::Array.new
+
+        # Create a future for each step
+        steps.each do |step|
+          # Use Concurrent::Future to process each step asynchronously
+          future = Concurrent::Future.execute do
+            handle_one_step(task, sequence, step)
+          end
+
+          futures << future
+        end
+
+        # Wait for all futures to complete
+        futures.each do |future|
+          # Wait for the future to complete (with a reasonable timeout)
+
+          # 30 second timeout to prevent indefinite hanging
+          result = future.value(30)
+          processed_steps << result if result
+        rescue StandardError => e
+          Rails.logger.error("Error processing step concurrently: #{e.message}")
+        end
+
+        # Update annotations for this batch
+        update_annotations(task, sequence, processed_steps)
+
+        processed_steps.to_a
+      end
+
+      # Process steps sequentially
+      # typed: true
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence,
+               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+      end
+      def handle_viable_steps_sequentially(task, sequence, steps)
+        processed_steps = []
+
+        # Process each step one at a time
+        steps.each do |step|
+          processed_step = handle_one_step(task, sequence, step)
+          processed_steps << processed_step
+        end
+
+        # Update annotations for this batch
+        update_annotations(task, sequence, processed_steps)
+
+        processed_steps
       end
 
       # we are finalizing whether a task is complete

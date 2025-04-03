@@ -10,7 +10,7 @@ module Tasker
       SUCCESS_CODES = (200..226)
 
       class Config
-        attr_accessor :url, :params, :ssl, :headers, :retry_delay, :retry_delay_multiplier, :enable_exponential_backoff
+        attr_accessor :url, :params, :ssl, :headers, :retry_delay, :enable_exponential_backoff, :jitter_factor
 
         def initialize(
           url:,
@@ -18,8 +18,8 @@ module Tasker
           ssl: nil,
           headers: default_headers,
           enable_exponential_backoff: true,
-          retry_delay: 5,
-          retry_delay_multiplier: 1
+          retry_delay: 1.0,
+          jitter_factor: rand
         )
           @url = url
           @params = params
@@ -27,7 +27,7 @@ module Tasker
           @headers = headers
           @enable_exponential_backoff = enable_exponential_backoff
           @retry_delay = retry_delay
-          @retry_delay_multiplier = retry_delay_multiplier
+          @jitter_factor = jitter_factor
         end
 
         def default_headers
@@ -93,8 +93,24 @@ module Tasker
 
       def _exponential_backoff(step)
         step.attempts ||= 1
-        exponent = step.attempts + 1
-        retry_delay = (@config.retry_delay * @config.retry_delay_multiplier)**exponent
+        min_exponent = 2
+        exponent = [step.attempts + 1, min_exponent].max
+        # Standard exponential backoff formula: base_delay * (2 ^ attempt)
+        # Starting with attempt=1, this gives: base_delay, 2*base_delay, 4*base_delay, 8*base_delay, etc.
+        base_delay = @config.retry_delay || 1.0 # Default to 1 second if not specified
+
+        # Calculate exponential delay with a cap to prevent excessive waiting
+        max_delay = 30.0 # Cap maximum delay at 30 seconds
+        exponential_delay = [base_delay * (2**exponent), max_delay].min
+
+        # Add jitter (randomness) to prevent thundering herd problem
+        # Use full jitter algorithm: random value between 0 and exponential_delay
+        jitter_factor = @config.jitter_factor
+        retry_delay = exponential_delay * jitter_factor
+
+        # Ensure minimum delay of at least half the base delay
+        retry_delay = [retry_delay, base_delay * 0.5].max
+
         step.backoff_request_seconds = retry_delay
         step.last_attempted_at = Time.zone.now
       end

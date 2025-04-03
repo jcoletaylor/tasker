@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'json-schema'
+require 'concurrent'
 
 module Tasker
   module TaskHandler
@@ -25,6 +26,7 @@ module Tasker
           default_retry_limit = kwargs.fetch(:default_retry_limit, 3)
           skippable = kwargs.fetch(:skippable, false)
           depends_on_step = kwargs.fetch(:depends_on_step, nil)
+          depends_on_steps = kwargs.fetch(:depends_on_steps, [])
           handler_config = kwargs.fetch(:handler_config, nil)
 
           @step_templates << Tasker::Types::StepTemplate.new(
@@ -36,6 +38,7 @@ module Tasker
             skippable: skippable,
             handler_class: handler_class,
             depends_on_step: depends_on_step,
+            depends_on_steps: depends_on_steps,
             handler_config: handler_config
           )
         end
@@ -63,7 +66,22 @@ module Tasker
         end
       end
 
-      def register_handler(name)
+      # Simple register_handler method that enables or disables concurrent processing
+      # using Concurrent::Future for step execution
+      #
+      # @param name [String, Symbol] The name to register the handler under
+      # @param concurrent [Boolean] Whether to use concurrent processing (default: true)
+      # @return [void]
+      def register_handler(name, concurrent: true)
+        # Set a flag indicating whether to use concurrent processing
+        class_variable_set(:@@use_concurrent_processing, concurrent)
+
+        # Define a method to check if concurrent processing is enabled
+        define_method(:use_concurrent_processing?) do
+          self.class.class_variable_get(:@@use_concurrent_processing)
+        end
+
+        # Register the handler with the factory
         Tasker::HandlerFactory.instance.register(name, self)
       end
     end

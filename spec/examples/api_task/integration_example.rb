@@ -14,7 +14,8 @@ module ApiTask
     STEP_PUBLISH_EVENT = 'publish_event'
     TASK_REGISTRY_NAME = 'api_integration_task'
 
-    register_handler(TASK_REGISTRY_NAME)
+    # Register the handler with concurrent processing enabled
+    register_handler(TASK_REGISTRY_NAME, concurrent: true)
 
     define_step_templates do |templates|
       templates.define(
@@ -33,7 +34,6 @@ module ApiTask
       templates.define(
         dependent_system: ECOMMERCE_SYSTEM,
         name: STEP_FETCH_PRODUCTS,
-        depends_on_step: STEP_FETCH_CART,
         description: 'Fetch product details from product catalog',
         handler_class: ApiTask::StepHandler::ProductsFetchStepHandler,
         handler_config: Tasker::StepHandler::Api::Config.new(
@@ -45,7 +45,7 @@ module ApiTask
         dependent_system: ECOMMERCE_SYSTEM,
         name: STEP_VALIDATE_PRODUCTS,
         description: 'Validate product availability',
-        depends_on_step: STEP_FETCH_PRODUCTS,
+        depends_on_steps: [STEP_FETCH_PRODUCTS, STEP_FETCH_CART],
         handler_class: ApiTask::StepHandler::ProductsValidateStepHandler
       )
 

@@ -11,7 +11,7 @@ module Tasker
       attribute :steps, Types::Array.default([].freeze)
 
       def find_step_by_name(name)
-        steps.find { |step| step.name == name }
+        Tasker::WorkflowStep.find_step_by_name(steps, name)
       end
     end
   end

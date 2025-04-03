@@ -1,44 +1,6 @@
 # typed: false
 # frozen_string_literal: true
 
-# == Schema Information
-#
-# Table name: workflow_steps
-#
-#  attempts                :integer
-#  backoff_request_seconds :integer
-#  in_process              :boolean          default(FALSE), not null
-#  inputs                  :jsonb
-#  last_attempted_at       :datetime
-#  processed               :boolean          default(FALSE), not null
-#  processed_at            :datetime
-#  results                 :jsonb
-#  retry_limit             :integer          default(3)
-#  retryable               :boolean          default(TRUE), not null
-#  skippable               :boolean          default(FALSE), not null
-#  status                  :string(64)       not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  depends_on_step_id      :bigint
-#  named_step_id           :integer          not null
-#  task_id                 :bigint           not null
-#  workflow_step_id        :bigint           not null, primary key
-#
-# Indexes
-#
-#  workflow_steps_depends_on_step_id_index  (depends_on_step_id)
-#  workflow_steps_last_attempted_at_index   (last_attempted_at)
-#  workflow_steps_named_step_id_index       (named_step_id)
-#  workflow_steps_processed_at_index        (processed_at)
-#  workflow_steps_status_index              (status)
-#  workflow_steps_task_id_index             (task_id)
-#
-# Foreign Keys
-#
-#  workflow_steps_depends_on_step_id_foreign  (depends_on_step_id => workflow_steps.workflow_step_id)
-#  workflow_steps_named_step_id_foreign       (named_step_id => named_steps.named_step_id)
-#  workflow_steps_task_id_foreign             (task_id => tasks.task_id)
-#
 require 'rails_helper'
 require_relative '../../helpers/task_helpers'
 require_relative '../../mocks/dummy_task'
@@ -77,22 +39,22 @@ module Tasker
           helper.reset_step_to_default(step)
           expect(step.save).to(be_truthy)
         end
-        step_one = sequence.steps.find { |step| step.name == DummyTask::STEP_ONE }
-        step_two = sequence.steps.find { |step| step.name == DummyTask::STEP_TWO }
+        step_one = sequence.find_step_by_name(DummyTask::STEP_ONE)
+        step_two = sequence.find_step_by_name(DummyTask::STEP_TWO)
         viable_steps = described_class.get_viable_steps(task, sequence)
         expect(viable_steps).to(eq([step_one, step_two]))
         viable_steps.each do |step|
           helper.mark_step_complete(step)
         end
         sequence = task_handler.get_sequence(task)
-        step_three = sequence.steps.find { |step| step.name == DummyTask::STEP_THREE }
+        step_three = sequence.find_step_by_name(DummyTask::STEP_THREE)
         viable_steps = described_class.get_viable_steps(task, sequence)
         expect(viable_steps).to(eq([step_three]))
         viable_steps.each do |step|
           helper.mark_step_complete(step)
         end
         sequence = task_handler.get_sequence(task)
-        step_four = sequence.steps.find { |step| step.name == DummyTask::STEP_FOUR }
+        step_four = sequence.find_step_by_name(DummyTask::STEP_FOUR)
         viable_steps = described_class.get_viable_steps(task, sequence)
         expect(viable_steps).to(eq([step_four]))
       end
