@@ -14,7 +14,8 @@ module ApiTask
     STEP_PUBLISH_EVENT = 'publish_event'
     TASK_REGISTRY_NAME = 'api_integration_task'
 
-    register_handler(TASK_REGISTRY_NAME)
+    # Register the handler with concurrent processing enabled
+    register_handler(TASK_REGISTRY_NAME, concurrent: true)
 
     define_step_templates do |templates|
       templates.define(

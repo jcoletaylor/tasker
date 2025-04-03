@@ -133,10 +133,53 @@ module Tasker
                steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
-        # Process steps in topological order to ensure dependencies are handled first
+        # If concurrent processing is not enabled, process steps sequentially
+        unless respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
+          return handle_viable_steps_sequentially(task, sequence, steps)
+        end
+
+        # Create an array of futures and processed steps
+        futures = []
+        processed_steps = Concurrent::Array.new
+
+        # Create a future for each step
+        steps.each do |step|
+          # Use Concurrent::Future to process each step asynchronously
+          future = Concurrent::Future.execute do
+            handle_one_step(task, sequence, step)
+          end
+
+          futures << future
+        end
+
+        # Wait for all futures to complete
+        futures.each do |future|
+          # Wait for the future to complete (with a reasonable timeout)
+          begin
+            # 30 second timeout to prevent indefinite hanging
+            result = future.value(30)
+            processed_steps << result if result
+          rescue => e
+            Rails.logger.error("Error processing step concurrently: #{e.message}")
+          end
+        end
+
+        # Update annotations for this batch
+        update_annotations(task, sequence, processed_steps)
+
+        processed_steps.to_a
+      end
+
+      # Process steps sequentially
+      # typed: true
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence,
+               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+      end
+      def handle_viable_steps_sequentially(task, sequence, steps)
         processed_steps = []
 
-        # First, process all viable steps that were passed in
+        # Process each step one at a time
         steps.each do |step|
           processed_step = handle_one_step(task, sequence, step)
           processed_steps << processed_step
