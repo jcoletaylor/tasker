@@ -25,6 +25,7 @@ module Tasker
           default_retry_limit = kwargs.fetch(:default_retry_limit, 3)
           skippable = kwargs.fetch(:skippable, false)
           depends_on_step = kwargs.fetch(:depends_on_step, nil)
+          depends_on_steps = kwargs.fetch(:depends_on_steps, [])
           handler_config = kwargs.fetch(:handler_config, nil)
 
           @step_templates << Tasker::Types::StepTemplate.new(
@@ -36,6 +37,7 @@ module Tasker
             skippable: skippable,
             handler_class: handler_class,
             depends_on_step: depends_on_step,
+            depends_on_steps: depends_on_steps,
             handler_config: handler_config
           )
         end

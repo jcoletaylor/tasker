@@ -31,17 +31,36 @@ module Tasker
       end
 
       def build_prior_incomplete_steps
-        # determine which states were incomplete for the whole sequence before this round
+        # determine which states were incomplete by traversing the entire DAG
         self.prior_incomplete_steps = []
-        @sequence.steps.each do |step|
+
+        # Find all root steps (those without parents)
+        root_steps = @sequence.steps.select { |step| step.parents.empty? }
+
+        # Recursively traverse the DAG to find all incomplete steps
+        find_incomplete_steps(root_steps, [])
+      end
+
+      # Helper method to recursively traverse the DAG and find incomplete steps
+      def find_incomplete_steps(steps, visited_step_ids)
+        steps.each do |step|
+          # Skip if we've already visited this step (avoid cycles, though they shouldn't exist in a DAG)
+          next if visited_step_ids.include?(step.workflow_step_id)
+
+          # Add this step to visited
+          visited_step_ids << step.workflow_step_id
+
+          # Add to prior_incomplete_steps if this step is incomplete
           prior_incomplete_steps << step if Tasker::Constants::VALID_STEP_COMPLETION_STATES.exclude?(step.status)
+
+          # Recursively check all children
+          find_incomplete_steps(step.children, visited_step_ids)
         end
       end
 
       def build_this_pass_complete_steps
-        # the steps that are passed into finalize are not the whole sequence
-        # just what has been worked on in this pass, so we need to see what completed
-        # in a valid state, and what has still to be done
+        # The steps passed into finalize are those processed in this pass
+        # Check which ones completed in a valid state
         self.this_pass_complete_steps = []
         @steps.each do |step|
           this_pass_complete_steps << step if Tasker::Constants::VALID_STEP_COMPLETION_STATES.include?(step.status)
@@ -50,7 +69,7 @@ module Tasker
       end
 
       def build_still_incomplete_steps
-        # what was incomplete from the prior pass that is still incopmlete now
+        # What was incomplete from the prior DAG traversal that is still incomplete now
         self.still_incomplete_steps = []
         prior_incomplete_steps.each do |step|
           still_incomplete_steps << step if this_pass_complete_step_ids.exclude?(step.workflow_step_id)
@@ -58,7 +77,7 @@ module Tasker
       end
 
       def build_still_working_steps
-        # what is still working but in a valid, retryable state
+        # What is still working from the incomplete steps but in a valid, retryable state
         self.still_working_steps = []
         still_incomplete_steps.each do |step|
           still_working_steps << step if Tasker::Constants::VALID_STEP_STILL_WORKING_STATES.include?(step.status)

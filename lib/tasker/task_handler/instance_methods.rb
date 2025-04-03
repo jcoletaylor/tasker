@@ -54,19 +54,54 @@ module Tasker
       sig { params(task: Task).void }
       def handle(task)
         start_task(task)
-        sequence = get_sequence(task)
-        viable_steps = Tasker::WorkflowStep.get_viable_steps(task, sequence)
-        steps = handle_viable_steps(task, sequence, viable_steps)
-        # get sequence again, updated
-        sequence = get_sequence(task)
-        more_viable_steps = Tasker::WorkflowStep.get_viable_steps(task, sequence)
-        if more_viable_steps.length.positive?
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
-          # if there are more viable steps that we can handle now
-          # that we are not waiting on, then just recursively call handle again
-          return handle(task)
+
+        # Process steps recursively until no more viable steps are found
+        all_processed_steps = []
+
+        loop do
+          # Get the latest sequence with up-to-date step statuses
+          task.reload
+          sequence = get_sequence(task)
+
+          # Find viable steps according to DAG traversal
+          # Force a fresh load of all steps, including children of completed steps
+          viable_steps = find_viable_steps_directly(task, sequence)
+
+          # If no viable steps found, we're done
+          break if viable_steps.empty?
+
+          # Process the viable steps
+          processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
+          all_processed_steps.concat(processed_in_this_round)
+
+          # Check if any errors occurred that would block further progress
+          break if blocked_by_errors?(task, sequence, processed_in_this_round)
         end
-        finalize(task, sequence, steps)
+
+        # Get final sequence after all processing
+        final_sequence = get_sequence(task)
+
+        # Finalize the task
+        finalize(task, final_sequence, all_processed_steps)
+      end
+
+      # Direct method to find viable steps, properly checking latest DB state
+      def find_viable_steps_directly(task, sequence)
+        unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
+
+        viable_steps = []
+        unfinished_steps.each do |step|
+          # Reload to get latest status
+          fresh_step = Tasker::WorkflowStep.find(step.workflow_step_id)
+
+          # Skip if step is now processed or in process
+          next if fresh_step.processed || fresh_step.in_process
+
+          # Check if step is viable with latest DB state
+          viable_steps << fresh_step if Tasker::WorkflowStep.is_step_viable?(fresh_step, task)
+        end
+
+        viable_steps
       end
 
       # typed: true
@@ -98,12 +133,19 @@ module Tasker
                steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
+        # Process steps in topological order to ensure dependencies are handled first
+        processed_steps = []
+
+        # First, process all viable steps that were passed in
         steps.each do |step|
-          handle_one_step(task, sequence, step)
+          processed_step = handle_one_step(task, sequence, step)
+          processed_steps << processed_step
         end
-        # we can update annotations in every pass
-        update_annotations(task, sequence, steps)
-        steps
+
+        # Update annotations for this batch
+        update_annotations(task, sequence, processed_steps)
+
+        processed_steps
       end
 
       # we are finalizing whether a task is complete

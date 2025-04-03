@@ -33,7 +33,6 @@ module ApiTask
       templates.define(
         dependent_system: ECOMMERCE_SYSTEM,
         name: STEP_FETCH_PRODUCTS,
-        depends_on_step: STEP_FETCH_CART,
         description: 'Fetch product details from product catalog',
         handler_class: ApiTask::StepHandler::ProductsFetchStepHandler,
         handler_config: Tasker::StepHandler::Api::Config.new(
@@ -45,7 +44,7 @@ module ApiTask
         dependent_system: ECOMMERCE_SYSTEM,
         name: STEP_VALIDATE_PRODUCTS,
         description: 'Validate product availability',
-        depends_on_step: STEP_FETCH_PRODUCTS,
+        depends_on_steps: [STEP_FETCH_PRODUCTS, STEP_FETCH_CART],
         handler_class: ApiTask::StepHandler::ProductsValidateStepHandler
       )
 

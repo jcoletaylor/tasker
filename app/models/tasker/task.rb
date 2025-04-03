@@ -68,7 +68,7 @@ module Tasker
           }
 
     scope :with_all_associated, lambda {
-      includes(:named_task).includes(workflow_steps: %i[named_step depends_on_step]).includes(task_annotations: %i[annotation_type])
+      includes(:named_task).includes(workflow_steps: %i[named_step parents children]).includes(task_annotations: %i[annotation_type])
     }
 
     # typed: true

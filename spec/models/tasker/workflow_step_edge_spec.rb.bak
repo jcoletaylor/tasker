@@ -93,20 +93,17 @@ module Tasker
 
       it 'allows multiple paths to the same destination' do
         # First, delete any existing edges from the setup to start with a clean graph
-        described_class.delete_all
+        Tasker::WorkflowStepEdge.delete_all
 
         # Create two paths to step_three: step_one -> step_three and step_two -> step_three
-        edge1 = described_class.create!(from_step: step_one, to_step: step_three,
-                                        name: WorkflowStep::PROVIDES_EDGE_NAME)
-        edge2 = described_class.create!(from_step: step_two, to_step: step_three,
-                                        name: WorkflowStep::PROVIDES_EDGE_NAME)
+        edge1 = described_class.create!(from_step: step_one, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
+        edge2 = described_class.create!(from_step: step_two, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
 
         expect(edge1).to be_persisted
         expect(edge2).to be_persisted
 
         # Create a path from step_four to step_three (should be valid as it doesn't create a cycle)
-        edge3 = described_class.create!(from_step: step_four, to_step: step_three,
-                                        name: WorkflowStep::PROVIDES_EDGE_NAME)
+        edge3 = described_class.create!(from_step: step_four, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
         expect(edge3).to be_persisted
       end
     end
@@ -129,13 +126,11 @@ module Tasker
       describe 'siblings_of' do
         it 'finds steps that share one parent' do
           # Delete any existing edges
-          described_class.delete_all
+          Tasker::WorkflowStepEdge.delete_all
 
           # Create a simple structure where step_one is a parent to both step_two and step_three
-          described_class.create!(from_step: step_one, to_step: step_two,
-                                  name: WorkflowStep::PROVIDES_EDGE_NAME)
-          described_class.create!(from_step: step_one, to_step: step_three,
-                                  name: WorkflowStep::PROVIDES_EDGE_NAME)
+          edge1 = described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
+          edge2 = described_class.create!(from_step: step_one, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
 
           # Step_two has step_four as a child (to avoid cycles)
           described_class.create!(from_step: step_two, to_step: step_four, name: WorkflowStep::PROVIDES_EDGE_NAME)
@@ -148,7 +143,7 @@ module Tasker
 
         it 'finds steps that share all parents' do
           # Delete any existing edges to start with a clean graph
-          described_class.delete_all
+          Tasker::WorkflowStepEdge.delete_all
 
           # Create a structure where step_two and step_three share multiple parents
           described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
@@ -162,10 +157,22 @@ module Tasker
           expect(parents.map(&:from_step)).to include(step_one, step_four)
 
           # Check siblings
+          siblings = described_class.siblings_of(step_two)
+          puts "\nSiblings of step_two (#{siblings.count}):"
+          siblings.each { |s| puts "  #{s.id}: #{s.from_step.name} -> #{s.to_step.name}" }
+
+          # Log the parents for comparison
+          step_parents = described_class.parents_of(step_two)
+          puts "\nParents of step_two:"
+          step_parents.each { |p| puts "  #{p.id}: #{p.from_step.name} -> #{p.to_step.name}" }
+
+          # Check the sibling finding SQL for debugging
+          puts "\nSibling SQL:"
+          puts described_class.sibling_sql(step_two.id)
+
           # The siblings_of method returns the edges to sibling steps, one edge per parent
           # Since we have two parents (step_one and step_four) and one sibling step (step_three),
           # we expect two edges (step_one -> step_three and step_four -> step_three)
-          siblings = described_class.siblings_of(step_two)
           expect(siblings.count).to eq(2)
           expect(siblings.map(&:from_step)).to include(step_one, step_four)
           expect(siblings.map(&:to_step).uniq).to eq([step_three])

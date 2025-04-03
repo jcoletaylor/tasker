@@ -5,19 +5,15 @@ module Tasker
     belongs_to :from_step, class_name: 'WorkflowStep'
     belongs_to :to_step, class_name: 'WorkflowStep'
 
-    validates :name, uniqueness: { scope: %i[from_step_id to_step_id] }
-
     validates :name, presence: true
 
     before_create :ensure_no_cycles!
 
     scope :children_of, ->(step) { where(from_step: step) }
     scope :parents_of, ->(step) { where(to_step: step) }
-
     scope :siblings_of, ->(step) { find_by_sql(sibling_sql(step.id)) }
-
     scope :provides_edges, -> { where(name: WorkflowStep::PROVIDES_EDGE_NAME) }
-    scope :depends_on_edges, -> { where(name: WorkflowStep::DEPENDS_ON_EDGE_NAME) }
+    scope :provides_to_children, -> { where(name: WorkflowStep::PROVIDES_EDGE_NAME, to_step: children_of(from_step)) }
 
     def self.create_edge!(from_step, to_step, name)
       create!(from_step: from_step, to_step: to_step, name: name)
