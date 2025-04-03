@@ -188,27 +188,142 @@ The request body must include:
 - `source_system`: The system that created the task
 - `tags`: (Optional) Array of tags for categorization
 
+## Workflow & Retry Mechanism
+
+```mermaid
+graph TD
+    Start([Task Initialization]) --> FindRoots[Find Root Steps]
+    FindRoots --> QueueRoots[Queue Root Steps]
+    QueueRoots --> ParallelExec{Parallel Execution}
+
+    ParallelExec --> RootA[Root Step A]
+    ParallelExec --> RootB[Root Step B]
+
+    RootA --> |Running| A[Step Ready for Execution]
+    RootB --> |Running| A
+
+    A --> B{Step Succeeded?}
+    B -->|Yes| C[Mark Step Complete]
+    B -->|No| D{Retryable Error?}
+    D -->|No| E[Mark as Failed]
+    D -->|Yes| F{Attempts < Max?}
+    F -->|No| E
+    F -->|Yes| G[Calculate Backoff]
+
+    G --> H[Apply Exponential Backoff with Jitter]
+    H --> I[Wait for Backoff Period]
+    I --> J[Increment Attempt Count]
+    J --> A
+
+    C --> K{Find Dependent Steps}
+    K --> DepCheck{For Each Dependent Step}
+    DepCheck --> DependenciesMet{All Dependencies\nComplete?}
+    DependenciesMet -->|Yes| QueueStep[Queue Step for Execution]
+    QueueStep --> ParallelExec
+    DependenciesMet -->|No| Wait[Step Remains Pending]
+
+    E --> TaskCheck{Any Step\nFailed?}
+    TaskCheck -->|Yes| FailTask[Mark Task as Failed]
+
+    Wait -.- DepMonitor[Dependency Monitor]
+    DepMonitor -.- DependenciesMet
+
+    C --> CompleteCheck{All Steps\nComplete?}
+    CompleteCheck -->|Yes| CompleteTask[Mark Task as Complete]
+    CompleteCheck -->|No| Continue[Continue Processing]
+
+    subgraph DAG Traversal
+    FindRoots
+    QueueRoots
+    ParallelExec
+    RootA
+    RootB
+    K
+    DepCheck
+    DependenciesMet
+    QueueStep
+    Wait
+    DepMonitor
+    end
+
+    subgraph Exponential Backoff
+    G
+    H
+    I
+    J
+    end
+
+    subgraph Task Status Management
+    E
+    TaskCheck
+    FailTask
+    CompleteCheck
+    CompleteTask
+    end
+
+    %% Initialize with dark borders and light fills
+    style Start fill:#ffffff,stroke:#444444,stroke-width:2px
+    style FindRoots fill:#f6f6f6,stroke:#444444
+    style QueueRoots fill:#f6f6f6,stroke:#444444
+    style ParallelExec fill:#f6f6f6,stroke:#444444,stroke-width:2px
+
+    %% Root steps (slightly lighter gray)
+    style RootA fill:#e8e8e8,stroke:#666666
+    style RootB fill:#e8e8e8,stroke:#666666
+
+    %% Standard flow components (white with medium gray borders)
+    style A fill:#ffffff,stroke:#666666
+    style B fill:#ffffff,stroke:#666666
+    style C fill:#ffffff,stroke:#666666
+    style D fill:#ffffff,stroke:#666666
+    style F fill:#ffffff,stroke:#666666
+    style CompleteCheck fill:#ffffff,stroke:#666666
+    style Continue fill:#ffffff,stroke:#666666
+    style TaskCheck fill:#ffffff,stroke:#666666
+
+    %% Exponential backoff (light gray)
+    style G fill:#f0f0f0,stroke:#666666
+    style H fill:#f0f0f0,stroke:#666666
+    style I fill:#f0f0f0,stroke:#666666
+    style J fill:#f0f0f0,stroke:#666666
+
+    %% DAG specific components (slightly darker gray)
+    style K fill:#e0e0e0,stroke:#444444
+    style DepCheck fill:#e0e0e0,stroke:#444444
+    style DependenciesMet fill:#e0e0e0,stroke:#444444,stroke-width:2px
+    style QueueStep fill:#e0e0e0,stroke:#444444
+    style Wait fill:#e0e0e0,stroke:#444444,stroke-dasharray: 5 5
+    style DepMonitor fill:#e0e0e0,stroke:#444444,stroke-dasharray: 5 5
+
+    %% Success and failure states (dark and medium grays)
+    style CompleteTask fill:#d0d0d0,stroke:#222222,stroke-width:2px
+    style FailTask fill:#b0b0b0,stroke:#222222,stroke-width:2px
+    style E fill:#b0b0b0,stroke:#222222
+```
+
+The system implements advanced workflow traversal with parallel execution and sophisticated retry logic:
+
+- **DAG Traversal & Parallel Execution**
+  - Initial identification and queueing of root steps (no dependencies)
+  - Parallel execution of independent steps at each level
+  - Dynamic discovery of next executable steps as dependencies are satisfied
+  - Continuous monitoring of dependency status to activate pending steps
+  - Automatic task completion detection when all steps are finished
+
+- **Industry Standard Exponential Backoff**
+  - Base delay that doubles with each attempt: `base_delay * (2^attempt)`
+  - Random jitter to prevent thundering herd problems
+  - Configurable maximum delay cap (30 seconds)
+  - Respects server-provided Retry-After headers when available
+
+- **Task Status Management**
+  - Real-time monitoring of all step statuses
+  - Early failure detection and propagation
+  - Graceful handling of unrecoverable errors
+
 ## Why build this?
 
-That's a good question - Tasker is a pretty specialized kind of abstraction that many organizations may never really need. But as event-driven architectures become the norm, and as even smaller organizations find themselves interacting with a significant number of microservices, SaaS platforms, data stores, event queues, and the like, managing this complexity becomes a problem at scale.
-
-## Doesn't Sidekiq already exist? (or insert your favorite queuing broker)
-
-It does! I love [Sidekiq](https://sidekiq.org/) and Tasker is built on top of it. But this solves a little bit of a different problem.
-
-In event-driven architectures, it is not uncommon for the successful completion of any single "task" to actually be dependent on a significant number of "steps" - and these steps often rely on interacting with a number of different external and internal systems, whether an external API, a local datastore, or an in-house microservice. The success of a given task is therefore dependent on the successful completion of each step, and steps can likewise be dependent on other steps.
-
-The task itself may be enqueued for processing more than once, while steps are in a backoff or retry state. There are situations where a task and all of it steps may be able to be processed sequentially and successfully completed. In this case, the first time a task is enqueued, it is processed to completion, and will not be enqueued again. However, there are situations where a step's status is still in a valid state, but not complete, waiting on other steps, waiting on remote backoff requests, waiting on retrying from a remote failure, etc. When working with integrated services, APIs, etc that may fail, having retryability and resiliency around *each step* is crucial. If a step fails, it can be retried up to its retry limit, before we consider it in a final-error state. It is only a task which has one or more steps in a final-error (no retries left) that would mark a task as itself in error and no longer re-enquable. Any task that has still-viable steps that cannot be processed immediately, will simply be re-enqueued. The task and its steps retain the state of inputs, outputs, successes, and failures, so that implementing logic for different workflows do not have to repeat this logic over and over.
-
-## Consider an Example
-
-Consider a common scenario of receiving an e-commerce order in a multi-channel sales scenario, where fulfillment is managed on-site by an organization. Fulfillment systems have different data stores than the e-commerce solution, of course, but changes to an "order" in the abstract may have mutual effects on both the e-commerce representation of an order and the fulfillment order. When a change should be made to one, very frequently that change should, in some manner, propagate to both. Or, similarly, when an order is shipped, perhaps final taxes need to be calculated and reported to a tax SaaS platform, have the response data stored, and finally in total synced to a data warehouse for financial consistency. The purpose of Tasker is to make it more straightforward to enable event-driven architectures to handle multi-step tasks in a consistent and predictable way, with exposure to visibility in terms of results, status of steps, retryability, timeouts and backoffs, etc.
-
-## Technology Choices
-
-I originally developed this as a [standalone application](https://github.com/jcoletaylor/tasker_rails), but it felt like this would be a really good opportunity to convert it to a Rails Engine. For my day-to-day professional life I've been working pretty deeply with microservices and domain driven design patterns, but my current role has me back in a Rails monolith - in some ways, it feels good to be home! However, if we were ever going to use something like this in my current role, we would want it to be an Engine so it could be built and maintained external to our existing architecture.
-
-For this Rails Engine, I'm not going to include a lot of the sample lower-level handlers that the standalone application has written in Rust. However, you can [checkout the writeup](https://github.com/jcoletaylor/tasker_rails#technology-choices) in that app if you're interested!
+See the [WHY.md](./docs/WHY.md) file for more information.
 
 ## TODO
 
