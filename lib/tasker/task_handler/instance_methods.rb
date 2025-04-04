@@ -295,7 +295,7 @@ module Tasker
       # typed: true
       sig { params(task: Task).void }
       def enqueue_task(task)
-        Tasker::TaskRunnerJob.perform_async(task.task_id)
+        Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
 
       # override in implementing class

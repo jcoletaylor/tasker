@@ -13,7 +13,6 @@ gem 'nokogiri', '~> 1.15.7'
 gem 'rails-html-sanitizer', '>= 1.6.2'
 
 group :development do
-  gem 'annotate', '~> 3.2'
   gem 'byebug', '~> 11.1'
   gem 'listen', '~> 3.8'
   gem 'rswag-api', '~> 2.16'
@@ -36,6 +35,7 @@ end
 
 group :development, :test do
   gem 'dotenv-rails', '~> 2.8'
+  gem 'sidekiq', '~> 7.3'
   gem 'sorbet', '~> 0.5.11934'
   gem 'sorbet-runtime', '~> 0.5.11934'
   gem 'sorbet-static', '~> 0.5.11934'

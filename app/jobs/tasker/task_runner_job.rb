@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 module Tasker
-  class TaskRunnerJob
-    include Sidekiq::Worker
-    sidekiq_options retry: 3, backtrace: true, queue: :default
+  class TaskRunnerJob < Tasker::ApplicationJob
+    queue_as :default
+    retry_on StandardError, wait: 3.seconds, attempts: 3
 
     def handler_factory
       @handler_factory ||= Tasker::HandlerFactory.instance
