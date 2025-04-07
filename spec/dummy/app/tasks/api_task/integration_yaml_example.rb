@@ -3,8 +3,8 @@
 require_relative 'step_handler'
 module ApiTask
   class IntegrationYamlExample < Tasker::ConfiguredTask
-    def self.yaml_path
-      Rails.root.join('../examples/api_task/config/integration_example.yaml')
+    def self.task_name
+      'integration_example'
     end
   end
 end

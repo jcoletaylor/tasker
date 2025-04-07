@@ -13,15 +13,15 @@ require 'tasker'
 
 Rails.application.config.after_initialize do
   # Force eager loading of task handlers in production
-  if Rails.env.production? && Rails.root.join('app/task_handlers').exist? && Rails.root.join('app/task_handlers').exist?
+  if Rails.env.production? && Rails.root.join('app/tasks').exist? && Rails.root.join('app/tasks').exist?
     T.unsafe(Rails.autoloaders.main).eager_load_dir(
-      Rails.root.join('app/task_handlers')
+      Rails.root.join('app/tasks')
     )
   end
 
   # Ensure all handlers that include Tasker::TaskHandler are registered
   Rails.autoloaders.main.on_load do |_const, path|
-    next unless path&.to_s&.include?('/task_handlers/')
+    next unless path&.to_s&.include?('/tasks/')
 
     klasses = ObjectSpace.each_object(Class).select do |klass|
       klass < Tasker::TaskHandler

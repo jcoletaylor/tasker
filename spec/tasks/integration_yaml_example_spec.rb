@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative 'integration_yaml_example'
-require_relative 'models/actions'
+require_relative '../dummy/app/tasks/api_task/integration_yaml_example'
+require_relative '../dummy/app/tasks/api_task/models/actions'
 
 RSpec.describe ApiTask::IntegrationYamlExample do
   let(:yaml_path) { described_class.yaml_path }

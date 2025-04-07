@@ -100,7 +100,10 @@ module Tasker
       if @config['default_dependent_system']
         default_system = @config['default_dependent_system']
         # Create a constant for the default system itself
-        @handler_class.const_set(:DEFAULT_DEPENDENT_SYSTEM, default_system) unless @handler_class.const_defined?(:DEFAULT_DEPENDENT_SYSTEM)
+        unless @handler_class.const_defined?(:DEFAULT_DEPENDENT_SYSTEM)
+          @handler_class.const_set(:DEFAULT_DEPENDENT_SYSTEM,
+                                   default_system)
+        end
       end
 
       # Define named step constants
@@ -174,8 +177,12 @@ module Tasker
   class ConfiguredTask < TaskBuilder
     include Tasker::TaskHandler
 
+    def self.task_name
+      raise NotImplementedError, 'Subclasses must implement task_name'
+    end
+
     def self.yaml_path
-      raise NotImplementedError, 'Subclasses must implement yaml_path'
+      Rails.root.join("config/tasks/#{task_name}.yaml")
     end
 
     def initialize
