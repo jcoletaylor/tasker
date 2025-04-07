@@ -46,6 +46,7 @@ module Tasker
       let(:task)         { described_class.create_with_defaults!(task_request)             }
 
       it 'is able to create with defaults' do
+        Tasker.configuration.identity_strategy = :hash
         expect(task.save).to(be_truthy)
         expect(task.task_id).not_to(be_nil)
         expect(task.identity_hash).not_to(be_nil)

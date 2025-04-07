@@ -53,14 +53,14 @@ module Tasker
       result = base.dup
 
       overrides.each do |key, value|
-        if result[key].is_a?(Hash) && value.is_a?(Hash)
-          result[key] = deep_merge(result[key], value)
-        elsif key == 'step_templates'
-          # Special handling for step_templates to merge based on step name
-          result[key] = merge_step_templates(result[key], value)
-        else
-          result[key] = value
-        end
+        result[key] = if result[key].is_a?(Hash) && value.is_a?(Hash)
+                        deep_merge(result[key], value)
+                      elsif key == 'step_templates'
+                        # Special handling for step_templates to merge based on step name
+                        merge_step_templates(result[key], value)
+                      else
+                        value
+                      end
       end
 
       result
@@ -68,16 +68,14 @@ module Tasker
 
     def merge_step_templates(base_templates, override_templates)
       # Create a map of step templates by name for quick lookup
-      template_map = base_templates.each_with_object({}) do |template, map|
-        map[template['name']] = template
+      template_map = base_templates.index_by do |template|
+        template['name']
       end
 
       # Apply overrides to matching templates
       override_templates.each do |override|
         name = override['name']
-        if template_map.key?(name)
-          template_map[name] = deep_merge(template_map[name], override)
-        end
+        template_map[name] = deep_merge(template_map[name], override) if template_map.key?(name)
       end
 
       # Return the merged templates in their original order
