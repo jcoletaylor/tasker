@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative 'integration_yaml_example'
-require_relative 'models/actions'
+require_relative '../dummy/app/tasks/api_task/integration_yaml_example'
+require_relative '../dummy/app/tasks/api_task/models/actions'
 
 RSpec.describe ApiTask::IntegrationYamlExample do
   let(:yaml_path) { described_class.yaml_path }
@@ -13,7 +13,7 @@ RSpec.describe ApiTask::IntegrationYamlExample do
   describe '#initialize' do
     it 'loads the task configuration from YAML' do
       expect(handler_instance.config).to be_a(Hash)
-      expect(handler_instance.config['name']).to eq('api_integration_yaml_task')
+      expect(handler_instance.config['name']).to eq('api_task/integration_yaml_example')
     end
 
     it 'validates the configuration' do
@@ -31,9 +31,9 @@ RSpec.describe ApiTask::IntegrationYamlExample do
   describe '.from_yaml' do
     it 'loads the configuration from the specified YAML file' do
       config = Tasker::TaskBuilder.from_yaml(yaml_path).config
-      expect(config).to include('name' => 'api_integration_yaml_task')
+      expect(config).to include('name' => 'api_task/integration_yaml_example')
       expect(config).to include('module_namespace' => 'ApiTask')
-      expect(config).to include('class_name' => 'IntegrationYamlExample')
+      expect(config).to include('task_handler_class' => 'IntegrationYamlExample')
     end
   end
 
@@ -63,6 +63,11 @@ RSpec.describe ApiTask::IntegrationYamlExample do
       expect(cart_step).to be_present
       expect(cart_step['handler_class']).to eq('ApiTask::StepHandler::CartFetchStepHandler')
       expect(cart_step['dependent_system']).to eq('ecommerce_system')
+      expect(cart_step['handler_config']).to eq(
+        'url' => 'http://test-api.ecommerce.com/cart',
+        'params' => { 'cart_id' => 1, 'test_mode' => true },
+        'type' => 'api'
+      )
 
       # Check dependencies
       validate_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'validate_products' }

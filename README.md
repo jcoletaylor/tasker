@@ -36,39 +36,90 @@ Rails.application.routes.draw do
 end
 ```
 
+Initialize the Tasker configuration and directory structure:
+
+```bash
+# Initialize Tasker configuration
+bundle exec rake tasker:init
+
+# Setup directories with configuration (runs the init task and creates directories)
+bundle exec rake tasker:setup
+```
+
+## Configuration
+
+Tasker allows you to customize the directories where task handlers and configuration files are stored. The default configuration uses the directory name `tasks` for both.
+
+### Configuring Task Directories
+
+Create or modify your `config/initializers/tasker.rb` file:
+
+```ruby
+# Configure Tasker task directories
+Tasker.configuration do |config|
+  # Directory within app/ where task handlers are stored (default: 'tasks')
+  config.task_handler_directory = 'custom_tasks'
+
+  # Directory within config/ where task YAML configs are stored (default: 'tasks')
+  config.task_config_directory = 'workflows'
+
+  # Default module namespace for task handlers (default: nil)
+  config.default_module_namespace = 'OurTasks'
+end
+```
+
+### Using the Task Handler Generator
+
+Tasker includes a generator to create new task handlers with all the necessary files:
+
+```bash
+# Generate a new task handler with default options
+rails generate task_handler OrderProcess # uses Tasker.configuration.default_module_namespace if set
+
+# Generate with custom options
+rails generate task_handler PaymentProcess --module-namespace=Payment --dependent-system=payment_system --concurrent=false
+
+# Generate without a module namespace
+rails generate task_handler PaymentProcess --module-namespace='' # creates files in root of configured directories
+```
+
+This will create:
+- `config/[task_config_directory]/[module_path/]order_process.yaml`
+- `app/[task_handler_directory]/[module_path/]order_process.rb`
+- `app/[task_handler_directory]/[module_path/]order_process/step_handler.rb`
+- `spec/[task_handler_directory]/[module_path/]order_process_spec.rb`
+
 ## Usage
 
-### Creating a Task Handler from scratch
-
-1. Create a new task handler class in `app/task_handlers/my_task.rb`
-2. Define the steps in the task handler class
-3. Register the task handler with the Tasker registry
-
-Full examples of this can be reviewed as an [API integration example](./spec/examples/api_task/integration_example.rb).
-
-However, the most common pattern is to use a YAML file to define the task handler.
+The above generator will create a task handler with a YAML file defining the task handler.
 
 ### Creating a Configured Task Handler
 
-1. Create a YAML file defining your task handler following the structure above
-2. Place it in an appropriate directory, e.g., `app/task_handlers/my_task.yaml`
-3. Develop your step handlers as normal classes, and reference them in the YAML file
-4. API-backed step handlers which inherit from `Tasker::StepHandler::Api` will automatically use exponential backoff and jitter
-5. Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow
+1. Use the generator to create a task handler with a YAML file defining the task handler
+2. Develop your step handlers as normal classes, and reference them in the YAML file
+3. API-backed step handlers which inherit from `Tasker::StepHandler::Api` will automatically use exponential backoff and jitter
+4. Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow
+
+### Customizing Task Handlers
+
+If you need to create a task handler from scratch, you can do so by following the steps below:
+
+1. Create a new task handler class in `app/[task_handler_directory]/my_task.rb`
+2. Define the steps in the task handler class
+3. Register the task handler with the Tasker registry
+4. An full examples of this can be reviewed as an [API integration example](./spec/dummy/app/tasks/api_task/integration_example.rb).
 
 ### Example of creating a Configured Task Handler
 
 ```ruby
-module MyModule
-  class MyYamlTask < Tasker::ConfiguredTask
-    def self.yaml_path
-      Rails.root.join('app/task_handlers/my_task.yaml')
-    end
+module OurTasks
+  class MyTask < Tasker::ConfiguredTask
+    # can override self.task_name and self.yaml_path if desired
   end
 end
 
 # Usage:
-handler = MyModule::MyYamlTask.new
+handler = OurTasks::MyTask.new
 # The class is already built and ready to use
 # though this of course requires the step handler classes referenced in the YAML to be defined
 # as that is the core of your business logic
@@ -80,9 +131,9 @@ Here's an example YAML file for an e-commerce API integration task handler:
 
 ```yaml
 ---
-name: api_integration_yaml_task
+name: api_task/integration_yaml_example
 module_namespace: ApiTask
-class_name: IntegrationYamlExample
+task_handler_class: IntegrationYamlExample
 concurrent: true
 
 default_dependent_system: ecommerce_system
@@ -135,11 +186,76 @@ step_templates:
     description: Publish order created event
     depends_on_step: create_order
     handler_class: ApiTask::StepHandler::PublishEventStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://localhost:3000/api/cart
+          params:
+            cart_id: 1
+            debug: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://localhost:3000/api/products
+          params:
+            debug: true
+
+  test:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://test-api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            test_mode: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://test-api.ecommerce.com/products
+          params:
+            test_mode: true
+
+  production:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: https://api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            api_key: ${ECOMMERCE_API_KEY}
+
+      - name: fetch_products
+        handler_config:
+          url: https://api.ecommerce.com/products
+          params:
+            api_key: ${ECOMMERCE_API_KEY}
 ```
+
+### Environment-Specific Configuration
+
+Tasker supports environment-specific configuration overrides in YAML files. This allows you to:
+
+1. Define a base configuration that works across all environments
+2. Override specific settings for each environment (development, test, production)
+
+The configuration is merged at runtime, with environment-specific settings taking precedence over the base configuration. This is particularly useful for:
+
+- Using different API endpoints per environment
+- Enabling debug mode in development
+- Using test mode in test environments
+
+To use environment-specific configuration:
+
+1. Add environment-specific sections to your YAML file
+2. Override only the settings that need to change per environment
+3. The TaskBuilder will automatically merge the configurations based on the current Rails environment
 
 ## API Task Example
 
-See the [examples/api_task](./spec/examples/api_task) directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example [here](./spec/examples/api_task/README.md).
+See the [spec/dummy/app/tasks/api_task](./spec/dummy/app/tasks/api_task) directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example [here](./spec/dummy/app/tasks/api_task/README.md).
 
 ### API Routes
 

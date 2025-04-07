@@ -1,7 +1,7 @@
 ---
-name: api_integration_yaml_task
+name: api_task/integration_yaml_example
 module_namespace: ApiTask
-class_name: IntegrationYamlExample
+task_handler_class: IntegrationYamlExample
 concurrent: true
 
 default_dependent_system: ecommerce_system
@@ -53,3 +53,49 @@ step_templates:
     description: Publish order created event
     depends_on_step: create_order
     handler_class: ApiTask::StepHandler::PublishEventStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://localhost:3000/api/cart
+          params:
+            cart_id: 1
+            debug: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://localhost:3000/api/products
+          params:
+            debug: true
+
+  test:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://test-api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            test_mode: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://test-api.ecommerce.com/products
+          params:
+            test_mode: true
+
+  production:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: https://api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            api_key: ${ECOMMERCE_API_KEY}
+
+      - name: fetch_products
+        handler_config:
+          url: https://api.ecommerce.com/products
+          params:
+            api_key: ${ECOMMERCE_API_KEY}

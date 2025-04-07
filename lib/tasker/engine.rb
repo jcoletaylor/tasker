@@ -7,7 +7,6 @@ require 'pg'
 # typed: strict
 
 require 'rails'
-require 'sidekiq'
 require 'sorbet-runtime'
 
 module Tasker
@@ -25,10 +24,12 @@ module Tasker
       # Load required components
       require 'dry-types'
       require 'dry-struct'
+      require 'tasker/configuration'
       require 'tasker/constants'
       require 'tasker/handler_factory'
       require 'tasker/types'
       require 'tasker/task_handler'
+      require 'tasker/task_builder'
 
       # Configure generators
       config.generators.api_only = true

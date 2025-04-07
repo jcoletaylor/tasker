@@ -10,7 +10,7 @@ module Tasker
     # YAML schema for validating task handler configurations
 
     def initialize(config: {})
-      @config = config
+      @config = deep_merge_configs(config)
       validate_config
       build
     end
@@ -33,6 +33,56 @@ module Tasker
     end
 
     private
+
+    def deep_merge_configs(config)
+      # Get the base configuration
+      base_config = Marshal.load(Marshal.dump(config))
+      base_config.delete('environments')
+
+      # Get environment-specific overrides if they exist
+      env_config = config.dig('environments', Rails.env) if config.key?('environments')
+
+      # If no environment-specific config, return base config
+      return base_config unless env_config
+
+      # Deep merge the configurations
+      deep_merge(base_config, env_config)
+    end
+
+    def deep_merge(base, overrides)
+      result = base.dup
+
+      overrides.each do |key, value|
+        if result[key].is_a?(Hash) && value.is_a?(Hash)
+          result[key] = deep_merge(result[key], value)
+        elsif key == 'step_templates'
+          # Special handling for step_templates to merge based on step name
+          result[key] = merge_step_templates(result[key], value)
+        else
+          result[key] = value
+        end
+      end
+
+      result
+    end
+
+    def merge_step_templates(base_templates, override_templates)
+      # Create a map of step templates by name for quick lookup
+      template_map = base_templates.each_with_object({}) do |template, map|
+        map[template['name']] = template
+      end
+
+      # Apply overrides to matching templates
+      override_templates.each do |override|
+        name = override['name']
+        if template_map.key?(name)
+          template_map[name] = deep_merge(template_map[name], override)
+        end
+      end
+
+      # Return the merged templates in their original order
+      base_templates.map { |template| template_map[template['name']] }
+    end
 
     def validate_step_names
       return unless @config['named_steps']
@@ -63,16 +113,7 @@ module Tasker
     end
 
     def build_and_register_handler
-      # Create the class dynamically
-      handler_module = Module.const_get(@config['module_namespace'])
-
-      # Create the class if it doesn't exist yet
-      if handler_module.const_defined?(@config['class_name'])
-        @handler_class = handler_module.const_get(@config['class_name'])
-      else
-        @handler_class = Class.new
-        handler_module.const_set(@config['class_name'], @handler_class)
-      end
+      @handler_class = build_handler_class
 
       # Include the TaskHandler module
       @handler_class.include(Tasker::TaskHandler)
@@ -95,12 +136,29 @@ module Tasker
       @handler_class
     end
 
+    def build_handler_class
+      # Create the class dynamically
+      handler_module = Module.const_get(@config['module_namespace'])
+
+      # Create the class if it doesn't exist yet
+      if handler_module.const_defined?(@config['task_handler_class'])
+        @handler_class = handler_module.const_get(@config['task_handler_class'])
+      else
+        @handler_class = Class.new
+        handler_module.const_set(@config['task_handler_class'], @handler_class)
+      end
+      @handler_class
+    end
+
     def define_constants
       # Define the default dependent system constant if available
       if @config['default_dependent_system']
         default_system = @config['default_dependent_system']
         # Create a constant for the default system itself
-        @handler_class.const_set(:DEFAULT_DEPENDENT_SYSTEM, default_system) unless @handler_class.const_defined?(:DEFAULT_DEPENDENT_SYSTEM)
+        unless @handler_class.const_defined?(:DEFAULT_DEPENDENT_SYSTEM)
+          @handler_class.const_set(:DEFAULT_DEPENDENT_SYSTEM,
+                                   default_system)
+        end
       end
 
       # Define named step constants
@@ -174,8 +232,12 @@ module Tasker
   class ConfiguredTask < TaskBuilder
     include Tasker::TaskHandler
 
+    def self.task_name
+      to_s.underscore
+    end
+
     def self.yaml_path
-      raise NotImplementedError, 'Subclasses must implement yaml_path'
+      Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
     end
 
     def initialize

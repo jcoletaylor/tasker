@@ -56,11 +56,11 @@ module Tasker
     UNKNOWN = 'unknown'
     YAML_SCHEMA = {
       type: 'object',
-      required: %w[name module_namespace class_name step_templates],
+      required: %w[name task_handler_class step_templates],
       properties: {
         name: { type: 'string' },
-        module_namespace: { type: 'string' },
-        class_name: { type: 'string' },
+        module_namespace: { type: 'string', default: nil },
+        task_handler_class: { type: 'string' },
         concurrent: { type: 'boolean', default: true },
         default_dependent_system: { type: 'string' },
         named_steps: {
@@ -87,6 +87,25 @@ module Tasker
                 items: { type: 'string' }
               },
               handler_config: { type: 'object' }
+            }
+          }
+        },
+        environments: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              step_templates: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: %w[name],
+                  properties: {
+                    name: { type: 'string' },
+                    handler_config: { type: 'object' }
+                  }
+                }
+              }
             }
           }
         }
