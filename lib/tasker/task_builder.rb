@@ -136,14 +136,21 @@ module Tasker
 
     def build_handler_class
       # Create the class dynamically
-      handler_module = Module.const_get(@config['module_namespace'])
+      handler_module = Module.const_get(@config['module_namespace']) if @config['module_namespace']
 
       # Create the class if it doesn't exist yet
-      if handler_module.const_defined?(@config['task_handler_class'])
-        @handler_class = handler_module.const_get(@config['task_handler_class'])
+      if handler_module
+        if handler_module.const_defined?(@config['task_handler_class'])
+          @handler_class = handler_module.const_get(@config['task_handler_class'])
+        else
+          @handler_class = Class.new
+          handler_module.const_set(@config['task_handler_class'], @handler_class)
+        end
+      elsif Object.const_defined?(@config['task_handler_class'])
+        @handler_class = Object.const_get(@config['task_handler_class'])
       else
         @handler_class = Class.new
-        handler_module.const_set(@config['task_handler_class'], @handler_class)
+        Object.const_set(@config['task_handler_class'], @handler_class)
       end
       @handler_class
     end
