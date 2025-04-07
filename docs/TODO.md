@@ -46,17 +46,17 @@
     - [ ] Implement efficient polling for scheduled tasks
     - [ ] Add timezone support for scheduling
 
-2.  **Task Cleanup Policies**
+2. **Task Cleanup Policies**
     - [ ] Add configurable retention policies for completed tasks
     - [ ] Implement efficient archiving strategies
     - [ ] Create tools for data migration/archiving
 
-3.  **Retry Callback Hooks**
+3. **Retry Callback Hooks**
     - [ ] Add extensible hook points for retry events
     - [ ] Implement customizable retry policies
     - [ ] Add support for external retry decision makers
 
-4.  **Rate Limiting Support**
+4. **Rate Limiting Support**
     - [ ] Add built-in rate limiting for integrations
     - [ ] Implement token bucket algorithm for smooth rate control
     - [ ] Add per-integration rate limit configuration
