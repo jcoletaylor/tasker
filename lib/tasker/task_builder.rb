@@ -182,7 +182,7 @@ module Tasker
     end
 
     def self.yaml_path
-      Rails.root.join("config/tasks/#{task_name}.yaml")
+      Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
     end
 
     def initialize

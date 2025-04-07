@@ -36,33 +36,80 @@ Rails.application.routes.draw do
 end
 ```
 
+Initialize the Tasker configuration and directory structure:
+
+```bash
+# Initialize Tasker configuration
+bundle exec rake tasker:init
+
+# Setup directories with configuration (runs the init task and creates directories)
+bundle exec rake tasker:setup
+```
+
+## Configuration
+
+Tasker allows you to customize the directories where task handlers and configuration files are stored. The default configuration uses the directory name `tasks` for both.
+
+### Configuring Task Directories
+
+Create or modify your `config/initializers/tasker.rb` file:
+
+```ruby
+# Configure Tasker task directories
+Tasker.configuration do |config|
+  # Directory within app/ where task handlers are stored (default: 'tasks')
+  config.task_handler_directory = 'custom_tasks'
+
+  # Directory within config/ where task YAML configs are stored (default: 'tasks')
+  config.task_config_directory = 'workflows'
+end
+```
+
+### Using the Task Handler Generator
+
+Tasker includes a generator to create new task handlers with all the necessary files:
+
+```bash
+# Generate a new task handler with default options
+rails generate task_handler OrderProcess
+
+# Generate with custom options
+rails generate task_handler PaymentProcess --module-namespace=Payment --dependent-system=payment_system --concurrent=false
+```
+
+This will create:
+- `config/[task_config_directory]/order_process.yaml`
+- `app/[task_handler_directory]/order_process.rb`
+- `app/[task_handler_directory]/order_process_step_handler.rb`
+- `spec/[task_handler_directory]/order_process_spec.rb`
+
 ## Usage
 
-### Creating a Task Handler from scratch
-
-1. Create a new task handler class in `app/task_handlers/my_task.rb`
-2. Define the steps in the task handler class
-3. Register the task handler with the Tasker registry
-
-Full examples of this can be reviewed as an [API integration example](./spec/examples/api_task/integration_example.rb).
-
-However, the most common pattern is to use a YAML file to define the task handler.
+The above generator will create a task handler with a YAML file defining the task handler.
 
 ### Creating a Configured Task Handler
 
-1. Create a YAML file defining your task handler following the structure above
-2. Place it in an appropriate directory, e.g., `app/task_handlers/my_task.yaml`
-3. Develop your step handlers as normal classes, and reference them in the YAML file
-4. API-backed step handlers which inherit from `Tasker::StepHandler::Api` will automatically use exponential backoff and jitter
-5. Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow
+1. Use the generator to create a task handler with a YAML file defining the task handler
+2. Develop your step handlers as normal classes, and reference them in the YAML file
+3. API-backed step handlers which inherit from `Tasker::StepHandler::Api` will automatically use exponential backoff and jitter
+4. Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow
+
+### Customizing Task Handlers
+
+If you need to create a task handler from scratch, you can do so by following the steps below:
+
+1. Create a new task handler class in `app/[task_handler_directory]/my_task.rb`
+2. Define the steps in the task handler class
+3. Register the task handler with the Tasker registry
+4. An full examples of this can be reviewed as an [API integration example](./spec/dummy/app/tasks/api_task/integration_example.rb).
 
 ### Example of creating a Configured Task Handler
 
 ```ruby
 module MyModule
-  class MyYamlTask < Tasker::ConfiguredTask
-    def self.yaml_path
-      Rails.root.join('app/task_handlers/my_task.yaml')
+  class MyTask < Tasker::ConfiguredTask
+    def self.task_name
+      'my_task'
     end
   end
 end
@@ -139,7 +186,7 @@ step_templates:
 
 ## API Task Example
 
-See the [examples/api_task](./spec/examples/api_task) directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example [here](./spec/examples/api_task/README.md).
+See the [spec/dummy/app/tasks/api_task](./spec/dummy/app/tasks/api_task) directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example [here](./spec/dummy/app/tasks/api_task/README.md).
 
 ### API Routes
 

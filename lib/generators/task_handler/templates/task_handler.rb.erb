@@ -3,8 +3,8 @@
 require_relative '<%= @task_name %>/step_handler'
 module <%= @module_namespace %>
   class <%= @class_name %> < Tasker::ConfiguredTask
-    def self.yaml_path
-      Rails.root.join('config/tasks/<%= @task_name %>.yaml')
+    def self.task_name
+      '<%= @task_name %>'
     end
   end
 end

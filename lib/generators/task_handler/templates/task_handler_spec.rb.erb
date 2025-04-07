@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../app/tasks/<%= @task_name %>'
+require_relative '../../app/<%= @task_handler_directory %>/<%= @task_name %>'
 
 RSpec.describe <%= @module_namespace %>::<%= @class_name %> do
   let(:yaml_path) { described_class.yaml_path }
