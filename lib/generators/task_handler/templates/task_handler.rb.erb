@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
-require_relative '<%= @task_name %>/step_handler'
+<% if @module_namespace %>
 module <%= @module_namespace %>
-  class <%= @class_name %> < Tasker::ConfiguredTask
-    def self.task_name
-      '<%= @task_name %>'
-    end
+<% end %>
+  class <%= @task_handler_class %> < Tasker::ConfiguredTask
+    # Add your task handler logic here, if necessary
+    # for configured tasks you can override the self.task_name method or the self.yaml_path method
   end
+<% if @module_namespace %>
 end
+<% end %>

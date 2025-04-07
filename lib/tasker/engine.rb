@@ -7,7 +7,6 @@ require 'pg'
 # typed: strict
 
 require 'rails'
-require 'sidekiq'
 require 'sorbet-runtime'
 
 module Tasker

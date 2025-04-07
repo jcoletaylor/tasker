@@ -2,11 +2,12 @@
 
 module Tasker
   class Configuration
-    attr_accessor :task_handler_directory, :task_config_directory
+    attr_accessor :task_handler_directory, :task_config_directory, :default_module_namespace
 
     def initialize
       @task_handler_directory = 'tasks'
       @task_config_directory = 'tasks'
+      @default_module_namespace = nil
     end
   end
 

@@ -15,6 +15,7 @@ require 'action_view/railtie'
 require 'action_mailer/railtie'
 require 'active_job/railtie'
 require 'active_record/railtie'
+require 'sidekiq'
 
 # Load dummy application
 require_relative 'dummy/config/environment'

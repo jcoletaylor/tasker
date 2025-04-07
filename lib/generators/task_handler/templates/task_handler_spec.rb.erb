@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../app/<%= @task_handler_directory %>/<%= @task_name %>'
+require_relative '../../app/<%= @task_handler_directory %>/<%= @module_path ? "#{@module_path}/" : '' %><%= @task_name %>/task_handler'
 
-RSpec.describe <%= @module_namespace %>::<%= @class_name %> do
+RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %> do
   let(:yaml_path) { described_class.yaml_path }
   let(:yaml_config) { YAML.load_file(yaml_path) }
   let(:handler_class) { described_class }
@@ -12,7 +12,7 @@ RSpec.describe <%= @module_namespace %>::<%= @class_name %> do
   describe '#initialize' do
     it 'loads the task configuration from YAML' do
       expect(handler_instance.config).to be_a(Hash)
-      expect(handler_instance.config['name']).to eq('<%= @task_name %>')
+      expect(handler_instance.config['name']).to eq('<%= @module_path ? "#{@module_path}_" : '' %><%= @task_name %>')
     end
 
     it 'validates the configuration' do
@@ -30,9 +30,11 @@ RSpec.describe <%= @module_namespace %>::<%= @class_name %> do
   describe '.from_yaml' do
     it 'loads the configuration from the specified YAML file' do
       config = Tasker::TaskBuilder.from_yaml(yaml_path).config
-      expect(config).to include('name' => '<%= @task_name %>')
+      expect(config).to include('name' => '<%= @module_path ? "#{@module_path}_" : '' %><%= @task_name %>')
+      <% if @module_namespace %>
       expect(config).to include('module_namespace' => '<%= @module_namespace %>')
-      expect(config).to include('class_name' => '<%= @class_name %>')
+      <% end %>
+      expect(config).to include('task_handler_class' => '<%= @task_handler_class %>')
     end
   end
 
@@ -60,7 +62,7 @@ RSpec.describe <%= @module_namespace %>::<%= @class_name %> do
       # Check specific step template details
       fetch_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'fetch_data' }
       expect(fetch_step).to be_present
-      expect(fetch_step['handler_class']).to eq('<%= @module_namespace %>::StepHandler::FetchDataStepHandler')
+      expect(fetch_step['handler_class']).to eq('<%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_name %>::StepHandler::FetchDataStepHandler')
 
       # Check dependencies
       process_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'process_data' }

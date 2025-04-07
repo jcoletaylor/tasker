@@ -1,7 +1,7 @@
 ---
-name: api_integration_yaml_task
+name: api_task/integration_yaml_example
 module_namespace: ApiTask
-class_name: IntegrationYamlExample
+task_handler_class: IntegrationYamlExample
 concurrent: true
 
 default_dependent_system: ecommerce_system

@@ -3,8 +3,8 @@
 class TaskHandlerGenerator < Rails::Generators::NamedBase
   source_root File.expand_path('templates', __dir__)
 
-  class_option :module_namespace, type: :string, default: 'OurTask',
-                                  desc: 'The module namespace for the task handler'
+  class_option :module_namespace, type: :string, default: nil,
+                                  desc: 'The module namespace for the task handler (defaults to Tasker.configuration.default_module_namespace)'
   class_option :concurrent, type: :boolean, default: true,
                             desc: 'Whether the task can be run concurrently'
   class_option :dependent_system, type: :string, default: 'default_system',
@@ -12,8 +12,9 @@ class TaskHandlerGenerator < Rails::Generators::NamedBase
 
   def create_task_handler_files
     # Set variables first
-    @module_namespace = options[:module_namespace]
-    @class_name = name.camelize
+    @module_namespace = options[:module_namespace] || Tasker.configuration.default_module_namespace
+    @module_path = @module_namespace&.underscore
+    @task_handler_class = name.camelize
     @task_name = name.underscore
     @concurrent = options[:concurrent]
     @dependent_system = options[:dependent_system]
@@ -26,22 +27,44 @@ class TaskHandlerGenerator < Rails::Generators::NamedBase
     @task_config_directory = Tasker.configuration.task_config_directory
 
     # Ensure directories exist
-    ensure_directories_exist
+    ensure_directories_exist(
+      [
+        task_handler_directory_with_module_path,
+        spec_directory_with_module_path,
+        task_config_directory_with_module_path
+      ]
+    )
 
     # Create the YAML config file
-    template 'task_config.yaml.erb', "config/#{@task_config_directory}/#{@task_name}.yaml"
+    template 'task_config.yaml.erb', "#{task_config_directory_with_module_path}/#{@task_name}.yaml"
 
     # Create the task handler class
-    template 'task_handler.rb.erb', "app/#{@task_handler_directory}/#{@task_name}.rb"
+    template 'task_handler.rb.erb', "#{task_handler_directory_with_module_path}/#{@task_name}.rb"
 
     # Create the step handler module
-    template 'step_handler.rb.erb', "app/#{@task_handler_directory}/#{@task_name}_step_handler.rb"
+    template 'step_handler.rb.erb', "#{task_handler_directory_with_module_path}/#{@task_name}/step_handler.rb"
 
     # Create the task handler spec
-    template 'task_handler_spec.rb.erb', "spec/#{@task_handler_directory}/#{@task_name}_spec.rb"
+    template 'task_handler_spec.rb.erb', "#{spec_directory_with_module_path}/#{@task_name}_spec.rb"
   end
 
   private
+
+  def usable_module_path
+    @module_path ? "#{@module_path}/" : ''
+  end
+
+  def task_handler_directory_with_module_path
+    Rails.root.join("app/#{@task_handler_directory}/#{usable_module_path}")
+  end
+
+  def task_config_directory_with_module_path
+    Rails.root.join("config/#{@task_config_directory}/#{usable_module_path}")
+  end
+
+  def spec_directory_with_module_path
+    Rails.root.join("spec/#{@spec_directory}/#{usable_module_path}")
+  end
 
   def ensure_configuration_loaded
     # Check if Tasker is already loaded
@@ -60,14 +83,12 @@ class TaskHandlerGenerator < Rails::Generators::NamedBase
     require initializer_path
   end
 
-  def ensure_directories_exist
-    # Create necessary directories if they don't exist
-    task_handler_dir = Rails.root.join('app', @task_handler_directory)
-    task_config_dir = Rails.root.join('config', @task_config_directory)
-    task_spec_dir = Rails.root.join('spec', @task_handler_directory)
-
-    [task_handler_dir, File.join(task_handler_dir, @task_name), task_config_dir, task_spec_dir].each do |dir|
-      FileUtils.mkdir_p(dir) unless File.directory?(dir)
+  def ensure_directories_exist(dirs)
+    dirs.each do |dir|
+      unless File.directory?(dir)
+        FileUtils.mkdir_p(dir)
+        Rails.logger.debug { "Created directory: #{dir}" }
+      end
     end
   end
 end

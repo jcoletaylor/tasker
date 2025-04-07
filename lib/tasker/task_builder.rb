@@ -67,11 +67,11 @@ module Tasker
       handler_module = Module.const_get(@config['module_namespace'])
 
       # Create the class if it doesn't exist yet
-      if handler_module.const_defined?(@config['class_name'])
-        @handler_class = handler_module.const_get(@config['class_name'])
+      if handler_module.const_defined?(@config['task_handler_class'])
+        @handler_class = handler_module.const_get(@config['task_handler_class'])
       else
         @handler_class = Class.new
-        handler_module.const_set(@config['class_name'], @handler_class)
+        handler_module.const_set(@config['task_handler_class'], @handler_class)
       end
 
       # Include the TaskHandler module
@@ -178,7 +178,7 @@ module Tasker
     include Tasker::TaskHandler
 
     def self.task_name
-      raise NotImplementedError, 'Subclasses must implement task_name'
+      to_s.underscore
     end
 
     def self.yaml_path

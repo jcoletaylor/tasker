@@ -62,6 +62,9 @@ Tasker.configuration do |config|
 
   # Directory within config/ where task YAML configs are stored (default: 'tasks')
   config.task_config_directory = 'workflows'
+
+  # Default module namespace for task handlers (default: nil)
+  config.default_module_namespace = 'OurTasks'
 end
 ```
 
@@ -71,17 +74,20 @@ Tasker includes a generator to create new task handlers with all the necessary f
 
 ```bash
 # Generate a new task handler with default options
-rails generate task_handler OrderProcess
+rails generate task_handler OrderProcess # uses Tasker.configuration.default_module_namespace if set
 
 # Generate with custom options
 rails generate task_handler PaymentProcess --module-namespace=Payment --dependent-system=payment_system --concurrent=false
+
+# Generate without a module namespace
+rails generate task_handler PaymentProcess --module-namespace='' # creates files in root of configured directories
 ```
 
 This will create:
-- `config/[task_config_directory]/order_process.yaml`
-- `app/[task_handler_directory]/order_process.rb`
-- `app/[task_handler_directory]/order_process_step_handler.rb`
-- `spec/[task_handler_directory]/order_process_spec.rb`
+- `config/[task_config_directory]/[module_path/]order_process.yaml`
+- `app/[task_handler_directory]/[module_path/]order_process.rb`
+- `app/[task_handler_directory]/[module_path/]order_process/step_handler.rb`
+- `spec/[task_handler_directory]/[module_path/]order_process_spec.rb`
 
 ## Usage
 
@@ -106,16 +112,14 @@ If you need to create a task handler from scratch, you can do so by following th
 ### Example of creating a Configured Task Handler
 
 ```ruby
-module MyModule
+module OurTasks
   class MyTask < Tasker::ConfiguredTask
-    def self.task_name
-      'my_task'
-    end
+    # can override self.task_name and self.yaml_path if desired
   end
 end
 
 # Usage:
-handler = MyModule::MyYamlTask.new
+handler = OurTasks::MyTask.new
 # The class is already built and ready to use
 # though this of course requires the step handler classes referenced in the YAML to be defined
 # as that is the core of your business logic
@@ -127,9 +131,9 @@ Here's an example YAML file for an e-commerce API integration task handler:
 
 ```yaml
 ---
-name: api_integration_yaml_task
+name: api_task/integration_yaml_example
 module_namespace: ApiTask
-class_name: IntegrationYamlExample
+task_handler_class: IntegrationYamlExample
 concurrent: true
 
 default_dependent_system: ecommerce_system
