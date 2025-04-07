@@ -36,7 +36,7 @@ module Tasker
 
     def deep_merge_configs(config)
       # Get the base configuration
-      base_config = config.dup
+      base_config = Marshal.load(Marshal.dump(config))
       base_config.delete('environments')
 
       # Get environment-specific overrides if they exist
