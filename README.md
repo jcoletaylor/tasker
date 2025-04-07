@@ -78,15 +78,11 @@ rails generate task_handler OrderProcess # uses Tasker.configuration.default_mod
 
 # Generate with custom options
 rails generate task_handler PaymentProcess --module-namespace=Payment --dependent-system=payment_system --concurrent=false
-
-# Generate without a module namespace
-rails generate task_handler PaymentProcess --module-namespace='' # creates files in root of configured directories
 ```
 
 This will create:
 - `config/[task_config_directory]/[module_path/]order_process.yaml`
 - `app/[task_handler_directory]/[module_path/]order_process.rb`
-- `app/[task_handler_directory]/[module_path/]order_process/step_handler.rb`
 - `spec/[task_handler_directory]/[module_path/]order_process_spec.rb`
 
 ## Usage
@@ -112,15 +108,13 @@ If you need to create a task handler from scratch, you can do so by following th
 ### Example of creating a Configured Task Handler
 
 ```ruby
-module OurTasks
-  class MyTask < Tasker::ConfiguredTask
-    # can override self.task_name and self.yaml_path if desired
-  end
+class MyTask < Tasker::ConfiguredTask
+  # can override self.task_name and self.yaml_path if desired
 end
 
 # Usage:
-handler = OurTasks::MyTask.new
-# The class is already built and ready to use
+handler = MyTask.new
+# The class is built and ready to use
 # though this of course requires the step handler classes referenced in the YAML to be defined
 # as that is the core of your business logic
 ```
