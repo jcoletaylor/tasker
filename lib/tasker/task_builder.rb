@@ -63,16 +63,7 @@ module Tasker
     end
 
     def build_and_register_handler
-      # Create the class dynamically
-      handler_module = Module.const_get(@config['module_namespace'])
-
-      # Create the class if it doesn't exist yet
-      if handler_module.const_defined?(@config['task_handler_class'])
-        @handler_class = handler_module.const_get(@config['task_handler_class'])
-      else
-        @handler_class = Class.new
-        handler_module.const_set(@config['task_handler_class'], @handler_class)
-      end
+      @handler_class = build_handler_class
 
       # Include the TaskHandler module
       @handler_class.include(Tasker::TaskHandler)
@@ -92,6 +83,27 @@ module Tasker
       # Define schema method if schema is provided
       define_schema if @config['schema']
 
+      @handler_class
+    end
+
+    def build_handler_class
+      # Create the class dynamically
+      handler_module = Module.const_get(@config['module_namespace']) if @config['module_namespace']
+
+      # Create the class if it doesn't exist yet
+      if handler_module
+        if handler_module.const_defined?(@config['task_handler_class'])
+          @handler_class = handler_module.const_get(@config['task_handler_class'])
+        else
+          @handler_class = Class.new
+          handler_module.const_set(@config['task_handler_class'], @handler_class)
+        end
+      elsif Object.const_defined?(@config['task_handler_class'])
+        @handler_class = Object.const_get(@config['task_handler_class'])
+      else
+        @handler_class = Class.new
+        Object.const_set(@config['task_handler_class'], @handler_class)
+      end
       @handler_class
     end
 
@@ -119,7 +131,7 @@ module Tasker
       @handler_class.define_step_templates do |definer|
         templates.each do |template|
           # Convert handler_class from string to actual class
-          handler_class_name = template['handler_class']
+          handler_class_name = template['handler_class'].classify
           handler_class = Object.const_get(handler_class_name)
 
           # Use default dependent system if not specified in the template
@@ -185,8 +197,12 @@ module Tasker
       Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
     end
 
+    def self.config
+      @config ||= YAML.load_file(yaml_path)
+    end
+
     def initialize
-      super(config: YAML.load_file(self.class.yaml_path))
+      super(config: self.class.config)
     end
   end
 end

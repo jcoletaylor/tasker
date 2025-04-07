@@ -41,9 +41,6 @@ class TaskHandlerGenerator < Rails::Generators::NamedBase
     # Create the task handler class
     template 'task_handler.rb.erb', "#{task_handler_directory_with_module_path}/#{@task_name}.rb"
 
-    # Create the step handler module
-    template 'step_handler.rb.erb', "#{task_handler_directory_with_module_path}/#{@task_name}/step_handler.rb"
-
     # Create the task handler spec
     template 'task_handler_spec.rb.erb', "#{spec_directory_with_module_path}/#{@task_name}_spec.rb"
   end
@@ -63,7 +60,7 @@ class TaskHandlerGenerator < Rails::Generators::NamedBase
   end
 
   def spec_directory_with_module_path
-    Rails.root.join("spec/#{@spec_directory}/#{usable_module_path}")
+    Rails.root.join("spec/#{@task_handler_directory}/#{usable_module_path}")
   end
 
   def ensure_configuration_loaded

@@ -5,7 +5,83 @@ module <%= @module_namespace %>
 <% end %>
   class <%= @task_handler_class %> < Tasker::ConfiguredTask
     # Add your task handler logic here, if necessary
-    # for configured tasks you can override the self.task_name method or the self.yaml_path method
+    # for configured tasks you can override:
+    # self.task_name method
+    # self.yaml_path method
+    # self.config method
+    class FetchDataStepHandler < Tasker::StepHandler::Api
+      def call(task, _sequence, _step)
+        input_id = task.context['input_id']
+        connection.get("/data/#{input_id}")
+      end
+
+      def handle(_task, _sequence, step)
+        super
+        step.results = get_from_results(step.results, 'data')
+      end
+
+      private
+
+      def get_from_results(results, key)
+        results&.dig('data', key) || {}
+      end
+    end
+
+    class ProcessDataStepHandler
+      def handle(_task, sequence, step)
+        data = get_data_from_previous_step(sequence)
+        processed_data = process_data(data)
+
+        step.results = { processed_data: processed_data }
+      end
+
+      private
+
+      def get_data_from_previous_step(sequence)
+        step = sequence.find_step_by_name("fetch_data")
+        if step.nil? || step.results.empty?
+          raise "Required data not found in sequence"
+        end
+
+        step.results
+      end
+
+      def process_data(data)
+        # Process the data as needed for your specific task
+        # This is a placeholder implementation
+        {
+          processed: true,
+          original_data_id: data['id'],
+          timestamp: Time.now.iso8601
+        }
+      end
+    end
+
+    class CompleteTaskStepHandler
+      def handle(_task, sequence, step)
+        processed_data = get_processed_data(sequence)
+
+        # Implement your task completion logic here
+        result = {
+          task_completed: true,
+          data_id: processed_data[:original_data_id],
+          completion_timestamp: Time.now.iso8601
+        }
+
+        step.results = result
+      end
+
+      private
+
+      def get_processed_data(sequence)
+        step = sequence.find_step_by_name("process_data")
+        if step.nil? || step.results.empty?
+          raise "Processed data not found in sequence"
+        end
+
+        step.results[:processed_data]
+      end
+    end
   end
 <% if @module_namespace %>
 end

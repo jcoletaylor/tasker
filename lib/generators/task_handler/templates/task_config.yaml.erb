@@ -23,7 +23,7 @@ schema:
 step_templates:
   - name: fetch_data
     description: Fetch required data from dependent system
-    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_name %>::StepHandler::FetchDataStepHandler
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::FetchDataStepHandler
     handler_config:
       type: api
       url: https://api.example.com/data
@@ -34,9 +34,9 @@ step_templates:
     description: Process fetched data
     depends_on_steps:
       - fetch_data
-    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_name %>::StepHandler::ProcessDataStepHandler
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::ProcessDataStepHandler
 
   - name: complete_task
     description: Complete the task with processed data
     depends_on_step: process_data
-    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_name %>::StepHandler::CompleteTaskStepHandler
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::CompleteTaskStepHandler

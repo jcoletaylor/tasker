@@ -18,7 +18,6 @@ This will create (using configured directories):
 
 - `config/[task_config_directory]/order_process.yaml` - Task configuration
 - `app/[task_handler_directory]/order_process/task_handler.rb` - Task handler class
-- `app/[task_handler_directory]/order_process/step_handler.rb` - Step handler implementation
 - `spec/[task_handler_directory]/order_process_spec.rb` - Test file
 
 ## Options
