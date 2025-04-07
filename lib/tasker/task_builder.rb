@@ -237,16 +237,22 @@ module Tasker
   class ConfiguredTask < TaskBuilder
     include Tasker::TaskHandler
 
-    def self.task_name
-      to_s.underscore
-    end
+    class << self
+      def task_name
+        @task_name ||= to_s.underscore
+      end
 
-    def self.yaml_path
-      Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
+      def yaml_path
+        @yaml_path ||= Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
+      end
+
+      def config
+        @config ||= YAML.load_file(yaml_path)
+      end
     end
 
     def initialize
-      super(config: YAML.load_file(self.class.yaml_path))
+      super(config: self.class.config)
     end
   end
 end
