@@ -15,7 +15,7 @@ Add to your Rails `Gemfile`
 ```ruby
 # add to your Gemfile
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 1.3.0'
+  gem 'tasker', '~> 1.4.0'
 end
 ```
 
