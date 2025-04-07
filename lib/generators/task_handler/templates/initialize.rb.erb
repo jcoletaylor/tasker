@@ -10,4 +10,14 @@ Tasker.configuration do |config|
 
   # Default module namespace for task handlers (default: nil)
   # config.default_module_namespace = 'OurTasks'
+
+  # Strategy for generating task identity hashes (options: :default, :hash, :custom)
+  # :default - Uses a GUID/UUID for each task (no duplicate detection)
+  # :hash - Uses SHA256 of task identity options (detects duplicates with same attributes)
+  # :custom - Uses a custom strategy class specified in identity_strategy_class
+  # config.identity_strategy = :hash
+
+  # Custom identity strategy class name (required if identity_strategy is :custom)
+  # Must be a fully qualified class name that responds to #generate_identity_hash(task_options)
+  # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
 end

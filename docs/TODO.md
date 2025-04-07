@@ -15,9 +15,9 @@
    - [x] Implement exponential backoff with jitter
 
 4. **Allow for Configurable Task Identity**
-   - [ ] Make task identity hash optional with GUID fallback
-   - [ ] Implement strategy pattern for custom identity hash implementations
-   - [ ] Add configurability for identity uniqueness time windows
+   - [x] Make task identity hash optional with GUID fallback
+   - [x] Implement strategy pattern for custom identity hash implementations
+   - [x] Add configurability for identity uniqueness time windows
 
 5. **Backend Queue Flexibility**
    - [x] Use ActiveJob as an abstraction layer for queue implementations

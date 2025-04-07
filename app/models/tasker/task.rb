@@ -148,8 +148,12 @@ module Tasker
       self.bypass_steps ||= []
     end
 
+    def identity_strategy
+      @identity_strategy ||= Tasker.configuration.identity_strategy_instance
+    end
+
     def set_identity_hash
-      self.identity_hash = Digest::SHA256.hexdigest(identity_options.to_json)
+      self.identity_hash = identity_strategy.generate_identity_hash(self, identity_options)
     end
   end
 end
