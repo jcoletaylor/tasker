@@ -10,7 +10,7 @@ module Tasker
     # YAML schema for validating task handler configurations
 
     def initialize(config: {})
-      @config = config
+      @config = deep_merge_configs(config)
       validate_config
       build
     end
@@ -33,6 +33,56 @@ module Tasker
     end
 
     private
+
+    def deep_merge_configs(config)
+      # Get the base configuration
+      base_config = config.dup
+      base_config.delete('environments')
+
+      # Get environment-specific overrides if they exist
+      env_config = config.dig('environments', Rails.env) if config.key?('environments')
+
+      # If no environment-specific config, return base config
+      return base_config unless env_config
+
+      # Deep merge the configurations
+      deep_merge(base_config, env_config)
+    end
+
+    def deep_merge(base, overrides)
+      result = base.dup
+
+      overrides.each do |key, value|
+        if result[key].is_a?(Hash) && value.is_a?(Hash)
+          result[key] = deep_merge(result[key], value)
+        elsif key == 'step_templates'
+          # Special handling for step_templates to merge based on step name
+          result[key] = merge_step_templates(result[key], value)
+        else
+          result[key] = value
+        end
+      end
+
+      result
+    end
+
+    def merge_step_templates(base_templates, override_templates)
+      # Create a map of step templates by name for quick lookup
+      template_map = base_templates.each_with_object({}) do |template, map|
+        map[template['name']] = template
+      end
+
+      # Apply overrides to matching templates
+      override_templates.each do |override|
+        name = override['name']
+        if template_map.key?(name)
+          template_map[name] = deep_merge(template_map[name], override)
+        end
+      end
+
+      # Return the merged templates in their original order
+      base_templates.map { |template| template_map[template['name']] }
+    end
 
     def validate_step_names
       return unless @config['named_steps']
@@ -88,21 +138,14 @@ module Tasker
 
     def build_handler_class
       # Create the class dynamically
-      handler_module = Module.const_get(@config['module_namespace']) if @config['module_namespace']
+      handler_module = Module.const_get(@config['module_namespace'])
 
       # Create the class if it doesn't exist yet
-      if handler_module
-        if handler_module.const_defined?(@config['task_handler_class'])
-          @handler_class = handler_module.const_get(@config['task_handler_class'])
-        else
-          @handler_class = Class.new
-          handler_module.const_set(@config['task_handler_class'], @handler_class)
-        end
-      elsif Object.const_defined?(@config['task_handler_class'])
-        @handler_class = Object.const_get(@config['task_handler_class'])
+      if handler_module.const_defined?(@config['task_handler_class'])
+        @handler_class = handler_module.const_get(@config['task_handler_class'])
       else
         @handler_class = Class.new
-        Object.const_set(@config['task_handler_class'], @handler_class)
+        handler_module.const_set(@config['task_handler_class'], @handler_class)
       end
       @handler_class
     end
@@ -131,7 +174,7 @@ module Tasker
       @handler_class.define_step_templates do |definer|
         templates.each do |template|
           # Convert handler_class from string to actual class
-          handler_class_name = template['handler_class'].classify
+          handler_class_name = template['handler_class']
           handler_class = Object.const_get(handler_class_name)
 
           # Use default dependent system if not specified in the template
@@ -197,12 +240,8 @@ module Tasker
       Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
     end
 
-    def self.config
-      @config ||= YAML.load_file(yaml_path)
-    end
-
     def initialize
-      super(config: self.class.config)
+      super(config: YAML.load_file(self.class.yaml_path))
     end
   end
 end

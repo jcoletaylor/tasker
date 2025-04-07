@@ -1,10 +1,5 @@
 # Tasker TODO List
 
-## For This Release
-
-- [ ] Enable task handler configurations to be environment aware
-- [x] Do not require a module namespace but allow one optionally
-
 ## High Priority (High Impact, Reasonable Effort)
 
 1. **Parallel Step Execution**
@@ -39,7 +34,7 @@
     - [ ] Implement migration paths between handler versions
     - [ ] Allow multiple versions of handlers to run concurrently
 
-3.  **Optional OpenTelemetry Metrics Collection**
+3. **Optional OpenTelemetry Metrics Collection**
     - [ ] Integrate with common metrics libraries
     - [ ] Collect performance and operational metrics
     - [ ] Add configurable metric exporters

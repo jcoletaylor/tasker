@@ -63,6 +63,11 @@ RSpec.describe ApiTask::IntegrationYamlExample do
       expect(cart_step).to be_present
       expect(cart_step['handler_class']).to eq('ApiTask::StepHandler::CartFetchStepHandler')
       expect(cart_step['dependent_system']).to eq('ecommerce_system')
+      expect(cart_step['handler_config']).to eq(
+        'url' => 'http://test-api.ecommerce.com/cart',
+        'params' => { 'cart_id' => 1, 'test_mode' => true },
+        'type' => 'api'
+      )
 
       # Check dependencies
       validate_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'validate_products' }

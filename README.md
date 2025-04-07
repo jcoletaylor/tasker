@@ -186,7 +186,72 @@ step_templates:
     description: Publish order created event
     depends_on_step: create_order
     handler_class: ApiTask::StepHandler::PublishEventStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://localhost:3000/api/cart
+          params:
+            cart_id: 1
+            debug: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://localhost:3000/api/products
+          params:
+            debug: true
+
+  test:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://test-api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            test_mode: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://test-api.ecommerce.com/products
+          params:
+            test_mode: true
+
+  production:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: https://api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            api_key: ${ECOMMERCE_API_KEY}
+
+      - name: fetch_products
+        handler_config:
+          url: https://api.ecommerce.com/products
+          params:
+            api_key: ${ECOMMERCE_API_KEY}
 ```
+
+### Environment-Specific Configuration
+
+Tasker supports environment-specific configuration overrides in YAML files. This allows you to:
+
+1. Define a base configuration that works across all environments
+2. Override specific settings for each environment (development, test, production)
+
+The configuration is merged at runtime, with environment-specific settings taking precedence over the base configuration. This is particularly useful for:
+
+- Using different API endpoints per environment
+- Enabling debug mode in development
+- Using test mode in test environments
+
+To use environment-specific configuration:
+
+1. Add environment-specific sections to your YAML file
+2. Override only the settings that need to change per environment
+3. The TaskBuilder will automatically merge the configurations based on the current Rails environment
 
 ## API Task Example
 

@@ -89,6 +89,25 @@ module Tasker
               handler_config: { type: 'object' }
             }
           }
+        },
+        environments: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              step_templates: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: %w[name],
+                  properties: {
+                    name: { type: 'string' },
+                    handler_config: { type: 'object' }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }.freeze
