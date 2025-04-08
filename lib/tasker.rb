@@ -5,12 +5,15 @@ require 'tasker/engine'
 
 require 'tasker/constants'
 require 'tasker/version'
+require 'tasker/configuration'
+require 'tasker/railtie' if defined?(Rails)
 
 require 'tasker/types/types'
 require 'tasker/types/step_template'
 require 'tasker/types/step_sequence'
 require 'tasker/types/task_request'
 
+require 'tasker/identity_strategy'
 require 'tasker/handler_factory'
 require 'tasker/task_handler'
 require 'tasker/task_handler/class_methods'

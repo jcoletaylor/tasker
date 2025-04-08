@@ -35,9 +35,8 @@
     - [ ] Allow multiple versions of handlers to run concurrently
 
 3. **Optional OpenTelemetry Metrics Collection**
-    - [ ] Integrate with common metrics libraries
-    - [ ] Collect performance and operational metrics
-    - [ ] Add configurable metric exporters
+    - [x] Integrate with common metrics libraries
+    - [x] Add observable lifecycle events for task execution
 
 ## Future Enhancements (Valuable, Higher Effort)
 

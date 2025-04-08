@@ -22,8 +22,8 @@ end
 Add the migrations in your Rails app root:
 
 ```bash
-bundle exec rake tasker:install:migrations
-bundle exec rake db:migrate
+bundle exec rails tasker:install:migrations
+bundle exec rails db:migrate
 ```
 
 And then mount it where you'd like in `config/routes.rb` with:
@@ -39,11 +39,11 @@ end
 Initialize the Tasker configuration and directory structure:
 
 ```bash
-# Initialize Tasker configuration
-bundle exec rake tasker:init
+# Setup Tasker configuration and directories
+bundle exec rails tasker:setup
 
-# Setup directories with configuration (runs the init task and creates directories)
-bundle exec rake tasker:setup
+# Force setup (overwrites existing configuration)
+bundle exec rails tasker:setup:force
 ```
 
 ## Configuration
@@ -81,6 +81,7 @@ rails generate task_handler PaymentProcess --module-namespace=Payment --dependen
 ```
 
 This will create:
+
 - `config/[task_config_directory]/[module_path/]order_process.yaml`
 - `app/[task_handler_directory]/[module_path/]order_process.rb`
 - `spec/[task_handler_directory]/[module_path/]order_process_spec.rb`

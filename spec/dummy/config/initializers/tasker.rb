@@ -19,4 +19,21 @@ Tasker.configuration do |config|
   # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
 
   config.identity_strategy = :hash
+
+  # Enable telemetry for tasks and steps (default: false)
+  config.enable_telemetry = true
+
+  # Telemetry adapters to use (options: :default, :opentelemetry, :custom)
+  # :default - Uses Rails.logger
+  # :opentelemetry - Uses OpenTelemetry for distributed tracing
+  # :custom - Uses custom adapter classes specified in telemetry_adapter_classes
+  # You can use multiple adapters simultaneously, e.g.:
+  # config.telemetry_adapters = [:default, :opentelemetry]
+
+  config.telemetry_adapters = %i[default opentelemetry]
+
+  # Custom telemetry adapter class names (required when using :custom in telemetry_adapters)
+  # Must be an array of fully qualified class names that implement the telemetry adapter interface
+  # The array indices should correspond to the :custom entries in telemetry_adapters
+  # config.telemetry_adapter_classes = ['MyApp::CustomTelemetryAdapter']
 end
