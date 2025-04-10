@@ -2,19 +2,8 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Tasker::Telemetry::OpenTelemetryAdapter' do
-  # Skip these tests if OpenTelemetry is not available
-  begin
-    require 'opentelemetry/sdk'
-    require 'opentelemetry/instrumentation/all'
-  rescue LoadError
-    # Print message and skip
-    puts 'OpenTelemetry gems not available, skipping OpenTelemetry adapter tests'
-    next
-  end
-
-  # Get the actual class (only accessible if gems loaded)
-  let(:adapter_class) { Tasker::Telemetry::OpenTelemetryAdapter }
+RSpec.describe Tasker::Observability::OpenTelemetryAdapter do
+  let(:adapter_class) { described_class }
   let(:adapter) { adapter_class.new }
   let(:event) { 'test.event' }
   let(:payload) { { key: 'value', task_id: 123 } }

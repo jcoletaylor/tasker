@@ -1,40 +1,42 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Telemetry
-    # Lifecycle events for tasks and steps - kept for compatibility
-    # These are now defined in Tasker::LifecycleEvents::Events
-    module Events
-      module Task
-        INITIALIZE = 'task.initialize'
-        START = 'task.start'
-        HANDLE = 'task.handle'
-        ENQUEUE = 'task.enqueue'
-        FINALIZE = 'task.finalize'
-        ERROR = 'task.error'
-        COMPLETE = 'task.complete'
+  module Observability
+    # Observer that connects lifecycle events to telemetry system
+    class LifecycleObserver
+      attr_reader :adapters
+
+      # Initialize the observer with the given adapters
+      # And register with the lifecycle events system
+      # @param adapters [Array<Tasker::Observability::Adapter>] The adapters to use
+      # @return [void]
+      def initialize(adapters)
+        @adapters = adapters
+        validate_adapters!
       end
 
-      module Step
-        FIND_VIABLE = 'step.find_viable'
-        HANDLE = 'step.handle'
-        COMPLETE = 'step.complete'
-        ERROR = 'step.error'
-        RETRY = 'step.retry'
-        SKIP = 'step.skip'
-        MAX_RETRIES_REACHED = 'step.max_retries_reached'
+      # Register the observer with the lifecycle events system
+      # @return [void]
+      def register!
+        Tasker::LifecycleEvents.register_observer(self)
       end
-    end
 
-    # Telemetry helper methods
-    class << self
-      # Initialize the telemetry system
-      # This sets up observers and connects them to the lifecycle events
-      def initialize
-        return unless Tasker.configuration.enable_telemetry
+      # Handle a lifecycle event by recording telemetry
+      # @param event [String] The event name
+      # @param context [Hash] The context data associated with the event
+      def on_lifecycle_event(event, context)
+        record(event, context)
+      end
 
-        require 'tasker/telemetry/observer'
-        Observer.instance # Create and register the observer
+      # Create a span for tracing execution
+      # @param name [String] The span name
+      # @param context [Hash] The context data associated with the span
+      # @param block [Block] The block to execute within the span
+      # @return [Proc] A procedure that executes the block within the span
+      def trace_execution(name, context, &block)
+        proc do
+          add_span(name, context, &block)
+        end
       end
 
       # Record an event with the given payload
@@ -47,7 +49,7 @@ module Tasker
           adapter.record(event, payload)
         rescue StandardError => e
           # Log error but don't interrupt normal operation
-          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}") if defined?(Rails)
+          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}")
         end
       end
 
@@ -61,7 +63,7 @@ module Tasker
           adapter.start_trace(name, attributes) if adapter.respond_to?(:start_trace)
         rescue StandardError => e
           # Log error but don't interrupt normal operation
-          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}") if defined?(Rails)
+          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}")
         end
       end
 
@@ -73,7 +75,7 @@ module Tasker
           adapter.end_trace if adapter.respond_to?(:end_trace)
         rescue StandardError => e
           # Log error but don't interrupt normal operation
-          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}") if defined?(Rails)
+          Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}")
         end
       end
 
@@ -102,7 +104,9 @@ module Tasker
             adapter.add_span(name, attributes) { original_proc.call }
           rescue StandardError => e
             # Log error but don't interrupt normal operation
-            Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}") if defined?(Rails)
+            if defined?(Rails)
+              Rails.logger.error("Error in telemetry adapter #{adapter.class}: #{e.backtrace.join("\n")}")
+            end
             original_proc.call # Still call the original proc if this adapter fails
           end
         end
@@ -112,15 +116,23 @@ module Tasker
         result
       end
 
-      # Get the configured adapters
-      # @return [Array] The configured telemetry adapters
-      def adapters
-        @adapters ||= Tasker.configuration.telemetry_adapter_instances
-      end
-
       # Reset the configured adapters
       def reset_adapters!
         @adapters = nil
+      end
+
+      private
+
+      def validate_adapters!
+        raise(Tasker::ProceduralError, 'No adapters provided') if @adapters.empty?
+
+        required_methods = %i[record start_trace end_trace add_span]
+
+        @adapters.each do |adapter|
+          required_methods.each do |method|
+            raise(Tasker::ProceduralError, "Adapter #{adapter.class} does not respond to ##{method}") unless adapter.respond_to?(method)
+          end
+        end
       end
     end
   end

@@ -14,12 +14,7 @@ RSpec.describe 'Telemetry Integration' do
 
   before do
     # Reset all singletons
-    Tasker::Telemetry.reset_adapters!
     Tasker::LifecycleEvents.reset_observers
-    Tasker::Telemetry::Observer.reset_instance
-
-    # Initialize telemetry (which registers the observer)
-    Tasker::Telemetry.initialize
   end
 
   it 'records events fired through lifecycle events' do

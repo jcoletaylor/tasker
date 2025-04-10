@@ -2,9 +2,9 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::Telemetry::Adapter do
+RSpec.describe Tasker::Observability::Adapter do
   # Create a concrete implementation for testing
-  class TestAdapter < Tasker::Telemetry::Adapter
+  class TestAdapter < Tasker::Observability::Adapter
     attr_reader :last_event, :last_payload
 
     def record(event, payload = {})
@@ -37,7 +37,7 @@ RSpec.describe Tasker::Telemetry::Adapter do
 
   describe 'subclassing' do
     it 'requires implementing #record' do
-      class InvalidAdapter < Tasker::Telemetry::Adapter; end
+      class InvalidAdapter < Tasker::Observability::Adapter; end
 
       expect { InvalidAdapter.new.record('event') }.to raise_error(NotImplementedError)
     end

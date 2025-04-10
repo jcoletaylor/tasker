@@ -7,46 +7,56 @@ module TelemetryTestHelper
   # and ensures cleanup after the test
   def with_isolated_telemetry(adapter = nil)
     adapter ||= MemoryAdapter.new
-    original_adapters = Tasker::Telemetry.instance_variable_get(:@adapters)
 
-    # Set our test adapter without touching global configuration
-    Tasker::Telemetry.instance_variable_set(:@adapters, [adapter])
+    # Store original configuration
+    original_configuration = Tasker::Configuration.configuration.dup
 
     # Clear any existing observers
     original_observers = Tasker::LifecycleEvents.observers.dup
     Tasker::LifecycleEvents.reset_observers
 
-    # Reset the telemetry observer
-    original_telemetry_observer = Tasker::Telemetry::Observer.instance
-    Tasker::Telemetry::Observer.reset_instance
+    # Create a test configuration
+    test_configuration = Tasker::Configuration.new
+    test_observability = Tasker::Configuration::ObservabilityConfiguration.new
+    test_observability.enable_telemetry = true
+    test_configuration.observability = test_observability
 
-    # Create new observer specifically for this test
-    test_observer = Tasker::Telemetry::Observer.new
+    # Override the singleton instance
+    Tasker::Configuration.instance_variable_set(:@configuration, test_configuration)
+
+    # Register test adapter
+    observer = Tasker::Observability::LifecycleObserver.new([adapter])
+    Tasker::LifecycleEvents.register_observer(observer)
 
     yield(adapter) if block_given?
 
-    # Restore the original state
-    Tasker::Telemetry.instance_variable_set(:@adapters, original_adapters)
-    Tasker::LifecycleEvents.reset_observers
-    original_observers.each do |observer|
-      Tasker::LifecycleEvents.register_observer(observer)
-    end
+    # Restore the original configuration
+    Tasker::Configuration.instance_variable_set(:@configuration, original_configuration)
 
-    # Reset the singleton observer to its original state
-    Tasker::Telemetry::Observer.reset_instance
-    if original_telemetry_observer
-      # Re-register the original instance
-      Tasker::Telemetry::Observer.instance_variable_set(:@instance, original_telemetry_observer)
+    # Restore original observers
+    Tasker::LifecycleEvents.reset_observers
+    original_observers.each do |obs|
+      Tasker::LifecycleEvents.register_observer(obs)
     end
   end
 
   # Helper to handle API error tests by temporarily disabling telemetry
   def with_disabled_telemetry
-    original_adapters = Tasker::Telemetry.instance_variable_get(:@adapters)
-    Tasker::Telemetry.instance_variable_set(:@adapters, [])
+    # Store original configuration
+    original_configuration = Tasker::Configuration.configuration.dup
+
+    # Create a test configuration with telemetry disabled
+    test_configuration = Tasker::Configuration.new
+    test_observability = Tasker::Configuration::ObservabilityConfiguration.new
+    test_observability.enable_telemetry = false
+    test_configuration.observability = test_observability
+
+    # Override the singleton instance
+    Tasker::Configuration.instance_variable_set(:@configuration, test_configuration)
 
     yield if block_given?
 
-    Tasker::Telemetry.instance_variable_set(:@adapters, original_adapters)
+    # Restore the original configuration
+    Tasker::Configuration.instance_variable_set(:@configuration, original_configuration)
   end
 end

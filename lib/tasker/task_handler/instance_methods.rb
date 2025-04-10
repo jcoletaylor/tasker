@@ -69,9 +69,7 @@ module Tasker
       # typed: true
       sig { params(task: Task).void }
       def handle(task)
-        # Get the telemetry observer to start a trace for this task
-        observer = Tasker::Telemetry::Observer.instance
-        observer.start_task_trace(task)
+        observer&.start_trace("task.#{task.name}", { task_id: task.task_id, task_name: task.name })
 
         begin
           # Fire the handle event
@@ -121,7 +119,7 @@ module Tasker
           finalize(task, final_sequence, all_processed_steps)
         ensure
           # End the trace
-          observer.end_task_trace
+          observer&.end_trace
         end
       end
 
@@ -426,6 +424,10 @@ module Tasker
 
         data = context.to_hash.deep_symbolize_keys
         JSON::Validator.fully_validate(schema, data, strict: true, insert_defaults: true)
+      end
+
+      def observer
+        @observer ||= Tasker::Configuration.configuration.observability.observer_instance
       end
     end
   end

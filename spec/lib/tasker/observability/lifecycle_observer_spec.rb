@@ -4,12 +4,12 @@ require 'rails_helper'
 require_relative 'memory_adapter'
 require_relative '../../../support/telemetry_test_helper'
 
-RSpec.describe Tasker::Telemetry::Observer do
+RSpec.describe Tasker::Observability::LifecycleObserver do
   include TelemetryTestHelper
 
   # Create a real memory adapter for verification
   let(:memory_adapter) { MemoryAdapter.new }
-  let(:observer) { described_class.new }
+  let(:observer) { described_class.new([memory_adapter]) }
   let(:event) { 'test.event' }
   let(:context) { { key: 'value', dummy: true } }
   let(:task_request) { Tasker::Types::TaskRequest.new(name: 'test_task', context: context) }
@@ -19,11 +19,12 @@ RSpec.describe Tasker::Telemetry::Observer do
     memory_adapter.clear
   end
 
-  describe '#initialize' do
+  describe '#register!' do
     it 'registers itself with the lifecycle events system' do
       with_isolated_telemetry(memory_adapter) do
         # Create a new observer in the isolated environment
-        test_observer = described_class.new
+        test_observer = described_class.new([memory_adapter])
+        test_observer.register!
 
         # Verify it's registered
         expect(Tasker::LifecycleEvents.observers).to include(test_observer)
@@ -78,11 +79,11 @@ RSpec.describe Tasker::Telemetry::Observer do
     end
   end
 
-  describe '#start_task_trace' do
+  describe '#start_trace' do
     it 'starts a trace for the task' do
       with_isolated_telemetry(memory_adapter) do
         # Call the method
-        observer.start_task_trace(task)
+        observer.start_trace('task.test_task', { task_id: task.task_id, task_name: task.name })
 
         # Verify a trace was started
         expect(memory_adapter.traces.size).to eq(1)
@@ -91,14 +92,14 @@ RSpec.describe Tasker::Telemetry::Observer do
     end
   end
 
-  describe '#end_task_trace' do
+  describe '#end_trace' do
     it 'ends the current trace' do
       with_isolated_telemetry(memory_adapter) do
         # Start a trace first
-        observer.start_task_trace(task)
+        observer.start_trace('task.test_task', { task_id: task.task_id, task_name: task.name })
 
         # Then end it
-        observer.end_task_trace
+        observer.end_trace
 
         # Verify the trace was ended (check if ended_at was set)
         expect(memory_adapter.traces.first[:ended_at]).not_to be_nil

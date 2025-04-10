@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Telemetry
+  module Observability
     # Base adapter interface for telemetry
     class Adapter
       def initialize

@@ -26,4 +26,14 @@ module Tasker
 
   module Types
   end
+
+  # Delegate to Configuration class for easier access
+  def self.configuration
+    Configuration.configuration
+  end
+
+  # Reset configuration (for testing purposes)
+  def self.reset_configuration!
+    Configuration.reset_configuration!
+  end
 end

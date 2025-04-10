@@ -21,18 +21,26 @@ Tasker.configuration do |config|
   # Must be a fully qualified class name that responds to #generate_identity_hash(task_options)
   # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
 
-  # Enable telemetry for tasks and steps (default: false)
-  # config.enable_telemetry = true
-
-  # Telemetry adapters to use (options: :default, :opentelemetry, :custom)
-  # :default - Uses Rails.logger
-  # :opentelemetry - Uses OpenTelemetry for distributed tracing
-  # :custom - Uses custom adapter classes specified in telemetry_adapter_classes
-  # You can use multiple adapters simultaneously, e.g.:
-  # config.telemetry_adapters = [:default, :opentelemetry]
-
-  # Custom telemetry adapter class names (required when using :custom in telemetry_adapters)
-  # Must be an array of fully qualified class names that implement the telemetry adapter interface
-  # The array indices should correspond to the :custom entries in telemetry_adapters
-  # config.telemetry_adapter_classes = ['MyApp::CustomTelemetryAdapter']
+  # Observability Configuration
+  #
+  # Controls telemetry and monitoring features of Tasker.
+  #
+  # @option config [Boolean] enable_telemetry Enable telemetry collection (default: true)
+  # @option config [Array<Symbol>] telemetry_adapters List of telemetry adapters to use
+  #   Available adapters:
+  #     Tasker::Observability::LoggerAdapter
+  #     Tasker::Observability::OpenTelemetryAdapter
+  #   Custom adapters can be created by subclassing Tasker::Observability::Adapter
+  #   or by implementing the required methods on an existing adapter
+  # @option config [String] observer Class name of observer to register
+  #   Available observers: Tasker::Observability::LifecycleObserver
+  #   sub classes of Tasker::Observability::LifecycleObserver for any customization
+  config.observability do |observability|
+    observability.enable_telemetry = true
+    observability.telemetry_adapters = %w[
+      Tasker::Observability::LoggerAdapter
+      Tasker::Observability::OpenTelemetryAdapter
+    ]
+    observability.observer = 'Tasker::Observability::LifecycleObserver'
+  end
 end

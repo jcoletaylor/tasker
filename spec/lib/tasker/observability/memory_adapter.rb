@@ -4,7 +4,7 @@
 # It's used for testing and development.
 # It's not used in production.
 
-class MemoryAdapter < Tasker::Telemetry::Adapter
+class MemoryAdapter < Tasker::Observability::Adapter
   attr_reader :recorded_events, :traces, :spans
 
   def initialize

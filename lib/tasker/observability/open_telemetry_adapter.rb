@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Telemetry
+  module Observability
     # OpenTelemetry adapter for telemetry
     class OpenTelemetryAdapter < Adapter
+      attr_reader :tracer, :current_span
+
       def initialize
         super
-        require_opentelemetry_gems
+        @tracer = ::OpenTelemetry.tracer_provider.tracer('tasker', Tasker::VERSION)
       end
 
       # Record an event with the given payload
@@ -14,7 +16,7 @@ module Tasker
       # @param payload [Hash] The payload data to record
       def record(event, payload = {})
         # Add event to current span if one exists
-        current_span = ::OpenTelemetry::Trace.current_span
+        @current_span ||= ::OpenTelemetry::Trace.current_span
         return if current_span.nil?
 
         # Convert payload to attributes
@@ -54,19 +56,10 @@ module Tasker
 
       private
 
-      def require_opentelemetry_gems
-        require 'opentelemetry/sdk'
-        require 'opentelemetry/instrumentation/all'
-      rescue LoadError => e
-        Rails.logger.error "OpenTelemetry gems not found: #{e.message}"
-        Rails.logger.error "Please add 'opentelemetry-sdk' and 'opentelemetry-instrumentation-all' to your Gemfile"
-        raise
-      end
-
       # Convert hash payload to OTel-compatible attributes
       def convert_payload_to_attributes(payload)
         # Convert all values to strings to make sure they are OTel-compatible
-        payload.transform_values(&:to_s)
+        payload.deep_stringify_keys.deep_transform_values(&:to_s)
       end
     end
   end

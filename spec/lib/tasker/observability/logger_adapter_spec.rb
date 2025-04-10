@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::Telemetry::LoggerAdapter do
+RSpec.describe Tasker::Observability::LoggerAdapter do
   let(:log_output) { StringIO.new }
   let(:test_logger) { Logger.new(log_output) }
   let(:adapter) { described_class.new }

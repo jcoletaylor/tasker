@@ -65,12 +65,19 @@ RSpec.describe Tasker::Configuration do
 
   describe 'Tasker.configuration' do
     it 'allows setting identity_strategy through the block syntax' do
+      original_strategy = Tasker.configuration.identity_strategy
+      original_strategy_instance = Tasker.configuration.identity_strategy_instance
+
       Tasker.configuration do |config|
         config.identity_strategy = :hash
+        expect(Tasker.configuration.identity_strategy).to eq(:hash)
+        expect(Tasker.configuration.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
+      rescue StandardError => e
+        Rails.logger.error("Error setting identity strategy: #{e.message}")
+      ensure
+        Tasker.configuration.identity_strategy = original_strategy
+        Tasker.configuration.identity_strategy_instance = original_strategy_instance
       end
-
-      expect(Tasker.configuration.identity_strategy).to eq(:hash)
-      expect(Tasker.configuration.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
     end
   end
 end

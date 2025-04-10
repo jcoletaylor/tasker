@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tasker
-  module Telemetry
+  module Observability
     # Default adapter implementation using Rails.logger
     class LoggerAdapter < Adapter
       # Record an event with the given payload
