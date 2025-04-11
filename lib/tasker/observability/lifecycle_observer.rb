@@ -130,7 +130,10 @@ module Tasker
 
         @adapters.each do |adapter|
           required_methods.each do |method|
-            raise(Tasker::ProceduralError, "Adapter #{adapter.class} does not respond to ##{method}") unless adapter.respond_to?(method)
+            unless adapter.respond_to?(method)
+              raise(Tasker::ProceduralError,
+                    "Adapter #{adapter.class} does not respond to ##{method}")
+            end
           end
         end
       end

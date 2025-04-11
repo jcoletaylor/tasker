@@ -6,7 +6,7 @@ namespace :tasker do
     require 'fileutils'
 
     # Source template file
-    template_path = File.expand_path('../generators/task_handler/templates/initialize.rb.erb', __dir__)
+    template_path = File.expand_path('../generators/tasker/templates/initialize.rb.erb', __dir__)
     # Target path in the Rails app
     target_path = Rails.root.join('config/initializers/tasker.rb')
 

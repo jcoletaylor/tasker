@@ -41,5 +41,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'faraday', '~> 2.12.2'
   spec.add_dependency 'graphql'
 
+  spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'
+  spec.add_dependency 'opentelemetry-sdk', '~> 1.8.0'
+
   spec.metadata['rubygems_mfa_required'] = 'true'
 end

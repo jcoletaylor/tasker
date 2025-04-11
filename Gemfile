@@ -10,7 +10,6 @@ gemspec
 # Security updates
 gem 'concurrent-ruby', '~> 1.3.5', require: 'concurrent'
 gem 'nokogiri', '~> 1.15.7'
-gem 'opentelemetry-sdk', '~> 1.8.0'
 gem 'rails-html-sanitizer', '>= 1.6.2'
 
 group :development do
@@ -38,7 +37,6 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem 'brakeman', require: false
   gem 'dotenv-rails', '~> 2.8'
-  gem 'opentelemetry-exporter-otlp', '~> 0.30.0'
   gem 'opentelemetry-instrumentation-all', '~> 0.74.0'
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem 'rubocop-rails-omakase', require: false
