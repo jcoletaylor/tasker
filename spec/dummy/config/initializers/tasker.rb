@@ -19,13 +19,4 @@ Tasker.configuration do |config|
   # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
 
   config.identity_strategy = :hash
-
-  config.observability do |observability|
-    observability.enable_telemetry = true
-    observability.telemetry_adapters = %w[
-      Tasker::Observability::LoggerAdapter
-      Tasker::Observability::OpenTelemetryAdapter
-    ]
-    observability.observer = 'Tasker::Observability::LifecycleObserver'
-  end
 end

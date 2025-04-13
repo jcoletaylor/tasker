@@ -69,58 +69,55 @@ module Tasker
       # typed: true
       sig { params(task: Task).void }
       def handle(task)
-        observer&.start_trace("task.#{task.name}", { task_id: task.task_id, task_name: task.name })
+        # Fire the handle event
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::HANDLE,
+          { task_id: task.task_id, task_name: task.name }
+        )
 
-        begin
-          # Fire the handle event
-          Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Task::HANDLE,
-            { task_id: task.task_id, task_name: task.name }
-          )
+        start_task(task)
 
-          start_task(task)
+        # Process steps recursively until no more viable steps are found
+        all_processed_steps = []
 
-          # Process steps recursively until no more viable steps are found
-          all_processed_steps = []
+        loop do
+          # Get the latest sequence with up-to-date step statuses
+          task.reload
+          sequence = get_sequence(task)
 
-          loop do
-            # Get the latest sequence with up-to-date step statuses
-            task.reload
-            sequence = get_sequence(task)
+          # Find viable steps according to DAG traversal
+          # Force a fresh load of all steps, including children of completed steps
+          viable_steps = find_viable_steps_directly(task, sequence)
 
-            # Find viable steps according to DAG traversal
-            # Force a fresh load of all steps, including children of completed steps
-            viable_steps = find_viable_steps_directly(task, sequence)
-
-            # Log the viable steps found
-            if viable_steps.any?
-              step_names = viable_steps.map(&:name)
-              Tasker::LifecycleEvents.fire(
-                Tasker::LifecycleEvents::Events::Step::FIND_VIABLE,
-                { task_id: task.task_id, step_names: step_names.join(', '), count: viable_steps.size }
-              )
-            end
-
-            # If no viable steps found, we're done
-            break if viable_steps.empty?
-
-            # Process the viable steps
-            processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
-            all_processed_steps.concat(processed_in_this_round)
-
-            # Check if any errors occurred that would block further progress
-            break if blocked_by_errors?(task, sequence, processed_in_this_round)
+          # Log the viable steps found
+          if viable_steps.any?
+            step_names = viable_steps.map(&:name)
+            Tasker::LifecycleEvents.fire(
+              Tasker::LifecycleEvents::Events::Step::FIND_VIABLE,
+              {
+                task_id: task.task_id,
+                step_names: step_names.join(', '),
+                count: viable_steps.size
+              }
+            )
           end
 
-          # Get final sequence after all processing
-          final_sequence = get_sequence(task)
+          # If no viable steps found, we're done
+          break if viable_steps.empty?
 
-          # Finalize the task
-          finalize(task, final_sequence, all_processed_steps)
-        ensure
-          # End the trace
-          observer&.end_trace
+          # Process the viable steps
+          processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
+          all_processed_steps.concat(processed_in_this_round)
+
+          # Check if any errors occurred that would block further progress
+          break if blocked_by_errors?(task, sequence, processed_in_this_round)
         end
+
+        # Get final sequence after all processing
+        final_sequence = get_sequence(task)
+
+        # Finalize the task
+        finalize(task, final_sequence, all_processed_steps)
       end
 
       # Direct method to find viable steps, properly checking latest DB state
@@ -153,6 +150,7 @@ module Tasker
           step_name: step.name
         }
 
+        # This will create a span that's properly connected to the parent task span
         Tasker::LifecycleEvents.fire_with_span(
           Tasker::LifecycleEvents::Events::Step::HANDLE,
           span_context.merge(attempt: step.attempts.to_i + 1)
@@ -424,10 +422,6 @@ module Tasker
 
         data = context.to_hash.deep_symbolize_keys
         JSON::Validator.fully_validate(schema, data, strict: true, insert_defaults: true)
-      end
-
-      def observer
-        @observer ||= Tasker::Configuration.configuration.observability.observer_instance
       end
     end
   end

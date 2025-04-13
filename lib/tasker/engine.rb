@@ -32,7 +32,7 @@ module Tasker
       require 'tasker/task_builder'
       require 'tasker/identity_strategy'
       require 'tasker/lifecycle_events'
-      require 'tasker/observability/lifecycle_observer'
+      require 'tasker/instrumentation'
       require 'tasker/railtie'
 
       # Configure generators

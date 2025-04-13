@@ -20,27 +20,4 @@ Tasker.configuration do |config|
   # Custom identity strategy class name (required if identity_strategy is :custom)
   # Must be a fully qualified class name that responds to #generate_identity_hash(task_options)
   # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
-
-  # Observability Configuration
-  #
-  # Controls telemetry and monitoring features of Tasker.
-  #
-  # @option config [Boolean] enable_telemetry Enable telemetry collection (default: true)
-  # @option config [Array<Symbol>] telemetry_adapters List of telemetry adapters to use
-  #   Available adapters:
-  #     Tasker::Observability::LoggerAdapter
-  #     Tasker::Observability::OpenTelemetryAdapter
-  #   Custom adapters can be created by subclassing Tasker::Observability::Adapter
-  #   or by implementing the required methods on an existing adapter
-  # @option config [String] observer Class name of observer to register
-  #   Available observers: Tasker::Observability::LifecycleObserver
-  #   sub classes of Tasker::Observability::LifecycleObserver for any customization
-  config.observability do |observability|
-    observability.enable_telemetry = true
-    observability.telemetry_adapters = %w[
-      Tasker::Observability::LoggerAdapter
-      Tasker::Observability::OpenTelemetryAdapter
-    ]
-    observability.observer = 'Tasker::Observability::LifecycleObserver'
-  end
 end

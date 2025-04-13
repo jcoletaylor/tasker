@@ -3,40 +3,40 @@
 # Helper module for isolated telemetry testing
 module TelemetryTestHelper
   # Setup isolated telemetry for a test
-  # This temporarily replaces the global telemetry adapters with test-specific ones
-  # and ensures cleanup after the test
-  def with_isolated_telemetry(adapter = nil)
-    adapter ||= MemoryAdapter.new
+  def with_isolated_telemetry
+    test_events = []
+    test_spans = []
 
-    # Store original configuration
-    original_configuration = Tasker::Configuration.configuration.dup
+    # Store original subscribers
+    original_subscribers = ActiveSupport::Notifications.notifier.listeners_for(/^tasker\./).dup
 
-    # Clear any existing observers
-    original_observers = Tasker::LifecycleEvents.observers.dup
-    Tasker::LifecycleEvents.reset_observers
+    # Remove existing subscribers
+    original_subscribers.each do |subscriber|
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
 
-    # Create a test configuration
-    test_configuration = Tasker::Configuration.new
-    test_observability = Tasker::Configuration::ObservabilityConfiguration.new
-    test_observability.enable_telemetry = true
-    test_configuration.observability = test_observability
+    # Add a test subscriber
+    subscription = ActiveSupport::Notifications.subscribe(/^tasker\./) do |name, started, finished, _unique_id, payload|
+      test_events << {
+        name: name,
+        duration: finished - started,
+        payload: payload
+      }
+    end
 
-    # Override the singleton instance
-    Tasker::Configuration.instance_variable_set(:@configuration, test_configuration)
+    # Create a test adapter for tracking spans
+    test_adapter = Object.new
+    test_adapter.define_singleton_method(:recorded_events) { test_events }
+    test_adapter.define_singleton_method(:spans) { test_spans }
 
-    # Register test adapter
-    observer = Tasker::Observability::LifecycleObserver.new([adapter])
-    Tasker::LifecycleEvents.register_observer(observer)
+    yield(test_adapter) if block_given?
 
-    yield(adapter) if block_given?
+    # Clean up subscription
+    ActiveSupport::Notifications.unsubscribe(subscription)
 
-    # Restore the original configuration
-    Tasker::Configuration.instance_variable_set(:@configuration, original_configuration)
-
-    # Restore original observers
-    Tasker::LifecycleEvents.reset_observers
-    original_observers.each do |obs|
-      Tasker::LifecycleEvents.register_observer(obs)
+    # Restore original subscribers
+    original_subscribers.each do |subscriber|
+      ActiveSupport::Notifications.notifier.subscribe(subscriber.pattern, subscriber)
     end
   end
 
@@ -47,9 +47,7 @@ module TelemetryTestHelper
 
     # Create a test configuration with telemetry disabled
     test_configuration = Tasker::Configuration.new
-    test_observability = Tasker::Configuration::ObservabilityConfiguration.new
-    test_observability.enable_telemetry = false
-    test_configuration.observability = test_observability
+    test_configuration.enable_telemetry = false
 
     # Override the singleton instance
     Tasker::Configuration.instance_variable_set(:@configuration, test_configuration)
