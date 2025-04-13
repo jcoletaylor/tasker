@@ -87,19 +87,27 @@ RSpec.describe Tasker::Instrumentation do
   end
 
   describe 'OpenTelemetry integration', if: defined?(OpenTelemetry) do
-    let(:mock_tracer) { double('OpenTelemetry::Tracer') }
+    let(:mock_tracer) { instance_double(OpenTelemetry::Trace::Tracer) }
     let(:mock_span) do
-      double('OpenTelemetry::Span', add_event: nil, set_attribute: nil, finish: nil,
-                                    status: nil, context: double('SpanContext', hex_trace_id: 'trace-123'))
+      instance_double(OpenTelemetry::Trace::Span,
+                      add_event: nil,
+                      set_attribute: nil,
+                      finish: nil,
+                      context: instance_double(OpenTelemetry::Trace::SpanContext, hex_trace_id: 'trace-123'))
     end
 
     before do
       # Mock OpenTelemetry for testing
-      allow(OpenTelemetry).to receive(:tracer_provider).and_return(double('TracerProvider', tracer: mock_tracer))
+      allow(OpenTelemetry).to receive(:tracer_provider)
+        .and_return(instance_double(
+                      OpenTelemetry::SDK::Trace::TracerProvider, tracer: mock_tracer
+                    ))
       allow(mock_tracer).to receive(:start_root_span).and_return(mock_span)
       allow(mock_tracer).to receive(:in_span).and_yield(mock_span)
       allow(OpenTelemetry::Trace).to receive(:current_span).and_return(mock_span)
-      allow(OpenTelemetry::Trace).to receive(:context_with_span).with(mock_span).and_return(double('Context'))
+      allow(OpenTelemetry::Trace).to receive(:context_with_span)
+        .with(mock_span)
+        .and_return(instance_double(OpenTelemetry::Context))
       allow(OpenTelemetry::Context).to receive(:with_current).and_yield
 
       # Initialize instrumentation
@@ -107,38 +115,38 @@ RSpec.describe Tasker::Instrumentation do
     end
 
     it 'creates spans for task events' do
-      # We expect a span to be created with attributes
+      # Set up expectations with expect-receive
       expect(mock_tracer).to receive(:start_root_span)
         .with(Tasker::LifecycleEvents::Events::Task::START, hash_including(:attributes))
         .and_return(mock_span)
-      expect(mock_span).to receive(:add_event).with(Tasker::LifecycleEvents::Events::Task::START, anything)
+      expect(mock_span).to receive(:add_event)
+        .with(Tasker::LifecycleEvents::Events::Task::START, anything)
 
       fire_task_start
     end
 
     it 'ends spans for task completion events' do
-      # Set up appropriate mock expectations
-      allow(mock_tracer).to receive(:start_root_span).and_return(mock_span)
-
-      # For the finish behavior
+      # Set up expectations with expect-receive
+      expect(mock_tracer).to receive(:start_root_span).and_return(mock_span)
       allow(mock_span).to receive(:status=)
       expect(mock_span).to receive(:finish)
 
       # First fire a start event to create the span
       fire_task_start
-
       fire_task_complete
     end
 
     it 'creates child spans for step events' do
-      # First fire a start event to create the parent span
-      fire_task_start
+      # First set up the task span
+      allow(mock_tracer).to receive(:start_root_span).and_return(mock_span)
 
-      # We expect a child span to be created
+      # Set up expectation for child span
       expect(mock_tracer).to receive(:in_span)
         .with(Tasker::LifecycleEvents::Events::Step::HANDLE, anything)
         .and_yield(mock_span)
 
+      # First fire a start event to create the span
+      fire_task_start
       fire_step_handle
     end
   end

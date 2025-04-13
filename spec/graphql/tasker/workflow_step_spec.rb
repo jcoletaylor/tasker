@@ -105,8 +105,13 @@ module Tasker
         retryLimit,
         retryable,
         skippable,
-        dependsOnStepId,
-        namedStepId
+        namedStepId,
+        parents {
+          workflowStepId
+        },
+        children {
+          workflowStepId
+        }
       GQL
     end
   end

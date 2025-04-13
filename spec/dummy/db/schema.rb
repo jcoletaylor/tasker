@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_02_130100) do
+ActiveRecord::Schema[7.2].define(version: 2025_04_13_105135) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -130,7 +130,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_130100) do
   create_table "tasker_workflow_steps", primary_key: "workflow_step_id", force: :cascade do |t|
     t.bigint "task_id", null: false
     t.integer "named_step_id", null: false
-    t.bigint "depends_on_step_id"
     t.string "status", limit: 64, null: false
     t.boolean "retryable", default: true, null: false
     t.integer "retry_limit", default: 3
@@ -145,7 +144,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_130100) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "skippable", default: false, null: false
-    t.index ["depends_on_step_id"], name: "workflow_steps_depends_on_step_id_index"
     t.index ["last_attempted_at"], name: "workflow_steps_last_attempted_at_index"
     t.index ["named_step_id"], name: "workflow_steps_named_step_id_index"
     t.index ["processed_at"], name: "workflow_steps_processed_at_index"
@@ -165,5 +163,4 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_02_130100) do
   add_foreign_key "tasker_workflow_step_edges", "tasker_workflow_steps", column: "to_step_id", primary_key: "workflow_step_id"
   add_foreign_key "tasker_workflow_steps", "tasker_named_steps", column: "named_step_id", primary_key: "named_step_id", name: "workflow_steps_named_step_id_foreign"
   add_foreign_key "tasker_workflow_steps", "tasker_tasks", column: "task_id", primary_key: "task_id", name: "workflow_steps_task_id_foreign"
-  add_foreign_key "tasker_workflow_steps", "tasker_workflow_steps", column: "depends_on_step_id", primary_key: "workflow_step_id", name: "workflow_steps_depends_on_step_id_foreign"
 end
