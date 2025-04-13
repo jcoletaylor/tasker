@@ -79,7 +79,7 @@ RSpec.describe Tasker::Instrumentation do
 
     it 'measures event duration' do
       # Fire an event with a sleep to ensure measurable duration
-      Tasker::LifecycleEvents.fire('slow.event') { sleep(0.01) }
+      Tasker::LifecycleEvents.fire('Slow.Event') { sleep(0.01) }
 
       expect(test_events.size).to eq(1)
       expect(test_events.first[:duration]).to be > 0.005
@@ -153,10 +153,15 @@ RSpec.describe Tasker::Instrumentation do
 
   describe '.convert_attributes' do
     it 'prefixes attribute keys with tasker.' do
+      # Configure a service name for testing
+      config = Tasker::Configuration.new
+      config.service_name = 'test_service'
+      allow(Tasker::Configuration).to receive(:configuration).and_return(config)
+
       # We'll use method_missing to access the private method for testing
       attributes = described_class.send(:convert_attributes, { key1: 'value1', key2: 'value2' })
 
-      expect(attributes).to include('tasker.key1' => 'value1', 'tasker.key2' => 'value2')
+      expect(attributes).to include('test_service.key1' => 'value1', 'test_service.key2' => 'value2')
     end
 
     it 'converts hashes and arrays to JSON strings' do
@@ -184,6 +189,68 @@ RSpec.describe Tasker::Instrumentation do
 
       expect(attributes).to include('tasker.normal' => 'value')
       expect(attributes).not_to include('tasker.exception_object')
+    end
+  end
+
+  describe '.filter_sensitive_data' do
+    before do
+      # Reset configuration to default
+      allow(Tasker::Configuration).to receive(:configuration).and_return(Tasker::Configuration.new)
+    end
+
+    it 'filters sensitive data based on configuration' do
+      # Set up filter parameters
+      config = Tasker::Configuration.configuration
+      config.filter_parameters = [:password, 'credit_card.number', /secret/i]
+
+      payload = {
+        user: 'test_user',
+        password: 'supersecret',
+        credit_card: { number: '4242424242424242', name: 'Test User' },
+        secret_key: 'api_key_12345',
+        normal_data: 'visible'
+      }
+
+      # Filter the data
+      filtered = described_class.send(:filter_sensitive_data, payload)
+
+      # Verify filtering
+      expect(filtered[:user]).to eq('test_user')
+      expect(filtered[:password]).to eq('[FILTERED]')
+      expect(filtered[:credit_card][:number]).to eq('[FILTERED]')
+      expect(filtered[:credit_card][:name]).to eq('Test User')
+      expect(filtered[:secret_key]).to eq('[FILTERED]')
+      expect(filtered[:normal_data]).to eq('visible')
+    end
+
+    it 'uses custom mask when configured' do
+      # Set up filter parameters with custom mask
+      config = Tasker::Configuration.configuration
+      config.filter_parameters = [:password]
+      config.telemetry_filter_mask = '***REDACTED***'
+
+      payload = { password: 'supersecret' }
+
+      # Filter the data
+      filtered = described_class.send(:filter_sensitive_data, payload)
+
+      # Verify custom mask
+      expect(filtered[:password]).to eq('***REDACTED***')
+    end
+
+    it 'preserves exception objects in the payload' do
+      exception = StandardError.new('Test exception')
+
+      payload = {
+        user: 'test_user',
+        exception_object: exception
+      }
+
+      # Filter the data
+      filtered = described_class.send(:filter_sensitive_data, payload)
+
+      # Verify exception object is preserved
+      expect(filtered[:exception_object]).to eq(exception)
     end
   end
 end

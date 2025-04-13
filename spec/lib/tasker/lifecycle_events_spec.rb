@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Tasker::LifecycleEvents do
-  let(:event) { 'test.event' }
+  let(:event) { 'Test.Event' }
   let(:context) { { key: 'value', task_id: 123 } }
   let(:namespaced_event) { "#{described_class::EVENT_NAMESPACE}.#{event}" }
 

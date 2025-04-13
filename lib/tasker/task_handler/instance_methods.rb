@@ -60,7 +60,7 @@ module Tasker
 
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::START,
-          { task_id: task.task_id, task_name: task.name }
+          { task_id: task.task_id, task_name: task.name, task_context: task.context }
         )
 
         true
@@ -69,12 +69,6 @@ module Tasker
       # typed: true
       sig { params(task: Task).void }
       def handle(task)
-        # Fire the handle event
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::HANDLE,
-          { task_id: task.task_id, task_name: task.name }
-        )
-
         start_task(task)
 
         # Process steps recursively until no more viable steps are found
@@ -147,7 +141,8 @@ module Tasker
           span_name: "step.#{step.name}",
           task_id: task.task_id,
           step_id: step.workflow_step_id,
-          step_name: step.name
+          step_name: step.name,
+          step_inputs: step.inputs
         }
 
         # This will create a span that's properly connected to the parent task span
@@ -165,7 +160,7 @@ module Tasker
 
             Tasker::LifecycleEvents.fire(
               Tasker::LifecycleEvents::Events::Step::COMPLETE,
-              span_context
+              span_context.merge(step_results: step.results)
             )
           rescue StandardError => e
             step.processed = false
@@ -176,7 +171,7 @@ module Tasker
 
             Tasker::LifecycleEvents.fire(
               Tasker::LifecycleEvents::Events::Step::ERROR,
-              span_context.merge(error: e.to_s)
+              span_context.merge(error: e.to_s, step_results: step.results)
             )
           end
           step.attempts += 1
@@ -345,7 +340,10 @@ module Tasker
               {
                 task_id: task.task_id,
                 task_name: task.name,
-                error_steps: error_steps.map(&:name).join(', ')
+                error_steps: error_steps.map(&:name).join(', '),
+                error_step_results: error_steps.map do |step|
+                  { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
+                end
               }
             )
             return true
@@ -397,7 +395,7 @@ module Tasker
       def enqueue_task(task)
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::ENQUEUE,
-          { task_id: task.task_id, task_name: task.name }
+          { task_id: task.task_id, task_name: task.name, task_context: task.context }
         )
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end

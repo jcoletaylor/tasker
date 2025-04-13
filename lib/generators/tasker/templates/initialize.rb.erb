@@ -20,4 +20,17 @@ Tasker.configuration do |config|
   # Custom identity strategy class name (required if identity_strategy is :custom)
   # Must be a fully qualified class name that responds to #generate_identity_hash(task_options)
   # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
+
+  # Parameters to filter from telemetry data for privacy and security
+  # By default, uses Rails.application.config.filter_parameters if available, or a predefined list
+  # Default: [:passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn]
+  # config.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
+
+  # The mask to use when filtering sensitive data (default: '[FILTERED]')
+  # config.telemetry_filter_mask = '***REDACTED***'
+
+  # Service name used for OpenTelemetry traces (default: 'tasker')
+  # This value is used for tracer names and attribute prefixes in OpenTelemetry telemetry
+  # Note: This only affects how traces appear in your tracing system, not the internal event structure
+  # config.service_name = 'my_app_tasker'
 end

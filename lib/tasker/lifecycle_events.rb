@@ -11,24 +11,24 @@ module Tasker
     # Event names - used when firing events
     module Events
       module Task
-        INITIALIZE = 'task.initialize'
-        START = 'task.start'
-        HANDLE = 'task.handle'
-        ENQUEUE = 'task.enqueue'
-        FINALIZE = 'task.finalize'
-        ERROR = 'task.error'
-        COMPLETE = 'task.complete'
+        INITIALIZE = 'TaskerTask.Initialize'
+        START = 'TaskerTask.Start'
+        HANDLE = 'TaskerTask.Handle'
+        ENQUEUE = 'TaskerTask.Enqueue'
+        FINALIZE = 'TaskerTask.Finalize'
+        ERROR = 'TaskerTask.Error'
+        COMPLETE = 'TaskerTask.Complete'
       end
 
       module Step
-        FIND_VIABLE = 'step.find_viable'
-        HANDLE = 'step.handle'
-        COMPLETE = 'step.complete'
-        ERROR = 'step.error'
-        RETRY = 'step.retry'
-        BACKOFF = 'step.backoff'
-        SKIP = 'step.skip'
-        MAX_RETRIES_REACHED = 'step.max_retries_reached'
+        FIND_VIABLE = 'TaskerStep.FindViable'
+        HANDLE = 'TaskerStep.Handle'
+        COMPLETE = 'TaskerStep.Complete'
+        ERROR = 'TaskerStep.Error'
+        RETRY = 'TaskerStep.Retry'
+        BACKOFF = 'TaskerStep.Backoff'
+        SKIP = 'TaskerStep.Skip'
+        MAX_RETRIES_REACHED = 'TaskerStep.MaxRetriesReached'
       end
     end
 

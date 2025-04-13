@@ -42,9 +42,13 @@ module Tasker
         ActiveSupport::Notifications.subscribe(/^tasker\./) do |name, started, finished, _unique_id, payload|
           duration = ((finished - started) * 1000).round(2)
           event_name = name.sub(/^tasker\./, '')
+          service_name = Tasker::Configuration.configuration.service_name
+
+          # Filter sensitive data before logging
+          filtered_payload = filter_sensitive_data(payload)
 
           # Log the event
-          Rails.logger.debug { "[Tasker] #{event_name} (#{duration}ms) #{payload.except(:exception_object).inspect}" }
+          Rails.logger.debug { "[#{service_name.capitalize}] #{event_name} (#{duration}ms) #{filtered_payload.inspect}" }
         end
       end
 
@@ -55,7 +59,8 @@ module Tasker
         return unless defined?(::OpenTelemetry)
 
         # Get OpenTelemetry tracer
-        tracer = ::OpenTelemetry.tracer_provider.tracer('tasker', Tasker::VERSION)
+        service_name = Tasker::Configuration.configuration.service_name
+        tracer = ::OpenTelemetry.tracer_provider.tracer(service_name, Tasker::VERSION)
 
         # Dispatch to appropriate handler based on event type
         case event
@@ -168,14 +173,19 @@ module Tasker
       # Convert hash payload to OTel-compatible attributes
       def convert_attributes(payload)
         result = {}
+        service_name = Tasker::Configuration.configuration.service_name
 
-        # Skip special keys
-        payload = payload.except(:exception_object)
+        # Filter sensitive data first
+        filtered_payload = filter_sensitive_data(payload)
 
         # Ensure attributes are properly formatted for OpenTelemetry
-        payload.each do |key, value|
-          # Use the recommended tasker. prefix for all attributes
-          attr_key = key.to_s.start_with?('tasker.') ? key.to_s : "tasker.#{key}"
+        filtered_payload.each do |key, value|
+          # Skip exception_object as it can't be properly serialized
+          next if key == :exception_object
+
+          # Use the configured service name as prefix for all attributes
+          attr_prefix = "#{service_name}."
+          attr_key = key.to_s.start_with?(attr_prefix) ? key.to_s : "#{attr_prefix}#{key}"
 
           # Convert values based on their type
           result[attr_key] = case value
@@ -218,6 +228,32 @@ module Tasker
         return unless task_id
 
         task_spans.delete(task_id.to_s)
+      end
+
+      def filter_sensitive_data(payload)
+        # Apply parameter filtering if configured
+        filter = Tasker::Configuration.configuration.parameter_filter
+        if filter
+          # Create a new hash to avoid modifying the original payload
+          filtered_data = {}
+
+          # Apply filtering to each key/value pair
+          payload.each do |key, value|
+            # Skip exception_object for filtering as it can't be properly serialized
+            # but we want to preserve it in the payload
+            if key == :exception_object
+              filtered_data[key] = value
+            else
+              filtered_value = filter.filter_param(key.to_s, value)
+              filtered_data[key] = filtered_value
+            end
+          end
+
+          return filtered_data
+        end
+
+        # If no filtering configured, return the original payload
+        payload
       end
     end
   end
