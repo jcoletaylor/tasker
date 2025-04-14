@@ -137,13 +137,7 @@ module Tasker
       sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
       def handle_one_step(task, sequence, step)
         # Use the lifecycle events to handle a step with proper span management
-        span_context = {
-          span_name: "step.#{step.name}",
-          task_id: task.task_id,
-          step_id: step.workflow_step_id,
-          step_name: step.name,
-          step_inputs: step.inputs
-        }
+        span_context = build_step_span_context(task, step)
 
         # This will create a span that's properly connected to the parent task span
         Tasker::LifecycleEvents.fire_with_span(
@@ -152,56 +146,84 @@ module Tasker
         ) do
           handler = get_step_handler(step)
           step.attempts ||= 0
+
           begin
             handler.handle(task, sequence, step)
-            step.processed = true
-            step.processed_at = Time.zone.now
-            step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
-
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::COMPLETE,
-              span_context.merge(step_results: step.results)
-            )
+            handle_step_success(step, span_context)
           rescue StandardError => e
-            step.processed = false
-            step.processed_at = nil
-            step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
-            step.results ||= {}
-            step.results = step.results.merge(error: e.to_s, backtrace: e.backtrace.join("\n"))
-
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::ERROR,
-              span_context.merge(error: e.to_s, step_results: step.results)
-            )
+            handle_step_error(step, e, span_context)
           end
+
+          # Common post-handling logic
           step.attempts += 1
           step.last_attempted_at = Time.zone.now
 
-          # Record a retry event if this is a retry
-          if step.attempts > 1 && step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::RETRY,
-              span_context.merge(attempt: step.attempts)
-            )
-          end
-
-          # Record if max retries reached
-          if step.attempts >= step.retry_limit && step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::MAX_RETRIES_REACHED,
-              span_context.merge(attempts: step.attempts, retry_limit: step.retry_limit)
-            )
-          end
+          # Check for retry or max retries reached
+          handle_retry_events(step, span_context) if step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
 
           step.save!
           step
         end
       end
 
+      private
+
+      def build_step_span_context(task, step)
+        {
+          span_name: "step.#{step.name}",
+          task_id: task.task_id,
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          step_inputs: step.inputs
+        }
+      end
+
+      def handle_step_success(step, span_context)
+        step.processed = true
+        step.processed_at = Time.zone.now
+        step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::COMPLETE,
+          span_context.merge(step_results: step.results)
+        )
+      end
+
+      def handle_step_error(step, error, span_context)
+        step.processed = false
+        step.processed_at = nil
+        step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
+        step.results ||= {}
+        step.results = step.results.merge(error: error.to_s, backtrace: error.backtrace.join("\n"))
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::ERROR,
+          span_context.merge(error: error.to_s, step_results: step.results)
+        )
+      end
+
+      def handle_retry_events(step, span_context)
+        # Record if max retries reached
+        if step.attempts >= step.retry_limit
+          Tasker::LifecycleEvents.fire(
+            Tasker::LifecycleEvents::Events::Step::MAX_RETRIES_REACHED,
+            span_context.merge(attempts: step.attempts, retry_limit: step.retry_limit)
+          )
+          return
+        end
+        # Record a retry event if this is a retry attempt (attempts > 0)
+        # Note: attempts is incremented before this method is called
+        return unless step.attempts > 1
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::RETRY,
+          span_context.merge(attempt: step.attempts)
+        )
+      end
+
       # typed: true
       sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence,
-               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
         # If concurrent processing is not enabled, process steps sequentially

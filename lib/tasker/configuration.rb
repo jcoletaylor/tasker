@@ -4,7 +4,7 @@ module Tasker
   class Configuration
     attr_accessor :task_handler_directory, :task_config_directory, :default_module_namespace,
                   :identity_strategy, :identity_strategy_class, :filter_parameters, :telemetry_filter_mask,
-                  :service_name
+                  :otel_telemetry_service_name, :otel_telemetry_service_version
 
     def initialize
       @task_handler_directory = 'tasks'
@@ -14,7 +14,8 @@ module Tasker
       @identity_strategy_class = nil
       @filter_parameters = default_filter_parameters
       @telemetry_filter_mask = '[FILTERED]'
-      @service_name = 'tasker'
+      @otel_telemetry_service_name = 'tasker'
+      @otel_telemetry_service_version = Tasker::VERSION
     end
 
     def default_filter_parameters

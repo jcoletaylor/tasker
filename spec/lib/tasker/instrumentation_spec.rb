@@ -155,7 +155,7 @@ RSpec.describe Tasker::Instrumentation do
     it 'prefixes attribute keys with tasker.' do
       # Configure a service name for testing
       config = Tasker::Configuration.new
-      config.service_name = 'test_service'
+      config.otel_telemetry_service_name = 'test_service'
       allow(Tasker::Configuration).to receive(:configuration).and_return(config)
 
       # We'll use method_missing to access the private method for testing

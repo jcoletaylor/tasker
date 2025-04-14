@@ -42,7 +42,7 @@ module Tasker
         ActiveSupport::Notifications.subscribe(/^tasker\./) do |name, started, finished, _unique_id, payload|
           duration = ((finished - started) * 1000).round(2)
           event_name = name.sub(/^tasker\./, '')
-          service_name = Tasker::Configuration.configuration.service_name
+          service_name = Tasker::Configuration.configuration.otel_telemetry_service_name
 
           # Filter sensitive data before logging
           filtered_payload = filter_sensitive_data(payload)
@@ -59,8 +59,11 @@ module Tasker
         return unless defined?(::OpenTelemetry)
 
         # Get OpenTelemetry tracer
-        service_name = Tasker::Configuration.configuration.service_name
-        tracer = ::OpenTelemetry.tracer_provider.tracer(service_name, Tasker::VERSION)
+        config = Tasker::Configuration.configuration
+        tracer = ::OpenTelemetry.tracer_provider.tracer(
+          config.otel_telemetry_service_name,
+          config.otel_telemetry_service_version
+        )
 
         # Dispatch to appropriate handler based on event type
         case event
@@ -173,7 +176,8 @@ module Tasker
       # Convert hash payload to OTel-compatible attributes
       def convert_attributes(payload)
         result = {}
-        service_name = Tasker::Configuration.configuration.service_name
+        config = Tasker::Configuration.configuration
+        service_name = config.otel_telemetry_service_name
 
         # Filter sensitive data first
         filtered_payload = filter_sensitive_data(payload)

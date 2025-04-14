@@ -10,7 +10,7 @@ require 'opentelemetry/instrumentation/all'
 # Configure OpenTelemetry
 OpenTelemetry::SDK.configure do |c|
   # Use the configured service name
-  c.service_name = Tasker::Configuration.configuration.service_name
+  c.service_name = Tasker::Configuration.configuration.otel_telemetry_service_name
 
   # Configure OTLP exporter to send to local Jaeger
   otlp_exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(
@@ -24,8 +24,8 @@ OpenTelemetry::SDK.configure do |c|
 
   # Configure resource with additional attributes
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
-                                                                'service.name' => Tasker::Configuration.configuration.service_name,
-                                                                'service.version' => Tasker::VERSION,
+                                                                'service.name' => Tasker::Configuration.configuration.otel_telemetry_service_name,
+                                                                'service.version' => Tasker::Configuration.configuration.otel_telemetry_service_version,
                                                                 'service.framework' => 'tasker'
                                                               })
 

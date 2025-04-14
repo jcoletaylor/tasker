@@ -32,5 +32,9 @@ Tasker.configuration do |config|
   # Service name used for OpenTelemetry traces (default: 'tasker')
   # This value is used for tracer names and attribute prefixes in OpenTelemetry telemetry
   # Note: This only affects how traces appear in your tracing system, not the internal event structure
-  # config.service_name = 'my_app_tasker'
+  # config.otel_telemetry_service_name = 'my_app_tasker'
+
+  # Service version used for OpenTelemetry traces (default: Tasker::VERSION)
+  # This value is used to identify the version of the service in traces
+  # config.otel_telemetry_service_version = '1.2.3'
 end
