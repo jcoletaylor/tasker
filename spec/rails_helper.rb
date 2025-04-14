@@ -27,7 +27,7 @@ require 'rspec/rails'
 # Add additional requires below this line
 
 # Requires supporting ruby files with custom matchers and macros, etc
-Rails.root.glob('spec/support/**/*.rb').each { |f| require f }
+Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |f| require f }
 
 # Checks for pending migrations and applies them before tests are run.
 begin

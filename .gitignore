@@ -9,3 +9,4 @@
 .byebug_history
 /coverage/**/*.*
 .vscode
+/tmp/**/*.*

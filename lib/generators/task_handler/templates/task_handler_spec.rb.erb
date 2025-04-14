@@ -3,37 +3,57 @@
 require 'rails_helper'
 
 RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %> do
+  let(:stubs) { Faraday::Adapter::Test::Stubs.new }
+  let(:connection) { Faraday.new { |b| b.adapter(:test, stubs) } }
+  let(:task_handler) do
+    handler = described_class.new
+    mock_connection = connection # Capture connection in closure
+    original_get_step_handler = handler.method(:get_step_handler)
+    handler.define_singleton_method(:get_step_handler) do |step|
+      step_handler = original_get_step_handler.call(step)
+      step_handler.instance_variable_set(:@connection, mock_connection)
+      step_handler
+    end
+    handler
+  end
   let(:yaml_path) { described_class.yaml_path }
   let(:yaml_config) { YAML.load_file(yaml_path) }
   let(:handler_class) { described_class }
-  let(:handler_instance) { described_class.new }
+  let(:task_request) do
+    Tasker::Types::TaskRequest.new(
+      name: "<%= @task_name %>",
+      context: { "input_id" => "123" },
+      initiator: "user",
+      reason: "test",
+      source_system: "test_system"
+    )
+  end
+  let(:task) { task_handler.initialize_task!(task_request) }
+  let(:factory) { Tasker::HandlerFactory.instance }
 
   describe '#initialize' do
     it 'loads the task configuration from YAML' do
-      expect(handler_instance.config).to be_a(Hash)
-      expect(handler_instance.config['name']).to eq('<%= @module_path ? "#{@module_path}/" : '' %><%= @task_name %>')
+      expect(task_handler.config).to be_a(Hash)
+      expect(task_handler.config['name']).to eq('<%= @task_name %>')
     end
 
     it 'validates the configuration' do
-      expect(handler_instance.config).to include('step_templates')
-      expect(handler_instance.config).to include('schema')
+      expect(task_handler.config).to include('step_templates')
+      expect(task_handler.config).to include('schema')
     end
 
     it 'builds the handler class automatically' do
       expect(handler_class.included_modules).to include(Tasker::TaskHandler)
       expect(handler_class::NAMED_STEPS).to eq(yaml_config['named_steps'])
-      expect(handler_class::DEFAULT_DEPENDENT_SYSTEM).to eq('<%= @dependent_system %>')
+      expect(handler_class::DEFAULT_DEPENDENT_SYSTEM).to eq('default_system')
     end
   end
 
   describe '.from_yaml' do
     it 'loads the configuration from the specified YAML file' do
       config = Tasker::TaskBuilder.from_yaml(yaml_path).config
-      expect(config).to include('name' => '<%= @module_path ? "#{@module_path}/" : '' %><%= @task_name %>')
-      <% if @module_namespace %>
-      expect(config).to include('module_namespace' => '<%= @module_namespace %>')
-      <% end %>
-      expect(config).to include('task_handler_class' => '<%= @task_handler_class %>')
+      expect(config).to include('name' => '<%= @task_name %>')
+      expect(config).to include('task_handler_class' => '<%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>')
     end
   end
 
@@ -51,23 +71,23 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
     end
 
     it 'defines default dependent system constant' do
-      expect(described_class::DEFAULT_DEPENDENT_SYSTEM).to eq('<%= @dependent_system %>')
+      expect(described_class::DEFAULT_DEPENDENT_SYSTEM).to eq('default_system')
     end
 
     it 'defines step templates with correct structure' do
       # Check that step templates are defined
-      expect(handler_instance.config['step_templates'].count).to eq(3)
+      expect(task_handler.config['step_templates'].count).to eq(3)
 
       # Check specific step template details
-      fetch_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'fetch_data' }
+      fetch_step = task_handler.config['step_templates'].find { |s| s['name'] == 'fetch_data' }
       expect(fetch_step).to be_present
       expect(fetch_step['handler_class']).to eq('<%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::FetchDataStepHandler')
 
       # Check dependencies
-      process_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'process_data' }
+      process_step = task_handler.config['step_templates'].find { |s| s['name'] == 'process_data' }
       expect(process_step['depends_on_steps']).to include('fetch_data')
 
-      complete_step = handler_instance.config['step_templates'].find { |s| s['name'] == 'complete_task' }
+      complete_step = task_handler.config['step_templates'].find { |s| s['name'] == 'complete_task' }
       expect(complete_step['depends_on_step']).to eq('process_data')
     end
 
@@ -76,6 +96,54 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
       expect(task).to respond_to(:schema)
       expect(task.schema).to include('type' => 'object')
       expect(task.schema['required']).to include('input_id')
+    end
+  end
+
+  describe 'complete workflow' do
+    before do
+      factory.register("<%= @task_name %>", described_class)
+      stubs.get("/data") do |env|
+        Faraday::Response.new(
+          Faraday::Env.from(
+            status: 200,
+            response_headers: { 'Content-Type' => 'application/json' },
+            body: { data: { id: 123 } }.to_json,
+            url: env.url
+          )
+        )
+      end
+      stubs.get("/data/123") do |env|
+        Faraday::Response.new(
+          Faraday::Env.from(
+            status: 200,
+            response_headers: { 'Content-Type' => 'application/json' },
+            body: { data: { id: 123 } }.to_json,
+            url: env.url
+          )
+        )
+      end
+    end
+
+    it 'can handle the task' do
+      expect(task).to be_valid
+      expect(task.save).to be_truthy
+      sequence = task_handler.get_sequence(task)
+      expect(sequence.steps.count).to eq(3)
+
+      expect(task.workflow_steps.count).to eq(3)
+      expect(task.workflow_steps.map(&:name)).to contain_exactly(
+        "fetch_data",
+        "process_data",
+        "complete_task"
+      )
+
+      task_handler.handle(task)
+      task.reload
+      # Verify all steps are complete
+      task.workflow_steps.each do |step|
+        expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+      end
+      expect(task.status).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
     end
   end
 end

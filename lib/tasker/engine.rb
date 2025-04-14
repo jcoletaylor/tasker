@@ -31,6 +31,10 @@ module Tasker
       require 'tasker/task_handler'
       require 'tasker/task_builder'
       require 'tasker/identity_strategy'
+      require 'tasker/lifecycle_events'
+      require 'tasker/instrumentation'
+      require 'tasker/railtie'
+
       # Configure generators
       config.generators.api_only = true
       config.generators.test_framework = :rspec

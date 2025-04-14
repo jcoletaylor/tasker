@@ -24,20 +24,19 @@
 
 ## Medium Priority (Significant Value, Moderate Effort)
 
-1. **Workflow Diagrams for Task Definitions**
+1. **Optional OpenTelemetry Metrics Collection**
+    - [x] Integrate with common metrics libraries
+    - [x] Add observable lifecycle events for task execution
+
+2. **Workflow Diagrams for Task Definitions**
    - [ ] Generate visual representation of task definitions
    - [ ] Add tooling to visualize task execution paths
    - [ ] Create documentation showing workflow examples with diagrams
 
-2. **Task Handler Versioning**
+3. **Task Handler Versioning**
     - [ ] Add support for versioned task handlers
     - [ ] Implement migration paths between handler versions
     - [ ] Allow multiple versions of handlers to run concurrently
-
-3. **Optional OpenTelemetry Metrics Collection**
-    - [ ] Integrate with common metrics libraries
-    - [ ] Collect performance and operational metrics
-    - [ ] Add configurable metric exporters
 
 ## Future Enhancements (Valuable, Higher Effort)
 

@@ -121,7 +121,7 @@ module Tasker
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-            expect(step.backoff_request_seconds).to be_within(1).of(60)
+            expect(step.backoff_request_seconds).to be_between(1, 60)
           end
         end
 

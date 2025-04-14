@@ -3,7 +3,8 @@
 module Tasker
   class Configuration
     attr_accessor :task_handler_directory, :task_config_directory, :default_module_namespace,
-                  :identity_strategy, :identity_strategy_class
+                  :identity_strategy, :identity_strategy_class, :filter_parameters, :telemetry_filter_mask,
+                  :otel_telemetry_service_name, :otel_telemetry_service_version
 
     def initialize
       @task_handler_directory = 'tasks'
@@ -11,6 +12,18 @@ module Tasker
       @default_module_namespace = nil
       @identity_strategy = :default
       @identity_strategy_class = nil
+      @filter_parameters = default_filter_parameters
+      @telemetry_filter_mask = '[FILTERED]'
+      @otel_telemetry_service_name = 'tasker'
+      @otel_telemetry_service_version = Tasker::VERSION
+    end
+
+    def default_filter_parameters
+      if Rails.application.config.filter_parameters.any?
+        Rails.application.config.filter_parameters
+      else
+        %i[passw email secret token _key crypt salt certificate otp ssn]
+      end
     end
 
     def identity_strategy_instance
@@ -33,19 +46,25 @@ module Tasker
         raise ArgumentError, "Unknown identity_strategy: #{identity_strategy}"
       end
     end
-  end
 
-  # Global configuration
-  def self.configuration
-    @configuration ||= Configuration.new
+    def parameter_filter
+      @parameter_filter ||= if filter_parameters.any?
+                              ActiveSupport::ParameterFilter.new(filter_parameters, mask: telemetry_filter_mask)
+                            end
+    end
 
-    # Yield if a block is given for backwards compatibility
-    yield(@configuration) if block_given?
+    # Global configuration
+    def self.configuration
+      @configuration ||= Configuration.new
 
-    @configuration
-  end
+      # Yield if a block is given for backwards compatibility
+      yield(@configuration) if block_given?
 
-  def self.reset_configuration!
-    @configuration = Configuration.new
+      @configuration
+    end
+
+    def self.reset_configuration!
+      @configuration = Configuration.new
+    end
   end
 end

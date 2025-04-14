@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require 'simplecov'
+require_relative 'support/opentelemetry_helper'
+
 SimpleCov.start('rails') do
   add_filter '/spec/'
   add_filter '/config/'

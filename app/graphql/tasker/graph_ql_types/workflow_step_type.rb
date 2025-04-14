@@ -7,7 +7,6 @@ module Tasker
       field :workflow_step_id, ID, null: false
       field :task_id, Integer, null: false
       field :named_step_id, Integer, null: false
-      field :depends_on_step_id, Integer, null: true
       field :status, String, null: false
       field :retryable, Boolean, null: false
       field :retry_limit, Integer, null: true
@@ -24,7 +23,8 @@ module Tasker
       field :skippable, Boolean, null: false
       field :task, GraphQLTypes::TaskInterface, null: true
       field :named_step, [GraphQLTypes::NamedStepType], null: true
-      field :depends_on_step, [GraphQLTypes::WorkflowStepType], null: true
+      field :children, [GraphQLTypes::WorkflowStepType], null: true
+      field :parents, [GraphQLTypes::WorkflowStepType], null: true
     end
   end
 end

@@ -44,12 +44,28 @@ module Tasker
       end
 
       def handle(task, sequence, step)
-        response = call(task, sequence, step)
-        _process_response(step, response)
-        step.results = response
-      rescue Faraday::Error => e
-        _handle_too_many_requests(step, e.response) if e.response && BACKOFF_ERROR_CODES.include?(e.response&.status)
-        raise
+        # Get the context for events and spans
+        span_context = {
+          span_name: "api.#{step.name}",
+          task_id: task.task_id,
+          step_id: step.workflow_step_id,
+          step_name: step.name
+        }
+
+        # Fire the handle event with span tracing
+        Tasker::LifecycleEvents.fire_with_span(
+          Tasker::LifecycleEvents::Events::Step::HANDLE,
+          span_context
+        ) do
+          response = call(task, sequence, step)
+          _process_response(step, response)
+          step.results = response
+        rescue Faraday::Error => e
+          if e.response && BACKOFF_ERROR_CODES.include?(e.response&.status)
+            _handle_too_many_requests(step, e.response, span_context)
+          end
+          raise
+        end
       end
 
       def call(task, sequence, step)
@@ -68,16 +84,35 @@ module Tasker
         status = response.is_a?(Hash) ? response[:status] : response.status
         return unless SUCCESS_CODES.exclude?(status) && BACKOFF_ERROR_CODES.include?(status)
 
-        _handle_too_many_requests(step, response)
+        # Context for the event
+        span_context = {
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          status: status
+        }
+
+        _handle_too_many_requests(step, response, span_context)
         raise Faraday::Error, "API call failed with status #{status} and body #{response.body}"
       end
 
-      def _handle_too_many_requests(step, response)
+      def _handle_too_many_requests(step, response, context = {})
         retry_after = response.headers['Retry-After']
+
         if retry_after
-          step.backoff_request_seconds = _parse_retry_after(retry_after)
+          backoff_seconds = _parse_retry_after(retry_after)
+          step.backoff_request_seconds = backoff_seconds
+
+          # Fire the backoff event with the retry time
+          Tasker::LifecycleEvents.fire(
+            Tasker::LifecycleEvents::Events::Step::BACKOFF,
+            context.merge(
+              backoff_seconds: backoff_seconds,
+              backoff_type: 'server_requested',
+              retry_after: retry_after
+            )
+          )
         elsif @config.enable_exponential_backoff
-          _exponential_backoff(step)
+          _exponential_backoff(step, context)
         end
       end
 
@@ -91,7 +126,7 @@ module Tasker
         raise Faraday::Error, "Failed to parse Retry-After header: #{e.message}"
       end
 
-      def _exponential_backoff(step)
+      def _exponential_backoff(step, context = {})
         step.attempts ||= 1
         min_exponent = 2
         exponent = [step.attempts + 1, min_exponent].max
@@ -113,6 +148,19 @@ module Tasker
 
         step.backoff_request_seconds = retry_delay
         step.last_attempted_at = Time.zone.now
+
+        # Fire the backoff event with the calculated retry time
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::BACKOFF,
+          context.merge(
+            backoff_seconds: retry_delay,
+            backoff_type: 'exponential',
+            attempt: step.attempts,
+            exponent: exponent,
+            base_delay: base_delay,
+            jitter_factor: jitter_factor
+          )
+        )
       end
 
       def _build_connection(&)

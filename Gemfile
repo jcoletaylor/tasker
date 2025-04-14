@@ -34,7 +34,12 @@ group :test do
 end
 
 group :development, :test do
+  # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
+  gem 'brakeman', require: false
   gem 'dotenv-rails', '~> 2.8'
+  gem 'opentelemetry-instrumentation-all', '~> 0.74.0'
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  gem 'rubocop-rails-omakase', require: false
   gem 'sidekiq', '~> 7.3'
   gem 'sorbet', '~> 0.5.11934'
   gem 'sorbet-runtime', '~> 0.5.11934'

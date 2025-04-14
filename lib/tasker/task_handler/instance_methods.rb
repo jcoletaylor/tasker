@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'json-schema'
+require 'tasker/lifecycle_events'
 
 module Tasker
   module TaskHandler
@@ -17,12 +18,20 @@ module Tasker
           context_errors.each do |error|
             task.errors.add(:context, error)
           end
+          Tasker::LifecycleEvents.fire(
+            Tasker::LifecycleEvents::Events::Task::INITIALIZE,
+            { task_name: task_request.name, status: 'error', errors: context_errors }
+          )
           return task
         end
         Tasker::Task.transaction do
           task = Tasker::Task.create_with_defaults!(task_request)
           get_sequence(task)
         end
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::INITIALIZE,
+          { task_id: task.task_id, task_name: task.name, status: 'success' }
+        )
         enqueue_task(task)
         task
       end
@@ -48,6 +57,13 @@ module Tasker
         task.context = ActiveSupport::HashWithIndifferentAccess.new(task.context)
 
         task.update!({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::START,
+          { task_id: task.task_id, task_name: task.name, task_context: task.context }
+        )
+
+        true
       end
 
       # typed: true
@@ -65,7 +81,20 @@ module Tasker
 
           # Find viable steps according to DAG traversal
           # Force a fresh load of all steps, including children of completed steps
-          viable_steps = find_viable_steps_directly(task, sequence)
+          viable_steps = find_viable_steps(task, sequence)
+
+          # Log the viable steps found
+          if viable_steps.any?
+            step_names = viable_steps.map(&:name)
+            Tasker::LifecycleEvents.fire(
+              Tasker::LifecycleEvents::Events::Step::FIND_VIABLE,
+              {
+                task_id: task.task_id,
+                step_names: step_names.join(', '),
+                count: viable_steps.size
+              }
+            )
+          end
 
           # If no viable steps found, we're done
           break if viable_steps.empty?
@@ -86,7 +115,7 @@ module Tasker
       end
 
       # Direct method to find viable steps, properly checking latest DB state
-      def find_viable_steps_directly(task, sequence)
+      def find_viable_steps(task, sequence)
         unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
 
         viable_steps = []
@@ -107,37 +136,110 @@ module Tasker
       # typed: true
       sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
       def handle_one_step(task, sequence, step)
-        handler = get_step_handler(step)
-        step.attempts ||= 0
-        begin
-          handler.handle(task, sequence, step)
-          step.processed = true
-          step.processed_at = Time.zone.now
-          step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
-        rescue StandardError => e
-          step.processed = false
-          step.processed_at = nil
-          step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
-          step.results ||= {}
-          step.results = step.results.merge(error: e.to_s, backtrace: e.backtrace.join("\n"))
+        # Use the lifecycle events to handle a step with proper span management
+        span_context = build_step_span_context(task, step)
+
+        # This will create a span that's properly connected to the parent task span
+        Tasker::LifecycleEvents.fire_with_span(
+          Tasker::LifecycleEvents::Events::Step::HANDLE,
+          span_context.merge(attempt: step.attempts.to_i + 1)
+        ) do
+          handler = get_step_handler(step)
+          step.attempts ||= 0
+
+          begin
+            handler.handle(task, sequence, step)
+            handle_step_success(step, span_context)
+          rescue StandardError => e
+            handle_step_error(step, e, span_context)
+          end
+
+          # Common post-handling logic
+          step.attempts += 1
+          step.last_attempted_at = Time.zone.now
+
+          # Check for retry or max retries reached
+          handle_retry_events(step, span_context) if step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
+
+          step.save!
+          step
         end
-        step.attempts += 1
-        step.last_attempted_at = Time.zone.now
-        step.save!
-        step
+      end
+
+      private
+
+      def build_step_span_context(task, step)
+        {
+          span_name: "step.#{step.name}",
+          task_id: task.task_id,
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          step_inputs: step.inputs
+        }
+      end
+
+      def handle_step_success(step, span_context)
+        step.processed = true
+        step.processed_at = Time.zone.now
+        step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::COMPLETE,
+          span_context.merge(step_results: step.results)
+        )
+      end
+
+      def handle_step_error(step, error, span_context)
+        step.processed = false
+        step.processed_at = nil
+        step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
+        step.results ||= {}
+        step.results = step.results.merge(error: error.to_s, backtrace: error.backtrace.join("\n"))
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::ERROR,
+          span_context.merge(error: error.to_s, step_results: step.results)
+        )
+      end
+
+      def handle_retry_events(step, span_context)
+        # Record if max retries reached
+        if step.attempts >= step.retry_limit
+          Tasker::LifecycleEvents.fire(
+            Tasker::LifecycleEvents::Events::Step::MAX_RETRIES_REACHED,
+            span_context.merge(attempts: step.attempts, retry_limit: step.retry_limit)
+          )
+          return
+        end
+        # Record a retry event if this is a retry attempt (attempts > 0)
+        # Note: attempts is incremented before this method is called
+        return unless step.attempts > 1
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Step::RETRY,
+          span_context.merge(attempt: step.attempts)
+        )
       end
 
       # typed: true
       sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence,
-               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
-        # If concurrent processing is not enabled, process steps sequentially
-        unless respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
-          return handle_viable_steps_sequentially(task, sequence, steps)
+        # Delegate to the appropriate handler based on concurrent processing setting
+        if respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
+          handle_viable_steps_concurrently(task, sequence, steps)
+        else
+          handle_viable_steps_sequentially(task, sequence, steps)
         end
+      end
 
+      # Process steps concurrently
+      # typed: true
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+      end
+      def handle_viable_steps_concurrently(task, sequence, steps)
         # Create an array of futures and processed steps
         futures = []
         processed_steps = Concurrent::Array.new
@@ -198,12 +300,22 @@ module Tasker
       # typed: true
       sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
       def finalize(task, sequence, steps)
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::FINALIZE,
+          { task_id: task.task_id, task_name: task.name }
+        )
+
         return if blocked_by_errors?(task, sequence, steps)
 
         step_group = StepGroup.build(task, sequence, steps)
 
         if step_group.complete?
           task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+
+          Tasker::LifecycleEvents.fire(
+            Tasker::LifecycleEvents::Events::Task::COMPLETE,
+            { task_id: task.task_id, task_name: task.name }
+          )
           return
         end
 
@@ -218,6 +330,11 @@ module Tasker
         # if we reach the end and have not re-enqueued the task
         # then we mark it complete since none of the above proved true
         task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::COMPLETE,
+          { task_id: task.task_id, task_name: task.name }
+        )
         nil
       end
 
@@ -248,6 +365,18 @@ module Tasker
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
             task.update!({ status: Tasker::Constants::TaskStatuses::ERROR })
+
+            Tasker::LifecycleEvents.fire(
+              Tasker::LifecycleEvents::Events::Task::ERROR,
+              {
+                task_id: task.task_id,
+                task_name: task.name,
+                error_steps: error_steps.map(&:name).join(', '),
+                error_step_results: error_steps.map do |step|
+                  { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
+                end
+              }
+            )
             return true
           end
           task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
@@ -295,6 +424,10 @@ module Tasker
       # typed: true
       sig { params(task: Task).void }
       def enqueue_task(task)
+        Tasker::LifecycleEvents.fire(
+          Tasker::LifecycleEvents::Events::Task::ENQUEUE,
+          { task_id: task.task_id, task_name: task.name, task_context: task.context }
+        )
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
 
