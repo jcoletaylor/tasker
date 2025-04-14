@@ -432,6 +432,19 @@ The system implements advanced workflow traversal with parallel execution and so
   - Early failure detection and propagation
   - Graceful handling of unrecoverable errors
 
+## Telemetry and Observability
+
+Tasker includes comprehensive telemetry capabilities to provide insights into task execution flow and performance:
+
+- **Built-in OpenTelemetry integration** for compatibility with tools like Jaeger, Zipkin, and Honeycomb
+- **Standardized event naming** for consistent observability across task and step operations
+- **Automatic span creation** with proper parent-child relationships for complex workflows
+- **Sensitive data filtering** to ensure security and privacy of telemetry data
+- **Configurable service naming** to customize how traces appear in your observability tools
+- **Detailed event lifecycle tracking** with standard events for all task and step operations
+
+For complete documentation on telemetry features, configuration options, and best practices, see [TELEMETRY.md](docs/TELEMETRY.md).
+
 ## Why build this?
 
 See the [WHY.md](./docs/WHY.md) file for more information.

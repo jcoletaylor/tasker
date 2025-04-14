@@ -81,7 +81,7 @@ module Tasker
 
           # Find viable steps according to DAG traversal
           # Force a fresh load of all steps, including children of completed steps
-          viable_steps = find_viable_steps_directly(task, sequence)
+          viable_steps = find_viable_steps(task, sequence)
 
           # Log the viable steps found
           if viable_steps.any?
@@ -115,7 +115,7 @@ module Tasker
       end
 
       # Direct method to find viable steps, properly checking latest DB state
-      def find_viable_steps_directly(task, sequence)
+      def find_viable_steps(task, sequence)
         unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
 
         viable_steps = []
@@ -226,11 +226,20 @@ module Tasker
         params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
       end
       def handle_viable_steps(task, sequence, steps)
-        # If concurrent processing is not enabled, process steps sequentially
-        unless respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
-          return handle_viable_steps_sequentially(task, sequence, steps)
+        # Delegate to the appropriate handler based on concurrent processing setting
+        if respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
+          handle_viable_steps_concurrently(task, sequence, steps)
+        else
+          handle_viable_steps_sequentially(task, sequence, steps)
         end
+      end
 
+      # Process steps concurrently
+      # typed: true
+      sig do
+        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
+      end
+      def handle_viable_steps_concurrently(task, sequence, steps)
         # Create an array of futures and processed steps
         futures = []
         processed_steps = Concurrent::Array.new
