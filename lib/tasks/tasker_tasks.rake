@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 namespace :tasker do
+  # @!method setup
+  # @description Initializes Tasker by creating the configuration file and necessary directory structure
+  # @example Run setup task
+  #   rake tasker:setup
   desc 'Setup Tasker with configuration and directory structure'
   task setup: :environment do
     require 'fileutils'
@@ -39,6 +43,10 @@ namespace :tasker do
   end
 
   namespace :setup do
+    # @!method force
+    # @description Forcibly initializes Tasker by overwriting the existing configuration file
+    # @example Run force setup task
+    #   rake tasker:setup:force
     desc 'Force setup Tasker by overwriting existing configuration file'
     task force: :environment do
       require 'fileutils'

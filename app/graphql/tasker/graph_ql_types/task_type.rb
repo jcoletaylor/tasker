@@ -1,4 +1,4 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
@@ -6,7 +6,6 @@ module Tasker
     class TaskType < GraphQLTypes::BaseObject
       implements TaskInterface
 
-      extend T::Sig
       field :named_task_id, Integer, null: false
       field :complete, Boolean, null: false
       field :requested_at, GraphQL::Types::ISO8601DateTime, null: false
@@ -19,7 +18,6 @@ module Tasker
       field :workflow_steps, [GraphQLTypes::WorkflowStepType], null: false
       field :task_annotations, [GraphQLTypes::TaskAnnotationType], null: false
 
-      sig { returns(Symbol) }
       def resolve_context
         :context
       end

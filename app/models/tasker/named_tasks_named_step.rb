@@ -1,4 +1,4 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 # == Schema Information
@@ -27,8 +27,6 @@
 #
 module Tasker
   class NamedTasksNamedStep < ApplicationRecord
-    extend T::Sig
-
     belongs_to :named_task
     belongs_to :named_step
     validates :named_task_id, uniqueness: { scope: :named_step_id }

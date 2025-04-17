@@ -6,10 +6,19 @@ require 'tasker/lifecycle_events'
 
 module Tasker
   module TaskHandler
+    # Instance methods for task handlers
+    #
+    # This module provides the core task handling functionality including
+    # task initialization, step processing, error handling, and workflow
+    # execution logic.
     module InstanceMethods
-      extend T::Sig
-      # typed: true
-      sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
+      # Initialize a new task from a task request
+      #
+      # Creates a task record, validates the context against the schema,
+      # and enqueues the task for processing.
+      #
+      # @param task_request [Tasker::Types::TaskRequest] The task request
+      # @return [Tasker::Task] The created task
       def initialize_task!(task_request)
         task = nil
         context_errors = validate_context(task_request.context)
@@ -36,16 +45,25 @@ module Tasker
         task
       end
 
-      # typed: true
-      sig { params(task: Task).returns(Tasker::Types::StepSequence) }
+      # Get the step sequence for a task
+      #
+      # Retrieves all workflow steps for the task and establishes their dependencies.
+      #
+      # @param task [Tasker::Task] The task to get the sequence for
+      # @return [Tasker::Types::StepSequence] The sequence of workflow steps
       def get_sequence(task)
         steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
         establish_step_dependencies_and_defaults(task, steps)
         Tasker::Types::StepSequence.new(steps: steps)
       end
 
-      # typed: true
-      sig { params(task: Task).returns(T::Boolean) }
+      # Start a task's execution
+      #
+      # Updates the task status to IN_PROGRESS and fires the appropriate event.
+      #
+      # @param task [Tasker::Task] The task to start
+      # @return [Boolean] True if the task was started successfully
+      # @raise [Tasker::ProceduralError] If the task is already complete or not pending
       def start_task(task)
         raise(Tasker::ProceduralError, "task already complete for task #{task.task_id}") if task.complete
 
@@ -66,8 +84,13 @@ module Tasker
         true
       end
 
-      # typed: true
-      sig { params(task: Task).void }
+      # Handle a task's execution
+      #
+      # This is the main entry point for processing a task. It starts the task,
+      # processes viable steps iteratively until completion or error, and then finalizes.
+      #
+      # @param task [Tasker::Task] The task to handle
+      # @return [void]
       def handle(task)
         start_task(task)
 
@@ -114,7 +137,14 @@ module Tasker
         finalize(task, final_sequence, all_processed_steps)
       end
 
-      # Direct method to find viable steps, properly checking latest DB state
+      # Find viable steps that can be executed
+      #
+      # Checks all unfinished steps to find those that are ready for processing
+      # based on their dependencies and current state.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @return [Array<Tasker::WorkflowStep>] The viable steps
       def find_viable_steps(task, sequence)
         unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
 
@@ -133,8 +163,15 @@ module Tasker
         viable_steps
       end
 
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
+      # Handle a single workflow step
+      #
+      # Processes a step with proper span management, error handling,
+      # and retry logic.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param step [Tasker::WorkflowStep] The step to handle
+      # @return [Tasker::WorkflowStep] The processed step
       def handle_one_step(task, sequence, step)
         # Use the lifecycle events to handle a step with proper span management
         span_context = build_step_span_context(task, step)
@@ -168,6 +205,11 @@ module Tasker
 
       private
 
+      # Build context data for step spans
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param step [Tasker::WorkflowStep] The step being handled
+      # @return [Hash] The span context data
       def build_step_span_context(task, step)
         {
           span_name: "step.#{step.name}",
@@ -178,6 +220,11 @@ module Tasker
         }
       end
 
+      # Handle successful completion of a step
+      #
+      # @param step [Tasker::WorkflowStep] The step that succeeded
+      # @param span_context [Hash] The span context data
+      # @return [void]
       def handle_step_success(step, span_context)
         step.processed = true
         step.processed_at = Time.zone.now
@@ -189,6 +236,12 @@ module Tasker
         )
       end
 
+      # Handle error during step processing
+      #
+      # @param step [Tasker::WorkflowStep] The step that encountered an error
+      # @param error [StandardError] The error that occurred
+      # @param span_context [Hash] The span context data
+      # @return [void]
       def handle_step_error(step, error, span_context)
         step.processed = false
         step.processed_at = nil
@@ -202,6 +255,11 @@ module Tasker
         )
       end
 
+      # Handle retry-related events for a step
+      #
+      # @param step [Tasker::WorkflowStep] The step being retried
+      # @param span_context [Hash] The span context data
+      # @return [void]
       def handle_retry_events(step, span_context)
         # Record if max retries reached
         if step.attempts >= step.retry_limit
@@ -221,10 +279,12 @@ module Tasker
         )
       end
 
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
+      # Handle a set of viable steps either concurrently or sequentially
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
+      # @return [Array<Tasker::WorkflowStep>] The processed steps
       def handle_viable_steps(task, sequence, steps)
         # Delegate to the appropriate handler based on concurrent processing setting
         if respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
@@ -234,11 +294,12 @@ module Tasker
         end
       end
 
-      # Process steps concurrently
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
+      # Handle viable steps concurrently using futures
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
+      # @return [Array<Tasker::WorkflowStep>] The processed steps
       def handle_viable_steps_concurrently(task, sequence, steps)
         # Create an array of futures and processed steps
         futures = []
@@ -271,12 +332,12 @@ module Tasker
         processed_steps.to_a
       end
 
-      # Process steps sequentially
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence,
-               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
+      # Handle viable steps sequentially
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
+      # @return [Array<Tasker::WorkflowStep>] The processed steps
       def handle_viable_steps_sequentially(task, sequence, steps)
         processed_steps = []
 
@@ -292,13 +353,15 @@ module Tasker
         processed_steps
       end
 
-      # we are finalizing whether a task is complete
-      # whether it is in error, or whether we can still retry it
-      # or whether no errors exist but if we should re-enqueue
-      # if there are still valid workable steps
-
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
+      # Finalize a task after processing
+      #
+      # Determines whether a task is complete, should be re-enqueued,
+      # or has encountered errors that prevent completion.
+      #
+      # @param task [Tasker::Task] The task being finalized
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The steps that were processed
+      # @return [void]
       def finalize(task, sequence, steps)
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::FINALIZE,
@@ -338,8 +401,10 @@ module Tasker
         nil
       end
 
-      # typed: true
-      sig { params(error_steps: T::Array[WorkflowStep]).returns(T::Boolean) }
+      # Check if any steps have exceeded their retry limit
+      #
+      # @param error_steps [Array<Tasker::WorkflowStep>] Steps in error state
+      # @return [Boolean] True if any step has too many attempts
       def too_many_attempts?(error_steps)
         too_many_attempts_steps = []
         error_steps.each do |err_step|
@@ -349,10 +414,12 @@ module Tasker
         too_many_attempts_steps.length.positive?
       end
 
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean)
-      end
+      # Check if the task is blocked by errors
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The steps that were processed
+      # @return [Boolean] True if the task is blocked by errors
       def blocked_by_errors?(task, sequence, steps)
         # how many steps in this round are in an error state before, and based on
         # being processed in this round of handling, is it still in an error state
@@ -386,6 +453,11 @@ module Tasker
         false
       end
 
+      # Get a step handler for a specific step
+      #
+      # @param step [Tasker::WorkflowStep] The step to get a handler for
+      # @return [Object] The step handler
+      # @raise [Tasker::ProceduralError] If no handler is registered for the step
       def get_step_handler(step)
         raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless step_handler_class_map[step.name]
 
@@ -397,6 +469,11 @@ module Tasker
         handler_class.new(config: handler_config)
       end
 
+      # Get steps that are still in error state
+      #
+      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @return [Array<Tasker::WorkflowStep>] Steps still in error state
       def get_error_steps(steps, sequence)
         error_steps = []
         sequence.steps.each do |step|
@@ -421,8 +498,10 @@ module Tasker
         error_steps
       end
 
-      # typed: true
-      sig { params(task: Task).void }
+      # Enqueue a task for processing
+      #
+      # @param task [Tasker::Task] The task to enqueue
+      # @return [void]
       def enqueue_task(task)
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::ENQUEUE,
@@ -431,21 +510,38 @@ module Tasker
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
 
-      # override in implementing class
-      # typed: true
-      sig { params(task: Task, steps: T::Array[WorkflowStep]).void }
+      # Establish step dependencies and defaults
+      #
+      # This is a hook method that can be overridden by implementing classes.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param steps [Array<Tasker::WorkflowStep>] The steps to establish dependencies for
+      # @return [void]
       def establish_step_dependencies_and_defaults(task, steps); end
 
-      # override in implementing class
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
+      # Update annotations based on processed steps
+      #
+      # This is a hook method that can be overridden by implementing classes.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
+      # @return [void]
       def update_annotations(task, sequence, steps); end
 
-      # override in implementing class
+      # Get the schema for validating task context
+      #
+      # This is a hook method that can be overridden by implementing classes.
+      #
+      # @return [Hash, nil] The JSON schema for task context validation
       def schema
         nil
       end
 
+      # Validate a task context against the schema
+      #
+      # @param context [Hash] The context to validate
+      # @return [Array<String>] Validation errors, if any
       def validate_context(context)
         return [] unless schema
 

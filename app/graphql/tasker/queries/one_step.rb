@@ -1,4 +1,4 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
@@ -12,7 +12,6 @@ module Tasker
       argument :task_id, Integer, required: true
       argument :step_id, ID, required: true
 
-      sig { params(task_id: T.any(Integer, String), step_id: T.any(Integer, String)).returns(Tasker::WorkflowStep) }
       def resolve(task_id:, step_id:)
         Tasker::WorkflowStep
           .includes(:named_step)

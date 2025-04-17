@@ -1,4 +1,4 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
@@ -11,7 +11,6 @@ module Tasker
       field :task, Tasker::GraphQLTypes::TaskType, null: false
       field :errors, [String], null: false
 
-      sig { params(task_id: T.any(Integer, String)).returns(T::Hash[Symbol, T.untyped]) }
       def resolve(task_id:)
         task = Tasker::Task.find(task_id)
         task.update!({ status: Tasker::Constants::TaskStatuses::CANCELLED })

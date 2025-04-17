@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# typed: strict
+# typed: false
 
 module ApplicationCable
   class Connection < ActionCable::Connection::Base

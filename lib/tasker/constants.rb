@@ -1,26 +1,45 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
+  # Constants used throughout the Tasker gem
+  #
+  # This module contains constants for workflow step and task statuses,
+  # validation states, and configuration schemas.
   module Constants
+    # Status values for workflow steps
     module WorkflowStepStatuses
+      # Step is waiting to be processed
       PENDING = 'pending'
+      # Step is currently being processed
       IN_PROGRESS = 'in_progress'
+      # Step encountered an error during processing
       ERROR = 'error'
+      # Step completed successfully
       COMPLETE = 'complete'
+      # Step was manually marked as resolved
       RESOLVED_MANUALLY = 'resolved_manually'
+      # Step was cancelled
       CANCELLED = 'cancelled'
     end
 
+    # Status values for tasks
     module TaskStatuses
+      # Task is waiting to be processed
       PENDING = 'pending'
+      # Task is currently being processed
       IN_PROGRESS = 'in_progress'
+      # Task encountered an error during processing
       ERROR = 'error'
+      # Task completed successfully
       COMPLETE = 'complete'
+      # Task was manually marked as resolved
       RESOLVED_MANUALLY = 'resolved_manually'
+      # Task was cancelled
       CANCELLED = 'cancelled'
     end
 
+    # All valid status values for workflow steps
     VALID_WORKFLOW_STEP_STATUSES = [
       WorkflowStepStatuses::PENDING,
       WorkflowStepStatuses::IN_PROGRESS,
@@ -30,6 +49,7 @@ module Tasker
       WorkflowStepStatuses::RESOLVED_MANUALLY
     ].freeze
 
+    # Status values for steps that are not ready to be processed
     UNREADY_WORKFLOW_STEP_STATUSES = [
       WorkflowStepStatuses::IN_PROGRESS,
       WorkflowStepStatuses::COMPLETE,
@@ -37,6 +57,7 @@ module Tasker
       WorkflowStepStatuses::RESOLVED_MANUALLY
     ].freeze
 
+    # All valid status values for tasks
     VALID_TASK_STATUSES = [
       TaskStatuses::PENDING,
       TaskStatuses::IN_PROGRESS,
@@ -46,14 +67,20 @@ module Tasker
       TaskStatuses::RESOLVED_MANUALLY
     ].freeze
 
+    # Step status values that indicate completion (success or otherwise)
     VALID_STEP_COMPLETION_STATES = [
       WorkflowStepStatuses::COMPLETE,
       WorkflowStepStatuses::RESOLVED_MANUALLY,
       WorkflowStepStatuses::CANCELLED
     ].freeze
 
+    # Step status values that indicate the step is still in a working state
     VALID_STEP_STILL_WORKING_STATES = [WorkflowStepStatuses::PENDING, WorkflowStepStatuses::IN_PROGRESS].freeze
+
+    # Default value for unknown identifiers
     UNKNOWN = 'unknown'
+
+    # JSON schema for validating task handler YAML configurations
     YAML_SCHEMA = {
       type: 'object',
       required: %w[name task_handler_class step_templates],

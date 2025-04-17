@@ -1,4 +1,4 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
@@ -9,7 +9,6 @@ module Tasker
 
       description 'List Annotation Types'
 
-      sig { returns(T.untyped) }
       def resolve
         AnnotationType.order('name asc')
       end

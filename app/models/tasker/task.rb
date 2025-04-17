@@ -41,8 +41,6 @@ require 'digest'
 #
 module Tasker
   class Task < ApplicationRecord
-    extend T::Sig
-
     ALPHANUM_PLUS_HYPHEN_DASH = /[^0-9a-z\-_]/i
 
     self.primary_key = :task_id
@@ -71,16 +69,12 @@ module Tasker
       includes(:named_task).includes(workflow_steps: %i[named_step parents children]).includes(task_annotations: %i[annotation_type])
     }
 
-    # typed: true
-    sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
     def self.create_with_defaults!(task_request)
       task = from_task_request(task_request)
       task.save!
       task
     end
 
-    # typed: true
-    sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
     def self.from_task_request(task_request)
       named_task = Tasker::NamedTask.find_or_create_by!(name: task_request.name)
       options = {

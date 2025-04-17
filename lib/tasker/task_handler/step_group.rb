@@ -3,26 +3,54 @@
 
 module Tasker
   module TaskHandler
+    # Manages and analyzes groups of workflow steps
+    #
+    # StepGroup is used to track the status of steps in a workflow and determine
+    # whether a task is complete, can be finalized, or needs further processing.
+    # It traverses the step dependency graph to find incomplete steps.
     class StepGroup
-      extend T::Sig
-      attr_accessor :prior_incomplete_steps,
-                    :this_pass_complete_steps,
-                    :still_incomplete_steps,
-                    :still_working_steps,
-                    :this_pass_complete_step_ids
+      # @return [Array<Tasker::WorkflowStep>] Steps that were incomplete before this processing pass
+      attr_accessor :prior_incomplete_steps
 
+      # @return [Array<Tasker::WorkflowStep>] Steps that were completed in this processing pass
+      attr_accessor :this_pass_complete_steps
+
+      # @return [Array<Tasker::WorkflowStep>] Steps that are still incomplete after this pass
+      attr_accessor :still_incomplete_steps
+
+      # @return [Array<Tasker::WorkflowStep>] Steps that are still in a working state (pending/in progress)
+      attr_accessor :still_working_steps
+
+      # @return [Array<Integer>] IDs of steps completed in this processing pass
+      attr_accessor :this_pass_complete_step_ids
+
+      # Build a StepGroup for the given task, sequence and steps
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The steps processed in the current pass
+      # @return [StepGroup] A fully built step group
       def self.build(task, sequence, steps)
         inst = new(task, sequence, steps)
         inst.build
         inst
       end
 
+      # Initialize a new StepGroup
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The steps processed in the current pass
+      # @return [StepGroup] A new step group instance
       def initialize(task, sequence, steps)
         @task = task
         @sequence = sequence
         @steps = steps
       end
 
+      # Build the step group by analyzing all step collections
+      #
+      # @return [void]
       def build
         build_prior_incomplete_steps
         build_this_pass_complete_steps
@@ -30,6 +58,9 @@ module Tasker
         build_still_working_steps
       end
 
+      # Find all steps that were incomplete prior to this processing pass
+      #
+      # @return [void]
       def build_prior_incomplete_steps
         # determine which states were incomplete by traversing the entire DAG
         self.prior_incomplete_steps = []
@@ -41,7 +72,11 @@ module Tasker
         find_incomplete_steps(root_steps, [])
       end
 
-      # Helper method to recursively traverse the DAG and find incomplete steps
+      # Recursively traverse the DAG to find all incomplete steps
+      #
+      # @param steps [Array<Tasker::WorkflowStep>] Steps to check
+      # @param visited_step_ids [Array<Integer>] IDs of steps already visited
+      # @return [void]
       def find_incomplete_steps(steps, visited_step_ids)
         steps.each do |step|
           # Skip if we've already visited this step (avoid cycles, though they shouldn't exist in a DAG)
@@ -58,6 +93,9 @@ module Tasker
         end
       end
 
+      # Find steps that were completed in this processing pass
+      #
+      # @return [void]
       def build_this_pass_complete_steps
         # The steps passed into finalize are those processed in this pass
         # Check which ones completed in a valid state
@@ -68,6 +106,9 @@ module Tasker
         self.this_pass_complete_step_ids = this_pass_complete_steps.map(&:workflow_step_id)
       end
 
+      # Find steps that are still incomplete after this processing pass
+      #
+      # @return [void]
       def build_still_incomplete_steps
         # What was incomplete from the prior DAG traversal that is still incomplete now
         self.still_incomplete_steps = []
@@ -76,6 +117,9 @@ module Tasker
         end
       end
 
+      # Find steps that are still in a working state (pending/in progress)
+      #
+      # @return [void]
       def build_still_working_steps
         # What is still working from the incomplete steps but in a valid, retryable state
         self.still_working_steps = []
@@ -84,12 +128,21 @@ module Tasker
         end
       end
 
-      # if nothing was incomplete in prior iteration, complete is true
-      # if nothing is still incomplete after this pass, complete is true
+      # Check if the task can be considered complete
+      #
+      # A task is complete if there were no incomplete steps in the prior iteration
+      # or if all previously incomplete steps are now complete.
+      #
+      # @return [Boolean] True if the task is complete
       def complete?
         prior_incomplete_steps.empty? || still_incomplete_steps.empty?
       end
 
+      # Check if the task should be marked as pending for further processing
+      #
+      # A task is considered pending if there are still steps in a working state.
+      #
+      # @return [Boolean] True if the task should be pending
       def pending?
         still_working_steps.length.positive?
       end

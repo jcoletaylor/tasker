@@ -1,10 +1,10 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
   module Mutations
     class UpdateStep < BaseMutation
-      ALLOWED_UPDATE_FIELDS = T.let(%i[retry_limit inputs].freeze, T::Array[Symbol])
+      ALLOWED_UPDATE_FIELDS = %i[retry_limit inputs].freeze
       type Tasker::GraphQLTypes::WorkflowStepType
 
       argument :step_id, ID, required: true

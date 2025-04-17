@@ -1,0 +1,10 @@
+-o docs
+
+--markup markdown
+
+--no-private
+--protected
+
+--exclude spec
+--exclude vendor
+
