@@ -24,15 +24,11 @@
 #
 module Tasker
   class NamedStep < ApplicationRecord
-    extend T::Sig
-
     self.primary_key = :named_step_id
     belongs_to :dependent_system
     has_many :workflow_steps, dependent: :destroy
     validates :name, presence: true, uniqueness: { scope: :dependent_system_id }
 
-    # typed: true
-    sig { params(templates: T::Array[Tasker::Types::StepTemplate]).returns(T::Array[Tasker::NamedStep]) }
     def self.create_named_steps_from_templates(templates)
       templates.map do |template|
         dependent_system = Tasker::DependentSystem.find_or_create_by!(name: template.dependent_system)

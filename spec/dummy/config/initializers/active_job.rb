@@ -1,4 +1,4 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 # Configure ActiveJob to use Sidekiq as the queue adapter

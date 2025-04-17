@@ -28,7 +28,6 @@ group :test do
   gem 'rspec-json_expectations', '~> 2.2'
   gem 'rspec-rails', '~> 7.1'
   gem 'rspec-sidekiq', '~> 4.0'
-  gem 'rspec-sorbet', '~> 1.9'
   gem 'rswag-specs', '~> 2.16'
   gem 'simplecov', '~> 0.22', require: false
 end
@@ -41,7 +40,4 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem 'rubocop-rails-omakase', require: false
   gem 'sidekiq', '~> 7.3'
-  gem 'sorbet', '~> 0.5.11934'
-  gem 'sorbet-runtime', '~> 0.5.11934'
-  gem 'sorbet-static', '~> 0.5.11934'
 end

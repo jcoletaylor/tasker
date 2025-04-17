@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-# typed: strict
+# typed: false
 
 module Tasker
   class ApplicationController < ActionController::API
-    extend T::Sig
   end
 end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-# typed: strict
+# typed: false
 
-require 'sorbet-runtime'
 require 'dry-types'
 require 'dry-struct'
 

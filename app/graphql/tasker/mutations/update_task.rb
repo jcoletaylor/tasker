@@ -1,10 +1,10 @@
-# typed: true
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
   module Mutations
     class UpdateTask < BaseMutation
-      ALLOWED_UPDATE_FIELDS = T.let(%i[reason tags].freeze, T::Array[Symbol])
+      ALLOWED_UPDATE_FIELDS = %i[reason tags].freeze
       type Tasker::GraphQLTypes::TaskType
 
       argument :task_id, ID, required: true

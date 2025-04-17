@@ -4,10 +4,8 @@ require 'active_model_serializers'
 require 'graphql'
 require 'json-schema'
 require 'pg'
-# typed: strict
 
 require 'rails'
-require 'sorbet-runtime'
 
 module Tasker
   class Engine < ::Rails::Engine
@@ -42,9 +40,6 @@ module Tasker
     end
 
     class << self
-      extend T::Sig
-
-      sig { params(_block: T.proc.params(config: Rails::Configuration).void).void }
       def configure(&)
         yield(Engine.config)
       end

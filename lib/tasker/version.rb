@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# typed: strict
+# typed: false
 
 module Tasker
   VERSION = '1.5.0'

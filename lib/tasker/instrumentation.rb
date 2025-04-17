@@ -48,7 +48,9 @@ module Tasker
           filtered_payload = filter_sensitive_data(payload)
 
           # Log the event
-          Rails.logger.debug { "[#{service_name.capitalize}] #{event_name} (#{duration}ms) #{filtered_payload.inspect}" }
+          Rails.logger.debug do
+            "[#{service_name.capitalize}] #{event_name} (#{duration}ms) #{filtered_payload.inspect}"
+          end
         end
       end
 

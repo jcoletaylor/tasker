@@ -29,8 +29,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'active_model_serializers', '>= 0.10.0'
   spec.add_dependency 'rack-cors'
 
-  spec.add_dependency 'sorbet-runtime'
-
   spec.add_dependency 'json-schema', '>= 2.4.0'
 
   spec.add_dependency 'concurrent-ruby', '~> 1.3.5'

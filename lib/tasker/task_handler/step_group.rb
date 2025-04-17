@@ -4,7 +4,6 @@
 module Tasker
   module TaskHandler
     class StepGroup
-      extend T::Sig
       attr_accessor :prior_incomplete_steps,
                     :this_pass_complete_steps,
                     :still_incomplete_steps,

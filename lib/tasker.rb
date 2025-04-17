@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'tasker/engine'
-# typed: strict
+# typed: false
 
 require 'tasker/constants'
 require 'tasker/version'

@@ -1,4 +1,4 @@
-# typed: strict
+# typed: false
 # frozen_string_literal: true
 
 module Tasker
@@ -12,9 +12,6 @@ module Tasker
       field :step, Tasker::GraphQLTypes::WorkflowStepType, null: false
       field :errors, [String], null: false
 
-      sig do
-        params(task_id: T.any(Integer, String), step_id: T.any(Integer, String)).returns(T::Hash[Symbol, T.untyped])
-      end
       def resolve(task_id:, step_id:)
         step = Tasker::WorkflowStep.where({ task_id: task_id, workflow_step_id: step_id }).first
         return { step: nil, errors: 'no such step' } unless step

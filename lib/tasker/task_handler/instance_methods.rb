@@ -7,9 +7,6 @@ require 'tasker/lifecycle_events'
 module Tasker
   module TaskHandler
     module InstanceMethods
-      extend T::Sig
-      # typed: true
-      sig { params(task_request: Tasker::Types::TaskRequest).returns(Task) }
       def initialize_task!(task_request)
         task = nil
         context_errors = validate_context(task_request.context)
@@ -36,16 +33,12 @@ module Tasker
         task
       end
 
-      # typed: true
-      sig { params(task: Task).returns(Tasker::Types::StepSequence) }
       def get_sequence(task)
         steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
         establish_step_dependencies_and_defaults(task, steps)
         Tasker::Types::StepSequence.new(steps: steps)
       end
 
-      # typed: true
-      sig { params(task: Task).returns(T::Boolean) }
       def start_task(task)
         raise(Tasker::ProceduralError, "task already complete for task #{task.task_id}") if task.complete
 
@@ -66,8 +59,6 @@ module Tasker
         true
       end
 
-      # typed: true
-      sig { params(task: Task).void }
       def handle(task)
         start_task(task)
 
@@ -133,8 +124,6 @@ module Tasker
         viable_steps
       end
 
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, step: WorkflowStep).returns(WorkflowStep) }
       def handle_one_step(task, sequence, step)
         # Use the lifecycle events to handle a step with proper span management
         span_context = build_step_span_context(task, step)
@@ -221,10 +210,6 @@ module Tasker
         )
       end
 
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
       def handle_viable_steps(task, sequence, steps)
         # Delegate to the appropriate handler based on concurrent processing setting
         if respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
@@ -234,11 +219,6 @@ module Tasker
         end
       end
 
-      # Process steps concurrently
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
       def handle_viable_steps_concurrently(task, sequence, steps)
         # Create an array of futures and processed steps
         futures = []
@@ -271,12 +251,6 @@ module Tasker
         processed_steps.to_a
       end
 
-      # Process steps sequentially
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence,
-               steps: T::Array[WorkflowStep]).returns(T::Array[WorkflowStep])
-      end
       def handle_viable_steps_sequentially(task, sequence, steps)
         processed_steps = []
 
@@ -296,9 +270,6 @@ module Tasker
       # whether it is in error, or whether we can still retry it
       # or whether no errors exist but if we should re-enqueue
       # if there are still valid workable steps
-
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
       def finalize(task, sequence, steps)
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::FINALIZE,
@@ -338,8 +309,6 @@ module Tasker
         nil
       end
 
-      # typed: true
-      sig { params(error_steps: T::Array[WorkflowStep]).returns(T::Boolean) }
       def too_many_attempts?(error_steps)
         too_many_attempts_steps = []
         error_steps.each do |err_step|
@@ -349,10 +318,6 @@ module Tasker
         too_many_attempts_steps.length.positive?
       end
 
-      # typed: true
-      sig do
-        params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).returns(T::Boolean)
-      end
       def blocked_by_errors?(task, sequence, steps)
         # how many steps in this round are in an error state before, and based on
         # being processed in this round of handling, is it still in an error state
@@ -421,8 +386,6 @@ module Tasker
         error_steps
       end
 
-      # typed: true
-      sig { params(task: Task).void }
       def enqueue_task(task)
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::ENQUEUE,
@@ -431,14 +394,9 @@ module Tasker
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
 
-      # override in implementing class
-      # typed: true
-      sig { params(task: Task, steps: T::Array[WorkflowStep]).void }
       def establish_step_dependencies_and_defaults(task, steps); end
 
       # override in implementing class
-      # typed: true
-      sig { params(task: Task, sequence: Tasker::Types::StepSequence, steps: T::Array[WorkflowStep]).void }
       def update_annotations(task, sequence, steps); end
 
       # override in implementing class
