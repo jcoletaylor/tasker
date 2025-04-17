@@ -2,7 +2,7 @@ lib/tasker.rb 0ecdbc94bde297ef9555766066950baad80cbb83
 lib/tasker/types.rb 3fbd9e620d6fabbacf747053d3e060d5174b5120
 lib/tasker/engine.rb 82440f45af732262e80090f21e4a64ab508249a9
 lib/tasker/railtie.rb 8cbb9cfa7ea572ab3f4ccdfc87da2a3e095bd04f
-lib/tasker/version.rb 3c91f8067e58e9c7f06b5d0de51f2aaad7eaf810
+lib/tasker/version.rb 175f20ec6443f9c918cd25bd761b4aa92d8f6c35
 lib/tasker/constants.rb 728b103e71225fa906fbe5a7153b9a4e3b52a2cc
 app/models/tasker/task.rb c188a2f16ea96b397a0ca8fafbcadadfbf9de62e
 lib/tasker/task_builder.rb 624404b0d33637f551be8e5c3f46ec15cfdd84fe
