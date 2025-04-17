@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: README
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "README";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'>
+<p><a href="https://github.com/jcoletaylor/tasker/actions/workflows/main.yml"><img src="https" alt="//github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg:CI"></a> <img src="https" alt="//img.shields.io/github/license/jcoletaylor/tasker:GitHub"> <img src="https" alt="//img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&amp;sort=semver:GitHub"> release (latest SemVer)</p>
+
+<h1 id="label-Tasker-3A+Queable+Multi-Step+Tasks+Made+Easy-ish">Tasker: Queable Multi-Step Tasks Made Easy-ish</h1>
+
+<h2 id="label-Designed+to+make+developing+queuable+multi-step+tasks+easier+to+reason+about"><em>Designed to make developing queuable multi-step tasks easier to reason about</em></h2>
+
+<p><img src="flowchart.png" alt="Flowchart"></p>
+
+<h2 id="label-Quickstart">Quickstart</h2>
+
+<p>Add to your Rails <code>Gemfile</code></p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># add to your Gemfile
+</span><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 1.5.0</span><span class='tstring_end'>&#39;</span></span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Add the migrations in your Rails app root:</p>
+
+<pre class="code ruby"><code class="ruby">bundle exec rails tasker:install:migrations
+bundle exec rails db:migrate
+</code></pre>
+
+<p>And then mount it where you’d like in <code>config/routes.rb</code> with:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/routes.rb
+</span>
+<span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_application'>application</span><span class='period'>.</span><span class='id identifier rubyid_routes'>routes</span><span class='period'>.</span><span class='id identifier rubyid_draw'>draw</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_mount'>mount</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Engine.html" title="Tasker::Engine (class)">Engine</a></span></span><span class='comma'>,</span> <span class='label'>at:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>as:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Initialize the Tasker configuration and directory structure:</p>
+
+<pre class="code ruby"><code class="ruby"># Setup Tasker configuration and directories
+bundle exec rails tasker:setup
+
+# Force setup (overwrites existing configuration)
+bundle exec rails tasker:setup:force
+</code></pre>
+
+<h2 id="label-Configuration">Configuration</h2>
+
+<p>Tasker allows you to customize the directories where task handlers and configuration files are stored. The default configuration uses the directory name <code>tasks</code> for both.</p>
+
+<h3 id="label-Configuring+Task+Directories">Configuring Task Directories</h3>
+
+<p>Create or modify your <code>config/initializers/tasker.rb</code> file:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Configure Tasker task directories
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='comment'># Directory within app/ where task handlers are stored (default: &#39;tasks&#39;)
+</span>  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_task_handler_directory'>task_handler_directory</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>custom_tasks</span><span class='tstring_end'>&#39;</span></span>
+
+  <span class='comment'># Directory within config/ where task YAML configs are stored (default: &#39;tasks&#39;)
+</span>  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_task_config_directory'>task_config_directory</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>workflows</span><span class='tstring_end'>&#39;</span></span>
+
+  <span class='comment'># Default module namespace for task handlers (default: nil)
+</span>  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_default_module_namespace'>default_module_namespace</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>OurTasks</span><span class='tstring_end'>&#39;</span></span>
+<span class='kw'>end</span>
+</code></pre>
+
+<h3 id="label-Using+the+Task+Handler+Generator">Using the Task Handler Generator</h3>
+
+<p>Tasker includes a generator to create new task handlers with all the necessary files:</p>
+
+<pre class="code ruby"><code class="ruby"># Generate a new task handler with default options
+rails generate task_handler OrderProcess # uses Tasker.configuration.default_module_namespace if set
+
+# Generate with custom options
+rails generate task_handler PaymentProcess --module-namespace=Payment --dependent-system=payment_system --concurrent=false
+</code></pre>
+
+<p>This will create:</p>
+<ul><li>
+<p><code>config/[task_config_directory]/[module_path/]order_process.yaml</code></p>
+</li><li>
+<p><code>app/[task_handler_directory]/[module_path/]order_process.rb</code></p>
+</li><li>
+<p><code>spec/[task_handler_directory]/[module_path/]order_process_spec.rb</code></p>
+</li></ul>
+
+<h2 id="label-Usage">Usage</h2>
+
+<p>The above generator will create a task handler with a YAML file defining the task handler.</p>
+
+<h3 id="label-Creating+a+Configured+Task+Handler">Creating a Configured Task Handler</h3>
+<ol><li>
+<p>Use the generator to create a task handler with a YAML file defining the task handler</p>
+</li><li>
+<p>Develop your step handlers as normal classes, and reference them in the YAML file</p>
+</li><li>
+<p>API-backed step handlers which inherit from <code>Tasker::StepHandler::Api</code> will automatically use exponential backoff and jitter</p>
+</li><li>
+<p>Task steps are organized as a Directed Acyclic Graph (DAG) to ensure proper ordering of execution, and if concurrency is not disabled, will automatically execute in parallel where dependencies allow</p>
+</li></ol>
+
+<h3 id="label-Customizing+Task+Handlers">Customizing Task Handlers</h3>
+
+<p>If you need to create a task handler from scratch, you can do so by following the steps below:</p>
+<ol><li>
+<p>Create a new task handler class in <code>app/[task_handler_directory]/my_task.rb</code></p>
+</li><li>
+<p>Define the steps in the task handler class</p>
+</li><li>
+<p>Register the task handler with the Tasker registry</p>
+</li><li>
+<p>An full examples of this can be reviewed as an <a href="./spec/dummy/app/tasks/api_task/integration_example_rb.html">API integration example</a>.</p>
+</li></ol>
+
+<h3 id="label-Example+of+creating+a+Configured+Task+Handler">Example of creating a Configured Task Handler</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>MyTask</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/ConfiguredTask.html" title="Tasker::ConfiguredTask (class)">ConfiguredTask</a></span></span>
+  <span class='comment'># can override self.task_name and self.yaml_path if desired
+</span><span class='kw'>end</span>
+
+<span class='comment'># Usage:
+</span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'>MyTask</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+<span class='comment'># The class is built and ready to use
+</span><span class='comment'># though this of course requires the step handler classes referenced in the YAML to be defined
+</span><span class='comment'># as that is the core of your business logic
+</span></code></pre>
+
+<h3 id="label-Example+of+a+Configured+Task+Handler">Example of a Configured Task Handler</h3>
+
+<p>Here’s an example YAML file for an e-commerce API integration task handler:</p>
+
+<pre class="code ruby"><code class="ruby">---
+name: api_task/integration_yaml_example
+module_namespace: ApiTask
+task_handler_class: IntegrationYamlExample
+concurrent: true
+
+default_dependent_system: ecommerce_system
+
+named_steps:
+  - fetch_cart
+  - fetch_products
+  - validate_products
+  - create_order
+  - publish_event
+
+schema:
+  type: object
+  required:
+    - cart_id
+  properties:
+    cart_id:
+      type: integer
+
+step_templates:
+  - name: fetch_cart
+    description: Fetch cart details from e-commerce system
+    handler_class: ApiTask::StepHandler::CartFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/cart
+      params:
+        cart_id: 1
+
+  - name: fetch_products
+    description: Fetch product details from product catalog
+    handler_class: ApiTask::StepHandler::ProductsFetchStepHandler
+    handler_config:
+      type: api
+      url: https://api.ecommerce.com/products
+
+  - name: validate_products
+    description: Validate product availability
+    depends_on_steps:
+      - fetch_products
+      - fetch_cart
+    handler_class: ApiTask::StepHandler::ProductsValidateStepHandler
+
+  - name: create_order
+    description: Create order from validated cart
+    depends_on_step: validate_products
+    handler_class: ApiTask::StepHandler::CreateOrderStepHandler
+
+  - name: publish_event
+    description: Publish order created event
+    depends_on_step: create_order
+    handler_class: ApiTask::StepHandler::PublishEventStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://localhost:3000/api/cart
+          params:
+            cart_id: 1
+            debug: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://localhost:3000/api/products
+          params:
+            debug: true
+
+  test:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: http://test-api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            test_mode: true
+
+      - name: fetch_products
+        handler_config:
+          url: http://test-api.ecommerce.com/products
+          params:
+            test_mode: true
+
+  production:
+    step_templates:
+      - name: fetch_cart
+        handler_config:
+          url: https://api.ecommerce.com/cart
+          params:
+            cart_id: 1
+            api_key: ${ECOMMERCE_API_KEY}
+
+      - name: fetch_products
+        handler_config:
+          url: https://api.ecommerce.com/products
+          params:
+            api_key: ${ECOMMERCE_API_KEY}
+</code></pre>
+
+<h3 id="label-Environment-Specific+Configuration">Environment-Specific Configuration</h3>
+
+<p>Tasker supports environment-specific configuration overrides in YAML files. This allows you to:</p>
+<ol><li>
+<p>Define a base configuration that works across all environments</p>
+</li><li>
+<p>Override specific settings for each environment (development, test, production)</p>
+</li></ol>
+
+<p>The configuration is merged at runtime, with environment-specific settings taking precedence over the base configuration. This is particularly useful for:</p>
+<ul><li>
+<p>Using different API endpoints per environment</p>
+</li><li>
+<p>Enabling debug mode in development</p>
+</li><li>
+<p>Using test mode in test environments</p>
+</li></ul>
+
+<p>To use environment-specific configuration:</p>
+<ol><li>
+<p>Add environment-specific sections to your YAML file</p>
+</li><li>
+<p>Override only the settings that need to change per environment</p>
+</li><li>
+<p>The TaskBuilder will automatically merge the configurations based on the current Rails environment</p>
+</li></ol>
+
+<h2 id="label-API+Task+Example">API Task Example</h2>
+
+<p>See the <a href="./spec/dummy/app/tasks/api_task">spec/dummy/app/tasks/api_task</a> directory for an example of a task handler that processes an e-commerce order through a series of steps, interacting with external systems, and handling errors and retries. You can read more about the example <a href="./spec/dummy/app/tasks/api_task/README_md.html">here</a>.</p>
+
+<h3 id="label-API+Routes">API Routes</h3>
+
+<p>Tasker provides a RESTful API for managing tasks. Here are the available endpoints:</p>
+
+<h4 id="label-Tasks">Tasks</h4>
+<ul><li>
+<p><code>GET /tasker/tasks</code> - List all tasks</p>
+</li><li>
+<p><code>POST /tasker/tasks</code> - Create and enqueue a new task</p>
+</li><li>
+<p><code>GET /tasker/tasks/{task_id}</code> - Get task details</p>
+</li><li>
+<p><code>PATCH/PUT /tasker/tasks/{task_id}</code> - Update task</p>
+</li><li>
+<p><code>DELETE /tasker/tasks/{task_id}</code> - Cancel task</p>
+</li></ul>
+
+<h4 id="label-Workflow+Steps">Workflow Steps</h4>
+<ul><li>
+<p><code>GET /tasker/tasks/{task_id}/workflow_steps</code> - List steps for a task</p>
+</li><li>
+<p><code>GET /tasker/tasks/{task_id}/workflow_steps/{step_id}</code> - Get step details</p>
+</li><li>
+<p><code>PATCH/PUT /tasker/tasks/{task_id}/workflow_steps/{step_id}</code> - Update step</p>
+</li><li>
+<p><code>DELETE /tasker/tasks/{task_id}/workflow_steps/{step_id}</code> - Cancel step</p>
+</li></ul>
+
+<h3 id="label-Creating+a+Task+via+API">Creating a Task via API</h3>
+
+<p>Example of creating a task using curl:</p>
+
+<pre class="code ruby"><code class="ruby">curl -X POST https://www.example.com/tasker/tasks \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;name&quot;: &quot;api_integration_task&quot;,
+    &quot;context&quot;: {
+      &quot;cart_id&quot;: 123
+    },
+    &quot;initiator&quot;: &quot;web_interface&quot;,
+    &quot;reason&quot;: &quot;Process new order&quot;,
+    &quot;source_system&quot;: &quot;ecommerce&quot;,
+    &quot;tags&quot;: [&quot;order_processing&quot;, &quot;api_integration&quot;]
+  }&#39;
+</code></pre>
+
+<p>The request body must include:</p>
+<ul><li>
+<p><code>name</code>: The name of the task handler to use</p>
+</li><li>
+<p><code>context</code>: A JSON object containing the task’s context data</p>
+</li><li>
+<p><code>initiator</code>: Who/what initiated the task</p>
+</li><li>
+<p><code>reason</code>: Why the task was created</p>
+</li><li>
+<p><code>source_system</code>: The system that created the task</p>
+</li><li>
+<p><code>tags</code>: (Optional) Array of tags for categorization</p>
+</li></ul>
+
+<h2 id="label-Workflow+-26+Retry+Mechanism">Workflow &amp; Retry Mechanism</h2>
+
+<pre class="code ruby"><code class="ruby">graph TD
+    Start([Task Initialization]) --&gt; FindRoots[Find Root Steps]
+    FindRoots --&gt; QueueRoots[Queue Root Steps]
+    QueueRoots --&gt; ParallelExec{Parallel Execution}
+
+    ParallelExec --&gt; RootA[Root Step A]
+    ParallelExec --&gt; RootB[Root Step B]
+
+    RootA --&gt; |Running| A[Step Ready for Execution]
+    RootB --&gt; |Running| A
+
+    A --&gt; B{Step Succeeded?}
+    B --&gt;|Yes| C[Mark Step Complete]
+    B --&gt;|No| D{Retryable Error?}
+    D --&gt;|No| E[Mark as Failed]
+    D --&gt;|Yes| F{Attempts &lt; Max?}
+    F --&gt;|No| E
+    F --&gt;|Yes| G[Calculate Backoff]
+
+    G --&gt; H[Apply Exponential Backoff with Jitter]
+    H --&gt; I[Wait for Backoff Period]
+    I --&gt; J[Increment Attempt Count]
+    J --&gt; A
+
+    C --&gt; K{Find Dependent Steps}
+    K --&gt; DepCheck{For Each Dependent Step}
+    DepCheck --&gt; DependenciesMet{All Dependencies\nComplete?}
+    DependenciesMet --&gt;|Yes| QueueStep[Queue Step for Execution]
+    QueueStep --&gt; ParallelExec
+    DependenciesMet --&gt;|No| Wait[Step Remains Pending]
+
+    E --&gt; TaskCheck{Any Step\nFailed?}
+    TaskCheck --&gt;|Yes| FailTask[Mark Task as Failed]
+
+    Wait -.- DepMonitor[Dependency Monitor]
+    DepMonitor -.- DependenciesMet
+
+    C --&gt; CompleteCheck{All Steps\nComplete?}
+    CompleteCheck --&gt;|Yes| CompleteTask[Mark Task as Complete]
+    CompleteCheck --&gt;|No| Continue[Continue Processing]
+
+    subgraph DAG Traversal
+    FindRoots
+    QueueRoots
+    ParallelExec
+    RootA
+    RootB
+    K
+    DepCheck
+    DependenciesMet
+    QueueStep
+    Wait
+    DepMonitor
+    end
+
+    subgraph Exponential Backoff
+    G
+    H
+    I
+    J
+    end
+
+    subgraph Task Status Management
+    E
+    TaskCheck
+    FailTask
+    CompleteCheck
+    CompleteTask
+    end
+
+    %% Initialize with dark borders and light fills
+    style Start fill:#ffffff,stroke:#444444,stroke-width:2px
+    style FindRoots fill:#f6f6f6,stroke:#444444
+    style QueueRoots fill:#f6f6f6,stroke:#444444
+    style ParallelExec fill:#f6f6f6,stroke:#444444,stroke-width:2px
+
+    %% Root steps (slightly lighter gray)
+    style RootA fill:#e8e8e8,stroke:#666666
+    style RootB fill:#e8e8e8,stroke:#666666
+
+    %% Standard flow components (white with medium gray borders)
+    style A fill:#ffffff,stroke:#666666
+    style B fill:#ffffff,stroke:#666666
+    style C fill:#ffffff,stroke:#666666
+    style D fill:#ffffff,stroke:#666666
+    style F fill:#ffffff,stroke:#666666
+    style CompleteCheck fill:#ffffff,stroke:#666666
+    style Continue fill:#ffffff,stroke:#666666
+    style TaskCheck fill:#ffffff,stroke:#666666
+
+    %% Exponential backoff (light gray)
+    style G fill:#f0f0f0,stroke:#666666
+    style H fill:#f0f0f0,stroke:#666666
+    style I fill:#f0f0f0,stroke:#666666
+    style J fill:#f0f0f0,stroke:#666666
+
+    %% DAG specific components (slightly darker gray)
+    style K fill:#e0e0e0,stroke:#444444
+    style DepCheck fill:#e0e0e0,stroke:#444444
+    style DependenciesMet fill:#e0e0e0,stroke:#444444,stroke-width:2px
+    style QueueStep fill:#e0e0e0,stroke:#444444
+    style Wait fill:#e0e0e0,stroke:#444444,stroke-dasharray: 5 5
+    style DepMonitor fill:#e0e0e0,stroke:#444444,stroke-dasharray: 5 5
+
+    %% Success and failure states (dark and medium grays)
+    style CompleteTask fill:#d0d0d0,stroke:#222222,stroke-width:2px
+    style FailTask fill:#b0b0b0,stroke:#222222,stroke-width:2px
+    style E fill:#b0b0b0,stroke:#222222
+</code></pre>
+
+<p>The system implements advanced workflow traversal with parallel execution and sophisticated retry logic:</p>
+<ul><li>
+<p><strong>DAG Traversal &amp; Parallel Execution</strong></p>
+</li><li>
+<p>Initial identification and queueing of root steps (no dependencies)</p>
+</li><li>
+<p>Parallel execution of independent steps at each level</p>
+</li><li>
+<p>Dynamic discovery of next executable steps as dependencies are satisfied</p>
+</li><li>
+<p>Continuous monitoring of dependency status to activate pending steps</p>
+</li><li>
+<p>Automatic task completion detection when all steps are finished</p>
+</li><li>
+<p><strong>Industry Standard Exponential Backoff</strong></p>
+</li><li>
+<p>Base delay that doubles with each attempt: <code>base_delay * (2^attempt)</code></p>
+</li><li>
+<p>Random jitter to prevent thundering herd problems</p>
+</li><li>
+<p>Configurable maximum delay cap (30 seconds)</p>
+</li><li>
+<p>Respects server-provided Retry-After headers when available</p>
+</li><li>
+<p><strong>Task Status Management</strong></p>
+</li><li>
+<p>Real-time monitoring of all step statuses</p>
+</li><li>
+<p>Early failure detection and propagation</p>
+</li><li>
+<p>Graceful handling of unrecoverable errors</p>
+</li></ul>
+
+<h2 id="label-Telemetry+and+Observability">Telemetry and Observability</h2>
+
+<p>Tasker includes comprehensive telemetry capabilities to provide insights into task execution flow and performance:</p>
+<ul><li>
+<p><strong>Built-in OpenTelemetry integration</strong> for compatibility with tools like Jaeger, Zipkin, and Honeycomb</p>
+</li><li>
+<p><strong>Standardized event naming</strong> for consistent observability across task and step operations</p>
+</li><li>
+<p><strong>Automatic span creation</strong> with proper parent-child relationships for complex workflows</p>
+</li><li>
+<p><strong>Sensitive data filtering</strong> to ensure security and privacy of telemetry data</p>
+</li><li>
+<p><strong>Configurable service naming</strong> to customize how traces appear in your observability tools</p>
+</li><li>
+<p><strong>Detailed event lifecycle tracking</strong> with standard events for all task and step operations</p>
+</li></ul>
+
+<p>For complete documentation on telemetry features, configuration options, and best practices, see <a href="docs/TELEMETRY_md.html">TELEMETRY.md</a>.</p>
+
+<h2 id="label-Why+build+this-3F">Why build this?</h2>
+
+<p>See the <a href="./docs/WHY_md.html">WHY.md</a> file for more information.</p>
+
+<h2 id="label-TODO">TODO</h2>
+
+<p>A full <a href="./docs/TODO_md.html">TODO</a>.</p>
+
+<h2 id="label-Dependencies">Dependencies</h2>
+<ul><li>
+<p>Ruby version - 3.2.2</p>
+</li><li>
+<p>System dependencies - Postgres, Redis, and Sidekiq</p>
+</li></ul>
+
+<h2 id="label-Development">Development</h2>
+<ul><li>
+<p>Database - <code>bundle exec rake db:schema:load</code></p>
+</li><li>
+<p>How to run the test suite - <code>bundle exec rspec spec</code></p>
+</li><li>
+<p>Lint: <code>bundle exec rubocop</code></p>
+</li></ul>
+
+<h2 id="label-Gratitude">Gratitude</h2>
+
+<p>Flowchart PNG by <a href="https://www.flaticon.com/authors/xnimrodx">xnimrodx</a> from <a href="https://www.flaticon.com/">Flaticon</a></p>
+
+<h2 id="label-License">License</h2>
+
+<p>The gem is available as open source under the terms of the <a href="https://opensource.org/licenses/MIT">MIT License</a>.</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Thu Apr 17 08:44:18 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

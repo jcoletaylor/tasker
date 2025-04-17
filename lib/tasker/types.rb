@@ -12,8 +12,20 @@ module Tasker
   # consistent type usage across the application.
   #
   # Types are implemented using dry-struct and follow a consistent
-  # pattern with proper documentation.
+  # pattern with proper documentation. The module includes basic types
+  # for all Tasker data structures including:
+  #
+  # - StepTemplate - Defines the structure for workflow step templates
+  # - StepSequence - Contains a sequence of workflow steps
+  # - TaskRequest - Represents a request to create and execute a task
+  #
+  # @example Using a Tasker type
+  #   task_request = Tasker::Types::TaskRequest.new(
+  #     name: 'my_task',
+  #     context: { id: 123 }
+  #   )
   module Types
+    include Dry::Types()
   end
 end
 

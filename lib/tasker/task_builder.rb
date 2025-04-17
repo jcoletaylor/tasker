@@ -4,26 +4,48 @@ require 'yaml'
 require 'json-schema'
 
 module Tasker
+  # Builds task handler classes from configuration
+  #
+  # TaskBuilder provides a way to dynamically create task handler classes
+  # from configuration defined in YAML or passed programmatically.
+  # It handles validation, step definition, and handler registration.
   class TaskBuilder
-    attr_reader :config, :handler_class
+    # @return [Hash] The configuration used to build the task handler
+    attr_reader :config
 
-    # YAML schema for validating task handler configurations
+    # @return [Class] The generated task handler class
+    attr_reader :handler_class
 
+    # Create a new TaskBuilder with the given configuration
+    #
+    # @param config [Hash] Configuration hash for building the task handler
+    # @return [TaskBuilder] A new task builder instance
     def initialize(config: {})
       @config = deep_merge_configs(config)
       validate_config
       build
     end
 
+    # Create a new TaskBuilder from a YAML file
+    #
+    # @param yaml_path [String] Path to the YAML configuration file
+    # @return [TaskBuilder] A new task builder instance
     def self.from_yaml(yaml_path)
       cfg = YAML.load_file(yaml_path)
       new(config: cfg)
     end
 
+    # Build the task handler class from the configuration
+    #
+    # @return [Class] The generated task handler class
     def build
       build_and_register_handler
     end
 
+    # Validate the configuration against the schema
+    #
+    # @return [Boolean] True if the configuration is valid
+    # @raise [InvalidTaskHandlerConfig] If the configuration is invalid
     def validate_config
       JSON::Validator.validate!(Tasker::Constants::YAML_SCHEMA, @config)
       validate_step_names
@@ -34,6 +56,10 @@ module Tasker
 
     private
 
+    # Merge the base and environment-specific configurations
+    #
+    # @param config [Hash] The raw configuration hash
+    # @return [Hash] The merged configuration
     def deep_merge_configs(config)
       # Get the base configuration
       base_config = Marshal.load(Marshal.dump(config))
@@ -49,6 +75,11 @@ module Tasker
       deep_merge(base_config, env_config)
     end
 
+    # Deep merge two hashes with special handling for step templates
+    #
+    # @param base [Hash] The base hash
+    # @param overrides [Hash] The hash to merge on top
+    # @return [Hash] The merged hash
     def deep_merge(base, overrides)
       result = base.dup
 
@@ -66,6 +97,11 @@ module Tasker
       result
     end
 
+    # Merge step templates from base and override configurations
+    #
+    # @param base_templates [Array<Hash>] The base templates array
+    # @param override_templates [Array<Hash>] The override templates array
+    # @return [Array<Hash>] The merged templates array
     def merge_step_templates(base_templates, override_templates)
       # Create a map of step templates by name for quick lookup
       template_map = base_templates.index_by do |template|
@@ -82,6 +118,10 @@ module Tasker
       base_templates.map { |template| template_map[template['name']] }
     end
 
+    # Validate that all step names are in the named_steps list if provided
+    #
+    # @return [void]
+    # @raise [InvalidTaskHandlerConfig] If validation fails
     def validate_step_names
       return unless @config['named_steps']
 
@@ -110,6 +150,9 @@ module Tasker
       end
     end
 
+    # Build the handler class and register it
+    #
+    # @return [Class] The generated handler class
     def build_and_register_handler
       @handler_class = build_handler_class
 
@@ -134,6 +177,9 @@ module Tasker
       @handler_class
     end
 
+    # Build the handler class and set it in the proper namespace
+    #
+    # @return [Class] The new or existing handler class
     def build_handler_class
       # Create the class dynamically
       handler_module = Module.const_get(@config['module_namespace']) if @config['module_namespace']
@@ -155,6 +201,9 @@ module Tasker
       @handler_class
     end
 
+    # Define constants for the handler class
+    #
+    # @return [void]
     def define_constants
       # Define the default dependent system constant if available
       if @config['default_dependent_system']
@@ -172,6 +221,9 @@ module Tasker
       @handler_class.const_set(:NAMED_STEPS, @config['named_steps']) unless @handler_class.const_defined?(:NAMED_STEPS)
     end
 
+    # Define step templates for the handler class
+    #
+    # @return [void]
     def define_step_templates
       templates = @config['step_templates']
       default_system = @config['default_dependent_system']
@@ -221,6 +273,9 @@ module Tasker
       end
     end
 
+    # Define the schema method if a schema is provided
+    #
+    # @return [void]
     def define_schema
       schema_data = @config['schema']
 
@@ -232,25 +287,42 @@ module Tasker
     end
   end
 
+  # Error raised when task handler configuration is invalid
   class InvalidTaskHandlerConfig < StandardError; end
 
+  # A task handler that loads configuration from YAML
+  #
+  # ConfiguredTask provides a base class for task handlers that
+  # load their configuration from YAML files.
   class ConfiguredTask < TaskBuilder
     include Tasker::TaskHandler
 
     class << self
+      # Get the task name derived from the class name
+      #
+      # @return [String] The task name
       def task_name
         @task_name ||= to_s.underscore
       end
 
+      # Get the path to the YAML configuration file
+      #
+      # @return [String] The path to the YAML file
       def yaml_path
         @yaml_path ||= Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
       end
 
+      # Load the configuration from the YAML file
+      #
+      # @return [Hash] The loaded configuration
       def config
         @config ||= YAML.load_file(yaml_path)
       end
     end
 
+    # Create a new ConfiguredTask
+    #
+    # @return [ConfiguredTask] A new configured task instance
     def initialize
       super(config: self.class.config)
     end

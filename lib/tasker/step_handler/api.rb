@@ -3,15 +3,61 @@
 require 'faraday'
 module Tasker
   module StepHandler
+    # Handles API-based workflow steps by making HTTP requests
+    # and processing responses with backoff/retry support
+    #
+    # @example Creating a custom API step handler
+    #   class MyApiHandler < Tasker::StepHandler::Api
+    #     def call(task, sequence, step)
+    #       connection.post('/endpoint', task.context)
+    #     end
+    #   end
     class Api < Base
-      attr_reader :connection, :config
+      # @return [Faraday::Connection] The Faraday connection for making HTTP requests
+      attr_reader :connection
 
+      # @return [Config] The configuration for this API handler
+      attr_reader :config
+
+      # HTTP status codes that should trigger backoff behavior
       BACKOFF_ERROR_CODES = [429, 503].freeze
+
+      # HTTP status codes that indicate a successful request
       SUCCESS_CODES = (200..226)
 
+      # Configuration class for API step handlers
       class Config
-        attr_accessor :url, :params, :ssl, :headers, :retry_delay, :enable_exponential_backoff, :jitter_factor
+        # @return [String] The base URL for API requests
+        attr_accessor :url
 
+        # @return [Hash] The default query parameters for requests
+        attr_accessor :params
+
+        # @return [Hash, nil] SSL configuration options
+        attr_accessor :ssl
+
+        # @return [Hash] Request headers
+        attr_accessor :headers
+
+        # @return [Float] Delay in seconds before retrying after failure
+        attr_accessor :retry_delay
+
+        # @return [Boolean] Whether to use exponential backoff for retries
+        attr_accessor :enable_exponential_backoff
+
+        # @return [Float] Random factor for jitter calculation (0.0-1.0)
+        attr_accessor :jitter_factor
+
+        # Creates a new API configuration
+        #
+        # @param url [String] The base URL for API requests
+        # @param params [Hash] Query parameters for requests
+        # @param ssl [Hash, nil] SSL configuration options
+        # @param headers [Hash] Request headers
+        # @param enable_exponential_backoff [Boolean] Whether to use exponential backoff
+        # @param retry_delay [Float] Delay in seconds before retrying
+        # @param jitter_factor [Float] Random factor for jitter calculation
+        # @return [Config] A new configuration instance
         def initialize(
           url:,
           params: {},
@@ -30,6 +76,9 @@ module Tasker
           @jitter_factor = jitter_factor
         end
 
+        # Returns the default headers for API requests
+        #
+        # @return [Hash] The default headers
         def default_headers
           {
             'Content-Type' => 'application/json',
@@ -38,11 +87,22 @@ module Tasker
         end
       end
 
+      # Creates a new API step handler
+      #
+      # @param config [Config] The configuration for this handler
+      # @yield [Faraday::Connection] Optional block for configuring the Faraday connection
+      # @return [Api] A new API step handler
       def initialize(config: Config.new, &)
         super(config: config)
         @connection = _build_connection(&)
       end
 
+      # Handles execution of an API step with tracing and error handling
+      #
+      # @param task [Tasker::Task] The task being executed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param step [Tasker::WorkflowStep] The current step being handled
+      # @return [void]
       def handle(task, sequence, step)
         # Get the context for events and spans
         span_context = {
@@ -68,6 +128,13 @@ module Tasker
         end
       end
 
+      # Makes the actual API call - must be implemented by subclasses
+      #
+      # @param task [Tasker::Task] The task being executed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param step [Tasker::WorkflowStep] The current step being handled
+      # @return [Faraday::Response, Hash] The API response
+      # @raise [NotImplementedError] If not implemented by a subclass
       def call(task, sequence, step)
         # Example from the Faraday docs:
         #

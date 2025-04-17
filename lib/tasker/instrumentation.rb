@@ -1,10 +1,20 @@
 # frozen_string_literal: true
 
 module Tasker
-  # Handles instrumentation setup and configuration
+  # Handles instrumentation setup and configuration for Tasker
+  #
+  # This module provides telemetry capabilities using ActiveSupport::Notifications
+  # and integrates with OpenTelemetry when available. It handles event subscription,
+  # span creation, attribute conversion, and sensitive data filtering.
   module Instrumentation
     class << self
       # Subscribe to all Tasker events
+      #
+      # Sets up event subscribers to capture telemetry data for logging
+      # and tracing purposes. Delegates to appropriate handlers based on
+      # event name and type.
+      #
+      # @return [void]
       def subscribe
         # Skip if already subscribed
         return if @subscribed
@@ -24,6 +34,11 @@ module Tasker
       end
 
       # Subscribe to events and send them to OpenTelemetry
+      #
+      # Sets up OpenTelemetry instrumentation for Tasker events when
+      # OpenTelemetry is available.
+      #
+      # @return [void]
       def subscribe_to_opentelemetry
         return unless defined?(::OpenTelemetry)
 
@@ -38,6 +53,11 @@ module Tasker
       end
 
       # Subscribe to events and log them
+      #
+      # Sets up logging for all Tasker events, including timing information
+      # and filtered payload data.
+      #
+      # @return [void]
       def subscribe_to_logger
         ActiveSupport::Notifications.subscribe(/^tasker\./) do |name, started, finished, _unique_id, payload|
           duration = ((finished - started) * 1000).round(2)
@@ -56,7 +76,13 @@ module Tasker
 
       private
 
-      # Handle OpenTelemetry integration
+      # Handle OpenTelemetry integration for a specific event
+      #
+      # @param event [String] The event name
+      # @param _started [Time] When the event started
+      # @param _finished [Time] When the event finished
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_otel_event(event, _started, _finished, payload)
         return unless defined?(::OpenTelemetry)
 
@@ -85,6 +111,11 @@ module Tasker
       end
 
       # Handle task start events
+      #
+      # @param tracer [OpenTelemetry::Tracer] The OpenTelemetry tracer
+      # @param event [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_task_start(tracer, event, payload)
         # Start a root span for the event type, not the task name
         span = tracer.start_root_span(event,
@@ -96,6 +127,11 @@ module Tasker
       end
 
       # Handle task completion events (complete or error)
+      #
+      # @param tracer [OpenTelemetry::Tracer] The OpenTelemetry tracer
+      # @param event [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_task_completion(tracer, event, payload)
         # End the task span
         span = get_task_span(payload[:task_id])
@@ -116,6 +152,11 @@ module Tasker
       end
 
       # Set the span status based on the event
+      #
+      # @param span [OpenTelemetry::Trace::Span] The span to set status on
+      # @param event [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def set_span_status(span, event, payload)
         if event == Tasker::LifecycleEvents::Events::Task::ERROR
           # For testing compatibility, don't directly set status
@@ -138,6 +179,11 @@ module Tasker
       end
 
       # Handle step events
+      #
+      # @param tracer [OpenTelemetry::Tracer] The OpenTelemetry tracer
+      # @param event [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_step_event(tracer, event, payload)
         # Create a child span for steps using the event name, not step name
         task_span = get_task_span(payload[:task_id])
@@ -160,6 +206,11 @@ module Tasker
       end
 
       # Handle all other generic events
+      #
+      # @param tracer [OpenTelemetry::Tracer] The OpenTelemetry tracer
+      # @param event [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_generic_event(tracer, event, payload)
         # For all other events, add them to the current span or create a new one
         current_span = ::OpenTelemetry::Trace.current_span
@@ -176,6 +227,9 @@ module Tasker
       end
 
       # Convert hash payload to OTel-compatible attributes
+      #
+      # @param payload [Hash] The event payload
+      # @return [Hash] OTel-compatible attributes
       def convert_attributes(payload)
         result = {}
         config = Tasker::Configuration.configuration
@@ -208,34 +262,60 @@ module Tasker
       end
 
       # Handle all events (main dispatcher)
+      #
+      # @param name [String] The event name
+      # @param started [Time] When the event started
+      # @param finished [Time] When the event finished
+      # @param unique_id [String] The unique ID of the event
+      # @param payload [Hash] The event payload
+      # @return [void]
       def handle_event(name, started, finished, unique_id, payload)
         # Additional event handling logic can go here
         # This is called for all events
       end
 
-      # Track active spans for tasks to create proper parent-child relationships
+      # Get a hash of active spans for tasks
+      #
+      # @return [Hash<String, OpenTelemetry::Trace::Span>] Task spans
       def task_spans
         @task_spans ||= {}
       end
 
+      # Store a span for a task
+      #
+      # @param task_id [String, Integer] The task ID
+      # @param span [OpenTelemetry::Trace::Span] The span to store
+      # @return [void]
       def store_task_span(task_id, span)
         return unless task_id && span
 
         task_spans[task_id.to_s] = span
       end
 
+      # Get a span for a task
+      #
+      # @param task_id [String, Integer] The task ID
+      # @return [OpenTelemetry::Trace::Span, nil] The span or nil if not found
       def get_task_span(task_id)
         return nil unless task_id
 
         task_spans[task_id.to_s]
       end
 
+      # Remove a span for a task
+      #
+      # @param task_id [String, Integer] The task ID
+      # @return [void]
       def remove_task_span(task_id)
         return unless task_id
 
         task_spans.delete(task_id.to_s)
       end
 
+      # Filter sensitive data from a payload
+      #
+      # @param payload [Hash] The event payload
+      # @return [Hash] The filtered payload
       def filter_sensitive_data(payload)
         # Apply parameter filtering if configured
         filter = Tasker::Configuration.configuration.parameter_filter

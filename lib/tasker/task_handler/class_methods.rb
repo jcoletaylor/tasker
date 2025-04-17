@@ -6,10 +6,29 @@ require 'concurrent'
 
 module Tasker
   module TaskHandler
+    # Class methods for task handlers
+    #
+    # This module provides class-level functionality for task handlers,
+    # including step template definition and handler registration.
     module ClassMethods
+      # Helper class for defining step templates in task handlers
       class StepTemplateDefiner
-        attr_reader :step_templates, :klass, :step_handler_class_map, :step_handler_config_map
+        # @return [Array<Tasker::Types::StepTemplate>] The defined step templates
+        attr_reader :step_templates
 
+        # @return [Class] The class where templates are being defined
+        attr_reader :klass
+
+        # @return [Hash<String, String>] Mapping of step names to handler class names
+        attr_reader :step_handler_class_map
+
+        # @return [Hash<String, Object>] Mapping of step names to handler configs
+        attr_reader :step_handler_config_map
+
+        # Create a new step template definer
+        #
+        # @param klass [Class] The class where templates are being defined
+        # @return [StepTemplateDefiner] A new step template definer
         def initialize(klass)
           @klass = klass
           @step_templates = []
@@ -17,6 +36,20 @@ module Tasker
           @step_handler_config_map = {}
         end
 
+        # Define a new step template
+        #
+        # @param kwargs [Hash] The step template attributes
+        # @option kwargs [String] :dependent_system The system that this step depends on
+        # @option kwargs [String] :name The name identifier for this step
+        # @option kwargs [String] :description A description of what this step does
+        # @option kwargs [Boolean] :default_retryable Whether this step can be retried
+        # @option kwargs [Integer] :default_retry_limit The maximum number of retry attempts
+        # @option kwargs [Boolean] :skippable Whether this step can be skipped
+        # @option kwargs [Class] :handler_class The class that implements the step's logic
+        # @option kwargs [String, nil] :depends_on_step Name of a step this depends on
+        # @option kwargs [Array<String>] :depends_on_steps Names of steps this depends on
+        # @option kwargs [Object, nil] :handler_config Configuration for the step handler
+        # @return [void]
         def define(**kwargs)
           dependent_system = kwargs.fetch(:dependent_system, Tasker::Constants::UNKNOWN)
           name = kwargs.fetch(:name)
@@ -43,6 +76,9 @@ module Tasker
           )
         end
 
+        # Register the mapping of step names to handler classes and configs
+        #
+        # @return [void]
         def register_class_map
           @step_templates.each do |template|
             @step_handler_class_map[template.name] = template.handler_class.to_s
@@ -51,6 +87,10 @@ module Tasker
         end
       end
 
+      # Define step templates for a task handler
+      #
+      # @yield [StepTemplateDefiner] A block to define step templates
+      # @return [void]
       def define_step_templates
         definer = StepTemplateDefiner.new(self)
         yield(definer)
@@ -66,11 +106,10 @@ module Tasker
         end
       end
 
-      # Simple register_handler method that enables or disables concurrent processing
-      # using Concurrent::Future for step execution
+      # Register a task handler with the handler factory
       #
       # @param name [String, Symbol] The name to register the handler under
-      # @param concurrent [Boolean] Whether to use concurrent processing (default: true)
+      # @param concurrent [Boolean] Whether to use concurrent processing
       # @return [void]
       def register_handler(name, concurrent: true)
         # Set a flag indicating whether to use concurrent processing

@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Types::StepTemplate
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Types::StepTemplate";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (S)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span>
+     &raquo; 
+    <span class="title">StepTemplate</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Types::StepTemplate
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Dry::Struct</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Dry::Struct</li>
+          
+            <li class="next">Tasker::Types::StepTemplate</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/types/step_template.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>StepTemplate defines the structure for workflow step templates</p>
+
+<p>A step template provides the blueprint for creating specific workflow steps in a task’s sequence. It defines the behavior, dependencies, and configuration for steps of a particular type.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_retry_limit-instance_method" title="#default_retry_limit (instance method)">#<strong>default_retry_limit</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The default maximum number of retry attempts.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_retryable-instance_method" title="#default_retryable (instance method)">#<strong>default_retryable</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Whether this step can be retried by default.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#dependent_system-instance_method" title="#dependent_system (instance method)">#<strong>dependent_system</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The system that this step depends on for execution.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#depends_on_step-instance_method" title="#depends_on_step (instance method)">#<strong>depends_on_step</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Optional name of a step that must be completed before this one.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#depends_on_steps-instance_method" title="#depends_on_steps (instance method)">#<strong>depends_on_steps</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Names of steps that must be completed before this one.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#description-instance_method" title="#description (instance method)">#<strong>description</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>A human-readable description of what this step does.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handler_class-instance_method" title="#handler_class (instance method)">#<strong>handler_class</strong>  &#x21d2; Class </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The class that implements the step’s logic.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handler_config-instance_method" title="#handler_config (instance method)">#<strong>handler_config</strong>  &#x21d2; Object<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Optional configuration for the step handler.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#name-instance_method" title="#name (instance method)">#<strong>name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The name identifier for this step template.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#skippable-instance_method" title="#skippable (instance method)">#<strong>skippable</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Whether this step can be skipped in the workflow.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_dependencies-instance_method" title="#all_dependencies (instance method)">#<strong>all_dependencies</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns all dependency step names as a single array.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="default_retry_limit-instance_method">
+  
+    #<strong>default_retry_limit</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The default maximum number of retry attempts.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The default maximum number of retry attempts</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+29</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 29</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:default_retry_limit</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>3</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="default_retryable-instance_method">
+  
+    #<strong>default_retryable</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Whether this step can be retried by default.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether this step can be retried by default</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+25</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 25</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:default_retryable</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Bool</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='kw'>true</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="dependent_system-instance_method">
+  
+    #<strong>dependent_system</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The system that this step depends on for execution.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The system that this step depends on for execution</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+13</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 13</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:dependent_system</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Strict</span><span class='op'>::</span><span class='const'>String</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="depends_on_step-instance_method">
+  
+    #<strong>depends_on_step</strong>  &#x21d2; <tt>String</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Optional name of a step that must be completed before this one.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional name of a step that must be completed before this one</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+45</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 45</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:depends_on_step</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_optional'>optional</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='kw'>nil</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="depends_on_steps-instance_method">
+  
+    #<strong>depends_on_steps</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Names of steps that must be completed before this one.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Names of steps that must be completed before this one</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 49</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:depends_on_steps</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='period'>.</span><span class='const'>Array</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="description-instance_method">
+  
+    #<strong>description</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns A human-readable description of what this step does.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>A human-readable description of what this step does</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+21</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 21</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:description</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>String</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="handler_class-instance_method">
+  
+    #<strong>handler_class</strong>  &#x21d2; <tt>Class</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The class that implements the step’s logic.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The class that implements the step’s logic</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+37</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 37</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:handler_class</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Class</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="handler_config-instance_method">
+  
+    #<strong>handler_config</strong>  &#x21d2; <tt>Object</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Optional configuration for the step handler.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional configuration for the step handler</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+41</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 41</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:handler_config</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Any</span><span class='period'>.</span><span class='id identifier rubyid_optional'>optional</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='kw'>nil</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="name-instance_method">
+  
+    #<strong>name</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The name identifier for this step template.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The name identifier for this step template</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+17</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 17</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:name</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Strict</span><span class='op'>::</span><span class='const'>String</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="skippable-instance_method">
+  
+    #<strong>skippable</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Whether this step can be skipped in the workflow.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether this step can be skipped in the workflow</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+33</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 33</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:skippable</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Bool</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="all_dependencies-instance_method">
+  
+    #<strong>all_dependencies</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns all dependency step names as a single array</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>All step dependencies</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+54
+55
+56</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 54</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_dependencies'>all_dependencies</span>
+  <span class='lbracket'>[</span><span class='id identifier rubyid_depends_on_step'>depends_on_step</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_depends_on_steps'>depends_on_steps</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Apr 17 08:44:19 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>
