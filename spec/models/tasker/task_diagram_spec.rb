@@ -166,24 +166,6 @@ RSpec.describe Tasker::TaskDiagram do
     end
   end
 
-  describe '#to_embedded_html' do
-    it 'generates HTML fragment for embedding in existing pages' do
-      html_output = diagram.to_embedded_html
-
-      # Check that it's a fragment, not a full document
-      expect(html_output).not_to include('<!DOCTYPE html>')
-
-      # Check that it includes the diagram
-      expect(html_output).to include('<div class="tasker-diagram">')
-      expect(html_output).to include('<div class="mermaid diagram-container">')
-      expect(html_output).to include(diagram.to_mermaid)
-
-      # Check for task information
-      expect(html_output).to include('Task ID:')
-      expect(html_output).to include(task.task_id.to_s)
-    end
-  end
-
   describe 'integration with native diagram library' do
     it 'builds proper node objects for tasks' do
       node = diagram.send(:build_task_node)

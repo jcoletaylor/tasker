@@ -8,5 +8,6 @@ Tasker::Engine.routes.draw do
   # mount Rswag::Api::Engine => '/api-docs'
   resources :tasks do
     resources :workflow_steps
+    resources :task_diagrams, only: %i[index]
   end
 end

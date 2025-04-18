@@ -20,27 +20,19 @@ module Tasker
 
     # GET /tasks/1
     def show
-      render do |format|
-        format.json do
-          render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
-        end
-        format.html do
-          render(html: @task.diagram(request.base_url).to_html)
-        end
-      end
+      render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
     end
 
     # POST /tasks
     def create
-      if task_params[:name].blank?
+      if task_params_as_symbolized_hash[:name].blank?
         return render(status: :bad_request,
                       json: { error: 'invalid parameters: requires task name' })
       end
-
-      task_request = Tasker::Types::TaskRequest.new(task_params)
+      set_task_request
       begin
-        handler = handler_factory.get(task_request.name)
-        @task = handler.initialize_task!(task_request)
+        handler = handler_factory.get(@task_request.name)
+        @task = handler.initialize_task!(@task_request)
       rescue Tasker::ProceduralError => e
         @task = Tasker::Task.new
         @task.errors.add(:name, e.to_s)
@@ -98,6 +90,14 @@ module Tasker
 
     def query_base
       Tasker::Task.with_all_associated
+    end
+
+    def task_params_as_symbolized_hash
+      task_params.to_h.deep_symbolize_keys
+    end
+
+    def set_task_request
+      @task_request = Tasker::Types::TaskRequest.new(task_params_as_symbolized_hash)
     end
   end
 end
