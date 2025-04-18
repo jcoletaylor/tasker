@@ -36,6 +36,7 @@ This guide will walk you through the fundamentals of using Tasker to build compl
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
   - [Best Practices](#best-practices)
   - [Telemetry and Observability](#telemetry-and-observability)
+  - [Scheduling Tasks](#scheduling-tasks)
   - [Dependencies](#dependencies)
   - [Development](#development)
   - [Gratitude](#gratitude)
@@ -406,6 +407,10 @@ For complete documentation on telemetry features, configuration options, and bes
 For more information on why I built this, see the [WHY.md](./docs/WHY.md) file.
 
 For a system overview, see the [OVERVIEW.md](./docs/OVERVIEW.md) file, and the full [TODO](./docs/TODO.md).
+
+## Scheduling Tasks
+
+Tasker does not directly manage scheduling recurring tasks. There are a variety of strategies that already exist in the Rails ecosystem for accomplishing this. [Javan's Whenever gem](https://github.com/javan/whenever) is one of the most popular, and is very battle-tested.
 
 ## Dependencies
 
