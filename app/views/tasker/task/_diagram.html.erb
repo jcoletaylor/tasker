@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Task <%= task.task_id %> Workflow Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default'
+    });
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .mermaid { margin: 20px 0; }
+    .header { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Task Workflow Diagram</h1>
+    <p>Task ID: <%= task.task_id %></p>
+    <p>Task Name: <%= task.name %></p>
+    <p>Status: <%= task.status %></p>
+    <p>Created: <%= task.created_at %></p>
+  </div>
+
+  <div class="tasker-diagram mermaid">
+    <%= diagram %>
+  </div>
+</body>
+</html>

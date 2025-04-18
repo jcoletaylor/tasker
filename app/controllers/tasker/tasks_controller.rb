@@ -20,7 +20,14 @@ module Tasker
 
     # GET /tasks/1
     def show
-      render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
+      render do |format|
+        format.json do
+          render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
+        end
+        format.html do
+          render(html: @task.diagram(request.base_url).to_html)
+        end
+      end
     end
 
     # POST /tasks

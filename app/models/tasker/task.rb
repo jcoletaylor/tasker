@@ -98,6 +98,10 @@ module Tasker
       workflow_steps.includes(:named_step).where(named_step: { name: name }).first
     end
 
+    def diagram(base_url = nil)
+      @diagram ||= Tasker::TaskDiagram.new(self, base_url)
+    end
+
     private
 
     def unique_identity_hash
