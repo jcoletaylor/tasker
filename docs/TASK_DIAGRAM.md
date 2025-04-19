@@ -25,8 +25,8 @@ mermaid_string = diagram.to_mermaid
 # Generate a complete HTML document with the embedded diagram
 html_document = diagram.to_html
 
-# Generate HTML for embedding in an existing page
-embedded_html = diagram.to_embedded_html
+# Convert diagram to JSON format
+json_data = diagram.to_json
 ```
 
 ## Adding Links to REST Endpoints
@@ -43,7 +43,7 @@ diagram = Tasker::TaskDiagram.new(task, base_url)
 
 ## Diagram Rendering Options
 
-The TaskDiagram class provides three main methods for visualization:
+The TaskDiagram class provides two main methods for visualization:
 
 ### to_mermaid
 
@@ -55,14 +55,12 @@ mermaid_string = diagram.to_mermaid
 
 # Example output:
 # graph TD
-#   task_123["Task: MyTask
-# ID: 123
-# Status: COMPLETE"]
-#   step_456["Step: step1
-# Status: COMPLETE
-# Attempts: 1"]
-#   task_123 -- "" --> step_456
+# subgraph "Task 123: MyTask"
+#   task_123["Task: MyTask<br/>ID: 123<br/>Status: COMPLETE"]
+#   step_456["Step: step1<br/>Status: COMPLETE<br/>Attempts: 1"]
+#   task_123 --> step_456
 #   ...
+# end
 ```
 
 ### to_html
@@ -82,29 +80,35 @@ html = diagram.to_html
 File.write("task_#{task.task_id}_diagram.html", html)
 ```
 
-### to_embedded_html
+### to_json
 
-This method returns HTML that can be embedded within an existing page. It includes:
-
-- A stylized container for the diagram
-- The Mermaid diagram itself
-- Required JavaScript and CSS (placed in the `content_for :head` block)
+This method returns the diagram data as a JSON string with nodes, edges, and diagram properties. This is useful for APIs and for custom rendering.
 
 ```ruby
 diagram = Tasker::TaskDiagram.new(task)
-embedded_html = diagram.to_embedded_html
+json = diagram.to_json
 
-# Use in a view or controller
+# Example output:
+# {
+#   "nodes": [
+#     {"id": "task_123", "label": "Task: MyTask\nID: 123\nStatus: COMPLETE", ...},
+#     {"id": "step_456", "label": "Step: step1\nStatus: COMPLETE\nAttempts: 1", ...}
+#   ],
+#   "edges": [
+#     {"source_id": "task_123", "target_id": "step_456", ...}
+#   ],
+#   "direction": "TD",
+#   "title": "Task 123: MyTask"
+# }
 ```
 
 ## Templates
 
-The HTML rendering uses ERB templates located in the app/views/tasker/task directory:
+The HTML rendering uses an ERB template located in the app/views/tasker/task directory:
 
 - `_diagram.html.erb`: Complete HTML document template for standalone viewing
-- `_embedded_diagram.html.erb`: Partial template for embedding in existing pages
 
-You can customize these templates to match your application's styling and requirements.
+You can customize this template to match your application's styling and requirements.
 
 ## Visual Features
 
@@ -138,7 +142,7 @@ The TaskDiagram uses a custom, native diagram implementation with the following 
 
 Represents a node in the diagram with properties like:
 - `id`: Unique identifier
-- `label`: Display text
+- `label`: Display text (supports HTML line breaks with `<br/>`)
 - `shape`: Node shape (box, circle, etc.)
 - `style`: CSS styling for the node
 - `url`: Optional URL for clickable nodes
@@ -148,7 +152,7 @@ Represents a node in the diagram with properties like:
 Represents a connection between nodes with properties like:
 - `source_id`: ID of the source node
 - `target_id`: ID of the target node
-- `label`: Text displayed on the edge
+- `label`: Text displayed on the edge (shown within pipes `|` in the syntax)
 - `type`: Edge style (solid, dashed, etc.)
 - `direction`: Arrow direction (forward, back, both, none)
 
@@ -158,7 +162,7 @@ Represents a complete flowchart containing nodes and edges with properties like:
 - `nodes`: Collection of nodes
 - `edges`: Collection of edges
 - `direction`: Layout direction (TD, LR, etc.)
-- `title`: Optional title for the diagram
+- `title`: Optional title for the diagram (shown as a subgraph title)
 
 All these components support JSON serialization and generation of Mermaid syntax.
 
@@ -177,6 +181,7 @@ class TasksController < ApplicationController
     respond_to do |format|
       format.html { render html: diagram.to_html.html_safe }
       format.text { render plain: diagram.to_mermaid }
+      format.json { render json: diagram.to_json }
     end
   end
 end
@@ -191,7 +196,8 @@ def show
 
   render json: {
     task: task.as_json,
-    mermaid_diagram: diagram.to_mermaid
+    diagram: JSON.parse(diagram.to_json),
+    mermaid_syntax: diagram.to_mermaid
   }
 end
 ```
@@ -199,10 +205,7 @@ end
 ### Use in Rails Views
 
 ```erb
-<!-- Option 1: Using the embedded HTML helper -->
-<%= raw Tasker::TaskDiagram.new(@task).to_embedded_html %>
-
-<!-- Option 2: Manual integration -->
+<!-- Using a div with Mermaid class -->
 <div class="mermaid">
   <%= Tasker::TaskDiagram.new(@task).to_mermaid %>
 </div>
@@ -218,12 +221,32 @@ end
 <% end %>
 ```
 
-### Customizing the Templates
+### Mermaid Syntax Updates
 
-You can modify the templates to match your application's styling or add additional information:
+The current Mermaid syntax follows these conventions:
+
+1. Nodes use HTML line breaks with `<br/>` tags instead of newlines
+   ```
+   nodeId["Multi-line<br/>content here"]
+   ```
+
+2. Edge labels use pipe syntax for clarity
+   ```
+   A -->|"connects to"| B
+   ```
+
+3. Titles are implemented as subgraphs rather than title directives
+   ```
+   subgraph "Task 123: Process Order"
+     // nodes and edges here
+   end
+   ```
+
+### Customizing the Template
+
+You can modify the template to match your application's styling or add additional information:
 
 ```ruby
-# Customize the templates in:
-# app/views/tasker/task/_diagram.html.erb          # Full HTML document
-# app/views/tasker/task/_embedded_diagram.html.erb  # Embeddable version
+# Customize the template in:
+# app/views/tasker/task/_diagram.html.erb  # Full HTML document
 ```

@@ -151,6 +151,10 @@ Tasker provides a RESTful API for managing tasks. Here are the available endpoin
 - `PATCH/PUT /tasker/tasks/{task_id}/workflow_steps/{step_id}` - Update step
 - `DELETE /tasker/tasks/{task_id}/workflow_steps/{step_id}` - Cancel step
 
+#### Task Diagrams
+
+- `GET /tasker/tasks/{task_id}/diagram` - Get a diagram for a task
+
 ### Creating a Task via API
 
 Example of creating a task using curl:
