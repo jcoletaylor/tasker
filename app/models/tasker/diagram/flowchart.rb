@@ -106,20 +106,28 @@ module Tasker
         # Add the flowchart definition
         lines << "graph #{direction}"
 
-        # Add the title if present
-        lines << "  title #{title}" if title
+        # Use a subgraph with title if title is present
+        if title
+          lines << "subgraph \"#{title}\""
+          indent = "  "
+        else
+          indent = ""
+        end
 
         # Add all nodes
         nodes.each do |node|
           node.to_mermaid.each do |line|
-            lines << "  #{line}"
+            lines << "#{indent}#{line}"
           end
         end
 
         # Add all edges
         edges.each do |edge|
-          lines << "  #{edge.to_mermaid}"
+          lines << "#{indent}#{edge.to_mermaid}"
         end
+
+        # Close the subgraph if we have a title
+        lines << "end" if title
 
         # Join all lines with newlines
         lines.join("\n")

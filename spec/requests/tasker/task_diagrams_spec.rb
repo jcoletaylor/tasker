@@ -83,6 +83,15 @@ module Tasker
           end
         end
 
+        response(200, 'successful HTML response') do
+          let(:format) { 'html' }
+
+          run_test! do |response|
+            expect(response.body).to include('<!DOCTYPE html>')
+            expect(response.body).to include('<div class="tasker-diagram mermaid">')
+          end
+        end
+
         response(404, 'task not found') do
           let(:task_id) { 999999 }
           let(:format) { 'json' }

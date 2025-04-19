@@ -369,7 +369,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#to_mermaid-instance_method" title="#to_mermaid (instance method)">#<strong>to_mermaid</strong>  &#x21d2; String </a>
+      <a href="#to_mermaid-instance_method" title="#to_mermaid (instance method)">#<strong>to_mermaid</strong>  &#x21d2; Array&lt;String&gt; </a>
     
 
     
@@ -1068,7 +1068,7 @@
       <div class="method_details ">
   <h3 class="signature " id="to_mermaid-instance_method">
   
-    #<strong>to_mermaid</strong>  &#x21d2; <tt>String</tt> 
+    #<strong>to_mermaid</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
   
 
   
@@ -1090,13 +1090,13 @@
     <li>
       
       
-        <span class='type'>(<tt>String</tt>)</span>
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
       
       
       
         &mdash;
         <div class='inline'>
-<p>Mermaid syntax for the node</p>
+<p>Array of Mermaid syntax lines for the node</p>
 </div>
       
     </li>
@@ -1130,11 +1130,11 @@
       <pre class="code"><span class="info file"># File 'app/models/tasker/diagram/node.rb', line 67</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_mermaid'>to_mermaid</span>
-  <span class='comment'># Basic node definition
-</span>  <span class='id identifier rubyid_node_def'>node_def</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'>[\&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_mermaid_text'>escape_mermaid_text</span><span class='lparen'>(</span><span class='id identifier rubyid_label'>label</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot;]</span><span class='tstring_end'>&quot;</span></span>
+  <span class='comment'># Use HTML line breaks in the label
+</span>  <span class='id identifier rubyid_formatted_label'>formatted_label</span> <span class='op'>=</span> <span class='id identifier rubyid_escape_mermaid_text'>escape_mermaid_text</span><span class='lparen'>(</span><span class='id identifier rubyid_label'>label</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_gsub'>gsub</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&lt;br/&gt;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 
-  <span class='comment'># Add styling if present
-</span>  <span class='id identifier rubyid_node_def'>node_def</span> <span class='op'>+=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>:::custom</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_style'>style</span>
+  <span class='comment'># Basic node definition
+</span>  <span class='id identifier rubyid_node_def'>node_def</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'>[\&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_formatted_label'>formatted_label</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot;]</span><span class='tstring_end'>&quot;</span></span>
 
   <span class='comment'># Add URL link if present
 </span>  <span class='id identifier rubyid_click_def'>click_def</span> <span class='op'>=</span> <span class='id identifier rubyid_url'>url</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>click </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'> \&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_escape_mermaid_text'>escape_mermaid_text</span><span class='lparen'>(</span><span class='id identifier rubyid_url'>url</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>\&quot;</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='kw'>nil</span>
@@ -1155,7 +1155,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Apr 18 20:23:53 2025 by
+  Generated on Fri Apr 18 20:52:17 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

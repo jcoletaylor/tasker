@@ -80,13 +80,12 @@ module Tasker
       #
       # @return [String] Mermaid syntax for the edge
       def to_mermaid
-        edge_style = EDGE_STYLES[type] || EDGE_STYLES['solid']
-        arrow_style = ARROW_STYLES[direction] || ARROW_STYLES['forward']
-
-        label_part = label.empty? ? '' : " \"#{escape_mermaid_text(label)}\""
-
-        # Format the edge in Mermaid syntax
-        "#{source_id} #{edge_style}#{label_part} #{edge_style}#{arrow_style} #{target_id}"
+        # For labeled edges, use the |label| syntax instead of adding a separate text label
+        if label&.present? # rubocop:disable Lint/RedundantSafeNavigation
+          "#{source_id} -->|\"#{escape_mermaid_text(label)}\"| #{target_id}"
+        else
+          "#{source_id} --> #{target_id}"
+        end
       end
 
       private

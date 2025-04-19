@@ -129,7 +129,7 @@ module Tasker
       label = build_step_label(step)
 
       # Create clickable URL if base_url is provided
-      url = @base_url ? "#{@base_url}/workflow_steps/#{step.workflow_step_id}" : nil
+      url = @base_url ? "#{@base_url}/tasks/#{@task.task_id}/workflow_steps/#{step.workflow_step_id}" : nil
 
       # Create node with styling
       Tasker::Diagram::Node.new(

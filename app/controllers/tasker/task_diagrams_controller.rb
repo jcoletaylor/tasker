@@ -5,11 +5,16 @@ require_dependency 'tasker/application_controller'
 
 module Tasker
   class TaskDiagramsController < ApplicationController
+    include ActionController::MimeResponds
+
     before_action :set_full_task, only: %i[index]
 
     # GET /tasks/1/task_diagrams
     def index
-      render(json: @task.diagram(request.base_url).to_json, status: :ok)
+      respond_to do |format|
+        format.html { render(html: @task.diagram(request.base_url).to_html.html_safe) }
+        format.json { render(json: @task.diagram(request.base_url).to_json, status: :ok) }
+      end
     end
 
     private

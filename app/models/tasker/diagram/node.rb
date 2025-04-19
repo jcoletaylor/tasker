@@ -63,13 +63,13 @@ module Tasker
 
       # Generate Mermaid diagram syntax for this node
       #
-      # @return [String] Mermaid syntax for the node
+      # @return [Array<String>] Array of Mermaid syntax lines for the node
       def to_mermaid
-        # Basic node definition
-        node_def = "#{id}[\"#{escape_mermaid_text(label)}\"]"
+        # Use HTML line breaks in the label
+        formatted_label = escape_mermaid_text(label).gsub("\n", "<br/>")
 
-        # Add styling if present
-        node_def += ':::custom' if style
+        # Basic node definition
+        node_def = "#{id}[\"#{formatted_label}\"]"
 
         # Add URL link if present
         click_def = url ? "click #{id} \"#{escape_mermaid_text(url)}\"" : nil

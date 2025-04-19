@@ -111,7 +111,7 @@ RSpec.describe Tasker::TaskDiagram do
       mermaid_output = diagram.to_mermaid
 
       @steps.each do |step|
-        expect(mermaid_output).to include("click step_#{step.workflow_step_id} \"#{base_url}/workflow_steps/#{step.workflow_step_id}\"")
+        expect(mermaid_output).to include("click step_#{step.workflow_step_id} \"#{base_url}/tasks/#{task.task_id}/workflow_steps/#{step.workflow_step_id}\"")
       end
     end
 
@@ -180,7 +180,7 @@ RSpec.describe Tasker::TaskDiagram do
       expect(node.id).to eq("step_#{@create_order_step.workflow_step_id}")
       expect(node.label).to include(@create_order_step.name)
       expect(node.style).to include('fill:red')
-      expect(node.url).to eq("#{base_url}/workflow_steps/#{@create_order_step.workflow_step_id}")
+      expect(node.url).to eq("#{base_url}/tasks/#{task.task_id}/workflow_steps/#{@create_order_step.workflow_step_id}")
     end
 
     it 'builds proper edge objects between nodes' do

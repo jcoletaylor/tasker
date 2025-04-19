@@ -73,13 +73,14 @@ RSpec.describe Tasker::Diagram::Flowchart do
       expect(mermaid).to include('graph TD')
       expect(mermaid).to include('A["Start"]')
       expect(mermaid).to include('B["End"]')
-      expect(mermaid).to include('A -- --> B')
+      expect(mermaid).to include('A --> B')
     end
 
-    it 'includes title when provided' do
+    it 'includes title as a subgraph when provided' do
       flowchart = described_class.new(direction: 'TD', title: 'Process Flow')
       mermaid = flowchart.to_mermaid
-      expect(mermaid).to include('title Process Flow')
+      expect(mermaid).to include('subgraph "Process Flow"')
+      expect(mermaid).to include('end')
     end
 
     it 'handles node styles' do
@@ -92,6 +93,7 @@ RSpec.describe Tasker::Diagram::Flowchart do
 
       mermaid = flowchart.to_mermaid
       expect(mermaid).to include('A["Styled Node"]')
+      expect(mermaid).to include('style A fill:red;stroke:blue;')
     end
 
     it 'handles node URLs' do
@@ -112,23 +114,20 @@ RSpec.describe Tasker::Diagram::Flowchart do
       flowchart.add_node(Tasker::Diagram::Node.new(id: 'B', label: 'Middle'))
       flowchart.add_node(Tasker::Diagram::Node.new(id: 'C', label: 'End'))
 
-      # Solid edge
+      # Simple edges
       flowchart.add_edge(Tasker::Diagram::Edge.new(
                            source_id: 'A',
-                           target_id: 'B',
-                           type: 'solid'
+                           target_id: 'B'
                          ))
 
-      # Dashed edge
       flowchart.add_edge(Tasker::Diagram::Edge.new(
                            source_id: 'B',
-                           target_id: 'C',
-                           type: 'dashed'
+                           target_id: 'C'
                          ))
 
       mermaid = flowchart.to_mermaid
-      expect(mermaid).to include('A -- --> B')
-      expect(mermaid).to include('B -- --> C')
+      expect(mermaid).to include('A --> B')
+      expect(mermaid).to include('B --> C')
     end
 
     it 'handles edge labels' do
@@ -143,7 +142,7 @@ RSpec.describe Tasker::Diagram::Flowchart do
                          ))
 
       mermaid = flowchart.to_mermaid
-      expect(mermaid).to include('A -- "connects to" --> B')
+      expect(mermaid).to include('A -->|"connects to"| B')
     end
 
     it 'escapes special characters' do
@@ -159,7 +158,18 @@ RSpec.describe Tasker::Diagram::Flowchart do
 
       mermaid = flowchart.to_mermaid
       expect(mermaid).to include('A["Node with \'quotes\'"]')
-      expect(mermaid).to include('-- "contains \'quoted text\'" -->')
+      expect(mermaid).to include('A -->|"contains \'quoted text\'"| B')
+    end
+
+    it 'formats multiline labels with HTML breaks' do
+      flowchart = described_class.new(direction: 'TD')
+      flowchart.add_node(Tasker::Diagram::Node.new(
+                           id: 'A',
+                           label: "Line 1\nLine 2\nLine 3"
+                         ))
+
+      mermaid = flowchart.to_mermaid
+      expect(mermaid).to include('A["Line 1<br/>Line 2<br/>Line 3"]')
     end
   end
 end
