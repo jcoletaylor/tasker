@@ -46,8 +46,13 @@ module Tasker
       template_path = views_path.join('_diagram.html.erb')
 
       # Load and render the template with ERB
-      template = File.read(template_path)
-      ERB.new(template).result(b)
+      begin
+        template = File.read(template_path)
+      rescue Errno::ENOENT
+        raise TaskDiagramError, "Template file not found: #{template_path}"
+      rescue Errno::EACCES
+        raise TaskDiagramError, "Permission denied while accessing template file: #{template_path}"
+      end
     end
 
     def to_json(pretty: false)
