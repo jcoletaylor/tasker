@@ -34,10 +34,11 @@ module Tasker
     # @return [String] HTML document with Mermaid diagram
     def to_html
       # Generate the mermaid diagram
-      diagram = flowchart.to_mermaid
+      @diagram = flowchart.to_mermaid
 
       # Create binding with relevant variables
       task = @task # Make task available to the template
+      diagram = @diagram # Make diagram available to the template
 
       # Create a binding with the variables
       b = binding
@@ -48,6 +49,7 @@ module Tasker
       # Load and render the template with ERB
       begin
         template = File.read(template_path)
+        ERB.new(template).result(b)
       rescue Errno::ENOENT
         raise TaskDiagramError, "Template file not found: #{template_path}"
       rescue Errno::EACCES
