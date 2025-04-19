@@ -397,17 +397,25 @@
 48
 49
 50
-51</pre>
+51
+52
+53
+54
+55
+56
+57
+58</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/models/tasker/task_diagram.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_html'>to_html</span>
   <span class='comment'># Generate the mermaid diagram
-</span>  <span class='id identifier rubyid_diagram'>diagram</span> <span class='op'>=</span> <span class='id identifier rubyid_flowchart'>flowchart</span><span class='period'>.</span><span class='id identifier rubyid_to_mermaid'>to_mermaid</span>
+</span>  <span class='ivar'>@diagram</span> <span class='op'>=</span> <span class='id identifier rubyid_flowchart'>flowchart</span><span class='period'>.</span><span class='id identifier rubyid_to_mermaid'>to_mermaid</span>
 
   <span class='comment'># Create binding with relevant variables
 </span>  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='ivar'>@task</span> <span class='comment'># Make task available to the template
+</span>  <span class='id identifier rubyid_diagram'>diagram</span> <span class='op'>=</span> <span class='ivar'>@diagram</span> <span class='comment'># Make diagram available to the template
 </span>
   <span class='comment'># Create a binding with the variables
 </span>  <span class='id identifier rubyid_b'>b</span> <span class='op'>=</span> <span class='id identifier rubyid_binding'>binding</span>
@@ -416,8 +424,14 @@
 </span>  <span class='id identifier rubyid_template_path'>template_path</span> <span class='op'>=</span> <span class='id identifier rubyid_views_path'>views_path</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>_diagram.html.erb</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 
   <span class='comment'># Load and render the template with ERB
-</span>  <span class='id identifier rubyid_template'>template</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_read'>read</span><span class='lparen'>(</span><span class='id identifier rubyid_template_path'>template_path</span><span class='rparen'>)</span>
-  <span class='const'>ERB</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_template'>template</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_result'>result</span><span class='lparen'>(</span><span class='id identifier rubyid_b'>b</span><span class='rparen'>)</span>
+</span>  <span class='kw'>begin</span>
+    <span class='id identifier rubyid_template'>template</span> <span class='op'>=</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_read'>read</span><span class='lparen'>(</span><span class='id identifier rubyid_template_path'>template_path</span><span class='rparen'>)</span>
+    <span class='const'>ERB</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_template'>template</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_result'>result</span><span class='lparen'>(</span><span class='id identifier rubyid_b'>b</span><span class='rparen'>)</span>
+  <span class='kw'>rescue</span> <span class='const'>Errno</span><span class='op'>::</span><span class='const'>ENOENT</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'>TaskDiagramError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Template file not found: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_template_path'>template_path</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>rescue</span> <span class='const'>Errno</span><span class='op'>::</span><span class='const'>EACCES</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='const'>TaskDiagramError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Permission denied while accessing template file: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_template_path'>template_path</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -439,12 +453,12 @@
       <pre class="lines">
 
 
-53
-54
-55</pre>
+60
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task_diagram.rb', line 53</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task_diagram.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='label'>pretty:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_flowchart'>flowchart</span><span class='period'>.</span><span class='id identifier rubyid_to_json'>to_json</span><span class='lparen'>(</span><span class='label'>pretty:</span> <span class='id identifier rubyid_pretty'>pretty</span><span class='rparen'>)</span>
@@ -514,7 +528,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Apr 18 20:52:17 2025 by
+  Generated on Sat Apr 19 10:05:22 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

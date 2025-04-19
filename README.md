@@ -58,7 +58,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 1.5.1'
+  gem 'tasker', '~> 1.6.0'
 end
 ```
 

@@ -2,7 +2,7 @@ lib/tasker.rb 0ecdbc94bde297ef9555766066950baad80cbb83
 lib/tasker/types.rb 3fbd9e620d6fabbacf747053d3e060d5174b5120
 lib/tasker/engine.rb 82440f45af732262e80090f21e4a64ab508249a9
 lib/tasker/railtie.rb 8cbb9cfa7ea572ab3f4ccdfc87da2a3e095bd04f
-lib/tasker/version.rb 175f20ec6443f9c918cd25bd761b4aa92d8f6c35
+lib/tasker/version.rb d880a17a68210edc3e463747f320804a5bd7bf10
 lib/tasker/constants.rb 728b103e71225fa906fbe5a7153b9a4e3b52a2cc
 app/models/tasker/task.rb 53b4f8118960d3e6a862191865cf6fc3a205ccd0
 lib/tasker/task_builder.rb 624404b0d33637f551be8e5c3f46ec15cfdd84fe
@@ -19,7 +19,7 @@ lib/tasker/step_handler/base.rb 4df6d4dc74ec2adbb53e8a769f7cf1f52c6d303d
 lib/tasker/types/task_request.rb af3100d21af5b710893834950052165ffd536a33
 app/models/tasker/diagram/edge.rb 408e639e8d77647a65b4a06aa6e4497cbbc23724
 app/models/tasker/diagram/node.rb f2d8f2bd8909983c47323cac094f2b5d4e4aa46b
-app/models/tasker/task_diagram.rb a7019d38e09209366a3bb5be7cd120dd384702e4
+app/models/tasker/task_diagram.rb 3f3214d1c8ef28a144ff32bd5d5d83710d016eef
 lib/tasker/types/step_sequence.rb fc61466ca5384ff06515394144656dfc3af64a19
 lib/tasker/types/step_template.rb b1288eff2a6ba49cf329b6efa11ab878b959fdbf
 app/jobs/tasker/application_job.rb b0e963b20b1102dfa1eec72c809d44e1ce68a28f
