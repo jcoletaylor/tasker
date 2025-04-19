@@ -121,6 +121,8 @@
 </li><li>
 <p><a href="#telemetry-and-observability">Telemetry and Observability</a></p>
 </li><li>
+<p><a href="#scheduling-tasks">Scheduling Tasks</a></p>
+</li><li>
 <p><a href="#dependencies">Dependencies</a></p>
 </li><li>
 <p><a href="#development">Development</a></p>
@@ -523,6 +525,10 @@ step_templates:
 
 <p>For a system overview, see the <a href="./docs/OVERVIEW_md.html">OVERVIEW.md</a> file, and the full <a href="./docs/TODO_md.html">TODO</a>.</p>
 
+<h2 id="label-Scheduling+Tasks">Scheduling Tasks</h2>
+
+<p>Tasker does not directly manage scheduling recurring tasks. There are a variety of strategies that already exist in the Rails ecosystem for accomplishing this. <a href="https://github.com/javan/whenever">Javan’s Whenever gem</a> is one of the most popular, and is very battle-tested.</p>
+
 <h2 id="label-Dependencies">Dependencies</h2>
 <ul><li>
 <p>Ruby version - 3.2.2</p>
@@ -549,7 +555,7 @@ step_templates:
 </div></div>
 
       <div id="footer">
-  Generated on Thu Apr 17 13:42:18 2025 by
+  Generated on Fri Apr 18 20:14:09 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -27,9 +27,7 @@ module Tasker
     # Generate a Mermaid diagram string for the task
     #
     # @return [String] Mermaid flowchart diagram string
-    def to_mermaid
-      flowchart.to_mermaid
-    end
+    delegate :to_mermaid, to: :flowchart
 
     # Generate a complete HTML document with embedded Mermaid diagram
     #

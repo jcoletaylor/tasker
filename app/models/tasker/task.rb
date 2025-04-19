@@ -56,6 +56,7 @@ module Tasker
     validate :unique_identity_hash, on: :create
 
     delegate :name, to: :named_task
+    delegate :to_mermaid, to: :diagram
 
     scope :by_annotation,
           lambda { |name, key, value|
