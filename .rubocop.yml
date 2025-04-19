@@ -10,6 +10,9 @@ AllCops:
   TargetRubyVersion: 3.2
   NewCops: enable
   SuggestExtensions: false
+  Exclude:
+    - 'spec/requests/tasker/**'
+    - 'spec/swagger_helper.rb'
 
 Style/Documentation:
   Enabled: false

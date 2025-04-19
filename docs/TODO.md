@@ -29,9 +29,9 @@
     - [x] Add observable lifecycle events for task execution
 
 2. **Workflow Diagrams for Task Definitions**
-   - [ ] Generate visual representation of task definitions
-   - [ ] Add tooling to visualize task execution paths
-   - [ ] Create documentation showing workflow examples with diagrams
+   - [x] Generate visual representation of task definitions
+   - [x] Add tooling to visualize task execution paths
+   - [x] Create documentation showing workflow examples with diagrams
 
 3. **Task Handler Versioning**
     - [ ] Add support for versioned task handlers

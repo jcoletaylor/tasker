@@ -318,22 +318,20 @@
 45
 46
 47
-48
-49</pre>
+48</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 27</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create'>create</span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_task_params'>task_params</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_task_params_as_symbolized_hash'>task_params_as_symbolized_hash</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span>
     <span class='kw'>return</span> <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='label'>status:</span> <span class='symbol'>:bad_request</span><span class='comma'>,</span>
                   <span class='label'>json:</span> <span class='lbrace'>{</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>invalid parameters: requires task name</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-
-  <span class='id identifier rubyid_task_request'>task_request</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">TaskRequest</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_task_params'>task_params</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_set_task_request'>set_task_request</span>
   <span class='kw'>begin</span>
-    <span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_factory'>handler_factory</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-    <span class='ivar'>@task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_factory'>handler_factory</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='ivar'>@task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+    <span class='ivar'>@task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='ivar'>@task_request</span><span class='rparen'>)</span>
   <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
     <span class='ivar'>@task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
     <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_errors'>errors</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='symbol'>:name</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
@@ -378,13 +376,13 @@
       <pre class="lines">
 
 
+60
 61
 62
-63
-64</pre>
+63</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 61</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_destroy'>destroy</span>
   <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_update!'>update!</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>status:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#CANCELLED-constant" title="Tasker::Constants::TaskStatuses::CANCELLED (constant)">CANCELLED</a></span></span> <span class='rbrace'>}</span><span class='rparen'>)</span>
@@ -507,16 +505,16 @@
       <pre class="lines">
 
 
+51
 52
 53
 54
 55
 56
-57
-58</pre>
+57</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 52</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update'>update</span>
   <span class='kw'>if</span> <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_update'>update</span><span class='lparen'>(</span><span class='id identifier rubyid_update_task_params'>update_task_params</span><span class='rparen'>)</span>
@@ -535,7 +533,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Apr 17 13:42:19 2025 by
+  Generated on Fri Apr 18 20:52:18 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
