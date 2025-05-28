@@ -37,7 +37,8 @@ module Tasker
 
     # DELETE /workflow_steps/1
     def destroy
-      @workflow_step.update!({ status: Constants::WorkflowStepStatuses::CANCELLED })
+      # Use state machine to transition step to cancelled
+      @workflow_step.state_machine.transition_to!(Constants::WorkflowStepStatuses::CANCELLED)
       render(status: :ok, json: { cancelled: true })
     end
 

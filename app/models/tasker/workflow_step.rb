@@ -1,6 +1,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require_relative '../../../lib/tasker/state_machine/step_state_machine'
+
 module Tasker
   class WorkflowStep < ApplicationRecord
     PROVIDES_EDGE_NAME = 'provides'
@@ -23,12 +25,33 @@ module Tasker
     has_many :parents, through: :incoming_edges, source: :from_step
     has_many :children, through: :outgoing_edges, source: :to_step
     has_many :siblings, through: :outgoing_edges, source: :from_step
+    has_many :workflow_step_transitions, inverse_of: :workflow_step, dependent: :destroy
 
     validates :status, presence: true, inclusion: { in: Constants::VALID_WORKFLOW_STEP_STATUSES }
     validates :named_step_id, uniqueness: { scope: :task_id, message: 'must be unique within the same task' }
     validate :name_uniqueness_within_task
 
     delegate :name, to: :named_step
+
+    # State machine integration
+    def state_machine
+      @state_machine ||= Tasker::StateMachine::StepStateMachine.new(
+        self,
+        transition_class: Tasker::WorkflowStepTransition,
+        association_name: :workflow_step_transitions
+      )
+    end
+
+    # Override status getter to use state machine for persisted records
+    def status
+      if new_record?
+        # For new records, use the database column directly
+        super
+      else
+        # For persisted records, use state machine
+        state_machine.current_state
+      end
+    end
 
     # Finds a WorkflowStep with the given name by traversing the DAG
     # @param steps [Array<WorkflowStep>] Array of WorkflowStep instances to search through
@@ -84,21 +107,29 @@ module Tasker
     end
 
     def self.build_default_step!(task, template, named_step)
-      create!(
-        {
-          task_id: task.task_id,
-          named_step_id: named_step.named_step_id,
-          status: Constants::WorkflowStepStatuses::PENDING,
-          retryable: template.default_retryable,
-          retry_limit: template.default_retry_limit,
-          skippable: template.skippable,
-          in_process: false,
-          inputs: task.context,
-          processed: false,
-          attempts: 0,
-          results: {}
-        }
-      )
+      status_value = Constants::WorkflowStepStatuses::PENDING
+
+      # Create the step first without status
+      step_attributes = {
+        task_id: task.task_id,
+        named_step_id: named_step.named_step_id,
+        retryable: template.default_retryable,
+        retry_limit: template.default_retry_limit,
+        skippable: template.skippable,
+        in_process: false,
+        inputs: task.context,
+        processed: false,
+        attempts: 0,
+        results: {}
+      }
+
+      step = new(step_attributes)
+
+      # Set status directly on the new instance to bypass setter
+      step.write_attribute(:status, status_value)
+
+      step.save!
+      step
     end
 
     def self.get_viable_steps(task, sequence)

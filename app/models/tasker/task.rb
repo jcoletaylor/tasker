@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'digest'
+require_relative '../../../lib/tasker/state_machine/task_state_machine'
 
 # == Schema Information
 #
@@ -58,6 +59,7 @@ module Tasker
     has_many :workflow_steps, dependent: :destroy
     has_many :task_annotations, dependent: :destroy
     has_many :annotation_types, through: :task_annotations
+    has_many :task_transitions, inverse_of: :task, dependent: :destroy
 
     validates :context, presence: true
     validates :requested_at, presence: true
@@ -66,6 +68,26 @@ module Tasker
 
     delegate :name, to: :named_task
     delegate :to_mermaid, to: :diagram
+
+    # State machine integration
+    def state_machine
+      @state_machine ||= Tasker::StateMachine::TaskStateMachine.new(
+        self,
+        transition_class: Tasker::TaskTransition,
+        association_name: :task_transitions
+      )
+    end
+
+    # Override status getter to use state machine for persisted records
+    def status
+      if new_record?
+        # For new records, use the database column directly
+        super
+      else
+        # For persisted records, use state machine
+        state_machine.current_state
+      end
+    end
 
     # Scopes a query to find tasks with a specific annotation value
     #

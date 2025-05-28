@@ -1,0 +1,325 @@
+# frozen_string_literal: true
+
+module Tasker
+  # WorkflowStepTransition represents state transitions for WorkflowStep entities using Statesman
+  #
+  # This model stores the audit trail of all workflow step state changes, providing
+  # a complete history of step lifecycle events with metadata and timestamps.
+  class WorkflowStepTransition < ApplicationRecord
+    # NOTE: We don't include Statesman::Adapters::ActiveRecordTransition
+    # because we're using PostgreSQL JSONB column for metadata
+
+    # Associations
+    belongs_to :workflow_step, inverse_of: :workflow_step_transitions
+
+    # Validations
+    validates :to_state, inclusion: {
+      in: %w[pending in_progress complete error cancelled resolved_manually],
+      message: 'is not a valid workflow step state'
+    }
+
+    # Validate that the workflow step exists before creating transition
+    validate :workflow_step_must_exist
+
+    validates :sort_key, presence: true, uniqueness: { scope: :workflow_step_id }
+    # Custom validation for metadata that allows empty hash but not nil
+    validate :metadata_must_be_hash
+
+    # Ensure metadata is always a hash
+    after_initialize :ensure_metadata_hash
+    # Ensure metadata defaults to empty hash if not provided
+    before_validation :ensure_metadata_presence
+
+    # Scopes
+    scope :recent, -> { order(sort_key: :desc) }
+    scope :to_state, ->(state) { where(to_state: state) }
+    scope :with_metadata_key, ->(key) { where('metadata ? :key', key: key.to_s) }
+    scope :for_task, ->(task_id) { joins(:workflow_step).where(workflow_steps: { task_id: task_id }) }
+
+    # Class methods for querying transitions
+    class << self
+      # Find the most recent transition to a specific state
+      #
+      # @param state [String, Symbol] The state to find the most recent transition to
+      # @return [WorkflowStepTransition, nil] The most recent transition to the given state
+      def most_recent_to_state(state)
+        to_state(state.to_s).order(sort_key: :desc).first
+      end
+
+      # Find all transitions that occurred within a time range
+      #
+      # @param start_time [Time] The start of the time range
+      # @param end_time [Time] The end of the time range
+      # @return [ActiveRecord::Relation] Transitions within the time range
+      def in_time_range(start_time, end_time)
+        where(created_at: start_time..end_time)
+      end
+
+      # Find transitions with specific metadata values
+      #
+      # @param key [String, Symbol] The metadata key to search for
+      # @param value [Object] The value to match
+      # @return [ActiveRecord::Relation] Transitions with matching metadata
+      def with_metadata_value(key, value)
+        where('metadata->:key = :value', key: key.to_s, value: value.to_json.delete('"'))
+      end
+
+      # Find retry transitions
+      #
+      # @return [ActiveRecord::Relation] Transitions from error back to pending (retries)
+      def retry_transitions
+        joins("INNER JOIN #{table_name} prev ON prev.workflow_step_id = #{table_name}.workflow_step_id")
+          .where(to_state: 'pending')
+          .where('prev.to_state = ? AND prev.sort_key < ?', 'error', arel_table[:sort_key])
+      end
+
+      # Find transitions by attempt number
+      #
+      # @param attempt [Integer] The attempt number to filter by
+      # @return [ActiveRecord::Relation] Transitions for the given attempt
+      def for_attempt(attempt)
+        with_metadata_value('attempt_number', attempt)
+      end
+
+      # Get transition statistics for analytics
+      #
+      # @return [Hash] Statistics about transitions
+      def statistics
+        {
+          total_transitions: count,
+          states: group(:to_state).count,
+          recent_activity: where(created_at: 24.hours.ago..Time.current).count,
+          retry_attempts: retry_transitions.count,
+          average_execution_time: average_execution_time,
+          average_time_between_transitions: average_time_between_transitions
+        }
+      end
+
+      private
+
+      # Calculate average execution time for completed steps
+      #
+      # @return [Float, nil] Average execution time in seconds
+      def average_execution_time
+        completed_transitions = with_metadata_key('execution_duration')
+        return nil if completed_transitions.empty?
+
+        total_time = completed_transitions.sum { |t| t.get_metadata('execution_duration', 0) }
+        total_time / completed_transitions.count
+      end
+
+      # Calculate average time between transitions
+      #
+      # @return [Float, nil] Average seconds between transitions
+      def average_time_between_transitions
+        transitions = order(:created_at).pluck(:created_at)
+        return nil if transitions.size < 2
+
+        total_time = 0
+        (1...transitions.size).each do |i|
+          total_time += (transitions[i] - transitions[i - 1])
+        end
+
+        total_time / (transitions.size - 1)
+      end
+    end
+
+    # Instance methods
+
+    # Get the associated task through the workflow step
+    #
+    # @return [Task] The task that owns this workflow step
+    delegate :task, to: :workflow_step
+
+    # Get the step name through the workflow step
+    #
+    # @return [String] The name of the workflow step
+    def step_name
+      workflow_step.name
+    end
+
+    # Get the duration since the previous transition
+    #
+    # @return [Float, nil] Duration in seconds since previous transition
+    def duration_since_previous
+      previous_transition = self.class.where(workflow_step_id: workflow_step_id)
+                                .where(sort_key: ...sort_key)
+                                .order(sort_key: :desc)
+                                .first
+
+      return nil unless previous_transition
+
+      created_at - previous_transition.created_at
+    end
+
+    # Check if this transition represents an error state
+    #
+    # @return [Boolean] True if transitioning to an error state
+    def error_transition?
+      to_state == 'error'
+    end
+
+    # Check if this transition represents completion
+    #
+    # @return [Boolean] True if transitioning to a completion state
+    def completion_transition?
+      %w[complete resolved_manually].include?(to_state)
+    end
+
+    # Check if this transition represents cancellation
+    #
+    # @return [Boolean] True if transitioning to cancelled state
+    def cancellation_transition?
+      to_state == 'cancelled'
+    end
+
+    # Check if this transition represents a retry attempt
+    #
+    # @return [Boolean] True if this is a retry transition
+    def retry_transition?
+      to_state == 'pending' && has_metadata?('retry_attempt')
+    end
+
+    # Get the attempt number for this transition
+    #
+    # @return [Integer] The attempt number
+    def attempt_number
+      get_metadata('attempt_number', 1)
+    end
+
+    # Get the execution duration if available
+    #
+    # @return [Float, nil] Execution duration in seconds
+    def execution_duration
+      get_metadata('execution_duration')
+    end
+
+    # Get human-readable description of the transition
+    #
+    # @return [String] Description of what this transition represents
+    def description
+      case to_state
+      when 'pending'
+        if retry_transition?
+          "Step retry attempt ##{attempt_number}"
+        else
+          'Step initialized and ready for execution'
+        end
+      when 'in_progress'
+        "Step execution started (attempt ##{attempt_number})"
+      when 'complete'
+        duration_text = execution_duration ? " in #{execution_duration.round(2)}s" : ''
+        "Step completed successfully#{duration_text}"
+      when 'error'
+        error_msg = get_metadata('error_message', 'Unknown error')
+        backoff_text = has_metadata?('backoff_until') ? ' (retry scheduled)' : ''
+        "Step failed: #{error_msg}#{backoff_text}"
+      when 'cancelled'
+        reason = get_metadata('triggered_by', 'manual cancellation')
+        "Step cancelled due to #{reason}"
+      when 'resolved_manually'
+        resolver = get_metadata('resolved_by', 'unknown')
+        "Step manually resolved by #{resolver}"
+      else
+        "Step transitioned to #{to_state}"
+      end
+    end
+
+    # Get formatted metadata for display
+    #
+    # @return [Hash] Formatted metadata with additional computed fields
+    def formatted_metadata
+      base_metadata = metadata.dup
+
+      # Add computed fields
+      base_metadata['duration_since_previous'] = duration_since_previous
+      base_metadata['transition_description'] = description
+      base_metadata['transition_timestamp'] = created_at.iso8601
+      base_metadata['step_name'] = step_name
+      base_metadata['task_id'] = workflow_step.task_id
+
+      base_metadata
+    end
+
+    # Check if transition has specific metadata
+    #
+    # @param key [String, Symbol] The metadata key to check for
+    # @return [Boolean] True if the metadata contains the key
+    def has_metadata?(key)
+      metadata.key?(key.to_s)
+    end
+
+    # Get metadata value with default
+    #
+    # @param key [String, Symbol] The metadata key
+    # @param default [Object] Default value if key not found
+    # @return [Object] The metadata value or default
+    def get_metadata(key, default = nil)
+      metadata.fetch(key.to_s, default)
+    end
+
+    # Set metadata value
+    #
+    # @param key [String, Symbol] The metadata key
+    # @param value [Object] The value to set
+    # @return [Object] The set value
+    def set_metadata(key, value)
+      self.metadata = metadata.merge(key.to_s => value)
+      value
+    end
+
+    # Get backoff information if this is an error transition
+    #
+    # @return [Hash, nil] Backoff information or nil if not applicable
+    def backoff_info
+      return nil unless error_transition? && has_metadata?('backoff_until')
+
+      {
+        backoff_until: Time.zone.parse(get_metadata('backoff_until')),
+        backoff_seconds: get_metadata('backoff_seconds'),
+        retry_available: get_metadata('retry_available', false)
+      }
+    end
+
+    private
+
+    # Ensure metadata is always initialized as a hash
+    #
+    # @return [void]
+    def ensure_metadata_hash
+      self.metadata ||= {}
+    end
+
+    # Ensure metadata is present for validation
+    #
+    # @return [void]
+    def ensure_metadata_presence
+      self.metadata = {} if metadata.blank?
+    end
+
+    # Custom validation for metadata
+    #
+    # @return [void]
+    def metadata_must_be_hash
+      if metadata.nil?
+        self.metadata = {}
+      elsif !metadata.is_a?(Hash)
+        errors.add(:metadata, 'must be a hash')
+      end
+    end
+
+    # Validate that the workflow step exists
+    #
+    # @return [void]
+    def workflow_step_must_exist
+      return unless workflow_step_id.present?
+
+      unless Tasker::WorkflowStep.exists?(workflow_step_id: workflow_step_id)
+        errors.add(:workflow_step, 'must exist before creating transition')
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      # Handle cases where the table might not exist (e.g., during migrations)
+      Rails.logger.warn { "Could not validate workflow step existence: #{e.message}" }
+    end
+  end
+end

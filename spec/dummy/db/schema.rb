@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_13_105135) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_25_001940) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -91,6 +91,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_13_105135) do
     t.index ["task_id"], name: "task_annotations_task_id_index"
   end
 
+  create_table "tasker_task_transitions", force: :cascade do |t|
+    t.string "to_state", null: false
+    t.string "from_state"
+    t.jsonb "metadata", default: {}
+    t.integer "sort_key", null: false
+    t.boolean "most_recent", default: true, null: false
+    t.bigint "task_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sort_key"], name: "index_tasker_task_transitions_on_sort_key"
+    t.index ["task_id", "most_recent"], name: "index_tasker_task_transitions_on_task_id_and_most_recent", unique: true, where: "(most_recent = true)"
+    t.index ["task_id", "sort_key"], name: "index_tasker_task_transitions_on_task_id_and_sort_key", unique: true
+    t.index ["task_id"], name: "index_tasker_task_transitions_on_task_id"
+  end
+
   create_table "tasker_tasks", primary_key: "task_id", force: :cascade do |t|
     t.integer "named_task_id", null: false
     t.string "status", limit: 64, null: false
@@ -127,6 +142,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_13_105135) do
     t.index ["to_step_id"], name: "index_tasker_workflow_step_edges_on_to_step_id"
   end
 
+  create_table "tasker_workflow_step_transitions", force: :cascade do |t|
+    t.string "to_state", null: false
+    t.string "from_state"
+    t.jsonb "metadata", default: {}
+    t.integer "sort_key", null: false
+    t.boolean "most_recent", default: true, null: false
+    t.bigint "workflow_step_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sort_key"], name: "index_tasker_workflow_step_transitions_on_sort_key"
+    t.index ["workflow_step_id", "most_recent"], name: "idx_on_workflow_step_id_most_recent_97d5374ad6", unique: true, where: "(most_recent = true)"
+    t.index ["workflow_step_id", "sort_key"], name: "idx_on_workflow_step_id_sort_key_4d476d7adb", unique: true
+    t.index ["workflow_step_id"], name: "index_tasker_workflow_step_transitions_on_workflow_step_id"
+  end
+
   create_table "tasker_workflow_steps", primary_key: "workflow_step_id", force: :cascade do |t|
     t.bigint "task_id", null: false
     t.integer "named_step_id", null: false
@@ -158,9 +188,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_13_105135) do
   add_foreign_key "tasker_named_tasks_named_steps", "tasker_named_tasks", column: "named_task_id", primary_key: "named_task_id", name: "named_tasks_named_steps_named_task_id_foreign"
   add_foreign_key "tasker_task_annotations", "tasker_annotation_types", column: "annotation_type_id", primary_key: "annotation_type_id", name: "task_annotations_annotation_type_id_foreign"
   add_foreign_key "tasker_task_annotations", "tasker_tasks", column: "task_id", primary_key: "task_id", name: "task_annotations_task_id_foreign"
+  add_foreign_key "tasker_task_transitions", "tasker_tasks", column: "task_id", primary_key: "task_id"
   add_foreign_key "tasker_tasks", "tasker_named_tasks", column: "named_task_id", primary_key: "named_task_id", name: "tasks_named_task_id_foreign"
   add_foreign_key "tasker_workflow_step_edges", "tasker_workflow_steps", column: "from_step_id", primary_key: "workflow_step_id"
   add_foreign_key "tasker_workflow_step_edges", "tasker_workflow_steps", column: "to_step_id", primary_key: "workflow_step_id"
+  add_foreign_key "tasker_workflow_step_transitions", "tasker_workflow_steps", column: "workflow_step_id", primary_key: "workflow_step_id"
   add_foreign_key "tasker_workflow_steps", "tasker_named_steps", column: "named_step_id", primary_key: "named_step_id", name: "workflow_steps_named_step_id_foreign"
   add_foreign_key "tasker_workflow_steps", "tasker_tasks", column: "task_id", primary_key: "task_id", name: "workflow_steps_task_id_foreign"
 end

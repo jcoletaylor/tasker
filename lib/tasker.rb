@@ -20,6 +20,24 @@ require 'tasker/task_handler/class_methods'
 require 'tasker/task_handler/instance_methods'
 require 'tasker/task_handler/step_group'
 
+# New simplified event system
+require 'tasker/events/publisher'
+require 'tasker/events/bus'
+require 'tasker/events/subscribers/telemetry_subscriber'
+
+# Lifecycle events system
+require 'tasker/lifecycle_events'
+
+# State machine system
+require 'tasker/state_machine'
+
+# Workflow orchestration system
+require 'tasker/workflow_orchestrator'
+require 'tasker/viable_step_discovery'
+require 'tasker/step_executor'
+require 'tasker/task_finalizer'
+require 'tasker/workflow_orchestration'
+
 # Main namespace for the Tasker gem
 #
 # Tasker is a Rails engine that provides a flexible and powerful
@@ -32,6 +50,10 @@ module Tasker
 
   # Namespace for data structure types used in Tasker
   module Types
+  end
+
+  # Namespace for event system components used in Tasker
+  module Events
   end
 
   # Accesses the global configuration for Tasker

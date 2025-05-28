@@ -4,6 +4,7 @@ require 'active_model_serializers'
 require 'graphql'
 require 'json-schema'
 require 'pg'
+require 'statesman'
 
 require 'rails'
 
@@ -31,7 +32,11 @@ module Tasker
       require 'tasker/identity_strategy'
       require 'tasker/lifecycle_events'
       require 'tasker/instrumentation'
+      require 'tasker/state_machine'
       require 'tasker/railtie'
+
+      # Configure Statesman for state machine support
+      Tasker::StateMachine.configure_statesman
 
       # Configure generators
       config.generators.api_only = true

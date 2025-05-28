@@ -74,7 +74,8 @@ module Tasker
 
         task.context = ActiveSupport::HashWithIndifferentAccess.new(task.context)
 
-        task.update!({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
+        # Use state machine to transition task to in_progress
+        task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
 
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::START,
@@ -185,6 +186,11 @@ module Tasker
           step.attempts ||= 0
 
           begin
+            # Transition step to IN_PROGRESS before execution
+            # Use state machine to transition step to in_progress
+            step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+
+            # Now execute the step
             handler.handle(task, sequence, step)
             handle_step_success(step, span_context)
           rescue StandardError => e
@@ -228,7 +234,8 @@ module Tasker
       def handle_step_success(step, span_context)
         step.processed = true
         step.processed_at = Time.zone.now
-        step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
+        # Use state machine to transition step to complete
+        step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
 
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Step::COMPLETE,
@@ -245,7 +252,8 @@ module Tasker
       def handle_step_error(step, error, span_context)
         step.processed = false
         step.processed_at = nil
-        step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
+        # Use state machine to transition step to error
+        step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
         step.results ||= {}
         step.results = step.results.merge(error: error.to_s, backtrace: error.backtrace.join("\n"))
 
@@ -373,7 +381,8 @@ module Tasker
         step_group = StepGroup.build(task, sequence, steps)
 
         if step_group.complete?
-          task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+          # Use state machine to transition task to complete
+          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
 
           Tasker::LifecycleEvents.fire(
             Tasker::LifecycleEvents::Events::Task::COMPLETE,
@@ -386,13 +395,15 @@ module Tasker
         # set the status of the task back to pending, update it,
         # and re-enqueue the task for processing
         if step_group.pending?
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
+          # Use state machine to transition task to pending
+          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
           enqueue_task(task)
           return
         end
         # if we reach the end and have not re-enqueued the task
         # then we mark it complete since none of the above proved true
-        task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
+        # Use state machine to transition task to complete
+        task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
 
         Tasker::LifecycleEvents.fire(
           Tasker::LifecycleEvents::Events::Task::COMPLETE,
@@ -431,7 +442,8 @@ module Tasker
 
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
-            task.update!({ status: Tasker::Constants::TaskStatuses::ERROR })
+            # Use state machine to transition task to error
+            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
 
             Tasker::LifecycleEvents.fire(
               Tasker::LifecycleEvents::Events::Task::ERROR,
@@ -446,7 +458,8 @@ module Tasker
             )
             return true
           end
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
+          # Use state machine to transition task to pending for retry
+          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
           enqueue_task(task)
           return true
         end
