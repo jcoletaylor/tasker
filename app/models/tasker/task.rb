@@ -100,6 +100,27 @@ module Tasker
               .where("tasker_task_annotations.annotation->>'#{clean_key}' = :value", value: value)
           }
 
+    # Scopes a query to find tasks by their current state using state machine transitions
+    #
+    # @param state [String, nil] The state to filter by. If nil, returns all tasks with current state information
+    # @return [ActiveRecord::Relation] Tasks with current state, optionally filtered by specific state
+    scope :by_current_state,
+          lambda { |state = nil|
+            relation = joins(<<-SQL.squish)
+              INNER JOIN (
+                SELECT DISTINCT ON (task_id) task_id, to_state
+                FROM tasker_task_transitions
+                ORDER BY task_id, sort_key DESC
+              ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
+            SQL
+
+            if state.present?
+              relation.where(current_transitions: { to_state: state })
+            else
+              relation
+            end
+          }
+
     # Includes all associated models for efficient querying
     #
     # @return [ActiveRecord::Relation] Tasks with all associated records preloaded

@@ -6,12 +6,11 @@ require_relative '../../mocks/dummy_task'
 
 module Tasker
   RSpec.describe('graphql tasks', type: :request) do
-    before(:all) do
-      @factory = Tasker::HandlerFactory.instance
-      @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
-      task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                                    initiator: 'pete@test', reason: "setup test #{Time.now.to_f}", source_system: 'test')
-      @task = @handler.initialize_task!(task_request)
+    include FactoryWorkflowHelpers
+
+    before do
+      # Register the handler for factory usage (per test to avoid conflicts)
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
     end
 
     def shared_task_expectations(task_data)
@@ -30,6 +29,14 @@ module Tasker
     context 'when making queries' do
       context 'basic tasks' do
         it 'gets all tasks' do
+          # Create a unique task for this test
+          create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "graphql all tasks test #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
           post '/tasker/graphql', params: { query: all_tasks_query }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasks]
@@ -38,6 +45,14 @@ module Tasker
         end
 
         it 'gets pending tasks' do
+          # Create a unique task for this test
+          create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "graphql pending tasks test #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
           post '/tasker/graphql', params: { query: task_status_query(:pending) }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:tasksByStatus]
@@ -50,11 +65,19 @@ module Tasker
       end
 
       context 'annotations' do
-        before(:all) do
-          task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                                        initiator: 'pete@test', reason: "setup annotations test #{Time.now.to_f}", source_system: 'test')
-          @task = @handler.initialize_task!(task_request)
-          @handler.handle(@task)
+        before do
+          # Create a unique task for annotation testing
+          @annotation_task = create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "annotations test #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
+          # Process the task to generate annotations
+          @factory = Tasker::HandlerFactory.instance
+          @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
+          @handler.handle(@annotation_task)
         end
 
         it 'gets tasks by annotation when annotation exists' do
@@ -90,6 +113,14 @@ module Tasker
 
       context 'update' do
         it 'is able to update a task' do
+          # Create a unique task for update testing
+          @task = create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "mutation update test #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
           post '/tasker/graphql', params: { query: update_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:updateTask]
@@ -101,6 +132,14 @@ module Tasker
 
       context 'cancel' do
         it 'is able to cancel a task' do
+          # Create a unique task for cancel testing
+          @task = create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "mutation cancel test #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
           post '/tasker/graphql', params: { query: cancel_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
           task_data = json[:data][:cancelTask]
@@ -137,16 +176,17 @@ module Tasker
     end
 
     def create_task_mutation
-      task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                                    initiator: 'pete@test', reason: "mutation test #{Time.now.to_f}", source_system: 'test')
+      # Use factory-based approach for mutation testing
+      unique_reason = "mutation create test #{Time.now.to_f}"
+
       <<~GQL
         mutation {
           createTask(input: {
-            name: "#{task_request.name}"
-            context: #{JSON.generate(task_request.context.to_json)}
-            initiator: "#{task_request.initiator}"
-            reason: "#{task_request.reason}"
-            sourceSystem: "#{task_request.source_system}"
+            name: "#{DummyTask::TASK_REGISTRY_NAME}"
+            context: #{JSON.generate({ dummy: true }.to_json)}
+            initiator: "pete@test"
+            reason: "#{unique_reason}"
+            sourceSystem: "test"
           }) {
             #{task_fields}
           }

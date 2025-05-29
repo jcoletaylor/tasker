@@ -47,6 +47,10 @@ Rails.application.configure do
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
 
+  # ✅ FIX: Configure ActiveJob to use test adapter instead of Sidekiq
+  # This prevents real job enqueueing during tests and avoids transaction issues
+  config.active_job.queue_adapter = :test
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 

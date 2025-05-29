@@ -4,13 +4,17 @@ require 'rails_helper'
 require_relative '../../dummy/app/tasks/custom_identity_strategy'
 
 RSpec.describe Tasker::Task, '#set_identity_hash' do
+  include FactoryWorkflowHelpers
+
   before do
     # Reset configuration before each test
     Tasker.reset_configuration!
+
+    # Register the handler for factory usage
+    register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
   end
 
-  let(:task_request) { Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { dummy: true }) }
-  let(:task)         { described_class.create_with_defaults!(task_request)             }
+  let(:task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'task identity test') }
 
   context 'with default strategy' do
     before do

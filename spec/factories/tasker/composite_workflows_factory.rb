@@ -4,7 +4,6 @@ FactoryBot.define do
   # Complete API Integration Workflow Factory
   # This mirrors the setup from integration_example_spec.rb
   factory :api_integration_workflow, class: 'Tasker::Task' do
-    named_task factory: %i[named_task api_integration]
     initiator { 'api_client' }
     source_system { 'ecommerce_api' }
     reason { 'process_cart_checkout' }
@@ -14,51 +13,35 @@ FactoryBot.define do
       step_states { :pending } # Can be :pending, :complete, :in_progress, :error
     end
 
-    after(:create) do |task, evaluator|
+    # Use find_or_create pattern for named_task to avoid conflicts
+    before(:create) do |task, evaluator|
+      # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
+      # This handles cases where the named_task already exists from previous tests
+      api_named_task = Tasker::NamedTask.find_or_create_by!(name: 'api_integration_example') do |named_task|
+        named_task.description = 'API integration workflow task'
+      end
+
+      task.named_task = api_named_task
+    end
+
+    after(:create) do |_task, evaluator|
       if evaluator.with_dependencies
-        # Create dependent systems
-        api_system = create(:dependent_system, :api_system)
-        db_system = create(:dependent_system, :database_system)
-        notification_system = create(:dependent_system, :notification_system)
+        # ✅ FACTORY CONSISTENCY: Use find_or_create pattern for dependent systems to avoid conflicts
+        # Create dependent systems that the task handler will use
+        Tasker::DependentSystem.find_or_create_by!(name: 'api-system') do |system|
+          system.description = 'API system for integration testing'
+        end
 
-        # Create named steps
-        fetch_cart_step = create(:named_step, :fetch_cart, dependent_system: api_system)
-        fetch_products_step = create(:named_step, :fetch_products, dependent_system: api_system)
-        validate_products_step = create(:named_step, :validate_products, dependent_system: db_system)
-        create_order_step = create(:named_step, :create_order, dependent_system: db_system)
-        publish_event_step = create(:named_step, :publish_event, dependent_system: notification_system)
+        Tasker::DependentSystem.find_or_create_by!(name: 'database-system') do |system|
+          system.description = 'Database system for integration testing'
+        end
 
-        # Create workflow steps with specified state
-        step1 = create(:workflow_step, evaluator.step_states,
-                       task: task,
-                       named_step: fetch_cart_step,
-                       inputs: { cart_id: task.context[:cart_id] })
+        Tasker::DependentSystem.find_or_create_by!(name: 'notification-system') do |system|
+          system.description = 'Notification system for integration testing'
+        end
 
-        step2 = create(:workflow_step, evaluator.step_states,
-                       task: task,
-                       named_step: fetch_products_step,
-                       inputs: {})
-
-        step3 = create(:workflow_step, evaluator.step_states,
-                       task: task,
-                       named_step: validate_products_step,
-                       inputs: { cart: {}, products: [] })
-
-        step4 = create(:workflow_step, evaluator.step_states,
-                       task: task,
-                       named_step: create_order_step,
-                       inputs: { cart: {}, validated_products: [] })
-
-        step5 = create(:workflow_step, evaluator.step_states,
-                       task: task,
-                       named_step: publish_event_step,
-                       inputs: { order_id: nil })
-
-        # Create step dependencies
-        create(:workflow_step_edge, from_step: step1, to_step: step3, name: 'provides')
-        create(:workflow_step_edge, from_step: step2, to_step: step3, name: 'provides')
-        create(:workflow_step_edge, from_step: step3, to_step: step4, name: 'provides')
-        create(:workflow_step_edge, from_step: step4, to_step: step5, name: 'provides')
+        # The task handler will create workflow steps dynamically from the task definition
+        # No need to create workflow steps manually here - this was causing duplication
       end
     end
 
@@ -248,7 +231,6 @@ FactoryBot.define do
   # Dummy Task Workflow Factory for testing workflow step logic
   # Mirrors the DummyTask structure from spec/mocks/dummy_task.rb
   factory :dummy_task_workflow, class: 'Tasker::Task' do
-    named_task factory: %i[named_task dummy_task]
     initiator { 'pete@test' }
     source_system { 'test-system' }
     reason { 'testing!' }
@@ -259,6 +241,16 @@ FactoryBot.define do
       with_dependencies { true }
     end
 
+    # Use find_or_create pattern for named_task to avoid conflicts
+    before(:create) do |task, _evaluator|
+      # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
+      # This handles cases where the named_task already exists from previous tests
+      dummy_named_task = Tasker::NamedTask.find_or_create_by!(name: 'dummy_task') do |named_task|
+        named_task.description = 'Dummy task for testing workflow step logic'
+      end
+      task.named_task = dummy_named_task
+    end
+
     after(:create) do |task, evaluator|
       if evaluator.with_dependencies
         # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
@@ -267,15 +259,20 @@ FactoryBot.define do
           system.description = 'Dummy system for testing workflow step logic'
         end
 
+        # ✅ FACTORY CONSISTENCY: Use find_or_create pattern for named_steps to avoid conflicts
         # Create named steps matching DummyTask structure
-        step_one = create(:named_step, name: 'step-one', description: 'Independent Step One',
-                                       dependent_system: dummy_system)
-        step_two = create(:named_step, name: 'step-two', description: 'Independent Step Two',
-                                       dependent_system: dummy_system)
-        step_three = create(:named_step, name: 'step-three', description: 'Step Three Dependent on Step Two',
-                                         dependent_system: dummy_system)
-        step_four = create(:named_step, name: 'step-four', description: 'Step Four Dependent on Step Three',
-                                        dependent_system: dummy_system)
+        step_one = Tasker::NamedStep.find_or_create_by!(name: 'step-one', dependent_system: dummy_system) do |step|
+          step.description = 'Independent Step One'
+        end
+        step_two = Tasker::NamedStep.find_or_create_by!(name: 'step-two', dependent_system: dummy_system) do |step|
+          step.description = 'Independent Step Two'
+        end
+        step_three = Tasker::NamedStep.find_or_create_by!(name: 'step-three', dependent_system: dummy_system) do |step|
+          step.description = 'Step Three Dependent on Step Two'
+        end
+        step_four = Tasker::NamedStep.find_or_create_by!(name: 'step-four', dependent_system: dummy_system) do |step|
+          step.description = 'Step Four Dependent on Step Three'
+        end
 
         # Create workflow steps
         create(:workflow_step, evaluator.step_states, task: task, named_step: step_one, inputs: { dummy: true })
@@ -291,7 +288,13 @@ FactoryBot.define do
     end
 
     trait :dummy_task_two do
-      named_task factory: %i[named_task dummy_task_two]
+      # Override the named_task for dummy_task_two variant
+      before(:create) do |task, _evaluator|
+        dummy_task_two_named_task = Tasker::NamedTask.find_or_create_by!(name: 'dummy_task_two') do |named_task|
+          named_task.description = 'Second dummy task variant for testing'
+        end
+        task.named_task = dummy_task_two_named_task
+      end
     end
 
     trait :with_partial_completion do

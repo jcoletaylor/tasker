@@ -7,15 +7,9 @@ require_relative '../../mocks/dummy_api_task'
 
 module Tasker
   RSpec.describe 'task_diagrams', type: :request, swagger_doc: 'v1/swagger.yaml' do
-    let(:factory) { Tasker::HandlerFactory.instance }
-    let(:handler) { factory.get(DummyTask::TASK_REGISTRY_NAME) }
-    let(:task_request) { Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }, initiator: 'pete@test', reason: 'diagram test', source_system: 'test') }
-    let(:task_instance) { handler.initialize_task!(task_request) }
-    let(:task_id) { task_instance.task_id }
-
-    # Make sure we have a task instance created before tests run
     before do
-      task_instance
+      # Register the handler for factory usage
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
     end
 
     path '/tasker/tasks/{task_id}/task_diagrams' do
@@ -30,6 +24,9 @@ module Tasker
                   description: 'Response format (json, html)'
 
         response(200, 'successful JSON response') do
+          # Create task specifically for JSON diagram test
+          let(:json_diagram_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'json diagram test') }
+          let(:task_id) { json_diagram_task.id }
           let(:format) { 'json' }
 
           after do |example|
@@ -84,6 +81,9 @@ module Tasker
         end
 
         response(200, 'successful HTML response') do
+          # Create task specifically for HTML diagram test
+          let(:html_diagram_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'html diagram test') }
+          let(:task_id) { html_diagram_task.id }
           let(:format) { 'html' }
 
           run_test! do |response|

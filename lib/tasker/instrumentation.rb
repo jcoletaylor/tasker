@@ -8,6 +8,26 @@ module Tasker
   # span creation, attribute conversion, and sensitive data filtering.
   module Instrumentation
     class << self
+      # ✅ FIX: Implement missing record_event method expected by telemetry system
+      # This method provides a simple telemetry interface for recording metrics
+      #
+      # @param metric_name [String] The name of the metric to record
+      # @param attributes [Hash] Additional attributes/dimensions for the metric
+      # @return [void]
+      def record_event(metric_name, attributes = {})
+        # Simple implementation: log the metric
+        # In production, this could integrate with StatsD, DataDog, etc.
+        Rails.logger.debug do
+          "[Tasker::Instrumentation] Metric: #{metric_name}, Attributes: #{attributes.inspect}"
+        end
+
+        # Also fire as an ActiveSupport notification for consistency
+        ActiveSupport::Notifications.instrument("tasker.metric.#{metric_name}", attributes)
+      rescue StandardError => e
+        # Prevent telemetry errors from breaking the application
+        Rails.logger.warn("Failed to record telemetry metric #{metric_name}: #{e.message}")
+      end
+
       # Subscribe to all Tasker events
       #
       # Sets up event subscribers to capture telemetry data for logging

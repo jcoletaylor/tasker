@@ -153,12 +153,55 @@ module Tasker
         # @return [void]
         def safe_fire_event(event_name, context = {})
           if defined?(Tasker::LifecycleEvents)
-            Tasker::LifecycleEvents.fire(event_name, context)
+            # ✅ FIX: Enhance payload with standardized keys expected by TelemetrySubscriber
+            enhanced_context = build_standardized_payload(event_name, context)
+            Tasker::LifecycleEvents.fire(event_name, enhanced_context)
           else
             Rails.logger.debug { "State machine event: #{event_name} with context: #{context.inspect}" }
           end
         rescue StandardError => e
           Rails.logger.error { "Error firing state machine event #{event_name}: #{e.message}" }
+        end
+
+        # Build standardized event payload with all expected keys
+        #
+        # @param event_name [String] The event name
+        # @param context [Hash] The base context
+        # @return [Hash] Enhanced context with standardized payload structure
+        def build_standardized_payload(event_name, context)
+          # Base payload with core identifiers
+          enhanced_context = {
+            # Core identifiers (always present)
+            task_id: context[:task_id],
+            step_id: context[:step_id],
+            step_name: context[:step_name],
+
+            # State transition information
+            from_state: context[:from_state],
+            to_state: context[:to_state],
+
+            # Timing information (provide defaults for missing keys)
+            started_at: context[:started_at] || context[:transitioned_at],
+            completed_at: context[:completed_at] || context[:transitioned_at],
+            execution_duration: context[:execution_duration] || 0.0,
+
+            # Error information (for error events)
+            error_message: context[:error_message] || context[:error] || 'Unknown error',
+            exception_class: context[:exception_class] || 'StandardError',
+            attempt_number: context[:attempt_number] || 1,
+
+            # Additional context
+            transitioned_at: context[:transitioned_at] || Time.zone.now
+          }
+
+          # Merge in any additional context provided
+          enhanced_context.merge!(context.except(
+            :task_id, :step_id, :step_name, :from_state, :to_state,
+            :started_at, :completed_at, :execution_duration,
+            :error_message, :exception_class, :attempt_number, :transitioned_at
+          ))
+
+          enhanced_context
         end
 
         # Determine the appropriate event name for a state transition using hashmap lookup

@@ -6,11 +6,10 @@ require_relative '../../mocks/dummy_task'
 require_relative '../../mocks/dummy_api_task'
 module Tasker
   RSpec.describe 'workflow_steps', type: :request do
-    let(:factory) { Tasker::HandlerFactory.instance }
-    let(:handler) { factory.get(DummyTask::TASK_REGISTRY_NAME) }
-    let(:task_request) { Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true }, initiator: 'pete@test', reason: 'setup workflow step test', source_system: 'test') }
-    let(:task_instance) { handler.initialize_task!(task_request) }
-    let(:task_id) { task_instance.task_id }
+    before do
+      # Register the handler for factory usage
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+    end
 
     let(:valid_attributes) do
       { retry_limit: 8 }
@@ -25,7 +24,9 @@ module Tasker
         operationId 'getStepsByTask'
         produces 'application/json'
         response(200, 'successful') do
-          let(:task_id) { task_instance.task_id }
+          # Create task specifically for listing steps
+          let(:list_steps_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'list steps test') }
+          let(:task_id) { list_steps_task.id }
 
           after do |example|
             example.metadata[:response][:content] = {
@@ -50,8 +51,10 @@ module Tasker
         produces 'application/json'
         consumes 'application/json'
         response(200, 'successful') do
-          let(:task_id) { task_instance.task_id }
-          let(:step_id) { task_instance.workflow_steps.first.workflow_step_id }
+          # Create task specifically for showing step
+          let(:show_step_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'show step test') }
+          let(:task_id) { show_step_task.id }
+          let(:step_id) { show_step_task.workflow_steps.first.id }
 
           after do |example|
             example.metadata[:response][:content] = {
@@ -78,8 +81,10 @@ module Tasker
           }
         }
         response(200, 'successful') do
-          let(:task_id) { task_instance.task_id }
-          let(:step_id) { task_instance.workflow_steps.first.workflow_step_id }
+          # Create task specifically for patch step test
+          let(:patch_step_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'patch step test') }
+          let(:task_id) { patch_step_task.id }
+          let(:step_id) { patch_step_task.workflow_steps.first.id }
           let(:workflow_step) { { workflow_step: { retry_limit: 10 } } }
 
           after do |example|
@@ -90,7 +95,7 @@ module Tasker
             }
           end
           run_test! do |_response|
-            step = task_instance.workflow_steps.first
+            step = patch_step_task.workflow_steps.first
             step.reload
             expect(step.retry_limit).to eq(10)
           end
@@ -111,8 +116,10 @@ module Tasker
           }
         }
         response(200, 'successful') do
-          let(:task_id) { task_instance.task_id }
-          let(:step_id) { task_instance.workflow_steps.last.workflow_step_id }
+          # Create task specifically for put step test
+          let(:put_step_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'put step test') }
+          let(:task_id) { put_step_task.id }
+          let(:step_id) { put_step_task.workflow_steps.last.id }
           let(:workflow_step) { { workflow_step: { retry_limit: 8 } } }
 
           after do |example|
@@ -123,7 +130,7 @@ module Tasker
             }
           end
           run_test! do |_response|
-            step = task_instance.workflow_steps.last
+            step = put_step_task.workflow_steps.last
             step.reload
             expect(step.retry_limit).to eq(8)
           end
@@ -137,8 +144,10 @@ module Tasker
         produces 'application/json'
         consumes 'application/json'
         response(200, 'successful') do
-          let(:task_id) { task_instance.task_id }
-          let(:step_id) { task_instance.workflow_steps.first.workflow_step_id }
+          # Create task specifically for delete step test
+          let(:delete_step_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'delete step test') }
+          let(:task_id) { delete_step_task.id }
+          let(:step_id) { delete_step_task.workflow_steps.first.id }
 
           after do |example|
             example.metadata[:response][:content] = {
@@ -148,7 +157,7 @@ module Tasker
             }
           end
           run_test! do |_response|
-            step = task_instance.workflow_steps.first
+            step = delete_step_task.workflow_steps.first
             step.reload
             expect(step.status).to eq('cancelled')
           end

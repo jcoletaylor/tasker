@@ -21,6 +21,20 @@ module FactoryWorkflowHelpers
     create(:dummy_task_workflow, :dummy_task_two, **options, with_dependencies: true)
   end
 
+  # Create API integration workflow (replacement for manual task creation in integration tests)
+  def create_api_integration_workflow(options = {})
+    cart_id = options.delete(:cart_id) || 1
+    context = { cart_id: cart_id }
+    task = create(:api_integration_workflow, **options, context: context, with_dependencies: true)
+
+    # Trigger workflow step creation by getting the sequence (like initialize_task! did)
+    handler = ApiTask::IntegrationExample.new
+    register_task_handler(ApiTask::IntegrationExample::TASK_REGISTRY_NAME, ApiTask::IntegrationExample)
+    handler.get_sequence(task)
+
+    task
+  end
+
   # Find step by name in task (replacement for sequence.find_step_by_name)
   def find_step_by_name(task, step_name)
     task.workflow_steps.joins(:named_step).find_by(named_step: { name: step_name })
@@ -35,6 +49,48 @@ module FactoryWorkflowHelpers
       processed_at: Time.current,
       results: { dummy: true, other: true }
     )
+    step
+  end
+
+  # Complete multiple steps for API integration testing (replacement for complete_steps helper)
+  def complete_prerequisite_steps(task, step_names)
+    step_names.each do |step_name|
+      step = find_step_by_name(task, step_name)
+      complete_step_with_results(step, step_name)
+    end
+  end
+
+  # Complete step with realistic results for API integration (replacement for task_handler.handle_one_step)
+  def complete_step_with_results(step, step_name = nil)
+    step_name ||= step.named_step.name
+
+    # Set step to in progress
+    step.state_machine.transition_to!(:in_progress)
+
+    # Set step-specific results based on step name
+    results = case step_name
+              when 'fetch_cart'
+                { cart: { id: 1, items: [{ product_id: 1, quantity: 2 }] } }
+              when 'fetch_products'
+                { products: [{ id: 1, name: 'Test Product', in_stock: true }] }
+              when 'validate_products'
+                { valid_products: [{ id: 1, validated: true }] }
+              when 'create_order'
+                { order_id: SecureRandom.uuid }
+              when 'publish_event'
+                { published: true, publish_results: { status: 'placed_pending_fulfillment' } }
+              else
+                { dummy: true, other: true }
+              end
+
+    # Complete step with results
+    step.state_machine.transition_to!(:complete)
+    step.update_columns(
+      processed: true,
+      processed_at: Time.current,
+      results: results
+    )
+
     step
   end
 
@@ -142,6 +198,17 @@ module FactoryWorkflowHelpers
     step
   end
 
+  # Set step to error state with custom error message (for API integration testing)
+  def set_step_to_error(step, error_message = 'Test error')
+    step.state_machine.transition_to!(:in_progress) if step.state_machine.current_state == 'pending'
+    step.state_machine.transition_to!(:error)
+    step.update_columns(
+      processed: false,
+      results: { error: error_message }
+    )
+    step
+  end
+
   # Get sequence (temporary compatibility method for tests still using task_handler.get_sequence)
   def get_sequence_for_task(task)
     # Create a simple struct that provides access to steps and find_step_by_name
@@ -156,6 +223,27 @@ module FactoryWorkflowHelpers
   def get_viable_steps_for_task(task)
     sequence = get_sequence_for_task(task)
     Tasker::WorkflowStep.get_viable_steps(task, sequence)
+  end
+
+  # Register task handler (replacement for factory.register in tests)
+  def register_task_handler(task_name, handler_class)
+    factory = Tasker::HandlerFactory.instance
+    factory.register(task_name, handler_class)
+  end
+
+  # Create task handler with connection stubbing (for API integration tests)
+  def create_api_task_handler_with_connection(handler_class, connection)
+    handler = handler_class.new
+
+    # Override get_step_handler to inject the mocked connection
+    original_get_step_handler = handler.method(:get_step_handler)
+    handler.define_singleton_method(:get_step_handler) do |step|
+      step_handler = original_get_step_handler.call(step)
+      step_handler.instance_variable_set(:@connection, connection)
+      step_handler
+    end
+
+    handler
   end
 end
 

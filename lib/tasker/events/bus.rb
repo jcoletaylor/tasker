@@ -34,14 +34,12 @@ module Tasker
 
       # Subscribe an object that responds to event methods
       #
-      # @param subscriber [Object] Object with event handling methods
+      # @param subscriber [Class] Subscriber class with a .subscribe class method
       def subscribe_object(subscriber)
-        subscriber_class = subscriber.class
-
-        if subscriber_class.respond_to?(:subscribe)
-          subscriber_class.subscribe(@publisher)
+        if subscriber.respond_to?(:subscribe)
+          subscriber.subscribe(@publisher)
         else
-          Rails.logger.warn("Subscriber #{subscriber_class} does not implement .subscribe method")
+          Rails.logger.warn("Subscriber #{subscriber} does not implement .subscribe method")
         end
       end
 
