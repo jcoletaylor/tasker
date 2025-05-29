@@ -442,8 +442,12 @@ module Tasker
 
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
-            # Use state machine to transition task to error
-            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
+            # Only transition to error if not already in error state
+            current_status = task.state_machine.current_state
+            unless current_status == Tasker::Constants::TaskStatuses::ERROR
+              # Use state machine to transition task to error
+              task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
+            end
 
             Tasker::LifecycleEvents.fire(
               Tasker::LifecycleEvents::Events::Task::ERROR,

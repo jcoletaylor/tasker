@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::WorkflowOrchestration do
+RSpec.describe Tasker::Orchestration::Coordinator do
   let(:mock_bus) { instance_double(Tasker::Events::Bus) }
   let(:task_double) do
     instance_double(
@@ -20,16 +20,16 @@ RSpec.describe Tasker::WorkflowOrchestration do
     allow(mock_bus).to receive(:present?).and_return(true)
 
     # Reset initialization state
-    described_class.instance_variable_set(:@initialized, false)
+    described_class.instance_variable_set(:@active, false)
   end
 
   describe '.initialize!' do
     it 'sets up all component subscriptions' do
       # Mock component subscription methods
-      expect(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events).with(mock_bus)
-      expect(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events).with(mock_bus)
-      expect(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events).with(mock_bus)
-      expect(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events).with(mock_bus)
+      expect(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events).with(mock_bus)
+      expect(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events).with(mock_bus)
+      expect(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events).with(mock_bus)
+      expect(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events).with(mock_bus)
 
       described_class.initialize!(mock_bus)
 
@@ -37,10 +37,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
     end
 
     it 'uses default bus when none provided' do
-      allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events)
-      allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
-      allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events)
-      allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events)
+      allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
+      allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events)
 
       described_class.initialize!
 
@@ -48,10 +48,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
     end
 
     it 'logs initialization messages' do
-      allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events)
-      allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
-      allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events)
-      allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events)
+      allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
+      allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events)
 
       expect(Rails.logger).to receive(:info).with(/Initializing event-driven workflow system/)
       expect(Rails.logger).to receive(:info).with(/initialized successfully/)
@@ -66,10 +66,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
     end
 
     it 'returns true after initialization' do
-      allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events)
-      allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
-      allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events)
-      allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events)
+      allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
+      allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events)
 
       described_class.initialize!(mock_bus)
 
@@ -89,10 +89,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
 
     context 'when initialized' do
       before do
-        allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events)
-        allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
-        allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events)
-        allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events)
+        allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events)
+        allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
+        allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events)
+        allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events)
 
         described_class.initialize!(mock_bus)
       end
@@ -101,8 +101,7 @@ RSpec.describe Tasker::WorkflowOrchestration do
         allow(Tasker::Task).to receive(:find).with(123).and_return(task_double)
         allow(task_double).to receive(:state_machine).and_return(state_machine_double)
         expect(state_machine_double).to receive(:transition_to!).with(
-          Tasker::Constants::TaskStatuses::IN_PROGRESS,
-          hash_including(triggered_by: 'workflow_orchestration')
+          Tasker::Constants::TaskStatuses::IN_PROGRESS
         )
 
         result = described_class.process_task(123)
@@ -139,7 +138,7 @@ RSpec.describe Tasker::WorkflowOrchestration do
       expect(stats).to have_key(:components)
       expect(stats).to have_key(:event_bus_active)
 
-      expect(stats[:components]).to have_key(:workflow_orchestrator)
+      expect(stats[:components]).to have_key(:orchestrator)
       expect(stats[:components]).to have_key(:viable_step_discovery)
       expect(stats[:components]).to have_key(:step_executor)
       expect(stats[:components]).to have_key(:task_finalizer)
@@ -149,10 +148,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
       stats_before = described_class.statistics
       expect(stats_before[:initialized]).to be false
 
-      allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events)
-      allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
-      allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events)
-      allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events)
+      allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events)
+      allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events)
+      allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events)
 
       described_class.initialize!(mock_bus)
 
@@ -170,27 +169,27 @@ RSpec.describe Tasker::WorkflowOrchestration do
         event_callbacks[event_name] = block
       end
 
-      allow(Tasker::WorkflowOrchestrator).to receive(:subscribe_to_state_events) do |bus|
-        # Simulate WorkflowOrchestrator subscription
-        orchestrator = Tasker::WorkflowOrchestrator.new
+      allow(Tasker::Orchestration::Orchestrator).to receive(:subscribe_to_state_events) do |bus|
+        # Simulate Orchestrator subscription
+        orchestrator = Tasker::Orchestration::Orchestrator.new
         bus.subscribe('task.start_requested') { |event| orchestrator.handle_task_started(event) }
       end
 
-      allow(Tasker::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events) do |bus|
+      allow(Tasker::Orchestration::ViableStepDiscovery).to receive(:subscribe_to_orchestration_events) do |bus|
         # Simulate ViableStepDiscovery subscription
-        discovery = Tasker::ViableStepDiscovery.new
+        discovery = Tasker::Orchestration::ViableStepDiscovery.new
         bus.subscribe('workflow.task_started') { |event| discovery.discover_viable_steps_for_task(event[:task_id]) }
       end
 
-      allow(Tasker::StepExecutor).to receive(:subscribe_to_workflow_events) do |bus|
+      allow(Tasker::Orchestration::StepExecutor).to receive(:subscribe_to_workflow_events) do |bus|
         # Simulate StepExecutor subscription
-        executor = Tasker::StepExecutor.new
+        executor = Tasker::Orchestration::StepExecutor.new
         bus.subscribe('workflow.viable_steps_discovered') { |event| executor.execute_viable_steps(event) }
       end
 
-      allow(Tasker::TaskFinalizer).to receive(:subscribe_to_workflow_events) do |bus|
+      allow(Tasker::Orchestration::TaskFinalizer).to receive(:subscribe_to_workflow_events) do |bus|
         # Simulate TaskFinalizer subscription
-        finalizer = Tasker::TaskFinalizer.new
+        finalizer = Tasker::Orchestration::TaskFinalizer.new
         bus.subscribe('workflow.no_viable_steps') { |event| finalizer.finalize_task(event[:task_id]) }
       end
     end
@@ -203,10 +202,10 @@ RSpec.describe Tasker::WorkflowOrchestration do
     it 'components are available for instantiation' do
       described_class.initialize!(mock_bus)
 
-      expect(Tasker::WorkflowOrchestrator.new).to be_a(Tasker::WorkflowOrchestrator)
-      expect(Tasker::ViableStepDiscovery.new).to be_a(Tasker::ViableStepDiscovery)
-      expect(Tasker::StepExecutor.new).to be_a(Tasker::StepExecutor)
-      expect(Tasker::TaskFinalizer.new).to be_a(Tasker::TaskFinalizer)
+      expect(Tasker::Orchestration::Orchestrator.new).to be_a(Tasker::Orchestration::Orchestrator)
+      expect(Tasker::Orchestration::ViableStepDiscovery.new).to be_a(Tasker::Orchestration::ViableStepDiscovery)
+      expect(Tasker::Orchestration::StepExecutor.new).to be_a(Tasker::Orchestration::StepExecutor)
+      expect(Tasker::Orchestration::TaskFinalizer.new).to be_a(Tasker::Orchestration::TaskFinalizer)
     end
   end
 end

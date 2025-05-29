@@ -16,7 +16,6 @@ require_relative '../../../lib/tasker/state_machine/task_state_machine'
 #  reason        :string(128)
 #  requested_at  :datetime         not null
 #  source_system :string(128)
-#  status        :string(64)       not null
 #  tags          :jsonb
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
@@ -32,7 +31,6 @@ require_relative '../../../lib/tasker/state_machine/task_state_machine'
 #  tasks_named_task_id_index     (named_task_id)
 #  tasks_requested_at_index      (requested_at)
 #  tasks_source_system_index     (source_system)
-#  tasks_status_index            (status)
 #  tasks_tags_idx                (tags) USING gin
 #  tasks_tags_idx1               (tags) USING gin
 #
@@ -43,7 +41,7 @@ require_relative '../../../lib/tasker/state_machine/task_state_machine'
 module Tasker
   # Task represents a workflow process that contains multiple workflow steps.
   # Each Task is identified by a name and has a context which defines the parameters for the task.
-  # Tasks track their status, initiator, source system, and other metadata.
+  # Tasks track their status via state machine transitions, initiator, source system, and other metadata.
   #
   # @example Creating a task from a task request
   #   task_request = Tasker::Types::TaskRequest.new(name: 'process_order', context: { order_id: 123 })
@@ -63,7 +61,6 @@ module Tasker
 
     validates :context, presence: true
     validates :requested_at, presence: true
-    validates :status, presence: true, inclusion: { in: Tasker::Constants::VALID_TASK_STATUSES }
     validate :unique_identity_hash, on: :create
 
     delegate :name, to: :named_task
@@ -78,11 +75,11 @@ module Tasker
       )
     end
 
-    # Override status getter to use state machine for persisted records
+    # Status is now entirely managed by the state machine
     def status
       if new_record?
-        # For new records, use the database column directly
-        super
+        # For new records, return the initial state
+        Tasker::Constants::TaskStatuses::PENDING
       else
         # For persisted records, use state machine
         state_machine.current_state
@@ -145,7 +142,6 @@ module Tasker
     # @return [Hash] Hash of non-nil task options from the request
     def self.get_request_options(task_request)
       {
-        status: task_request.status,
         initiator: task_request.initiator,
         source_system: task_request.source_system,
         reason: task_request.reason,
@@ -162,7 +158,6 @@ module Tasker
     # @return [Hash] Hash of default task options
     def self.get_default_task_request_options(named_task)
       {
-        status: Tasker::Constants::TaskStatuses::PENDING,
         initiator: Tasker::Constants::UNKNOWN,
         source_system: Constants::UNKNOWN,
         reason: Tasker::Constants::UNKNOWN,
@@ -245,7 +240,6 @@ module Tasker
     # @return [Hash] Hash of default values
     def task_defaults
       @task_defaults ||= {
-        status: Tasker::Constants::TaskStatuses::PENDING,
         requested_at: Time.zone.now,
         initiator: Tasker::Constants::UNKNOWN,
         source_system: Tasker::Constants::UNKNOWN,

@@ -78,7 +78,7 @@ RSpec.configure do |config|
   config.include StateMachineHelpers
 
   # Add around hook to handle state machine cleanup
-  config.around(:each) do |example|
+  config.around do |example|
     # Suppress foreign key violations during test cleanup
     example.run
   rescue ActiveRecord::InvalidForeignKey => e

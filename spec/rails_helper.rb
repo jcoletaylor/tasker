@@ -26,6 +26,13 @@ abort('The Rails environment is running in production mode!') if Rails.env.produ
 require 'rspec/rails'
 # Add additional requires below this line
 
+# Load FactoryBot if available
+begin
+  require 'factory_bot_rails'
+rescue LoadError
+  # FactoryBot not available, continue without it
+end
+
 # Requires supporting ruby files with custom matchers and macros, etc
 Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |f| require f }
 
@@ -53,6 +60,38 @@ RSpec.configure do |config|
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
+
+  # FactoryBot Configuration
+  if defined?(FactoryBot)
+    config.include FactoryBot::Syntax::Methods
+
+    # Configure FactoryBot before the test suite runs
+    config.before(:suite) do
+      # Configure FactoryBot paths for the engine
+      engine_factory_path = File.expand_path('../spec/factories', __dir__)
+
+      # Add engine factory paths if not already present
+      unless FactoryBot.definition_file_paths.include?(engine_factory_path)
+        FactoryBot.definition_file_paths << engine_factory_path
+      end
+
+      # Configure generators for FactoryBot (test environment only)
+      if Rails.application.config.respond_to?(:generators)
+        Rails.application.config.generators do |g|
+          g.factory_bot suffix: 'factory'
+          g.factory_bot dir: 'spec/factories/tasker'
+        end
+      end
+
+      # Reload to pick up all factories
+      FactoryBot.reload
+    end
+
+    # Clear factory state between tests to prevent pollution
+    config.after do
+      FactoryBot.rewind_sequences
+    end
+  end
 end
 
 require 'rspec-sidekiq'

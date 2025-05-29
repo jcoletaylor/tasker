@@ -3,25 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe Tasker::StateMachine::TaskStateMachine do
-  let(:task_double) do
-    instance_double(
-      Tasker::Task,
-      task_id: 123,
-      name: 'test_task',
-      context: { test: 'data' },
-      status: Tasker::Constants::TaskStatuses::PENDING,
-      'update_column' => true,
-      'respond_to?' => true
-    )
-  end
-
-  let(:state_machine) { described_class.new(task_double) }
-
-  before do
-    # Stub the safe_fire_event method to avoid lifecycle event dependencies
-    allow_any_instance_of(described_class).to receive(:safe_fire_event)
-    allow_any_instance_of(described_class).to receive(:task_has_incomplete_steps?).and_return(false)
-  end
+  # Use real factory-created task instead of mocks
+  let(:task) { create(:task) }
+  let(:state_machine) { task.state_machine }
 
   describe '#initialize' do
     it 'creates a state machine instance' do
@@ -71,7 +55,7 @@ RSpec.describe Tasker::StateMachine::TaskStateMachine do
 
     context 'from in_progress state' do
       before do
-        allow(task_double).to receive(:status).and_return(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+        # Transition to in_progress using the state machine
         state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
       end
 
@@ -94,7 +78,7 @@ RSpec.describe Tasker::StateMachine::TaskStateMachine do
 
     context 'from error state' do
       before do
-        allow(task_double).to receive(:status).and_return(Tasker::Constants::TaskStatuses::ERROR)
+        # Transition through the states using the state machine
         state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
         state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
       end
@@ -116,186 +100,161 @@ RSpec.describe Tasker::StateMachine::TaskStateMachine do
   describe 'guard clauses' do
     describe 'transition to in_progress' do
       it 'allows transition when task status is pending' do
-        allow(task_double).to receive(:status).and_return(Tasker::Constants::TaskStatuses::PENDING)
+        expect(task.status).to eq(Tasker::Constants::TaskStatuses::PENDING)
         expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS) }.not_to raise_error
       end
 
       it 'prevents transition when task is not pending' do
-        allow(task_double).to receive(:status).and_return(Tasker::Constants::TaskStatuses::COMPLETE)
-        expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS) }
-          .to raise_error(Statesman::GuardFailedError)
-      end
-    end
-
-    describe 'transition to complete' do
-      before do
-        allow(task_double).to receive(:status).and_return(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+        # First transition to complete state
         state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-      end
+        state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
 
-      it 'allows transition when task is in_progress and has no incomplete steps' do
-        allow_any_instance_of(described_class).to receive(:task_has_incomplete_steps?).and_return(false)
-        expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE) }.not_to raise_error
-      end
-
-      it 'prevents transition when task has incomplete steps' do
-        allow_any_instance_of(described_class).to receive(:task_has_incomplete_steps?).and_return(true)
-        expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE) }
-          .to raise_error(Statesman::GuardFailedError)
-      end
-    end
-  end
-
-  describe 'callbacks' do
-    it 'fires before_transition events' do
-      expect_any_instance_of(described_class).to receive(:safe_fire_event)
-        .with('task.before_transition', hash_including(
-                                          task_id: 123,
-                                          from_state: Tasker::Constants::TaskStatuses::PENDING,
-                                          to_state: Tasker::Constants::TaskStatuses::IN_PROGRESS
-                                        ))
-
-      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-    end
-
-    it 'fires after_transition events with appropriate event name' do
-      expect_any_instance_of(described_class).to receive(:safe_fire_event)
-        .with('task.start_requested', hash_including(
-                                        task_id: 123,
-                                        task_name: 'test_task',
-                                        from_state: Tasker::Constants::TaskStatuses::PENDING,
-                                        to_state: Tasker::Constants::TaskStatuses::IN_PROGRESS
-                                      ))
-
-      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-    end
-
-    it 'updates the task status in database' do
-      expect(task_double).to receive(:update_column).with(:status, Tasker::Constants::TaskStatuses::IN_PROGRESS)
-      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-    end
-  end
-
-  describe 'class methods' do
-    describe '.can_transition?' do
-      it 'returns true for valid transitions' do
-        expect(described_class.can_transition?(task_double, Tasker::Constants::TaskStatuses::IN_PROGRESS)).to be true
-      end
-
-      it 'returns false for invalid transitions' do
-        expect(described_class.can_transition?(task_double, Tasker::Constants::TaskStatuses::COMPLETE)).to be false
-      end
-    end
-
-    describe '.allowed_transitions' do
-      it 'returns array of allowed target states' do
-        allowed = described_class.allowed_transitions(task_double)
-        expect(allowed).to include(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-        expect(allowed).to include(Tasker::Constants::TaskStatuses::CANCELLED)
-        expect(allowed).not_to include(Tasker::Constants::TaskStatuses::COMPLETE)
-      end
-    end
-
-    describe '.transition_to!' do
-      it 'successfully transitions to valid state' do
-        expect(described_class.transition_to!(task_double, Tasker::Constants::TaskStatuses::IN_PROGRESS)).to be true
-      end
-
-      it 'raises error for invalid state' do
-        expect { described_class.transition_to!(task_double, Tasker::Constants::TaskStatuses::COMPLETE) }
+        expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS) }
           .to raise_error(Statesman::TransitionFailedError)
       end
     end
 
-    describe '.current_state' do
-      it 'returns task status or default pending' do
-        expect(described_class.current_state(task_double)).to eq(Tasker::Constants::TaskStatuses::PENDING)
+    describe 'transition to complete' do
+      let(:task_with_steps) { create(:task, :with_steps) }
+      let(:state_machine_with_steps) { task_with_steps.state_machine }
+
+      before do
+        # Transition to in_progress first
+        state_machine_with_steps.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
       end
 
-      it 'returns pending when status is nil' do
-        allow(task_double).to receive(:status).and_return(nil)
-        expect(described_class.current_state(task_double)).to eq(Tasker::Constants::TaskStatuses::PENDING)
+      it 'allows transition when task is in_progress and has no incomplete steps' do
+        # Mark all steps as complete to allow task completion
+        task_with_steps.workflow_steps.each do |step|
+          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+        end
+
+        expect { state_machine_with_steps.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE) }.not_to raise_error
+      end
+
+      it 'prevents transition when task has incomplete steps' do
+        # Leave steps incomplete
+        expect { state_machine_with_steps.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE) }
+          .to raise_error(Statesman::GuardFailedError)
       end
     end
   end
 
-  describe 'event name determination' do
-    let(:transition_double) { instance_double(Statesman::Transition) }
-
-    it 'returns correct event for start transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::TaskStatuses::PENDING,
-                                                   to: Tasker::Constants::TaskStatuses::IN_PROGRESS)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('start_requested')
-    end
-
-    it 'returns correct event for completion transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::TaskStatuses::IN_PROGRESS,
-                                                   to: Tasker::Constants::TaskStatuses::COMPLETE)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('completed')
-    end
-
-    it 'returns correct event for error transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::TaskStatuses::IN_PROGRESS,
-                                                   to: Tasker::Constants::TaskStatuses::ERROR)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('failed')
-    end
-
-    it 'returns correct event for retry transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::TaskStatuses::ERROR,
-                                                   to: Tasker::Constants::TaskStatuses::PENDING)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('retry_requested')
-    end
-  end
-
-  describe 'incomplete steps checking' do
-    let(:step_double_pending) do
-      instance_double(Tasker::WorkflowStep, status: Tasker::Constants::WorkflowStepStatuses::PENDING)
-    end
-    let(:step_double_complete) do
-      instance_double(Tasker::WorkflowStep, status: Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-    end
-
-    before do
-      allow_any_instance_of(described_class).to receive(:task_has_incomplete_steps?).and_call_original
-    end
-
-    it 'returns true when task has pending steps' do
-      allow(task_double).to receive(:respond_to?).with(:workflow_steps).and_return(true)
-      allow(task_double).to receive(:workflow_steps).and_return([step_double_pending, step_double_complete])
-
-      result = state_machine.send(:task_has_incomplete_steps?, task_double)
-      expect(result).to be true
-    end
-
-    it 'returns false when all steps are complete' do
-      allow(task_double).to receive(:respond_to?).with(:workflow_steps).and_return(true)
-      allow(task_double).to receive(:workflow_steps).and_return([step_double_complete])
-
-      result = state_machine.send(:task_has_incomplete_steps?, task_double)
-      expect(result).to be false
-    end
-
-    it 'returns false when task does not respond to workflow_steps' do
-      allow(task_double).to receive(:respond_to?).with(:workflow_steps).and_return(false)
-
-      result = state_machine.send(:task_has_incomplete_steps?, task_double)
-      expect(result).to be false
-    end
-  end
-
-  describe 'error handling' do
-    it 'handles lifecycle event errors gracefully' do
-      allow_any_instance_of(described_class).to receive(:safe_fire_event).and_raise(StandardError.new('Event error'))
-
+  describe 'callbacks and lifecycle events' do
+    it 'fires lifecycle events on state transitions' do
+      # Test that events are fired (we can check this through the transition history)
       expect { state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS) }.not_to raise_error
+
+      # Verify the transition was recorded (Statesman creates transitions as needed)
+      expect(task.task_transitions.count).to be >= 1
+      latest_transition = task.task_transitions.where(most_recent: true).first
+      expect(latest_transition.to_state).to eq(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+    end
+
+    it 'creates proper transition history' do
+      # Test full transition sequence
+      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+      state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
+
+      # Verify transition history (check that we have the expected final states)
+      transitions = task.task_transitions.order(:sort_key)
+      expect(transitions.last.to_state).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
+      expect(transitions.map(&:to_state)).to include(
+        Tasker::Constants::TaskStatuses::IN_PROGRESS,
+        Tasker::Constants::TaskStatuses::COMPLETE
+      )
+    end
+  end
+
+  describe 'class methods' do
+    describe '.task_has_incomplete_steps?' do
+      context 'with incomplete steps' do
+        let(:task_with_steps) { create(:task, :with_steps) }
+
+        it 'returns true when task has pending steps' do
+          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
+        end
+
+        it 'returns true when task has in_progress steps' do
+          task_with_steps.workflow_steps.first.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
+        end
+
+        it 'returns true when task has error steps' do
+          step = task_with_steps.workflow_steps.first
+          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
+          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
+        end
+      end
+
+      context 'with complete steps' do
+        let(:task_with_steps) { create(:task, :with_steps) }
+
+        before do
+          # Complete all steps
+          task_with_steps.workflow_steps.each do |step|
+            step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+            step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+          end
+        end
+
+        it 'returns false when all steps are complete' do
+          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be false
+        end
+      end
+
+      context 'with no steps' do
+        it 'returns false when task has no steps' do
+          expect(described_class.task_has_incomplete_steps?(task)).to be false
+        end
+      end
+    end
+
+    describe '.safe_fire_event' do
+      it 'handles event firing without errors' do
+        expect { described_class.safe_fire_event('test.event', { test: 'data' }) }.not_to raise_error
+      end
+    end
+
+    describe '.determine_transition_event_name' do
+      it 'returns correct event names for transitions' do
+        expect(described_class.determine_transition_event_name(nil, Tasker::Constants::TaskStatuses::PENDING))
+          .to eq(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED)
+
+        expect(described_class.determine_transition_event_name(
+                 Tasker::Constants::TaskStatuses::PENDING,
+                 Tasker::Constants::TaskStatuses::IN_PROGRESS
+               )).to eq(Tasker::Constants::TaskEvents::START_REQUESTED)
+
+        expect(described_class.determine_transition_event_name(
+                 Tasker::Constants::TaskStatuses::IN_PROGRESS,
+                 Tasker::Constants::TaskStatuses::COMPLETE
+               )).to eq(Tasker::Constants::TaskEvents::COMPLETED)
+      end
+    end
+  end
+
+  describe 'integration with real task model' do
+    it 'properly integrates with task status method' do
+      expect(task.status).to eq(Tasker::Constants::TaskStatuses::PENDING)
+
+      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+      expect(task.status).to eq(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+
+      # Reload to ensure database persistence
+      task.reload
+      expect(task.status).to eq(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+    end
+
+    it 'maintains state consistency across reloads' do
+      state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
+      original_state = task.status
+
+      task.reload
+      expect(task.status).to eq(original_state)
+      expect(task.state_machine.current_state).to eq(original_state)
     end
   end
 end

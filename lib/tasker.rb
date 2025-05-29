@@ -32,11 +32,7 @@ require 'tasker/lifecycle_events'
 require 'tasker/state_machine'
 
 # Workflow orchestration system
-require 'tasker/workflow_orchestrator'
-require 'tasker/viable_step_discovery'
-require 'tasker/step_executor'
-require 'tasker/task_finalizer'
-require 'tasker/workflow_orchestration'
+require 'tasker/orchestration'
 
 # Main namespace for the Tasker gem
 #

@@ -312,7 +312,7 @@ module Tasker
     #
     # @return [void]
     def workflow_step_must_exist
-      return unless workflow_step_id.present?
+      return if workflow_step_id.blank?
 
       unless Tasker::WorkflowStep.exists?(workflow_step_id: workflow_step_id)
         errors.add(:workflow_step, 'must exist before creating transition')

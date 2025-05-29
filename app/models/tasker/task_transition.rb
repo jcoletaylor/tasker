@@ -224,11 +224,9 @@ module Tasker
     #
     # @return [void]
     def task_must_exist
-      return unless task_id.present?
+      return if task_id.blank?
 
-      unless Tasker::Task.exists?(task_id: task_id)
-        errors.add(:task, 'must exist before creating transition')
-      end
+      errors.add(:task, 'must exist before creating transition') unless Tasker::Task.exists?(task_id: task_id)
     rescue ActiveRecord::StatementInvalid => e
       # Handle cases where the table might not exist (e.g., during migrations)
       Rails.logger.warn { "Could not validate task existence: #{e.message}" }

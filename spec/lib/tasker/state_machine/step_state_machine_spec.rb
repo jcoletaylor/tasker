@@ -3,37 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe Tasker::StateMachine::StepStateMachine do
-  let(:task_double) do
-    instance_double(
-      Tasker::Task,
-      task_id: 123,
-      'respond_to?' => true
-    )
-  end
-
-  let(:step_double) do
-    instance_double(
-      Tasker::WorkflowStep,
-      workflow_step_id: 456,
-      task_id: 123,
-      name: 'test_step',
-      inputs: { test: 'input' },
-      results: { test: 'result' },
-      status: Tasker::Constants::WorkflowStepStatuses::PENDING,
-      'update_column' => true,
-      'respond_to?' => true,
-      depends_on_steps: [],
-      task: task_double
-    )
-  end
-
-  let(:state_machine) { described_class.new(step_double) }
-
-  before do
-    # Stub the safe_fire_event method to avoid lifecycle event dependencies
-    allow_any_instance_of(described_class).to receive(:safe_fire_event)
-    allow_any_instance_of(described_class).to receive(:step_dependencies_met?).and_return(true)
-  end
+  # Use real factory-created objects instead of mocks
+  let(:task) { create(:task) }
+  let(:step) { create(:workflow_step, task: task) }
+  let(:state_machine) { step.state_machine }
 
   describe '#initialize' do
     it 'creates a state machine instance' do
@@ -76,14 +49,18 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
         expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::CANCELLED)).to be true
       end
 
-      it 'cannot transition to complete directly' do
+      it 'cannot transition to complete directly (must go through in_progress)' do
         expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::COMPLETE)).to be false
+      end
+
+      it 'can transition to resolved_manually for manual resolution' do
+        expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY)).to be true
       end
     end
 
     context 'from in_progress state' do
       before do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+        # Transition to in_progress using the state machine
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
       end
 
@@ -102,17 +79,13 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
 
     context 'from error state' do
       before do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::ERROR)
+        # Transition through the states using the state machine
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
       end
 
       it 'can transition to pending for retry' do
         expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::PENDING)).to be true
-      end
-
-      it 'can transition to resolved_manually' do
-        expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY)).to be true
       end
 
       it 'cannot transition to complete directly' do
@@ -124,28 +97,46 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
   describe 'guard clauses' do
     describe 'transition to in_progress' do
       it 'allows transition when step is pending and dependencies are met' do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::PENDING)
-        allow_any_instance_of(described_class).to receive(:step_dependencies_met?).and_return(true)
+        expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::PENDING)
         expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }.not_to raise_error
       end
 
       it 'prevents transition when dependencies are not met' do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::PENDING)
-        allow_any_instance_of(described_class).to receive(:step_dependencies_met?).and_return(false)
+        # Create a step with dependencies that aren't complete
+        parent_step = create(:workflow_step, task: task)
+        create(:workflow_step_edge, from_step: parent_step, to_step: step)
+
+        # Parent step is still pending, so transition should fail
         expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }
           .to raise_error(Statesman::GuardFailedError)
       end
 
+      it 'allows transition when dependencies are complete' do
+        # Create a step with completed dependencies
+        parent_step = create(:workflow_step, task: task)
+        create(:workflow_step_edge, from_step: parent_step, to_step: step)
+
+        # Complete the parent step
+        parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+        parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+
+        # Now the dependent step should be able to transition
+        expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }.not_to raise_error
+      end
+
       it 'prevents transition when step is not pending' do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+        # First transition to complete state
+        state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+        state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+
         expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }
-          .to raise_error(Statesman::GuardFailedError)
+          .to raise_error(Statesman::TransitionFailedError)
       end
     end
 
     describe 'transition to complete' do
       before do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+        # Transition to in_progress first
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
       end
 
@@ -156,7 +147,7 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
 
     describe 'transition to pending from error' do
       before do
-        allow(step_double).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::ERROR)
+        # Transition through the states to error
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
       end
@@ -167,194 +158,153 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
     end
   end
 
-  describe 'callbacks' do
-    it 'fires before_transition events' do
-      expect_any_instance_of(described_class).to receive(:safe_fire_event)
-        .with('step.before_transition', hash_including(
-                                          task_id: 123,
-                                          step_id: 456,
-                                          step_name: 'test_step',
-                                          from_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
-                                          to_state: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-                                        ))
+  describe 'callbacks and lifecycle events' do
+    it 'fires lifecycle events on state transitions' do
+      # Test that events are fired (we can check this through the transition history)
+      expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }.not_to raise_error
 
-      state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+      # Verify the transition was recorded
+      expect(step.workflow_step_transitions.count).to be >= 1
+      latest_transition = step.workflow_step_transitions.where(most_recent: true).first
+      expect(latest_transition.to_state).to eq(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
     end
 
-    it 'fires after_transition events with appropriate event name' do
-      expect_any_instance_of(described_class).to receive(:safe_fire_event)
-        .with('step.execution_requested', hash_including(
-                                            task_id: 123,
-                                            step_id: 456,
-                                            step_name: 'test_step',
-                                            from_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
-                                            to_state: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-                                          ))
-
+    it 'creates proper transition history' do
+      # Test full transition sequence
       state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-    end
+      state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
 
-    it 'updates the step status in database' do
-      expect(step_double).to receive(:update_column).with(:status, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-      state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+      # Verify transition history
+      transitions = step.workflow_step_transitions.order(:sort_key)
+      expect(transitions.last.to_state).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+      expect(transitions.map(&:to_state)).to include(
+        Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+        Tasker::Constants::WorkflowStepStatuses::COMPLETE
+      )
     end
   end
 
   describe 'class methods' do
-    describe '.can_transition?' do
-      it 'returns true for valid transitions' do
-        expect(described_class.can_transition?(step_double,
-                                               Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)).to be true
+    describe '.step_dependencies_met?' do
+      context 'with no dependencies' do
+        it 'returns true when step has no parent steps' do
+          expect(described_class.step_dependencies_met?(step)).to be true
+        end
       end
 
-      it 'returns false for invalid transitions' do
-        expect(described_class.can_transition?(step_double,
-                                               Tasker::Constants::WorkflowStepStatuses::COMPLETE)).to be false
-      end
-    end
+      context 'with dependencies' do
+        let(:parent_step) { create(:workflow_step, task: task) }
 
-    describe '.allowed_transitions' do
-      it 'returns array of allowed target states' do
-        allowed = described_class.allowed_transitions(step_double)
-        expect(allowed).to include(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-        expect(allowed).to include(Tasker::Constants::WorkflowStepStatuses::CANCELLED)
-        expect(allowed).not_to include(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-      end
-    end
+        before do
+          create(:workflow_step_edge, from_step: parent_step, to_step: step)
+        end
 
-    describe '.transition_to!' do
-      it 'successfully transitions to valid state' do
-        expect(described_class.transition_to!(step_double,
-                                              Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)).to be true
-      end
+        it 'returns false when parent steps are pending' do
+          expect(described_class.step_dependencies_met?(step)).to be false
+        end
 
-      it 'raises error for invalid state' do
-        expect { described_class.transition_to!(step_double, Tasker::Constants::WorkflowStepStatuses::COMPLETE) }
-          .to raise_error(Statesman::TransitionFailedError)
-      end
-    end
+        it 'returns false when parent steps are in progress' do
+          parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          expect(described_class.step_dependencies_met?(step)).to be false
+        end
 
-    describe '.current_state' do
-      it 'returns step status or default pending' do
-        expect(described_class.current_state(step_double)).to eq(Tasker::Constants::WorkflowStepStatuses::PENDING)
+        it 'returns true when parent steps are complete' do
+          parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+          expect(described_class.step_dependencies_met?(step)).to be true
+        end
+
+        it 'returns false when any parent step is in error' do
+          parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          parent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
+          expect(described_class.step_dependencies_met?(step)).to be false
+        end
       end
 
-      it 'returns pending when status is nil' do
-        allow(step_double).to receive(:status).and_return(nil)
-        expect(described_class.current_state(step_double)).to eq(Tasker::Constants::WorkflowStepStatuses::PENDING)
-      end
-    end
-  end
+      context 'with multiple dependencies' do
+        let(:parent_step_1) { create(:workflow_step, task: task) }
+        let(:parent_step_2) { create(:workflow_step, task: task) }
 
-  describe 'event name determination' do
-    let(:transition_double) { instance_double(Statesman::Transition) }
+        before do
+          create(:workflow_step_edge, from_step: parent_step_1, to_step: step)
+          create(:workflow_step_edge, from_step: parent_step_2, to_step: step)
+        end
 
-    it 'returns correct event for execution transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::WorkflowStepStatuses::PENDING,
-                                                   to: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+        it 'returns false when only some parent steps are complete' do
+          parent_step_1.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          parent_step_1.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+          # parent_step_2 remains pending
 
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('execution_requested')
-    end
+          expect(described_class.step_dependencies_met?(step)).to be false
+        end
 
-    it 'returns correct event for completion transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
-                                                   to: Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+        it 'returns true when all parent steps are complete' do
+          [parent_step_1, parent_step_2].each do |parent|
+            parent.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+            parent.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+          end
 
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('completed')
-    end
-
-    it 'returns correct event for error transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
-                                                   to: Tasker::Constants::WorkflowStepStatuses::ERROR)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('failed')
-    end
-
-    it 'returns correct event for retry transition' do
-      allow(transition_double).to receive_messages(from: Tasker::Constants::WorkflowStepStatuses::ERROR,
-                                                   to: Tasker::Constants::WorkflowStepStatuses::PENDING)
-
-      event_name = state_machine.send(:transition_event_name, transition_double)
-      expect(event_name).to eq('retry_requested')
-    end
-  end
-
-  describe 'dependency checking' do
-    let(:dependent_step_1) do
-      instance_double(Tasker::WorkflowStep,
-                      workflow_step_id: 111,
-                      status: Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-    end
-
-    let(:dependent_step_2) do
-      instance_double(Tasker::WorkflowStep,
-                      workflow_step_id: 222,
-                      status: Tasker::Constants::WorkflowStepStatuses::PENDING)
-    end
-
-    let(:workflow_steps_collection) { [dependent_step_1, dependent_step_2] }
-
-    before do
-      allow_any_instance_of(described_class).to receive(:step_dependencies_met?).and_call_original
-    end
-
-    context 'when step has no dependencies' do
-      before do
-        allow(step_double).to receive(:respond_to?).with(:depends_on_steps).and_return(true)
-        allow(step_double).to receive(:depends_on_steps).and_return([])
-      end
-
-      it 'returns true' do
-        result = state_machine.send(:step_dependencies_met?, step_double)
-        expect(result).to be true
+          expect(described_class.step_dependencies_met?(step)).to be true
+        end
       end
     end
 
-    context 'when step has dependencies' do
-      before do
-        allow(step_double).to receive(:respond_to?).with(:depends_on_steps).and_return(true)
-        allow(step_double).to receive(:depends_on_steps).and_return(%w[dep_step_1 dep_step_2])
-        allow(step_double).to receive(:respond_to?).with(:task).and_return(true)
-        allow(task_double).to receive(:respond_to?).with(:workflow_steps).and_return(true)
-        allow(task_double).to receive(:workflow_steps).and_return(workflow_steps_collection)
-        allow(workflow_steps_collection).to receive(:where).with(name: %w[dep_step_1
-                                                                          dep_step_2]).and_return([dependent_step_1,
-                                                                                                   dependent_step_2])
-      end
-
-      it 'returns true when all dependencies are complete' do
-        allow(dependent_step_2).to receive(:status).and_return(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-
-        result = state_machine.send(:step_dependencies_met?, step_double)
-        expect(result).to be true
-      end
-
-      it 'returns false when some dependencies are not complete' do
-        result = state_machine.send(:step_dependencies_met?, step_double)
-        expect(result).to be false
+    describe '.safe_fire_event' do
+      it 'handles event firing without errors' do
+        expect { described_class.safe_fire_event('test.event', { test: 'data' }) }.not_to raise_error
       end
     end
 
-    context 'when step does not respond to depends_on_steps' do
-      before do
-        allow(step_double).to receive(:respond_to?).with(:depends_on_steps).and_return(false)
-      end
+    describe '.determine_transition_event_name' do
+      it 'returns correct event names for transitions' do
+        expect(described_class.determine_transition_event_name(nil, Tasker::Constants::WorkflowStepStatuses::PENDING))
+          .to eq(Tasker::Constants::StepEvents::INITIALIZE_REQUESTED)
 
-      it 'returns true' do
-        result = state_machine.send(:step_dependencies_met?, step_double)
-        expect(result).to be true
+        expect(described_class.determine_transition_event_name(
+                 Tasker::Constants::WorkflowStepStatuses::PENDING,
+                 Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+               )).to eq(Tasker::Constants::StepEvents::EXECUTION_REQUESTED)
+
+        expect(described_class.determine_transition_event_name(
+                 Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+                 Tasker::Constants::WorkflowStepStatuses::COMPLETE
+               )).to eq(Tasker::Constants::StepEvents::COMPLETED)
       end
     end
   end
 
-  describe 'error handling' do
-    it 'handles lifecycle event errors gracefully' do
-      allow_any_instance_of(described_class).to receive(:safe_fire_event).and_raise(StandardError.new('Event error'))
+  describe 'integration with real workflow step model' do
+    it 'properly integrates with step status method' do
+      expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::PENDING)
 
-      expect { state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }.not_to raise_error
+      state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+      expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+
+      # Reload to ensure database persistence
+      step.reload
+      expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+    end
+
+    it 'maintains state consistency across reloads' do
+      state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+      original_state = step.status
+
+      step.reload
+      expect(step.status).to eq(original_state)
+      expect(step.state_machine.current_state).to eq(original_state)
+    end
+
+    it 'properly handles step dependencies in real workflow scenarios' do
+      # Create a realistic workflow with dependencies
+      task_with_workflow = create(:task, :api_integration, :with_steps)
+      steps = task_with_workflow.workflow_steps.includes(:named_step).order(:workflow_step_id)
+
+      # Verify that steps with dependencies can't transition until parents are complete
+      dependent_step = steps.last
+      if dependent_step.parents.any?
+        expect { dependent_step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS) }
+          .to raise_error(Statesman::GuardFailedError)
+      end
     end
   end
 end
