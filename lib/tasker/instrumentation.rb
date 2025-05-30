@@ -115,11 +115,11 @@ module Tasker
 
         # Dispatch to appropriate handler based on event type
         case event
-        when Tasker::LifecycleEvents::Events::Task::START
+        when Tasker::LifecycleEvents::Events::Task::START, Tasker::LifecycleEvents::Events::Task::INITIALIZE
           handle_task_start(tracer, event, payload)
-        when Tasker::LifecycleEvents::Events::Task::COMPLETE, Tasker::LifecycleEvents::Events::Task::ERROR
+        when Tasker::Constants::TaskEvents::COMPLETED, Tasker::Constants::TaskEvents::FAILED
           handle_task_completion(tracer, event, payload)
-        when Tasker::LifecycleEvents::Events::Step::HANDLE
+        when Tasker::Constants::ObservabilityEvents::Step::HANDLE
           handle_step_event(tracer, event, payload)
         else
           handle_generic_event(tracer, event, payload)
@@ -178,7 +178,7 @@ module Tasker
       # @param payload [Hash] The event payload
       # @return [void]
       def set_span_status(span, event, payload)
-        if event == Tasker::LifecycleEvents::Events::Task::ERROR
+        if event == Tasker::Constants::TaskEvents::FAILED
           # For testing compatibility, don't directly set status
           if defined?(::OpenTelemetry::Trace::Status)
             error_msg = payload[:error] || 'Task failed'

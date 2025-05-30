@@ -2,6 +2,7 @@
 
 require 'statesman'
 require_relative '../constants'
+require 'tasker/events/event_payload_builder'
 
 module Tasker
   module StateMachine
@@ -153,8 +154,26 @@ module Tasker
         # @return [void]
         def safe_fire_event(event_name, context = {})
           if defined?(Tasker::LifecycleEvents)
-            # ✅ FIX: Enhance payload with standardized keys expected by TelemetrySubscriber
-            enhanced_context = build_standardized_payload(event_name, context)
+            # Use EventPayloadBuilder for consistent payload structure
+            step = extract_step_from_context(context)
+            task = step&.task
+
+            if step && task
+              # Determine event type from event name
+              event_type = determine_event_type_from_name(event_name)
+
+              # Use EventPayloadBuilder for standardized payload
+              enhanced_context = Tasker::Events::EventPayloadBuilder.build_step_payload(
+                step,
+                task,
+                event_type: event_type,
+                additional_context: context
+              )
+            else
+              # Fallback to enhanced context if step/task not available
+              enhanced_context = build_standardized_payload(event_name, context)
+            end
+
             Tasker::LifecycleEvents.fire(event_name, enhanced_context)
           else
             Rails.logger.debug { "State machine event: #{event_name} with context: #{context.inspect}" }
@@ -163,7 +182,44 @@ module Tasker
           Rails.logger.error { "Error firing state machine event #{event_name}: #{e.message}" }
         end
 
-        # Build standardized event payload with all expected keys
+        # Extract step object from context for EventPayloadBuilder
+        #
+        # @param context [Hash] The event context
+        # @return [WorkflowStep, nil] The step object if available
+        def extract_step_from_context(context)
+          step_id = context[:step_id]
+          return nil unless step_id
+
+          # Try to find the step - handle both string and numeric IDs
+          Tasker::WorkflowStep.find_by(workflow_step_id: step_id) ||
+            Tasker::WorkflowStep.find_by(id: step_id)
+        rescue StandardError => e
+          Rails.logger.warn { "Could not find step with ID #{step_id}: #{e.message}" }
+          nil
+        end
+
+        # Determine event type from event name for EventPayloadBuilder
+        #
+        # @param event_name [String] The event name
+        # @return [Symbol] The event type
+        def determine_event_type_from_name(event_name)
+          case event_name
+          when /completed/i
+            :completed
+          when /failed/i, /error/i
+            :failed
+          when /execution_requested/i, /started/i
+            :started
+          when /retry/i
+            :retry
+          when /backoff/i
+            :backoff
+          else
+            :unknown
+          end
+        end
+
+        # Build standardized event payload with all expected keys (legacy fallback)
         #
         # @param event_name [String] The event name
         # @param context [Hash] The base context

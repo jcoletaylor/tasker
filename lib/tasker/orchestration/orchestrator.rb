@@ -12,12 +12,12 @@ module Tasker
       include Dry::Events::Publisher[:workflow_orchestrator]
 
       # Register workflow orchestration events
-      register_event('workflow.task_started')
-      register_event('workflow.task_completed')
-      register_event('workflow.task_failed')
-      register_event('workflow.step_completed')
-      register_event('workflow.step_failed')
-      register_event('workflow.orchestration_requested')
+      register_event(Tasker::Constants::WorkflowEvents::TASK_STARTED)
+      register_event(Tasker::Constants::WorkflowEvents::TASK_COMPLETED)
+      register_event(Tasker::Constants::WorkflowEvents::TASK_FAILED)
+      register_event(Tasker::Constants::WorkflowEvents::STEP_COMPLETED)
+      register_event(Tasker::Constants::WorkflowEvents::STEP_FAILED)
+      register_event(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED)
 
       class << self
         # Subscribe to state transition events from state machines
@@ -28,24 +28,24 @@ module Tasker
           orchestrator = new
 
           # Subscribe to task state events
-          event_bus.subscribe('task.start_requested') do |event|
+          event_bus.subscribe(Tasker::Constants::LifecycleEvents::TASK_START_REQUESTED) do |event|
             orchestrator.handle_task_started(event)
           end
 
-          event_bus.subscribe('task.completed') do |event|
+          event_bus.subscribe(Tasker::Constants::TaskEvents::COMPLETED) do |event|
             orchestrator.handle_task_completed(event)
           end
 
-          event_bus.subscribe('task.failed') do |event|
+          event_bus.subscribe(Tasker::Constants::TaskEvents::FAILED) do |event|
             orchestrator.handle_task_failed(event)
           end
 
           # Subscribe to step state events
-          event_bus.subscribe('step.completed') do |event|
+          event_bus.subscribe(Tasker::Constants::StepEvents::COMPLETED) do |event|
             orchestrator.handle_step_completed(event)
           end
 
-          event_bus.subscribe('step.failed') do |event|
+          event_bus.subscribe(Tasker::Constants::StepEvents::FAILED) do |event|
             orchestrator.handle_step_failed(event)
           end
 
@@ -60,7 +60,7 @@ module Tasker
         Rails.logger.debug { "Orchestrator: Task started - #{event[:task_id]}" }
 
         # Publish workflow orchestration event to trigger step discovery
-        publish('workflow.task_started', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_STARTED, {
                   task_id: event[:task_id],
                   task_name: event[:task_name],
                   orchestrated_at: Time.current
@@ -73,7 +73,7 @@ module Tasker
       def handle_task_completed(event)
         Rails.logger.debug { "Orchestrator: Task completed - #{event[:task_id]}" }
 
-        publish('workflow.task_completed', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_COMPLETED, {
                   task_id: event[:task_id],
                   task_name: event[:task_name],
                   orchestrated_at: Time.current
@@ -86,7 +86,7 @@ module Tasker
       def handle_task_failed(event)
         Rails.logger.debug { "Orchestrator: Task failed - #{event[:task_id]}" }
 
-        publish('workflow.task_failed', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_FAILED, {
                   task_id: event[:task_id],
                   task_name: event[:task_name],
                   orchestrated_at: Time.current
@@ -100,7 +100,7 @@ module Tasker
         Rails.logger.debug { "Orchestrator: Step completed - #{event[:step_id]} for task #{event[:task_id]}" }
 
         # When a step completes, we need to discover if new steps become viable
-        publish('workflow.step_completed', {
+        publish(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, {
                   task_id: event[:task_id],
                   step_id: event[:step_id],
                   step_name: event[:step_name],
@@ -117,7 +117,7 @@ module Tasker
       def handle_step_failed(event)
         Rails.logger.debug { "Orchestrator: Step failed - #{event[:step_id]} for task #{event[:task_id]}" }
 
-        publish('workflow.step_failed', {
+        publish(Tasker::Constants::WorkflowEvents::STEP_FAILED, {
                   task_id: event[:task_id],
                   step_id: event[:step_id],
                   step_name: event[:step_name],
@@ -136,7 +136,7 @@ module Tasker
       def request_orchestration(task_id)
         Rails.logger.debug { "Orchestrator: Requesting orchestration for task #{task_id}" }
 
-        publish('workflow.orchestration_requested', {
+        publish(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED, {
                   task_id: task_id,
                   orchestrated_at: Time.current
                 })

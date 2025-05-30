@@ -189,12 +189,16 @@ RSpec.describe ApiTask::IntegrationExample do
 
   describe 'complete workflow' do
     it 'successfully completes the entire workflow' do
+      # Create a fresh task WITHOUT pre-created dependencies to avoid step name conflicts
+      # This allows the task handler to create steps properly at runtime
+      fresh_task = create(:api_integration_workflow, context: { cart_id: cart_id }, with_dependencies: false)
+
       # Use factory-created task with full workflow execution
-      task_handler.handle(task)
-      expect(task.status).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
+      task_handler.handle(fresh_task)
+      expect(fresh_task.status).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
 
       # Verify all steps are complete
-      task.workflow_steps.each do |step|
+      fresh_task.workflow_steps.each do |step|
         expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
       end
     end

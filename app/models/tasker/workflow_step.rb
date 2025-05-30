@@ -32,6 +32,88 @@ module Tasker
 
     delegate :name, to: :named_step
 
+    # Optimized scopes for efficient querying using state machine transitions
+    scope :completed, -> {
+      joins(:workflow_step_transitions)
+        .where(
+          workflow_step_transitions: {
+            most_recent: true,
+            to_state: [
+              Constants::WorkflowStepStatuses::COMPLETE,
+              Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+            ]
+          }
+        )
+    }
+
+    scope :failed, -> {
+      joins(:workflow_step_transitions)
+        .where(
+          workflow_step_transitions: {
+            most_recent: true,
+            to_state: Constants::WorkflowStepStatuses::ERROR
+          }
+        )
+    }
+
+    scope :pending, -> {
+      # Include steps with no transitions (initial state) AND steps with pending/in_progress transitions
+      left_joins(:workflow_step_transitions)
+        .where(
+          workflow_step_transitions: { id: nil }  # No transitions (initial pending state)
+        ).or(
+          joins(:workflow_step_transitions)
+            .where(
+              workflow_step_transitions: {
+                most_recent: true,
+                to_state: [
+                  Constants::WorkflowStepStatuses::PENDING,
+                  Constants::WorkflowStepStatuses::IN_PROGRESS
+                ]
+              }
+            )
+        )
+    }
+
+    scope :for_task, ->(task) {
+      where(task_id: task.task_id)
+    }
+
+    # Efficient method to get task completion statistics using ActiveRecord scopes
+    # This avoids the N+1 query problem while working with the state machine system
+    #
+    # @param task [Task] The task to analyze
+    # @return [Hash] Hash with completion statistics and latest completion time
+    def self.task_completion_stats(task)
+      # Use efficient ActiveRecord queries with the state machine
+      task_steps = for_task(task)
+
+      # Get completion statistics with optimized queries
+      total_steps = task_steps.count
+      completed_steps = task_steps.completed
+      failed_steps = task_steps.failed
+
+      # Calculate counts
+      completed_count = completed_steps.count
+      failed_count = failed_steps.count
+
+      # For pending count, calculate as total minus completed and failed
+      # This handles the case where new steps don't have transitions yet
+      pending_count = total_steps - completed_count - failed_count
+
+      # Get latest completion time from completed steps
+      latest_completion_time = completed_steps.maximum(:processed_at)
+
+      {
+        total_steps: total_steps,
+        completed_steps: completed_count,
+        failed_steps: failed_count,
+        pending_steps: pending_count,
+        latest_completion_time: latest_completion_time,
+        all_complete: completed_count == total_steps && total_steps > 0
+      }
+    end
+
     # State machine integration
     def state_machine
       @state_machine ||= Tasker::StateMachine::StepStateMachine.new(
@@ -233,7 +315,10 @@ module Tasker
     end
 
     def complete?
-      status == Constants::WorkflowStepStatuses::COMPLETE
+      [
+        Constants::WorkflowStepStatuses::COMPLETE,
+        Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+      ].include?(status)
     end
 
     def in_progress?

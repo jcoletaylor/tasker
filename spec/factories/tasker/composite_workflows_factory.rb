@@ -4,9 +4,13 @@ FactoryBot.define do
   # Complete API Integration Workflow Factory
   # This mirrors the setup from integration_example_spec.rb
   factory :api_integration_workflow, class: 'Tasker::Task' do
-    initiator { 'api_client' }
-    source_system { 'ecommerce_api' }
-    reason { 'process_cart_checkout' }
+    initiator { 'pete@test' }
+    source_system { 'ecommerce-api' }
+    reason { 'automated_integration_test' }
+    tags { %w[api integration testing] }
+
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { cart_id: 42, api_endpoint: 'https://api.example.com' } }
 
     transient do
       with_dependencies { true }
@@ -24,24 +28,63 @@ FactoryBot.define do
       task.named_task = api_named_task
     end
 
-    after(:create) do |_task, evaluator|
+    after(:create) do |task, evaluator|
       if evaluator.with_dependencies
         # ✅ FACTORY CONSISTENCY: Use find_or_create pattern for dependent systems to avoid conflicts
         # Create dependent systems that the task handler will use
-        Tasker::DependentSystem.find_or_create_by!(name: 'api-system') do |system|
+        api_system = Tasker::DependentSystem.find_or_create_by!(name: 'api-system') do |system|
           system.description = 'API system for integration testing'
         end
 
-        Tasker::DependentSystem.find_or_create_by!(name: 'database-system') do |system|
+        database_system = Tasker::DependentSystem.find_or_create_by!(name: 'database-system') do |system|
           system.description = 'Database system for integration testing'
         end
 
-        Tasker::DependentSystem.find_or_create_by!(name: 'notification-system') do |system|
+        notification_system = Tasker::DependentSystem.find_or_create_by!(name: 'notification-system') do |system|
           system.description = 'Notification system for integration testing'
         end
 
-        # The task handler will create workflow steps dynamically from the task definition
-        # No need to create workflow steps manually here - this was causing duplication
+        # ✅ FIX: Create the actual workflow steps that the test expects
+        # Create named steps for the API integration workflow
+        fetch_cart_step = Tasker::NamedStep.find_or_create_by!(name: 'fetch_cart') do |step|
+          step.description = 'Fetch cart data from API'
+          step.dependent_system = api_system
+        end
+
+        fetch_products_step = Tasker::NamedStep.find_or_create_by!(name: 'fetch_products') do |step|
+          step.description = 'Fetch product data from API'
+          step.dependent_system = api_system
+        end
+
+        validate_products_step = Tasker::NamedStep.find_or_create_by!(name: 'validate_products') do |step|
+          step.description = 'Validate product data'
+          step.dependent_system = database_system
+        end
+
+        create_order_step = Tasker::NamedStep.find_or_create_by!(name: 'create_order') do |step|
+          step.description = 'Create order in database'
+          step.dependent_system = database_system
+        end
+
+        publish_event_step = Tasker::NamedStep.find_or_create_by!(name: 'publish_event') do |step|
+          step.description = 'Publish order created event'
+          step.dependent_system = notification_system
+        end
+
+        # Create workflow steps
+        step1 = create(:workflow_step, evaluator.step_states, task: task, named_step: fetch_cart_step)
+        step2 = create(:workflow_step, evaluator.step_states, task: task, named_step: fetch_products_step)
+        step3 = create(:workflow_step, evaluator.step_states, task: task, named_step: validate_products_step)
+        step4 = create(:workflow_step, evaluator.step_states, task: task, named_step: create_order_step)
+        step5 = create(:workflow_step, evaluator.step_states, task: task, named_step: publish_event_step)
+
+        # Create dependencies: validate depends on fetch_cart and fetch_products
+        create(:workflow_step_edge, from_step: step1, to_step: step3, name: 'provides')
+        create(:workflow_step_edge, from_step: step2, to_step: step3, name: 'provides')
+        # create_order depends on validate_products
+        create(:workflow_step_edge, from_step: step3, to_step: step4, name: 'provides')
+        # publish_event depends on create_order
+        create(:workflow_step_edge, from_step: step4, to_step: step5, name: 'provides')
       end
     end
 
@@ -65,6 +108,9 @@ FactoryBot.define do
     initiator { 'test_system' }
     source_system { 'test' }
     reason { 'testing' }
+
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { test: true, linear_workflow: true } }
 
     transient do
       step_count { 3 }
@@ -97,6 +143,9 @@ FactoryBot.define do
     initiator { 'batch_processor' }
     source_system { 'data_pipeline' }
     reason { 'parallel_processing' }
+
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { test: true, parallel_workflow: true, batch_size: 100 } }
 
     transient do
       parallel_count { 3 }
@@ -135,6 +184,9 @@ FactoryBot.define do
   # Task with State Machine Transitions (simplified to avoid constraint violations)
   factory :task_with_transitions, class: 'Tasker::Task' do
     named_task
+
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { test: true, with_transitions: true } }
 
     transient do
       transition_sequence { :complete } # :complete, :error, :retry, :cancel
@@ -235,6 +287,9 @@ FactoryBot.define do
     source_system { 'test-system' }
     reason { 'testing!' }
     tags { %w[dummy testing] }
+
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { dummy: true } }
 
     transient do
       step_states { :pending }

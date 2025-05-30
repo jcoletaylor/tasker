@@ -8,6 +8,9 @@ module Tasker
   # This module provides a clean event firing interface using dry-events
   # publisher/subscriber patterns for decoupled communication.
   module LifecycleEvents
+    # Event namespace for ActiveSupport::Notifications compatibility
+    EVENT_NAMESPACE = 'tasker'
+
     class << self
       # Get the global event bus
       #
@@ -29,18 +32,27 @@ module Tasker
       def fire(event, context = {})
         Rails.logger.debug { "LifecycleEvent fired: #{event} with context: #{context.inspect}" }
 
+        # Create namespaced event name for ActiveSupport::Notifications
+        namespaced_event = "#{EVENT_NAMESPACE}.#{event}"
+
         if block_given?
           # Execute block and publish event with result
-          result = yield
-          bus.publish(event, context.merge(result: result))
+          result = nil
+
+          # Use ActiveSupport::Notifications.instrument for timing
+          ActiveSupport::Notifications.instrument(namespaced_event, context) do
+            result = yield
+          end
+
           result
         else
-          # Just publish the event
-          bus.publish(event, context)
+          # For non-block events, use instrument with empty block to ensure proper timing
+          ActiveSupport::Notifications.instrument(namespaced_event, context) do
+            # Empty block - just fires the event with timing
+          end
+
+          nil
         end
-      rescue StandardError => e
-        Rails.logger.error { "Error firing lifecycle event #{event}: #{e.message}" }
-        raise
       end
 
       # Fire an event with span-based tracing
@@ -64,7 +76,7 @@ module Tasker
       # @return [void]
       def fire_error(event, exception, context = {})
         error_context = context.merge(
-          error: [exception.class.name, exception.message],
+          exception: [exception.class.name, exception.message],
           exception_object: exception,
           backtrace: exception.backtrace&.join("\n")
         )
@@ -112,7 +124,7 @@ module Tasker
       delegate :subscribe_object, to: :bus
     end
 
-    # Event names - kept for backward compatibility
+    # Event names - updated to use modern constants
     module Events
       # Task-related lifecycle events
       module Task
@@ -120,36 +132,27 @@ module Tasker
         INITIALIZE = 'task.initialize_requested'
         # Fired when a task is started
         START = 'task.start_requested'
-        # Fired when a task is handled
-        HANDLE = 'task.handle'
-        # Fired when a task is enqueued for processing
-        ENQUEUE = 'task.enqueue'
-        # Fired when a task handling is finalized
-        FINALIZE = 'task.finalize'
-        # Fired when a task encounters an error
-        ERROR = 'task.error'
-        # Fired when a task is completed
-        COMPLETE = 'task.complete'
+        # Task state events (use modern constants)
+        COMPLETE = Tasker::Constants::TaskEvents::COMPLETED    # 'task.completed'
+        ERROR = Tasker::Constants::TaskEvents::FAILED          # 'task.failed'
+        # Process tracking events (use ObservabilityEvents)
+        HANDLE = Tasker::Constants::ObservabilityEvents::Task::HANDLE      # 'task.handle'
+        ENQUEUE = Tasker::Constants::ObservabilityEvents::Task::ENQUEUE    # 'task.enqueue'
+        FINALIZE = Tasker::Constants::ObservabilityEvents::Task::FINALIZE  # 'task.finalize'
       end
 
       # Step-related lifecycle events
       module Step
-        # Fired when viable steps are found
-        FIND_VIABLE = 'step.find_viable'
-        # Fired when a step is handled
-        HANDLE = 'step.handle'
-        # Fired when a step is completed
-        COMPLETE = 'step.complete'
-        # Fired when a step encounters an error
-        ERROR = 'step.error'
-        # Fired when a step is retried
-        RETRY = 'step.retry'
-        # Fired when a step needs to back off before retrying
-        BACKOFF = 'step.backoff'
-        # Fired when a step is skipped
-        SKIP = 'step.skip'
-        # Fired when a step reaches its maximum retry limit
-        MAX_RETRIES_REACHED = 'step.max_retries_reached'
+        # Step state events (use modern constants)
+        COMPLETE = Tasker::Constants::StepEvents::COMPLETED         # 'step.completed'
+        ERROR = Tasker::Constants::StepEvents::FAILED              # 'step.failed'
+        RETRY = Tasker::Constants::StepEvents::RETRY_REQUESTED      # 'step.retry_requested'
+        # Process tracking events (use ObservabilityEvents)
+        FIND_VIABLE = Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE        # 'step.find_viable'
+        HANDLE = Tasker::Constants::ObservabilityEvents::Step::HANDLE                  # 'step.handle'
+        BACKOFF = Tasker::Constants::ObservabilityEvents::Step::BACKOFF                # 'step.backoff'
+        SKIP = Tasker::Constants::ObservabilityEvents::Step::SKIP                      # 'step.skip'
+        MAX_RETRIES_REACHED = Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED  # 'step.max_retries_reached'
       end
     end
   end

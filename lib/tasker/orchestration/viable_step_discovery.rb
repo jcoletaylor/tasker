@@ -12,9 +12,9 @@ module Tasker
       include Dry::Events::Publisher[:step_discovery]
 
       # Register events that this component publishes
-      register_event('workflow.viable_steps_discovered')
-      register_event('workflow.no_viable_steps')
-      register_event('workflow.viable_steps_batch_ready')
+      register_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED)
+      register_event(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS)
+      register_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_BATCH_READY)
 
       class << self
         # Subscribe to workflow orchestration events
@@ -25,17 +25,17 @@ module Tasker
           discovery = new
 
           # Subscribe to workflow orchestration requests
-          event_bus.subscribe('workflow.orchestration_requested') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED) do |event|
             discovery.discover_viable_steps_for_task(event[:task_id])
           end
 
           # Subscribe to task started events
-          event_bus.subscribe('workflow.task_started') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
             discovery.discover_viable_steps_for_task(event[:task_id])
           end
 
           # Subscribe to step completion events to trigger new discovery
-          event_bus.subscribe('workflow.step_completed') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::STEP_COMPLETED) do |event|
             discovery.discover_viable_steps_for_task(event[:task_id])
           end
 
@@ -67,7 +67,7 @@ module Tasker
 
           # Fire telemetry event for backward compatibility
           Tasker::LifecycleEvents.fire(
-            'step.find_viable',
+            Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE,
             {
               task_id: task_id,
               step_names: step_names.join(', '),
@@ -76,7 +76,7 @@ module Tasker
           )
 
           # Publish workflow event with discovered steps
-          publish('workflow.viable_steps_discovered', {
+          publish(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, {
                     task_id: task_id,
                     step_ids: step_ids,
                     step_names: step_names,
@@ -88,7 +88,7 @@ module Tasker
           Rails.logger.debug { "ViableStepDiscovery: No viable steps found for task #{task_id}" }
 
           # Publish no viable steps event to trigger finalization
-          publish('workflow.no_viable_steps', {
+          publish(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, {
                     task_id: task_id,
                     discovered_at: Time.current
                   })
@@ -111,7 +111,7 @@ module Tasker
         # For now, we'll use the WorkflowStep model's logic directly
         # In a future iteration, we might inject a TaskHandler or make this configurable
         steps = task.workflow_steps.includes(:named_step, :parents, :children)
-        Tasker::Types::StepSequence.new(steps: steps)
+        Tasker::Types::StepSequence.new(steps: steps.to_a)
       end
 
       # Find viable steps that can be executed (extracted from TaskHandler)

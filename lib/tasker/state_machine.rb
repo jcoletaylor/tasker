@@ -13,6 +13,25 @@ module Tasker
     # Exception raised when an invalid state transition is attempted
     class InvalidStateTransition < StandardError; end
 
+    # Compatibility module for legacy state management
+    module Compatibility
+      # Legacy method for updating status with state machine integration
+      #
+      # @param entity [Object] The entity (task or step) to update
+      # @param new_status [String] The new status to transition to
+      # @param metadata [Hash] Optional metadata for the transition
+      # @return [Boolean] True if transition succeeded
+      def update_status!(entity, new_status, metadata = {})
+        return false unless entity.respond_to?(:state_machine)
+
+        entity.state_machine.transition_to!(new_status, metadata)
+        true
+      rescue Statesman::GuardFailedError, Statesman::TransitionFailedError => e
+        Rails.logger.warn { "State transition failed: #{e.message}" }
+        false
+      end
+    end
+
     # Configure state machine behavior
     class << self
       # Configure Statesman for Tasker

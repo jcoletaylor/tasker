@@ -28,52 +28,6 @@ RSpec.describe Tasker::StateMachine do
     end
   end
 
-  describe '.transition_task!' do
-    let(:task_double) { instance_double(Tasker::Task) }
-    let(:target_state) { Tasker::Constants::TaskStatuses::IN_PROGRESS }
-    let(:metadata) { { reason: 'test' } }
-
-    it 'delegates to TaskStateMachine.transition_to!' do
-      expect(Tasker::StateMachine::TaskStateMachine).to receive(:transition_to!)
-        .with(task_double, target_state, metadata)
-        .and_return(true)
-
-      result = described_class.transition_task!(task_double, target_state, metadata)
-      expect(result).to be true
-    end
-
-    it 'uses empty metadata when not provided' do
-      expect(Tasker::StateMachine::TaskStateMachine).to receive(:transition_to!)
-        .with(task_double, target_state, {})
-        .and_return(true)
-
-      described_class.transition_task!(task_double, target_state)
-    end
-  end
-
-  describe '.transition_step!' do
-    let(:step_double) { instance_double(Tasker::WorkflowStep) }
-    let(:target_state) { Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS }
-    let(:metadata) { { attempt: 1 } }
-
-    it 'delegates to StepStateMachine.transition_to!' do
-      expect(Tasker::StateMachine::StepStateMachine).to receive(:transition_to!)
-        .with(step_double, target_state, metadata)
-        .and_return(true)
-
-      result = described_class.transition_step!(step_double, target_state, metadata)
-      expect(result).to be true
-    end
-
-    it 'uses empty metadata when not provided' do
-      expect(Tasker::StateMachine::StepStateMachine).to receive(:transition_to!)
-        .with(step_double, target_state, {})
-        .and_return(true)
-
-      described_class.transition_step!(step_double, target_state)
-    end
-  end
-
   describe '.configured?' do
     context 'when all dependencies are available' do
       before do

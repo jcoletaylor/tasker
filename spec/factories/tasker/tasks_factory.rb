@@ -10,6 +10,9 @@ FactoryBot.define do
     reason { 'automated_test' }
     requested_at { Time.current }
 
+    # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { test: true } }
+
     # Default state - managed by state machine
     complete { false }
 
@@ -91,6 +94,8 @@ FactoryBot.define do
       initiator { 'api_client' }
       source_system { 'ecommerce_api' }
       reason { 'process_cart_checkout' }
+      # ✅ FIX: Add cart_id context that the test expects
+      context { { cart_id: 42, api_endpoint: 'https://api.example.com' } }
     end
 
     trait :data_processing do
@@ -110,6 +115,22 @@ FactoryBot.define do
 
     # Factory for creating tasks with workflow steps
     trait :with_steps do
+      transient do
+        step_count { 3 }
+        step_names { (1..step_count).map { |i| "step_#{i}" } }
+      end
+
+      after(:create) do |task, evaluator|
+        evaluator.step_names.each do |step_name|
+          create(:workflow_step,
+                 task: task,
+                 named_step: create(:named_step, name: step_name))
+        end
+      end
+    end
+
+    # ✅ FIX: Add alias for workflow orchestration tests
+    trait :with_workflow_steps do
       transient do
         step_count { 3 }
         step_names { (1..step_count).map { |i| "step_#{i}" } }

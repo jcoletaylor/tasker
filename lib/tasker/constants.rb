@@ -179,62 +179,6 @@ module Tasker
       BEFORE_TRANSITION = 'step.before_transition'
     end
 
-    # Legacy lifecycle events (for backward compatibility with existing LifecycleEvents)
-    module LegacyTaskEvents
-      # Task handling events
-      HANDLE = 'task.handle'
-      ENQUEUE = 'task.enqueue'
-      FINALIZE = 'task.finalize'
-      ERROR = 'task.error'
-      COMPLETE = 'task.complete'
-    end
-
-    # Legacy step lifecycle events (for backward compatibility)
-    module LegacyStepEvents
-      # Step processing events
-      FIND_VIABLE = 'step.find_viable'
-      HANDLE = 'step.handle'
-      COMPLETE = 'step.complete'
-      ERROR = 'step.error'
-      RETRY = 'step.retry'
-      BACKOFF = 'step.backoff'
-      SKIP = 'step.skip'
-      MAX_RETRIES_REACHED = 'step.max_retries_reached'
-    end
-
-    # Workflow orchestration events
-    module WorkflowEvents
-      # Task orchestration
-      TASK_STARTED = 'workflow.task_started'
-      TASK_COMPLETED = 'workflow.task_completed'
-      TASK_FAILED = 'workflow.task_failed'
-
-      # Step orchestration
-      STEP_COMPLETED = 'workflow.step_completed'
-      STEP_FAILED = 'workflow.step_failed'
-
-      # Workflow processing
-      ORCHESTRATION_REQUESTED = 'workflow.orchestration_requested'
-      VIABLE_STEPS_DISCOVERED = 'workflow.viable_steps_discovered'
-      NO_VIABLE_STEPS = 'workflow.no_viable_steps'
-      VIABLE_STEPS_BATCH_READY = 'workflow.viable_steps_batch_ready'
-      STEPS_EXECUTION_STARTED = 'workflow.steps_execution_started'
-      STEPS_EXECUTION_COMPLETED = 'workflow.steps_execution_completed'
-      STEP_EXECUTION_FAILED = 'workflow.step_execution_failed'
-
-      # Task finalization
-      TASK_FINALIZATION_STARTED = 'workflow.task_finalization_started'
-      TASK_FINALIZATION_COMPLETED = 'workflow.task_finalization_completed'
-      TASK_REENQUEUE_REQUESTED = 'workflow.task_reenqueue_requested'
-
-      # Workflow iteration
-      ITERATION_STARTED = 'workflow.iteration_started'
-      VIABLE_STEPS_BATCH_PROCESSED = 'workflow.viable_steps_batch_processed'
-      ITERATION_COMPLETED = 'workflow.iteration_completed'
-      STATE_REFRESHED = 'workflow.state_refreshed'
-      SEQUENCE_REGENERATED = 'workflow.sequence_regenerated'
-    end
-
     # All valid task event names
     VALID_TASK_EVENTS = [
       TaskEvents::INITIALIZE_REQUESTED,
@@ -259,49 +203,145 @@ module Tasker
       StepEvents::BEFORE_TRANSITION
     ].freeze
 
-    # All legacy task events
-    VALID_LEGACY_TASK_EVENTS = [
-      LegacyTaskEvents::HANDLE,
-      LegacyTaskEvents::ENQUEUE,
-      LegacyTaskEvents::FINALIZE,
-      LegacyTaskEvents::ERROR,
-      LegacyTaskEvents::COMPLETE
+    # Event categories for observability, telemetry, and process tracking
+    # These events provide visibility into workflow execution for monitoring purposes
+    module ObservabilityEvents
+      # Task-level observability events
+      module Task
+        # Fired when task handler begins processing a task
+        HANDLE = 'task.handle'
+        # Fired when a task is enqueued for processing
+        ENQUEUE = 'task.enqueue'
+        # Fired when task processing is finalized
+        FINALIZE = 'task.finalize'
+      end
+
+      # Step-level observability events
+      module Step
+        # Fired during viable step discovery process
+        FIND_VIABLE = 'step.find_viable'
+        # Fired when step handler begins processing a step
+        HANDLE = 'step.handle'
+        # Fired when step execution is delayed due to backoff
+        BACKOFF = 'step.backoff'
+        # Fired when a step is skipped during processing
+        SKIP = 'step.skip'
+        # Fired when a step reaches maximum retry attempts
+        MAX_RETRIES_REACHED = 'step.max_retries_reached'
+      end
+    end
+
+    # Workflow orchestration events (for event-driven workflow coordination)
+    # These events coordinate workflow execution between components
+    module WorkflowEvents
+      # Task orchestration events
+      TASK_STARTED = 'workflow.task_started'
+      TASK_COMPLETED = 'workflow.task_completed'
+      TASK_FAILED = 'workflow.task_failed'
+      TASK_FINALIZATION_STARTED = 'workflow.task_finalization_started'
+      TASK_FINALIZATION_COMPLETED = 'workflow.task_finalization_completed'
+      TASK_REENQUEUE_REQUESTED = 'workflow.task_reenqueue_requested'
+
+      # Step orchestration events
+      STEP_COMPLETED = 'workflow.step_completed'
+      STEP_FAILED = 'workflow.step_failed'
+      STEP_EXECUTION_FAILED = 'workflow.step_execution_failed'
+      VIABLE_STEPS_DISCOVERED = 'workflow.viable_steps_discovered'
+      VIABLE_STEPS_BATCH_READY = 'workflow.viable_steps_batch_ready'
+      STEPS_EXECUTION_STARTED = 'workflow.steps_execution_started'
+      STEPS_EXECUTION_COMPLETED = 'workflow.steps_execution_completed'
+      NO_VIABLE_STEPS = 'workflow.no_viable_steps'
+
+      # Orchestration control events
+      ORCHESTRATION_REQUESTED = 'workflow.orchestration_requested'
+    end
+
+    # All event constants for easy access and validation
+    ALL_EVENTS = [
+      # Task state events
+      TaskEvents::INITIALIZE_REQUESTED,
+      TaskEvents::START_REQUESTED,
+      TaskEvents::COMPLETED,
+      TaskEvents::FAILED,
+      TaskEvents::RETRY_REQUESTED,
+      TaskEvents::RESOLVED_MANUALLY,
+      TaskEvents::CANCELLED,
+      TaskEvents::BEFORE_TRANSITION,
+
+      # Step state events
+      StepEvents::INITIALIZE_REQUESTED,
+      StepEvents::EXECUTION_REQUESTED,
+      StepEvents::COMPLETED,
+      StepEvents::FAILED,
+      StepEvents::RETRY_REQUESTED,
+      StepEvents::RESOLVED_MANUALLY,
+      StepEvents::CANCELLED,
+      StepEvents::BEFORE_TRANSITION,
+
+      # Workflow orchestration events
+      WorkflowEvents::ORCHESTRATION_REQUESTED,
+      WorkflowEvents::TASK_STARTED,
+      WorkflowEvents::STEP_COMPLETED,
+      WorkflowEvents::VIABLE_STEPS_DISCOVERED,
+      WorkflowEvents::NO_VIABLE_STEPS,
+      WorkflowEvents::VIABLE_STEPS_BATCH_READY,
+
+      # Observability/process tracking events
+      ObservabilityEvents::Task::HANDLE,
+      ObservabilityEvents::Task::ENQUEUE,
+      ObservabilityEvents::Task::FINALIZE,
+
+      # Step observability events
+      ObservabilityEvents::Step::FIND_VIABLE,
+      ObservabilityEvents::Step::HANDLE,
+      ObservabilityEvents::Step::BACKOFF,
+      ObservabilityEvents::Step::SKIP,
+      ObservabilityEvents::Step::MAX_RETRIES_REACHED
     ].freeze
 
-    # All legacy step events
-    VALID_LEGACY_STEP_EVENTS = [
-      LegacyStepEvents::FIND_VIABLE,
-      LegacyStepEvents::HANDLE,
-      LegacyStepEvents::COMPLETE,
-      LegacyStepEvents::ERROR,
-      LegacyStepEvents::RETRY,
-      LegacyStepEvents::BACKOFF,
-      LegacyStepEvents::SKIP,
-      LegacyStepEvents::MAX_RETRIES_REACHED
-    ].freeze
+    # Lifecycle initialization events (for task/step initialization)
+    module LifecycleEvents
+      TASK_INITIALIZE_REQUESTED = 'task.initialize_requested'
+      TASK_START_REQUESTED = 'task.start_requested'
+    end
 
-    # All workflow orchestration events
+    # Test events for testing infrastructure
+    module TestEvents
+      BASIC_EVENT = 'test.event'
+      SLOW_EVENT = 'Slow.Event'
+      TEST_EVENT = 'Test.Event'
+    end
+
+    # All valid workflow orchestration events
     VALID_WORKFLOW_EVENTS = [
       WorkflowEvents::TASK_STARTED,
       WorkflowEvents::TASK_COMPLETED,
       WorkflowEvents::TASK_FAILED,
-      WorkflowEvents::STEP_COMPLETED,
-      WorkflowEvents::STEP_FAILED,
-      WorkflowEvents::ORCHESTRATION_REQUESTED,
-      WorkflowEvents::VIABLE_STEPS_DISCOVERED,
-      WorkflowEvents::NO_VIABLE_STEPS,
-      WorkflowEvents::VIABLE_STEPS_BATCH_READY,
-      WorkflowEvents::STEPS_EXECUTION_STARTED,
-      WorkflowEvents::STEPS_EXECUTION_COMPLETED,
-      WorkflowEvents::STEP_EXECUTION_FAILED,
       WorkflowEvents::TASK_FINALIZATION_STARTED,
       WorkflowEvents::TASK_FINALIZATION_COMPLETED,
       WorkflowEvents::TASK_REENQUEUE_REQUESTED,
-      WorkflowEvents::ITERATION_STARTED,
-      WorkflowEvents::VIABLE_STEPS_BATCH_PROCESSED,
-      WorkflowEvents::ITERATION_COMPLETED,
-      WorkflowEvents::STATE_REFRESHED,
-      WorkflowEvents::SEQUENCE_REGENERATED
+      WorkflowEvents::STEP_COMPLETED,
+      WorkflowEvents::STEP_FAILED,
+      WorkflowEvents::STEP_EXECUTION_FAILED,
+      WorkflowEvents::VIABLE_STEPS_DISCOVERED,
+      WorkflowEvents::VIABLE_STEPS_BATCH_READY,
+      WorkflowEvents::STEPS_EXECUTION_STARTED,
+      WorkflowEvents::STEPS_EXECUTION_COMPLETED,
+      WorkflowEvents::NO_VIABLE_STEPS,
+      WorkflowEvents::ORCHESTRATION_REQUESTED
+    ].freeze
+
+    # All valid lifecycle events
+    VALID_LIFECYCLE_EVENTS = [
+      LifecycleEvents::TASK_INITIALIZE_REQUESTED,
+      LifecycleEvents::TASK_START_REQUESTED
+    ].freeze
+
+    # All valid test events
+    VALID_TEST_EVENTS = [
+      TestEvents::BASIC_EVENT,
+      TestEvents::SLOW_EVENT,
+      TestEvents::TEST_EVENT
     ].freeze
   end
 end

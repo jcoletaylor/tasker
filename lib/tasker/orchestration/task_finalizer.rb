@@ -12,9 +12,9 @@ module Tasker
       include Dry::Events::Publisher[:task_finalizer]
 
       # Register events that this component publishes
-      register_event('workflow.task_finalization_started')
-      register_event('workflow.task_finalization_completed')
-      register_event('workflow.task_reenqueue_requested')
+      register_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED)
+      register_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED)
+      register_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED)
 
       class << self
         # Subscribe to workflow events for task finalization
@@ -25,12 +25,12 @@ module Tasker
           finalizer = new
 
           # Subscribe to no viable steps events (main trigger for finalization)
-          event_bus.subscribe('workflow.no_viable_steps') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS) do |event|
             finalizer.finalize_task(event[:task_id])
           end
 
           # Subscribe to step execution completion for potential early finalization
-          event_bus.subscribe('workflow.steps_execution_completed') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED) do |event|
             finalizer.check_task_completion(event[:task_id])
           end
 
@@ -46,7 +46,7 @@ module Tasker
 
         Rails.logger.debug { "TaskFinalizer: Finalizing task #{task_id}" }
 
-        publish('workflow.task_finalization_started', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED, {
                   task_id: task_id,
                   task_name: task.name,
                   started_at: Time.current
@@ -54,7 +54,7 @@ module Tasker
 
         # Fire finalization event for backward compatibility
         Tasker::LifecycleEvents.fire(
-          'task.finalize',
+          Tasker::Constants::ObservabilityEvents::Task::FINALIZE,
           { task_id: task_id, task_name: task.name }
         )
 
@@ -77,7 +77,7 @@ module Tasker
           complete_task(task)
         end
 
-        publish('workflow.task_finalization_completed', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED, {
                   task_id: task_id,
                   final_state: task.status,
                   completed_at: Time.current
@@ -164,7 +164,7 @@ module Tasker
 
           # Fire error event
           Tasker::LifecycleEvents.fire(
-            'task.error',
+            Tasker::Constants::TaskEvents::FAILED,
             {
               task_id: task.task_id,
               task_name: task.name,
@@ -198,7 +198,7 @@ module Tasker
 
         # Fire completion event
         Tasker::LifecycleEvents.fire(
-          'task.complete',
+          Tasker::Constants::TaskEvents::COMPLETED,
           { task_id: task.task_id, task_name: task.name }
         )
       end
@@ -212,7 +212,7 @@ module Tasker
         # Transition task back to pending
         task.state_machine.transition_to!(Constants::TaskStatuses::PENDING)
 
-        publish('workflow.task_reenqueue_requested', {
+        publish(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED, {
                   task_id: task.task_id,
                   task_name: task.name,
                   reenqueued_at: Time.current
@@ -227,7 +227,7 @@ module Tasker
       # @param task [Tasker::Task] The task to enqueue
       def enqueue_task(task)
         Tasker::LifecycleEvents.fire(
-          'task.enqueue',
+          Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
           { task_id: task.task_id, task_name: task.name, task_context: task.context }
         )
 

@@ -8,17 +8,6 @@ RSpec.describe Tasker::TaskDiagram do
 
   let(:cart_id) { 42 }
   let(:base_url) { 'https://example.com/api' }
-  let(:unique_reason) { "diagram_test_#{SecureRandom.hex(6)}" }
-
-  let(:task) do
-    create_api_integration_workflow(
-      cart_id: cart_id,
-      reason: unique_reason,
-      with_dependencies: true
-    )
-  end
-
-  let(:diagram) { described_class.new(task, base_url) }
 
   before do
     # Register the task handler for factory usage
@@ -26,6 +15,16 @@ RSpec.describe Tasker::TaskDiagram do
   end
 
   describe '#to_mermaid' do
+    let(:unique_reason) { "mermaid_test_#{SecureRandom.hex(8)}" }
+    let(:task) do
+      create_api_integration_workflow(
+        cart_id: cart_id,
+        reason: unique_reason,
+        with_dependencies: true
+      )
+    end
+    let(:diagram) { described_class.new(task, base_url) }
+
     subject(:mermaid_output) { diagram.to_mermaid }
 
     it 'generates valid mermaid flowchart syntax' do
@@ -53,7 +52,7 @@ RSpec.describe Tasker::TaskDiagram do
     end
 
     context 'with steps in error state' do
-      let(:error_reason) { "error_diagram_test_#{SecureRandom.hex(6)}" }
+      let(:error_reason) { "error_diagram_test_#{SecureRandom.hex(8)}" }
       let(:failed_task) do
         create_api_integration_workflow(
           cart_id: cart_id + 100,
@@ -64,8 +63,9 @@ RSpec.describe Tasker::TaskDiagram do
       let(:failed_diagram) { described_class.new(failed_task, base_url) }
 
       before do
-        # Set first two steps to error state
-        failed_task.workflow_steps.limit(2).each do |step|
+        # Set first two steps to error state and capture which ones we set
+        @error_steps = failed_task.workflow_steps.limit(2).to_a
+        @error_steps.each do |step|
           set_step_to_error(step, 'Simulated error for diagram testing')
         end
       end
@@ -73,7 +73,7 @@ RSpec.describe Tasker::TaskDiagram do
       it 'applies error styling to failed steps' do
         error_output = failed_diagram.to_mermaid
 
-        failed_task.workflow_steps.limit(2).each do |step|
+        @error_steps.each do |step|
           expect(error_output).to include("style step_#{step.workflow_step_id} fill:red;")
         end
       end
@@ -97,6 +97,16 @@ RSpec.describe Tasker::TaskDiagram do
   end
 
   describe '#to_html' do
+    let(:html_reason) { "html_test_#{SecureRandom.hex(8)}" }
+    let(:task) do
+      create_api_integration_workflow(
+        cart_id: cart_id + 200,
+        reason: html_reason,
+        with_dependencies: true
+      )
+    end
+    let(:diagram) { described_class.new(task, base_url) }
+
     subject(:html_output) { diagram.to_html }
 
     it 'generates a complete HTML document' do
@@ -116,6 +126,16 @@ RSpec.describe Tasker::TaskDiagram do
   end
 
   describe 'diagram component building' do
+    let(:component_reason) { "component_test_#{SecureRandom.hex(8)}" }
+    let(:task) do
+      create_api_integration_workflow(
+        cart_id: cart_id + 300,
+        reason: component_reason,
+        with_dependencies: true
+      )
+    end
+    let(:diagram) { described_class.new(task, base_url) }
+
     describe 'task node creation' do
       subject(:task_node) { diagram.send(:build_task_node) }
 

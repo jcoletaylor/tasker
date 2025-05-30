@@ -74,23 +74,39 @@ module Tasker
       end
 
       # Guard clauses for transition validation
+      guard_transition(to: Constants::TaskStatuses::PENDING) do |task, transition|
+        # Don't allow transition to pending if already pending (idempotent)
+        current_status = task.state_machine.current_state
+        current_status != Constants::TaskStatuses::PENDING
+      end
+
       guard_transition(to: Constants::TaskStatuses::IN_PROGRESS) do |task|
         # Only allow start if task is not already processing
         current_status = task.state_machine.current_state
         current_status == Constants::TaskStatuses::PENDING
       end
 
-      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task|
-        # Only allow completion from in_progress state
+      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, transition|
+        # Don't allow transition to complete if already complete (idempotent)
         current_status = task.state_machine.current_state
+        if current_status == Constants::TaskStatuses::COMPLETE
+          return false
+        end
+
+        # Only allow completion from in_progress state and all steps complete
         current_status == Constants::TaskStatuses::IN_PROGRESS &&
           !TaskStateMachine.task_has_incomplete_steps?(task)
       end
 
-      guard_transition(to: Constants::TaskStatuses::ERROR) do |task|
-        # Allow error transition from in_progress state
+      guard_transition(to: Constants::TaskStatuses::ERROR) do |task, transition|
+        # Don't allow transition to error if already in error (idempotent)
         current_status = task.state_machine.current_state
-        current_status == Constants::TaskStatuses::IN_PROGRESS
+        if current_status == Constants::TaskStatuses::ERROR
+          return false
+        end
+
+        # Allow error transition from in_progress or pending state
+        [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::PENDING].include?(current_status)
       end
 
       # Class methods for state machine management

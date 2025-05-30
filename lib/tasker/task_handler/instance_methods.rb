@@ -3,6 +3,7 @@
 
 require 'json-schema'
 require 'tasker/lifecycle_events'
+require 'tasker/events/event_payload_builder'
 
 module Tasker
   module TaskHandler
@@ -111,7 +112,7 @@ module Tasker
           if viable_steps.any?
             step_names = viable_steps.map(&:name)
             Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::FIND_VIABLE,
+              Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE,
               {
                 task_id: task.task_id,
                 step_names: step_names.join(', '),
@@ -179,7 +180,7 @@ module Tasker
 
         # This will create a span that's properly connected to the parent task span
         Tasker::LifecycleEvents.fire_with_span(
-          Tasker::LifecycleEvents::Events::Step::HANDLE,
+          Tasker::Constants::ObservabilityEvents::Step::HANDLE,
           span_context.merge(attempt: step.attempts.to_i + 1)
         ) do
           handler = get_step_handler(step)
@@ -237,9 +238,16 @@ module Tasker
         # Use state machine to transition step to complete
         step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
 
+        # Use EventPayloadBuilder for standardized payload
+        payload = Tasker::Events::EventPayloadBuilder.build_step_payload(
+          step,
+          event_type: :completed,
+          additional_context: span_context
+        )
+
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::COMPLETE,
-          span_context.merge(step_results: step.results)
+          Tasker::Constants::StepEvents::COMPLETED,
+          payload
         )
       end
 
@@ -257,9 +265,21 @@ module Tasker
         step.results ||= {}
         step.results = step.results.merge(error: error.to_s, backtrace: error.backtrace.join("\n"))
 
+        # Use EventPayloadBuilder for standardized payload
+        payload = Tasker::Events::EventPayloadBuilder.build_step_payload(
+          step,
+          event_type: :failed,
+          additional_context: span_context.merge(
+            error: error.to_s,
+            error_message: error.message,
+            exception_object: error,
+            backtrace: error.backtrace.join("\n")
+          )
+        )
+
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::ERROR,
-          span_context.merge(error: error.to_s, step_results: step.results)
+          Tasker::Constants::StepEvents::FAILED,
+          payload
         )
       end
 
@@ -271,19 +291,39 @@ module Tasker
       def handle_retry_events(step, span_context)
         # Record if max retries reached
         if step.attempts >= step.retry_limit
+          # Use EventPayloadBuilder for standardized payload
+          payload = Tasker::Events::EventPayloadBuilder.build_step_payload(
+            step,
+            event_type: :max_retries_reached,
+            additional_context: span_context.merge(
+              attempts: step.attempts,
+              retry_limit: step.retry_limit
+            )
+          )
+
           Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Step::MAX_RETRIES_REACHED,
-            span_context.merge(attempts: step.attempts, retry_limit: step.retry_limit)
+            Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED,
+            payload
           )
           return
         end
+
         # Record a retry event if this is a retry attempt (attempts > 0)
         # Note: attempts is incremented before this method is called
         return unless step.attempts > 1
 
+        # Use EventPayloadBuilder for standardized payload
+        payload = Tasker::Events::EventPayloadBuilder.build_step_payload(
+          step,
+          event_type: :retry,
+          additional_context: span_context.merge(
+            attempt: step.attempts
+          )
+        )
+
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::RETRY,
-          span_context.merge(attempt: step.attempts)
+          Tasker::Constants::StepEvents::RETRY_REQUESTED,
+          payload
         )
       end
 
@@ -371,9 +411,15 @@ module Tasker
       # @param steps [Array<Tasker::WorkflowStep>] The steps that were processed
       # @return [void]
       def finalize(task, sequence, steps)
+        # Use EventPayloadBuilder for task finalization event
+        payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
+          task,
+          event_type: :finalize
+        )
+
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::FINALIZE,
-          { task_id: task.task_id, task_name: task.name }
+          Tasker::Constants::ObservabilityEvents::Task::FINALIZE,
+          payload
         )
 
         return if blocked_by_errors?(task, sequence, steps)
@@ -384,9 +430,15 @@ module Tasker
           # Use state machine to transition task to complete
           task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
 
+          # Use EventPayloadBuilder for task completion event
+          completion_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
+            task,
+            event_type: :completed
+          )
+
           Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Task::COMPLETE,
-            { task_id: task.task_id, task_name: task.name }
+            Tasker::Constants::TaskEvents::COMPLETED,
+            completion_payload
           )
           return
         end
@@ -395,21 +447,27 @@ module Tasker
         # set the status of the task back to pending, update it,
         # and re-enqueue the task for processing
         if step_group.pending?
-          # Use state machine to transition task to pending
+          # Request re-processing (state machine will handle if already pending)
           task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
           enqueue_task(task)
           return
         end
+
         # if we reach the end and have not re-enqueued the task
         # then we mark it complete since none of the above proved true
-        # Use state machine to transition task to complete
+        # Request completion (state machine will handle if already complete)
         task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
 
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::COMPLETE,
-          { task_id: task.task_id, task_name: task.name }
+        # Use EventPayloadBuilder for task completion event
+        completion_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
+          task,
+          event_type: :completed
         )
-        nil
+
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::TaskEvents::COMPLETED,
+          completion_payload
+        )
       end
 
       # Check if any steps have exceeded their retry limit
@@ -437,32 +495,31 @@ module Tasker
         error_steps = get_error_steps(steps, sequence)
         # if there are no steps in error still, then move on to the rest of the checks
         # if there are steps in error still, then we need to see if we have tried them
-        # too many times - if we have, we need to mark the whole task as in error
-        # if we have not, then we need to re-enqueue the task
-
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
-            # Only transition to error if not already in error state
-            current_status = task.state_machine.current_state
-            unless current_status == Tasker::Constants::TaskStatuses::ERROR
-              # Use state machine to transition task to error
-              task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
-            end
+            # Transition to error state (state machine will prevent invalid transitions)
+            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
 
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Task::ERROR,
-              {
-                task_id: task.task_id,
-                task_name: task.name,
+            # Use EventPayloadBuilder for task error event
+            error_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
+              task,
+              event_type: :failed,
+              additional_context: {
                 error_steps: error_steps.map(&:name).join(', '),
                 error_step_results: error_steps.map do |step|
                   { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
                 end
               }
             )
+
+            Tasker::LifecycleEvents.fire(
+              Tasker::Constants::TaskEvents::FAILED,
+              error_payload
+            )
             return true
           end
-          # Use state machine to transition task to pending for retry
+
+          # Request retry by transitioning to pending (state machine will handle if already pending)
           task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
           enqueue_task(task)
           return true
@@ -520,9 +577,18 @@ module Tasker
       # @param task [Tasker::Task] The task to enqueue
       # @return [void]
       def enqueue_task(task)
+        # Use EventPayloadBuilder for task enqueue event
+        payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
+          task,
+          event_type: :enqueue,
+          additional_context: {
+            task_context: task.context
+          }
+        )
+
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::ENQUEUE,
-          { task_id: task.task_id, task_name: task.name, task_context: task.context }
+          Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
+          payload
         )
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end

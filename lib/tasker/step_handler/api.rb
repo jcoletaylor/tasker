@@ -171,12 +171,12 @@ module Tasker
 
           # Fire the backoff event with the retry time
           Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Step::BACKOFF,
-            context.merge(
+            Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
+            {
               backoff_seconds: backoff_seconds,
               backoff_type: 'server_requested',
               retry_after: retry_after
-            )
+            }
           )
         elsif @config.enable_exponential_backoff
           _exponential_backoff(step, context)
@@ -218,15 +218,15 @@ module Tasker
 
         # Fire the backoff event with the calculated retry time
         Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::BACKOFF,
-          context.merge(
+          Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
+          {
             backoff_seconds: retry_delay,
             backoff_type: 'exponential',
             attempt: step.attempts,
             exponent: exponent,
             base_delay: base_delay,
             jitter_factor: jitter_factor
-          )
+          }
         )
       end
 

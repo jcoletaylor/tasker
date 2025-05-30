@@ -13,9 +13,9 @@ module Tasker
       include Dry::Events::Publisher[:step_executor]
 
       # Register events that this component publishes
-      register_event('workflow.steps_execution_started')
-      register_event('workflow.steps_execution_completed')
-      register_event('workflow.step_execution_failed')
+      register_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED)
+      register_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED)
+      register_event(Tasker::Constants::WorkflowEvents::STEP_EXECUTION_FAILED)
 
       class << self
         # Subscribe to workflow events for step execution
@@ -26,7 +26,7 @@ module Tasker
           executor = new
 
           # Subscribe to viable steps discovered events
-          event_bus.subscribe('workflow.viable_steps_discovered') do |event|
+          event_bus.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
             executor.execute_viable_steps(event)
           end
 
@@ -49,7 +49,7 @@ module Tasker
         # Load the steps to execute
         steps = Tasker::WorkflowStep.where(workflow_step_id: step_ids)
 
-        publish('workflow.steps_execution_started', {
+        publish(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED, {
                   task_id: task_id,
                   step_ids: step_ids,
                   processing_mode: processing_mode,
@@ -65,7 +65,7 @@ module Tasker
           execute_steps_sequentially(steps) # Default to sequential
         end
 
-        publish('workflow.steps_execution_completed', {
+        publish(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED, {
                   task_id: task_id,
                   step_ids: step_ids,
                   processing_mode: processing_mode,
@@ -74,7 +74,7 @@ module Tasker
       rescue StandardError => e
         Rails.logger.error { "StepExecutor: Error executing steps for task #{task_id}: #{e.message}" }
 
-        publish('workflow.step_execution_failed', {
+        publish(Tasker::Constants::WorkflowEvents::STEP_EXECUTION_FAILED, {
                   task_id: task_id,
                   step_ids: step_ids,
                   error: e.message,

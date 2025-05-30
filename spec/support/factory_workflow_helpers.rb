@@ -27,10 +27,7 @@ module FactoryWorkflowHelpers
     context = { cart_id: cart_id }
     task = create(:api_integration_workflow, **options, context: context, with_dependencies: true)
 
-    # Trigger workflow step creation by getting the sequence (like initialize_task! did)
-    handler = ApiTask::IntegrationExample.new
     register_task_handler(ApiTask::IntegrationExample::TASK_REGISTRY_NAME, ApiTask::IntegrationExample)
-    handler.get_sequence(task)
 
     task
   end

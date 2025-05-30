@@ -199,7 +199,11 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       event_flow = []
 
       # State Machine Events
-      %w[task.start_requested step.completed task.completed].each do |event_name|
+      [
+        'task.start_requested',
+        Tasker::Constants::StepEvents::COMPLETED,
+        Tasker::Constants::TaskEvents::COMPLETED
+      ].each do |event_name|
         event_bus.subscribe(event_name) do |event|
           event_flow << { category: 'state_machine', event: event_name, data: event }
         end
