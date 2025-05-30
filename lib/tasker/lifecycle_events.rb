@@ -1,82 +1,84 @@
 # frozen_string_literal: true
 
-require_relative 'events/bus'
+require 'benchmark'
+require 'dry/events'
 
 module Tasker
-  # Simplified lifecycle events using dry-events
-  #
-  # This module provides a clean event firing interface using dry-events
-  # publisher/subscriber patterns for decoupled communication.
+  # LifecycleEvents provides a unified interface for firing and subscribing to
+  # task and step lifecycle events using dry-events publisher.
   module LifecycleEvents
     # Event namespace for ActiveSupport::Notifications compatibility
     EVENT_NAMESPACE = 'tasker'
 
+    # Create a publisher instance that includes dry-events functionality
+    class Publisher
+      include Dry::Events::Publisher[:tasker_lifecycle]
+    end
+
     class << self
-      # Get the global event bus
+      # Get the dry-events publisher instance
       #
-      # @return [Tasker::Events::Bus] The event bus instance
-      def bus
-        @bus ||= begin
-          bus_instance = Tasker::Events::Bus.instance
-          bus_instance.setup_default_subscribers
-          bus_instance
+      # @return [Publisher] The publisher instance
+      def publisher
+        @publisher ||= begin
+          instance = Publisher.new
+          # Register all valid events
+          Events::VALID_EVENTS.each do |event_name|
+            instance.register_event(event_name)
+          end
+          instance
         end
       end
 
-      # Fire a lifecycle event with associated context
+      # Legacy method name for backward compatibility
+      #
+      # @return [Publisher] The publisher instance
+      def bus
+        publisher
+      end
+
+      # Fire a lifecycle event using dry-events
       #
       # @param event [String] The event name
       # @param context [Hash] The context data associated with the event
-      # @yield [void] Optional block to instrument
+      # @yield [void] Optional block to execute within the event context
       # @return [Object, nil] The result of the block if given, otherwise nil
-      def fire(event, context = {})
-        Rails.logger.debug { "LifecycleEvent fired: #{event} with context: #{context.inspect}" }
-
-        # Create namespaced event name for ActiveSupport::Notifications
-        namespaced_event = "#{EVENT_NAMESPACE}.#{event}"
+      def fire(event, context = {}, &block)
+        # Add timing information to context
+        started_at = Time.current
+        context = context.merge(fired_at: started_at)
 
         if block_given?
-          # Execute block and publish event with result
+          # For block-based events, measure execution time
           result = nil
-
-          # Use ActiveSupport::Notifications.instrument for timing
-          ActiveSupport::Notifications.instrument(namespaced_event, context) do
+          execution_time = Benchmark.realtime do
             result = yield
           end
 
+          context = context.merge(
+            execution_duration: execution_time,
+            completed_at: Time.current
+          )
+
+          # Publish the event with timing
+          publisher.publish(event, context)
           result
         else
-          # For non-block events, use instrument with empty block to ensure proper timing
-          ActiveSupport::Notifications.instrument(namespaced_event, context) do
-            # Empty block - just fires the event with timing
-          end
-
+          # For non-block events, just publish
+          publisher.publish(event, context)
           nil
         end
       end
 
-      # Fire an event with span-based tracing
-      #
-      # This is an alias for backward compatibility that behaves the same
-      # as the regular fire method.
+      # Fire an error event with exception details
       #
       # @param event [String] The event name
-      # @param context [Hash] The context data associated with the event
-      # @yield [void] Optional block to instrument
-      # @return [Object, nil] The result of the block if given, otherwise nil
-      def fire_with_span(event, context = {}, &)
-        fire(event, context, &)
-      end
-
-      # Helper to fire an event with an exception
-      #
-      # @param event [String] The event name
-      # @param exception [Exception] The exception to include
-      # @param context [Hash] Additional context data
-      # @return [void]
+      # @param exception [Exception] The exception object
+      # @param context [Hash] Additional context
       def fire_error(event, exception, context = {})
         error_context = context.merge(
-          exception: [exception.class.name, exception.message],
+          error: exception.message,
+          exception_class: exception.class.name,
           exception_object: exception,
           backtrace: exception.backtrace&.join("\n")
         )
@@ -84,76 +86,93 @@ module Tasker
         fire(event, error_context)
       end
 
-      # Fire a task lifecycle event
+      # Subscribe to lifecycle events
       #
-      # @param event [String] The event name
-      # @param task [Object] The task object
-      # @param metadata [Hash] Additional metadata
-      def fire_task_event(event, task, metadata = {})
-        bus.publish_task_event(event, task, metadata)
+      # @param event_name [String] The event name to subscribe to
+      # @param callable [Proc, #call] Optional callable object
+      # @yield [event] Block to execute when event is fired
+      def subscribe(event_name, callable = nil, &block)
+        handler = callable || block
+        publisher.subscribe(event_name, &handler)
       end
 
-      # Fire a step lifecycle event
-      #
-      # @param event [String] The event name
-      # @param step [Object] The step object
-      # @param metadata [Hash] Additional metadata
-      def fire_step_event(event, step, metadata = {})
-        bus.publish_step_event(event, step, metadata)
-      end
-
-      # Fire a workflow orchestration event
-      #
-      # @param event [String] The event name
-      # @param context [Hash] The event context
-      def fire_workflow_event(event, context = {})
-        bus.publish_workflow_event(event, context)
-      end
-
-      # Subscribe to events (delegates to bus)
-      #
-      # @param event_name [String] The event to subscribe to
-      # @param callable [Proc, Method] The callback
-      def subscribe(event_name, callable = nil, &)
-        bus.subscribe(event_name, callable, &)
-      end
-
-      # Subscribe an object with event handling methods
-      #
-      # @param subscriber [Object] Object with event handling methods
-      delegate :subscribe_object, to: :bus
+      # Backward compatibility methods (delegate to dry-events)
+      alias_method :fire_with_span, :fire
     end
 
-    # Event names - updated to use modern constants
+    # Nested event name constants for backward compatibility
     module Events
-      # Task-related lifecycle events
+      # Task state and lifecycle events
       module Task
-        # Fired when a task is initialized
-        INITIALIZE = 'task.initialize_requested'
-        # Fired when a task is started
-        START = 'task.start_requested'
-        # Task state events (use modern constants)
-        COMPLETE = Tasker::Constants::TaskEvents::COMPLETED    # 'task.completed'
-        ERROR = Tasker::Constants::TaskEvents::FAILED          # 'task.failed'
-        # Process tracking events (use ObservabilityEvents)
-        HANDLE = Tasker::Constants::ObservabilityEvents::Task::HANDLE      # 'task.handle'
-        ENQUEUE = Tasker::Constants::ObservabilityEvents::Task::ENQUEUE    # 'task.enqueue'
-        FINALIZE = Tasker::Constants::ObservabilityEvents::Task::FINALIZE  # 'task.finalize'
+        INITIALIZE = Constants::TaskEvents::INITIALIZE_REQUESTED
+        START = Constants::TaskEvents::START_REQUESTED
+        COMPLETE = Constants::TaskEvents::COMPLETED
+        ERROR = Constants::TaskEvents::FAILED
+        RETRY = Constants::TaskEvents::RETRY_REQUESTED
+        CANCELLED = Constants::TaskEvents::CANCELLED
+        RESOLVED_MANUALLY = Constants::TaskEvents::RESOLVED_MANUALLY
       end
 
-      # Step-related lifecycle events
+      # Step state and lifecycle events
       module Step
-        # Step state events (use modern constants)
-        COMPLETE = Tasker::Constants::StepEvents::COMPLETED         # 'step.completed'
-        ERROR = Tasker::Constants::StepEvents::FAILED              # 'step.failed'
-        RETRY = Tasker::Constants::StepEvents::RETRY_REQUESTED      # 'step.retry_requested'
-        # Process tracking events (use ObservabilityEvents)
-        FIND_VIABLE = Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE        # 'step.find_viable'
-        HANDLE = Tasker::Constants::ObservabilityEvents::Step::HANDLE                  # 'step.handle'
-        BACKOFF = Tasker::Constants::ObservabilityEvents::Step::BACKOFF                # 'step.backoff'
-        SKIP = Tasker::Constants::ObservabilityEvents::Step::SKIP                      # 'step.skip'
-        MAX_RETRIES_REACHED = Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED  # 'step.max_retries_reached'
+        INITIALIZE = Constants::StepEvents::INITIALIZE_REQUESTED
+        EXECUTION = Constants::StepEvents::EXECUTION_REQUESTED
+        COMPLETE = Constants::StepEvents::COMPLETED
+        ERROR = Constants::StepEvents::FAILED
+        RETRY = Constants::StepEvents::RETRY_REQUESTED
+        CANCELLED = Constants::StepEvents::CANCELLED
+        RESOLVED_MANUALLY = Constants::StepEvents::RESOLVED_MANUALLY
       end
+
+      # All valid events that can be fired
+      VALID_EVENTS = [
+        # Task events
+        Constants::TaskEvents::INITIALIZE_REQUESTED,
+        Constants::TaskEvents::START_REQUESTED,
+        Constants::TaskEvents::COMPLETED,
+        Constants::TaskEvents::FAILED,
+        Constants::TaskEvents::RETRY_REQUESTED,
+        Constants::TaskEvents::CANCELLED,
+        Constants::TaskEvents::RESOLVED_MANUALLY,
+        Constants::TaskEvents::BEFORE_TRANSITION,
+
+        # Step events
+        Constants::StepEvents::INITIALIZE_REQUESTED,
+        Constants::StepEvents::EXECUTION_REQUESTED,
+        Constants::StepEvents::COMPLETED,
+        Constants::StepEvents::FAILED,
+        Constants::StepEvents::RETRY_REQUESTED,
+        Constants::StepEvents::CANCELLED,
+        Constants::StepEvents::RESOLVED_MANUALLY,
+        Constants::StepEvents::BEFORE_TRANSITION,
+
+        # Observability events
+        Constants::ObservabilityEvents::Task::HANDLE,
+        Constants::ObservabilityEvents::Task::ENQUEUE,
+        Constants::ObservabilityEvents::Task::FINALIZE,
+        Constants::ObservabilityEvents::Step::FIND_VIABLE,
+        Constants::ObservabilityEvents::Step::HANDLE,
+        Constants::ObservabilityEvents::Step::BACKOFF,
+        Constants::ObservabilityEvents::Step::SKIP,
+        Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED,
+
+        # Workflow orchestration events
+        Constants::WorkflowEvents::TASK_STARTED,
+        Constants::WorkflowEvents::TASK_COMPLETED,
+        Constants::WorkflowEvents::TASK_FAILED,
+        Constants::WorkflowEvents::TASK_FINALIZATION_STARTED,
+        Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED,
+        Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED,
+        Constants::WorkflowEvents::STEP_COMPLETED,
+        Constants::WorkflowEvents::STEP_FAILED,
+        Constants::WorkflowEvents::STEP_EXECUTION_FAILED,
+        Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED,
+        Constants::WorkflowEvents::VIABLE_STEPS_BATCH_READY,
+        Constants::WorkflowEvents::STEPS_EXECUTION_STARTED,
+        Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED,
+        Constants::WorkflowEvents::NO_VIABLE_STEPS,
+        Constants::WorkflowEvents::ORCHESTRATION_REQUESTED
+      ].freeze
     end
   end
 end

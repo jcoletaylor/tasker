@@ -75,23 +75,23 @@ module Tasker
 
       # Guard clauses for transition validation
       guard_transition(to: Constants::TaskStatuses::PENDING) do |task, transition|
-        # Don't allow transition to pending if already pending (idempotent)
+        # Allow idempotent transitions (already pending) or valid transitions
         current_status = task.state_machine.current_state
-        current_status != Constants::TaskStatuses::PENDING
+        current_status == Constants::TaskStatuses::PENDING || # Idempotent
+          [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::IN_PROGRESS].include?(current_status)
       end
 
       guard_transition(to: Constants::TaskStatuses::IN_PROGRESS) do |task|
-        # Only allow start if task is not already processing
+        # Allow idempotent transitions (already in progress) or valid transitions from pending
         current_status = task.state_machine.current_state
-        current_status == Constants::TaskStatuses::PENDING
+        current_status == Constants::TaskStatuses::IN_PROGRESS || # Idempotent
+          current_status == Constants::TaskStatuses::PENDING
       end
 
       guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, transition|
-        # Don't allow transition to complete if already complete (idempotent)
+        # Allow idempotent transitions (already complete) or valid completion
         current_status = task.state_machine.current_state
-        if current_status == Constants::TaskStatuses::COMPLETE
-          return false
-        end
+        return true if current_status == Constants::TaskStatuses::COMPLETE # Idempotent
 
         # Only allow completion from in_progress state and all steps complete
         current_status == Constants::TaskStatuses::IN_PROGRESS &&
@@ -99,11 +99,9 @@ module Tasker
       end
 
       guard_transition(to: Constants::TaskStatuses::ERROR) do |task, transition|
-        # Don't allow transition to error if already in error (idempotent)
+        # Allow idempotent transitions (already in error) or valid error transitions
         current_status = task.state_machine.current_state
-        if current_status == Constants::TaskStatuses::ERROR
-          return false
-        end
+        return true if current_status == Constants::TaskStatuses::ERROR # Idempotent
 
         # Allow error transition from in_progress or pending state
         [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::PENDING].include?(current_status)

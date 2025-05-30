@@ -10,6 +10,7 @@ module Tasker
     # and makes it event-driven, responding to workflow completion events.
     class TaskFinalizer
       include Dry::Events::Publisher[:task_finalizer]
+      include Tasker::Concerns::IdempotentStateTransitions
 
       # Register events that this component publishes
       register_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED)
@@ -36,11 +37,18 @@ module Tasker
 
           Rails.logger.info('Tasker::Orchestration::TaskFinalizer subscribed to workflow events')
         end
+
+        # Compatibility method for TaskRunnerJob cleanup
+        # TODO: Remove this once we eliminate the old reenqueue tracking entirely
+        def complete_reenqueue(task_id)
+          # No-op for now, kept for compatibility
+        end
       end
 
       # Finalize a task when no more viable steps are found
       #
       # @param task_id [Integer] The task ID to finalize
+      # @return [Symbol] :reenqueued, :completed, :error, or :blocked to indicate terminal action
       def finalize_task(task_id)
         task = Tasker::Task.find(task_id)
 
@@ -52,60 +60,176 @@ module Tasker
                   started_at: Time.current
                 })
 
-        # Fire finalization event for backward compatibility
+        # Also publish to main LifecycleEvents bus
         Tasker::LifecycleEvents.fire(
-          Tasker::Constants::ObservabilityEvents::Task::FINALIZE,
-          { task_id: task_id, task_name: task.name }
+          Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED,
+          {
+            task_id: task_id,
+            task_name: task.name,
+            started_at: Time.current
+          }
         )
 
         # Check if task is blocked by errors first
-        if task_blocked_by_errors?(task)
-          Rails.logger.debug { "TaskFinalizer: Task #{task_id} is blocked by errors" }
-          return
+        error_result = check_task_blocked_by_errors(task)
+        if error_result == :reenqueued || error_result == :blocked
+          # Task was reenqueued or blocked - this is a terminal action
+          return error_result
         end
 
         # Analyze step completion state
         step_analysis = analyze_step_completion(task)
 
-        case step_analysis[:state]
+        result = case step_analysis[:state]
         when :complete
           complete_task(task)
+          :completed
         when :pending
           reenqueue_task(task)
         else
           # Default to complete if we can't determine state clearly
           complete_task(task)
+          :completed
         end
 
         publish(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED, {
                   task_id: task_id,
                   final_state: task.status,
+                  finalization_result: result,
                   completed_at: Time.current
                 })
+
+        # Also publish to main LifecycleEvents bus
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED,
+          {
+            task_id: task_id,
+            final_state: task.status,
+            finalization_result: result,
+            completed_at: Time.current
+          }
+        )
+
+        result
       rescue StandardError => e
         Rails.logger.error { "TaskFinalizer: Error finalizing task #{task_id}: #{e.message}" }
-        raise
+        :error
       end
 
       # Check if a task might be ready for completion without waiting for no viable steps
       #
       # @param task_id [Integer] The task ID to check
+      # @return [Symbol] :reenqueued, :completed, or :no_action
       def check_task_completion(task_id)
         task = Tasker::Task.find(task_id)
 
         # Only check if task is in progress
-        return unless task.status == Constants::TaskStatuses::IN_PROGRESS
+        return :no_action unless task.status == Constants::TaskStatuses::IN_PROGRESS
 
         step_analysis = analyze_step_completion(task)
 
         # If all steps are complete, trigger finalization
-        return unless step_analysis[:state] == :complete
+        return :no_action unless step_analysis[:state] == :complete
 
         Rails.logger.debug { "TaskFinalizer: Task #{task_id} appears complete, triggering finalization" }
         finalize_task(task_id)
       end
 
       private
+
+      # Check if task is blocked by unrecoverable errors
+      #
+      # @param task [Tasker::Task] The task to check
+      # @return [Symbol] :reenqueued, :blocked, or :continue
+      def check_task_blocked_by_errors(task)
+        error_steps = task.workflow_steps.select { |step| step_in_error?(step) }
+
+        return :continue if error_steps.empty?
+
+        # Check if any error steps have exceeded retry limits
+        unrecoverable_steps = error_steps.select do |step|
+          step.attempts >= step.retry_limit || !step.retryable
+        end
+
+        if unrecoverable_steps.any?
+          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} has unrecoverable step errors" }
+
+          # Use the concern's safe_transition_to method
+          safe_transition_to(task, Constants::TaskStatuses::ERROR)
+
+          # Fire error event
+          Tasker::LifecycleEvents.fire(
+            Tasker::Constants::TaskEvents::FAILED,
+            {
+              task_id: task.task_id,
+              task_name: task.name,
+              error_steps: unrecoverable_steps.map(&:name).join(', '),
+              error_step_results: unrecoverable_steps.map do |step|
+                { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
+              end
+            }
+          )
+
+          return :blocked
+        end
+
+        # Error steps are recoverable, transition back to pending for retry
+        safe_transition_to(task, Constants::TaskStatuses::PENDING)
+
+        # Reenqueue for retry - this should be terminal
+        return reenqueue_task(task)
+      end
+
+      # Complete a task successfully
+      #
+      # @param task [Tasker::Task] The task to complete
+      def complete_task(task)
+        Rails.logger.debug { "TaskFinalizer: Completing task #{task.task_id}" }
+
+        # Use the concern's safe_transition_to method
+        safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+
+        # Fire completion event
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::TaskEvents::COMPLETED,
+          { task_id: task.task_id, task_name: task.name }
+        )
+      end
+
+      # Re-enqueue a task for further processing
+      #
+      # This is the TERMINAL action - once a task is reenqueued,
+      # the current execution path should stop.
+      #
+      # @param task [Tasker::Task] The task to re-enqueue
+      # @return [Symbol] :reenqueued (always, as this is terminal)
+      def reenqueue_task(task)
+        Rails.logger.debug { "TaskFinalizer: Re-enqueuing task #{task.task_id} (TERMINAL ACTION)" }
+
+        # Transition to pending state for reenqueue
+        safe_transition_to(task, Constants::TaskStatuses::PENDING)
+
+        # Publish reenqueue event
+        publish(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED, {
+                  task_id: task.task_id,
+                  task_name: task.name,
+                  reenqueued_at: Time.current
+                })
+
+        # Fire observability event
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
+          { task_id: task.task_id, task_name: task.name, task_context: task.context }
+        )
+
+        # Schedule the background job - this is the terminal action
+        Tasker::TaskRunnerJob.perform_later(task.task_id)
+
+        Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} successfully reenqueued, execution complete" }
+
+        # Return terminal status - caller should stop processing
+        :reenqueued
+      end
 
       # Analyze the completion state of all steps in a task
       #
@@ -140,99 +264,6 @@ module Tasker
         else
           { state: :complete, details: 'No actionable steps remaining' }
         end
-      end
-
-      # Check if task is blocked by unrecoverable errors
-      #
-      # @param task [Tasker::Task] The task to check
-      # @return [Boolean] True if task is blocked by errors
-      def task_blocked_by_errors?(task)
-        error_steps = task.workflow_steps.select { |step| step_in_error?(step) }
-
-        return false if error_steps.empty?
-
-        # Check if any error steps have exceeded retry limits
-        unrecoverable_steps = error_steps.select do |step|
-          step.attempts >= step.retry_limit || !step.retryable
-        end
-
-        if unrecoverable_steps.any?
-          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} has unrecoverable step errors" }
-
-          # Transition task to error state
-          task.state_machine.transition_to!(Constants::TaskStatuses::ERROR)
-
-          # Fire error event
-          Tasker::LifecycleEvents.fire(
-            Tasker::Constants::TaskEvents::FAILED,
-            {
-              task_id: task.task_id,
-              task_name: task.name,
-              error_steps: unrecoverable_steps.map(&:name).join(', '),
-              error_step_results: unrecoverable_steps.map do |step|
-                { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
-              end
-            }
-          )
-
-          return true
-        end
-
-        # Error steps are recoverable, transition back to pending for retry
-        task.state_machine.transition_to!(Constants::TaskStatuses::PENDING)
-
-        # Re-enqueue the task for retry
-        enqueue_task(task)
-
-        true # Task is temporarily blocked but will be retried
-      end
-
-      # Complete a task successfully
-      #
-      # @param task [Tasker::Task] The task to complete
-      def complete_task(task)
-        Rails.logger.debug { "TaskFinalizer: Completing task #{task.task_id}" }
-
-        # Transition task to complete state
-        task.state_machine.transition_to!(Constants::TaskStatuses::COMPLETE)
-
-        # Fire completion event
-        Tasker::LifecycleEvents.fire(
-          Tasker::Constants::TaskEvents::COMPLETED,
-          { task_id: task.task_id, task_name: task.name }
-        )
-      end
-
-      # Re-enqueue a task for continued processing
-      #
-      # @param task [Tasker::Task] The task to re-enqueue
-      def reenqueue_task(task)
-        Rails.logger.debug { "TaskFinalizer: Re-enqueuing task #{task.task_id}" }
-
-        # Transition task back to pending
-        task.state_machine.transition_to!(Constants::TaskStatuses::PENDING)
-
-        publish(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED, {
-                  task_id: task.task_id,
-                  task_name: task.name,
-                  reenqueued_at: Time.current
-                })
-
-        # Enqueue the task for processing
-        enqueue_task(task)
-      end
-
-      # Enqueue a task for processing (extracted from TaskHandler)
-      #
-      # @param task [Tasker::Task] The task to enqueue
-      def enqueue_task(task)
-        Tasker::LifecycleEvents.fire(
-          Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
-          { task_id: task.task_id, task_name: task.name, task_context: task.context }
-        )
-
-        # Use the existing job infrastructure
-        Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
 
       # Check if a step is complete

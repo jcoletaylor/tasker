@@ -55,10 +55,14 @@ module Tasker
       end
 
       it 'is able to initialize and handle a task' do
-        # Use factory-based task creation with proper context
-        task = create_dummy_task_workflow(context: { dummy: true })
+        # Clean up any existing state from other tests that might interfere
+        # This ensures we start with a fresh task rather than working around with unique names
+        cleanup_task_state_for_orchestration('dummy_task')
 
-        # Execute the full workflow using task handler
+        # Use the real DummyTask infrastructure as intended
+        task = create_dummy_task_for_orchestration(context: { dummy: true })
+
+        # Execute the full workflow using task handler (now delegates to orchestration)
         task_handler.handle(task)
         task.reload
 

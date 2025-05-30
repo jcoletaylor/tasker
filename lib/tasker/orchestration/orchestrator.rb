@@ -28,7 +28,7 @@ module Tasker
           orchestrator = new
 
           # Subscribe to task state events
-          event_bus.subscribe(Tasker::Constants::LifecycleEvents::TASK_START_REQUESTED) do |event|
+          event_bus.subscribe(Tasker::Constants::TaskEvents::START_REQUESTED) do |event|
             orchestrator.handle_task_started(event)
           end
 
@@ -59,12 +59,21 @@ module Tasker
       def handle_task_started(event)
         Rails.logger.debug { "Orchestrator: Task started - #{event[:task_id]}" }
 
-        # Publish workflow orchestration event to trigger step discovery
-        publish(Tasker::Constants::WorkflowEvents::TASK_STARTED, {
-                  task_id: event[:task_id],
-                  task_name: event[:task_name],
-                  orchestrated_at: Time.current
-                })
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: event[:task_id],
+          task_name: event[:task_name],
+          orchestrated_at: Time.current
+        }
+
+        # Publish to Dry::Events bus for internal orchestration
+        publish(Tasker::Constants::WorkflowEvents::TASK_STARTED, workflow_event_payload)
+
+        # Also publish to main LifecycleEvents bus for external subscribers (tests, monitoring, etc.)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::TASK_STARTED,
+          workflow_event_payload
+        )
       end
 
       # Handle task completion events
@@ -73,11 +82,19 @@ module Tasker
       def handle_task_completed(event)
         Rails.logger.debug { "Orchestrator: Task completed - #{event[:task_id]}" }
 
-        publish(Tasker::Constants::WorkflowEvents::TASK_COMPLETED, {
-                  task_id: event[:task_id],
-                  task_name: event[:task_name],
-                  orchestrated_at: Time.current
-                })
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: event[:task_id],
+          task_name: event[:task_name],
+          orchestrated_at: Time.current
+        }
+
+        # Publish to both event buses
+        publish(Tasker::Constants::WorkflowEvents::TASK_COMPLETED, workflow_event_payload)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::TASK_COMPLETED,
+          workflow_event_payload
+        )
       end
 
       # Handle task failure events
@@ -86,11 +103,19 @@ module Tasker
       def handle_task_failed(event)
         Rails.logger.debug { "Orchestrator: Task failed - #{event[:task_id]}" }
 
-        publish(Tasker::Constants::WorkflowEvents::TASK_FAILED, {
-                  task_id: event[:task_id],
-                  task_name: event[:task_name],
-                  orchestrated_at: Time.current
-                })
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: event[:task_id],
+          task_name: event[:task_name],
+          orchestrated_at: Time.current
+        }
+
+        # Publish to both event buses
+        publish(Tasker::Constants::WorkflowEvents::TASK_FAILED, workflow_event_payload)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::TASK_FAILED,
+          workflow_event_payload
+        )
       end
 
       # Handle step completion events by triggering workflow progression
@@ -99,13 +124,20 @@ module Tasker
       def handle_step_completed(event)
         Rails.logger.debug { "Orchestrator: Step completed - #{event[:step_id]} for task #{event[:task_id]}" }
 
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: event[:task_id],
+          step_id: event[:step_id],
+          step_name: event[:step_name],
+          orchestrated_at: Time.current
+        }
+
         # When a step completes, we need to discover if new steps become viable
-        publish(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, {
-                  task_id: event[:task_id],
-                  step_id: event[:step_id],
-                  step_name: event[:step_name],
-                  orchestrated_at: Time.current
-                })
+        publish(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, workflow_event_payload)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::STEP_COMPLETED,
+          workflow_event_payload
+        )
 
         # Request orchestration to find next viable steps
         request_orchestration(event[:task_id])
@@ -117,12 +149,20 @@ module Tasker
       def handle_step_failed(event)
         Rails.logger.debug { "Orchestrator: Step failed - #{event[:step_id]} for task #{event[:task_id]}" }
 
-        publish(Tasker::Constants::WorkflowEvents::STEP_FAILED, {
-                  task_id: event[:task_id],
-                  step_id: event[:step_id],
-                  step_name: event[:step_name],
-                  orchestrated_at: Time.current
-                })
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: event[:task_id],
+          step_id: event[:step_id],
+          step_name: event[:step_name],
+          orchestrated_at: Time.current
+        }
+
+        # Publish to both event buses
+        publish(Tasker::Constants::WorkflowEvents::STEP_FAILED, workflow_event_payload)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::STEP_FAILED,
+          workflow_event_payload
+        )
 
         # Request orchestration to handle failure and potentially retry or fail task
         request_orchestration(event[:task_id])
@@ -136,10 +176,18 @@ module Tasker
       def request_orchestration(task_id)
         Rails.logger.debug { "Orchestrator: Requesting orchestration for task #{task_id}" }
 
-        publish(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED, {
-                  task_id: task_id,
-                  orchestrated_at: Time.current
-                })
+        # Build the workflow event payload
+        workflow_event_payload = {
+          task_id: task_id,
+          orchestrated_at: Time.current
+        }
+
+        # Publish to both event buses
+        publish(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED, workflow_event_payload)
+        Tasker::LifecycleEvents.fire(
+          Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED,
+          workflow_event_payload
+        )
       end
     end
   end

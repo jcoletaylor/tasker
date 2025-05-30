@@ -67,29 +67,64 @@ module Tasker
       end
 
       # Guard clauses for transition validation
-      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step|
-        # Only allow start if step is pending AND dependencies are met
+      guard_transition(to: Constants::WorkflowStepStatuses::PENDING) do |step|
+        # Allow idempotent transitions (already pending) or valid retry transitions from error
         current_status = step.state_machine.current_state
-        current_status == Constants::WorkflowStepStatuses::PENDING &&
+        return true if current_status == Constants::WorkflowStepStatuses::PENDING # Idempotent
+
+        # Allow retry transition from error state
+        current_status == Constants::WorkflowStepStatuses::ERROR
+      end
+
+      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step|
+        # Allow idempotent transitions (already in progress) or valid start transitions
+        current_status = step.state_machine.current_state
+        Rails.logger.debug "StepStateMachine: Guard clause for IN_PROGRESS - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::IN_PROGRESS}"
+
+        if current_status == Constants::WorkflowStepStatuses::IN_PROGRESS
+          Rails.logger.debug "StepStateMachine: Allowing idempotent transition to IN_PROGRESS"
+          return true # Idempotent
+        end
+
+        # Only allow start if step is pending AND dependencies are met
+        result = current_status == Constants::WorkflowStepStatuses::PENDING &&
           StepStateMachine.step_dependencies_met?(step)
+        Rails.logger.debug "StepStateMachine: Guard clause result for IN_PROGRESS: #{result}"
+        result
       end
 
       guard_transition(to: Constants::WorkflowStepStatuses::COMPLETE) do |step|
-        # Only allow completion from in_progress state (proper workflow execution)
+        # Allow idempotent transitions (already complete) or valid completion
         current_status = step.state_machine.current_state
+        return true if current_status == Constants::WorkflowStepStatuses::COMPLETE # Idempotent
+
+        # Only allow completion from in_progress state (proper workflow execution)
         current_status == Constants::WorkflowStepStatuses::IN_PROGRESS
       end
 
       guard_transition(to: Constants::WorkflowStepStatuses::ERROR) do |step|
-        # Allow error transition from in_progress or pending state
+        # Allow idempotent transitions (already in error) or valid error transitions
         current_status = step.state_machine.current_state
-        [Constants::WorkflowStepStatuses::IN_PROGRESS,
+        Rails.logger.debug "StepStateMachine: Guard clause for ERROR - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::ERROR}"
+
+        if current_status == Constants::WorkflowStepStatuses::ERROR
+          Rails.logger.debug "StepStateMachine: Allowing idempotent transition to ERROR"
+          return true # Idempotent
+        end
+
+        # Allow error transition from in_progress or pending state
+        result = [Constants::WorkflowStepStatuses::IN_PROGRESS,
          Constants::WorkflowStepStatuses::PENDING].include?(current_status)
+        Rails.logger.debug "StepStateMachine: Guard clause result for ERROR: #{result}"
+        result
       end
 
       guard_transition(to: Constants::WorkflowStepStatuses::RESOLVED_MANUALLY) do |step|
-        # Allow manual resolution from pending or error states
+        # Allow idempotent transitions (already resolved manually) or valid manual resolution
         current_status = step.state_machine.current_state
+        return true if current_status == Constants::WorkflowStepStatuses::RESOLVED_MANUALLY # Idempotent
+
+        # Allow manual resolution from pending or error states
         [Constants::WorkflowStepStatuses::PENDING,
          Constants::WorkflowStepStatuses::ERROR].include?(current_status)
       end

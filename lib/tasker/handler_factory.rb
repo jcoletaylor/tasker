@@ -10,7 +10,7 @@ module Tasker
   class HandlerFactory
     include Singleton
 
-    # @return [Hash] Registered handler class names by handler name
+    # @return [Hash] Registered handler classes by handler name
     attr_accessor :handler_classes
 
     # Initialize a new handler factory
@@ -26,9 +26,19 @@ module Tasker
     # @return [Object] An instance of the requested task handler
     # @raise [Tasker::ProceduralError] If no handler is registered with the given name
     def get(name)
-      raise(Tasker::ProceduralError, "No task handler for #{name}") unless handler_classes[name.to_sym]
+      handler_class = handler_classes[name.to_sym]
+      raise(Tasker::ProceduralError, "No task handler for #{name}") unless handler_class
 
-      handler_classes[name.to_sym].to_s.camelize.constantize.new
+      # Handle both direct class objects and string class names
+      if handler_class.is_a?(Class)
+        # Direct class registration (used in tests with anonymous classes)
+        handler_class.new
+      else
+        # String class name registration (used in production)
+        handler_class.to_s.camelize.constantize.new
+      end
+    rescue NameError => e
+      raise(Tasker::ProceduralError, "No task handler for #{name}: #{e.message}")
     end
 
     # Register a task handler class with a name
@@ -37,7 +47,13 @@ module Tasker
     # @param class_name [Class, String] The handler class to register
     # @return [void]
     def register(name, class_name)
-      self.handler_classes[name.to_sym] = class_name.to_s
+      if class_name.is_a?(Class)
+        # Store the class directly for anonymous classes
+        self.handler_classes[name.to_sym] = class_name
+      else
+        # Store as string for named classes (original behavior)
+        self.handler_classes[name.to_sym] = class_name.to_s
+      end
     end
   end
 end

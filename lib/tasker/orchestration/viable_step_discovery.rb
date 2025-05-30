@@ -65,33 +65,38 @@ module Tasker
             "ViableStepDiscovery: Found #{viable_steps.size} viable steps: #{step_names.join(', ')}"
           end
 
-          # Fire telemetry event for backward compatibility
-          Tasker::LifecycleEvents.fire(
-            Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE,
-            {
-              task_id: task_id,
-              step_names: step_names.join(', '),
-              count: viable_steps.size
-            }
-          )
+          # Build the workflow event payload
+          workflow_event_payload = {
+            task_id: task_id,
+            step_ids: step_ids,
+            step_names: step_names,
+            count: viable_steps.size,
+            processing_mode: determine_processing_mode(task),
+            discovered_at: Time.current
+          }
 
-          # Publish workflow event with discovered steps
-          publish(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, {
-                    task_id: task_id,
-                    step_ids: step_ids,
-                    step_names: step_names,
-                    count: viable_steps.size,
-                    processing_mode: determine_processing_mode(task),
-                    discovered_at: Time.current
-                  })
+          # Publish to both event buses
+          publish(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, workflow_event_payload)
+          Tasker::LifecycleEvents.fire(
+            Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED,
+            workflow_event_payload
+          )
         else
           Rails.logger.debug { "ViableStepDiscovery: No viable steps found for task #{task_id}" }
 
-          # Publish no viable steps event to trigger finalization
-          publish(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, {
-                    task_id: task_id,
-                    discovered_at: Time.current
-                  })
+          # Build the workflow event payload for no viable steps
+          workflow_event_payload = {
+            task_id: task_id,
+            task_name: task.name,
+            discovered_at: Time.current
+          }
+
+          # Publish to both event buses
+          publish(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, workflow_event_payload)
+          Tasker::LifecycleEvents.fire(
+            Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS,
+            workflow_event_payload
+          )
         end
       rescue StandardError => e
         Rails.logger.error { "ViableStepDiscovery: Error discovering steps for task #{task_id}: #{e.message}" }

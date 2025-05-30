@@ -16,6 +16,12 @@ module FactoryWorkflowHelpers
     create(:dummy_task_workflow, **options, with_dependencies: true)
   end
 
+  # Create a dummy task workflow ready for event-driven orchestration
+  # This creates tasks and steps in their initial pending state, ready for processing
+  def create_dummy_task_for_orchestration(options = {})
+    create(:dummy_task_workflow, :for_orchestration, **options, with_dependencies: true)
+  end
+
   # Create a dummy task workflow variant (mimics DUMMY_TASK_TWO)
   def create_dummy_task_two_workflow(options = {})
     create(:dummy_task_workflow, :dummy_task_two, **options, with_dependencies: true)

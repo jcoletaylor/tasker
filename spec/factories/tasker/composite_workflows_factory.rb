@@ -352,6 +352,33 @@ FactoryBot.define do
       end
     end
 
+    # Trait specifically for event-driven orchestration testing
+    # Creates tasks and steps in their initial pending state
+    trait :for_orchestration do
+      step_states { :pending }
+
+      # Ensure task starts in pending state for orchestration
+      after(:create) do |task, _evaluator|
+        # Explicitly set task to pending state if not already
+        unless task.status == Tasker::Constants::TaskStatuses::PENDING
+          task.update_columns(status: Tasker::Constants::TaskStatuses::PENDING)
+        end
+
+        # Ensure all steps are in pending state
+        task.workflow_steps.each do |step|
+          unless step.status == Tasker::Constants::WorkflowStepStatuses::PENDING
+            step.update_columns(
+              status: Tasker::Constants::WorkflowStepStatuses::PENDING,
+              processed: false,
+              in_process: false,
+              processed_at: nil,
+              attempts: 0
+            )
+          end
+        end
+      end
+    end
+
     trait :with_partial_completion do
       after(:create) do |task, _evaluator|
         # Complete first two steps

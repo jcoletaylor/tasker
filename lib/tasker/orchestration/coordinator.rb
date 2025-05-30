@@ -13,6 +13,9 @@ module Tasker
     # that replaces the imperative TaskHandler workflow loop.
     module Coordinator
       class << self
+        # Include the concern methods at the class level
+        include Tasker::Concerns::IdempotentStateTransitions
+
         # Initialize the complete workflow orchestration system
         #
         # This sets up all event subscriptions and coordinates the components:
@@ -23,6 +26,9 @@ module Tasker
         #
         # @param event_bus [Tasker::Events::Bus] Optional event bus instance
         def initialize!(event_bus = nil)
+          # Prevent double initialization
+          return if @initialized
+
           Rails.logger.info('Tasker::Orchestration::Coordinator: Initializing event-driven workflow system')
 
           # Use provided bus or default
@@ -31,16 +37,16 @@ module Tasker
           # Subscribe all workflow components to their respective events
           setup_component_subscriptions(bus)
 
-          @active = true
+          @initialized = true
 
           Rails.logger.info('Tasker::Orchestration::Coordinator: Event-driven workflow system initialized successfully')
         end
 
-        # Check if the workflow orchestration system is active
+        # Check if the system has been initialized
         #
-        # @return [Boolean] True if orchestration is initialized
-        def active?
-          @active ||= false
+        # @return [Boolean] True if initialized
+        def initialized?
+          @initialized || false
         end
 
         # Trigger workflow orchestration for a specific task
@@ -49,20 +55,24 @@ module Tasker
         # instead of the imperative TaskHandler.handle method.
         #
         # @param task_id [Integer] The task ID to process
+        # @return [Boolean] True if processing started successfully, false if failed
         def process_task(task_id)
-          unless active?
-            Rails.logger.warn('Tasker::Orchestration::Coordinator: System not initialized, falling back to imperative processing')
-            return false
-          end
-
           Rails.logger.info("Tasker::Orchestration::Coordinator: Starting event-driven processing for task #{task_id}")
 
           # Load the task and transition it to in_progress, which will trigger the orchestration
           task = Tasker::Task.find(task_id)
 
-          # Transition to in_progress, which will trigger workflow.task_started event
-          task.state_machine.transition_to!(Constants::TaskStatuses::IN_PROGRESS)
+          # Use the concern's safe_transition_to method
+          transition_result = safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
 
+          Rails.logger.debug("Tasker::Orchestration::Coordinator: Task #{task_id} transition result: #{transition_result}")
+
+          # The orchestration system is now event-driven and asynchronous
+          # The task will be processed through events, and if it needs reenqueuing,
+          # that will happen via TaskFinalizer which is terminal for this execution
+
+          # Return true to indicate we successfully started orchestration
+          # The actual completion/reenqueuing happens asynchronously through events
           true
         rescue StandardError => e
           Rails.logger.error("Tasker::Orchestration::Coordinator: Error processing task #{task_id}: #{e.message}")
@@ -74,7 +84,7 @@ module Tasker
         # @return [Hash] Statistics about component initialization and event subscriptions
         def statistics
           {
-            initialized: active?,
+            initialized: @initialized || false,
             components: {
               orchestrator: defined?(Tasker::Orchestration::Orchestrator),
               viable_step_discovery: defined?(Tasker::Orchestration::ViableStepDiscovery),
@@ -102,8 +112,6 @@ module Tasker
 
           # Subscribe TaskFinalizer to workflow events
           Tasker::Orchestration::TaskFinalizer.subscribe_to_workflow_events(bus)
-
-          @initialized = true
         end
       end
     end

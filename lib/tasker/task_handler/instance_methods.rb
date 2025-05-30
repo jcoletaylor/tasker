@@ -88,55 +88,29 @@ module Tasker
 
       # Handle a task's execution
       #
-      # This is the main entry point for processing a task. It starts the task,
-      # processes viable steps iteratively until completion or error, and then finalizes.
+      # This is the main entry point for processing a task. It delegates to the
+      # event-driven orchestration system for actual processing while maintaining
+      # the traditional TaskHandler API for backward compatibility.
       #
       # @param task [Tasker::Task] The task to handle
       # @return [void]
       def handle(task)
+        # Ensure orchestration system is initialized
+        Tasker::Orchestration::Coordinator.initialize! unless Tasker::Orchestration::Coordinator.initialized?
+
+        # Start the task using traditional method (maintains existing behavior)
         start_task(task)
 
-        # Process steps recursively until no more viable steps are found
-        all_processed_steps = []
+        # Delegate to orchestration system for workflow processing
+        # This replaces the old imperative loop with event-driven orchestration
+        result = Tasker::Orchestration::Coordinator.process_task(task.task_id)
 
-        loop do
-          # Get the latest sequence with up-to-date step statuses
-          task.reload
-          sequence = get_sequence(task)
-
-          # Find viable steps according to DAG traversal
-          # Force a fresh load of all steps, including children of completed steps
-          viable_steps = find_viable_steps(task, sequence)
-
-          # Log the viable steps found
-          if viable_steps.any?
-            step_names = viable_steps.map(&:name)
-            Tasker::LifecycleEvents.fire(
-              Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE,
-              {
-                task_id: task.task_id,
-                step_names: step_names.join(', '),
-                count: viable_steps.size
-              }
-            )
-          end
-
-          # If no viable steps found, we're done
-          break if viable_steps.empty?
-
-          # Process the viable steps
-          processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
-          all_processed_steps.concat(processed_in_this_round)
-
-          # Check if any errors occurred that would block further progress
-          break if blocked_by_errors?(task, sequence, processed_in_this_round)
+        unless result
+          Rails.logger.error("TaskHandler: Orchestration failed for task #{task.task_id}")
+          raise Tasker::ProceduralError, "Task processing failed for task #{task.task_id}"
         end
 
-        # Get final sequence after all processing
-        final_sequence = get_sequence(task)
-
-        # Finalize the task
-        finalize(task, final_sequence, all_processed_steps)
+        Rails.logger.debug("TaskHandler: Successfully processed task #{task.task_id} via orchestration")
       end
 
       # Find viable steps that can be executed
@@ -208,6 +182,45 @@ module Tasker
           step.save!
           step
         end
+      end
+
+      # Establish step dependencies and defaults
+      #
+      # This is a hook method that can be overridden by implementing classes.
+      # This method is public so that orchestration components can call it.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param steps [Array<Tasker::WorkflowStep>] The steps to establish dependencies for
+      # @return [void]
+      def establish_step_dependencies_and_defaults(task, steps); end
+
+      # Update annotations based on processed steps
+      #
+      # This is a hook method that can be overridden by implementing classes.
+      # This method is public so that orchestration components can call it.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
+      # @return [void]
+      def update_annotations(task, sequence, steps); end
+
+      # Get a step handler for a specific step
+      #
+      # This method is public so that orchestration components can access step handlers.
+      #
+      # @param step [Tasker::WorkflowStep] The step to get a handler for
+      # @return [Object] The step handler
+      # @raise [Tasker::ProceduralError] If no handler is registered for the step
+      def get_step_handler(step)
+        raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless step_handler_class_map[step.name]
+
+        handler_config = step_handler_config_map[step.name]
+        handler_class = step_handler_class_map[step.name].to_s.camelize.constantize
+
+        return handler_class.new if handler_config.nil?
+
+        handler_class.new(config: handler_config)
       end
 
       private
@@ -427,8 +440,10 @@ module Tasker
         step_group = StepGroup.build(task, sequence, steps)
 
         if step_group.complete?
-          # Use state machine to transition task to complete
-          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
+          # Use state machine to transition task to complete only if not already complete
+          unless task.status == Tasker::Constants::TaskStatuses::COMPLETE
+            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
+          end
 
           # Use EventPayloadBuilder for task completion event
           completion_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
@@ -447,16 +462,20 @@ module Tasker
         # set the status of the task back to pending, update it,
         # and re-enqueue the task for processing
         if step_group.pending?
-          # Request re-processing (state machine will handle if already pending)
-          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
+          # Request re-processing only if not already pending
+          unless task.status == Tasker::Constants::TaskStatuses::PENDING
+            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
+          end
           enqueue_task(task)
           return
         end
 
         # if we reach the end and have not re-enqueued the task
         # then we mark it complete since none of the above proved true
-        # Request completion (state machine will handle if already complete)
-        task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
+        # Request completion only if not already complete
+        unless task.status == Tasker::Constants::TaskStatuses::COMPLETE
+          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::COMPLETE)
+        end
 
         # Use EventPayloadBuilder for task completion event
         completion_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
@@ -497,8 +516,10 @@ module Tasker
         # if there are steps in error still, then we need to see if we have tried them
         if error_steps.length.positive?
           if too_many_attempts?(error_steps)
-            # Transition to error state (state machine will prevent invalid transitions)
-            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
+            # Transition to error state only if not already in error state
+            unless task.status == Tasker::Constants::TaskStatuses::ERROR
+              task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::ERROR)
+            end
 
             # Use EventPayloadBuilder for task error event
             error_payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
@@ -519,28 +540,14 @@ module Tasker
             return true
           end
 
-          # Request retry by transitioning to pending (state machine will handle if already pending)
-          task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
+          # Request retry by transitioning to pending only if not already pending
+          unless task.status == Tasker::Constants::TaskStatuses::PENDING
+            task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::PENDING)
+          end
           enqueue_task(task)
           return true
         end
         false
-      end
-
-      # Get a step handler for a specific step
-      #
-      # @param step [Tasker::WorkflowStep] The step to get a handler for
-      # @return [Object] The step handler
-      # @raise [Tasker::ProceduralError] If no handler is registered for the step
-      def get_step_handler(step)
-        raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless step_handler_class_map[step.name]
-
-        handler_config = step_handler_config_map[step.name]
-        handler_class = step_handler_class_map[step.name].to_s.camelize.constantize
-
-        return handler_class.new if handler_config.nil?
-
-        handler_class.new(config: handler_config)
       end
 
       # Get steps that are still in error state
@@ -592,25 +599,6 @@ module Tasker
         )
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end
-
-      # Establish step dependencies and defaults
-      #
-      # This is a hook method that can be overridden by implementing classes.
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param steps [Array<Tasker::WorkflowStep>] The steps to establish dependencies for
-      # @return [void]
-      def establish_step_dependencies_and_defaults(task, steps); end
-
-      # Update annotations based on processed steps
-      #
-      # This is a hook method that can be overridden by implementing classes.
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
-      # @return [void]
-      def update_annotations(task, sequence, steps); end
 
       # Get the schema for validating task context
       #
