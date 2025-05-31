@@ -191,7 +191,13 @@
 18
 19
 20
-21</pre>
+21
+22
+23
+24
+25
+26
+27</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/graphql/tasker/queries/tasks_by_status.rb', line 17</span>
@@ -199,7 +205,13 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_resolve'>resolve</span><span class='lparen'>(</span><span class='label'>limit:</span><span class='comma'>,</span> <span class='label'>offset:</span><span class='comma'>,</span> <span class='label'>sort_by:</span><span class='comma'>,</span> <span class='label'>sort_order:</span><span class='comma'>,</span> <span class='label'>status:</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_sorts'>sorts</span> <span class='op'>=</span> <span class='id identifier rubyid_page_sort_params'>page_sort_params</span><span class='lparen'>(</span><span class='label'>model:</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='comma'>,</span> <span class='label'>limit:</span> <span class='id identifier rubyid_limit'>limit</span><span class='comma'>,</span> <span class='label'>offset:</span> <span class='id identifier rubyid_offset'>offset</span><span class='comma'>,</span> <span class='label'>sort_by:</span> <span class='id identifier rubyid_sort_by'>sort_by</span><span class='comma'>,</span>
                            <span class='label'>sort_order:</span> <span class='id identifier rubyid_sort_order'>sort_order</span><span class='rparen'>)</span>
-  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_with_all_associated'><span class='object_link'><a href="../Task.html#with_all_associated-instance_method" title="Tasker::Task#with_all_associated (method)">with_all_associated</a></span></span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>status:</span> <span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_limit'>limit</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:limit</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_offset'>offset</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:offset</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_order'>order</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:order</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+
+  <span class='comment'># Use the ActiveRecord scope to query tasks by current state
+</span>  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_with_all_associated'><span class='object_link'><a href="../Task.html#with_all_associated-instance_method" title="Tasker::Task#with_all_associated (method)">with_all_associated</a></span></span>
+              <span class='period'>.</span><span class='id identifier rubyid_by_current_state'>by_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
+              <span class='period'>.</span><span class='id identifier rubyid_limit'>limit</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:limit</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+              <span class='period'>.</span><span class='id identifier rubyid_offset'>offset</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:offset</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+              <span class='period'>.</span><span class='id identifier rubyid_order'>order</span><span class='lparen'>(</span><span class='id identifier rubyid_sorts'>sorts</span><span class='lbracket'>[</span><span class='symbol'>:order</span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -211,7 +223,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:23 2025 by
+  Generated on Sat May 31 00:05:09 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

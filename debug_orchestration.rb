@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 # Debug script to test step state machine guard clauses
 # Run with: bundle exec rails runner debug_orchestration.rb
 
-puts "=== TESTING STEP STATE MACHINE GUARD CLAUSES ==="
+puts '=== TESTING STEP STATE MACHINE GUARD CLAUSES ==='
 
 # Create a test task
 task = Tasker::Task.create!(
@@ -35,57 +37,57 @@ puts "Step state machine current state: #{step.state_machine.current_state}"
 # Test 1: Transition step to IN_PROGRESS
 puts "\n=== TEST 1: Step transition to IN_PROGRESS ==="
 begin
-  puts "Attempting to transition step to IN_PROGRESS..."
+  puts 'Attempting to transition step to IN_PROGRESS...'
   step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
   puts "✅ SUCCESS: Step transitioned to #{step.state_machine.current_state}"
-rescue => e
+rescue StandardError => e
   puts "❌ ERROR: #{e.message}"
 end
 
 # Test 2: Try to transition step to IN_PROGRESS again (should be idempotent)
 puts "\n=== TEST 2: Idempotent step transition to IN_PROGRESS ==="
 begin
-  puts "Attempting to transition step to IN_PROGRESS again..."
+  puts 'Attempting to transition step to IN_PROGRESS again...'
   step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
   puts "✅ SUCCESS: Idempotent step transition worked, still in #{step.state_machine.current_state}"
-rescue => e
+rescue StandardError => e
   puts "❌ ERROR: #{e.message}"
 end
 
 # Test 3: Transition to ERROR
 puts "\n=== TEST 3: Step transition to ERROR ==="
 begin
-  puts "Attempting to transition step to ERROR..."
+  puts 'Attempting to transition step to ERROR...'
   step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
   puts "✅ SUCCESS: Step transitioned to #{step.state_machine.current_state}"
-rescue => e
+rescue StandardError => e
   puts "❌ ERROR: #{e.message}"
 end
 
 # Test 4: Try to transition step to ERROR again (should be idempotent)
 puts "\n=== TEST 4: Idempotent step transition to ERROR ==="
 begin
-  puts "Attempting to transition step to ERROR again..."
+  puts 'Attempting to transition step to ERROR again...'
   step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
   puts "✅ SUCCESS: Idempotent step transition worked, still in #{step.state_machine.current_state}"
-rescue => e
+rescue StandardError => e
   puts "❌ ERROR: #{e.message}"
 end
 
 # Test 5: Try to transition from ERROR to IN_PROGRESS (should fail)
 puts "\n=== TEST 5: Invalid transition from ERROR to IN_PROGRESS ==="
 begin
-  puts "Attempting to transition step from ERROR to IN_PROGRESS..."
+  puts 'Attempting to transition step from ERROR to IN_PROGRESS...'
   step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-  puts "❌ UNEXPECTED SUCCESS: This should have failed!"
-rescue => e
+  puts '❌ UNEXPECTED SUCCESS: This should have failed!'
+rescue StandardError => e
   puts "✅ EXPECTED ERROR: #{e.message}"
 end
 
 puts "\n=== GUARD CLAUSE DEBUGGING ==="
 
 # Test the guard clause logic directly
-puts "Testing step guard clause for IN_PROGRESS transition:"
+puts 'Testing step guard clause for IN_PROGRESS transition:'
 current_step_status = step.state_machine.current_state
 puts "Current step status: #{current_step_status}"
 puts "Target step status: #{Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS}"

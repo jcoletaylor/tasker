@@ -15,6 +15,8 @@ RSpec.describe Tasker::TaskDiagram do
   end
 
   describe '#to_mermaid' do
+    subject(:mermaid_output) { diagram.to_mermaid }
+
     let(:unique_reason) { "mermaid_test_#{SecureRandom.hex(8)}" }
     let(:task) do
       create_api_integration_workflow(
@@ -24,8 +26,6 @@ RSpec.describe Tasker::TaskDiagram do
       )
     end
     let(:diagram) { described_class.new(task, base_url) }
-
-    subject(:mermaid_output) { diagram.to_mermaid }
 
     it 'generates valid mermaid flowchart syntax' do
       expect(mermaid_output).to start_with('graph TD')
@@ -97,6 +97,8 @@ RSpec.describe Tasker::TaskDiagram do
   end
 
   describe '#to_html' do
+    subject(:html_output) { diagram.to_html }
+
     let(:html_reason) { "html_test_#{SecureRandom.hex(8)}" }
     let(:task) do
       create_api_integration_workflow(
@@ -106,8 +108,6 @@ RSpec.describe Tasker::TaskDiagram do
       )
     end
     let(:diagram) { described_class.new(task, base_url) }
-
-    subject(:html_output) { diagram.to_html }
 
     it 'generates a complete HTML document' do
       expect(html_output).to include('<!DOCTYPE html>', '<html>', '<head>', '<body>')
@@ -147,8 +147,9 @@ RSpec.describe Tasker::TaskDiagram do
     end
 
     describe 'workflow step node creation' do
-      let(:sample_step) { task.workflow_steps.first }
       subject(:step_node) { diagram.send(:build_step_node, sample_step) }
+
+      let(:sample_step) { task.workflow_steps.first }
 
       before do
         skip 'No workflow steps available for testing' if sample_step.nil?

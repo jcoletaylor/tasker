@@ -158,7 +158,7 @@ module Tasker
         return false if step_ids.empty?
 
         # Query for any steps in error state using the failed scope
-        Tasker::WorkflowStep.failed.where(workflow_step_id: step_ids).exists?
+        Tasker::WorkflowStep.failed.exists?(workflow_step_id: step_ids)
       end
 
       # Get debugging state information for the step group

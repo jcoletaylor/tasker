@@ -305,15 +305,15 @@ module FactoryWorkflowHelpers
       # Complete specified steps using state machine transitions
       complete_steps.each do |step_name|
         step = task.workflow_steps.joins(:named_step).find_by(named_step: { name: step_name })
-        if step
-          step.state_machine.transition_to!(:in_progress)
-          step.state_machine.transition_to!(:complete)
-          step.update_columns(
-            processed: true,
-            processed_at: Time.current,
-            results: { dummy: true, step_name: step_name }
-          )
-        end
+        next unless step
+
+        step.state_machine.transition_to!(:in_progress)
+        step.state_machine.transition_to!(:complete)
+        step.update_columns(
+          processed: true,
+          processed_at: Time.current,
+          results: { dummy: true, step_name: step_name }
+        )
       end
     end
 
@@ -326,7 +326,7 @@ module FactoryWorkflowHelpers
     # Force steps to pending state for orchestration testing
     options = options.merge(
       step_states: :pending,
-      complete_steps: []  # No pre-completed steps for orchestration testing
+      complete_steps: [] # No pre-completed steps for orchestration testing
     )
 
     create_dummy_task_via_request(options)

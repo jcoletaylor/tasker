@@ -33,7 +33,7 @@ module Tasker
 
         # Transition task back to pending state for clarity
         if safe_transition_to(task, Tasker::Constants::TaskStatuses::PENDING)
-          Rails.logger.debug("TaskReenqueuer: Task #{task.task_id} transitioned back to pending")
+          Rails.logger.debug { "TaskReenqueuer: Task #{task.task_id} transitioned back to pending" }
         end
 
         # Enqueue the task for processing
@@ -49,7 +49,7 @@ module Tasker
           }
         )
 
-        Rails.logger.debug("TaskReenqueuer: Task #{task.task_id} re-enqueued due to #{reason}")
+        Rails.logger.debug { "TaskReenqueuer: Task #{task.task_id} re-enqueued due to #{reason}" }
         true
       rescue StandardError => e
         # Fire re-enqueue failed event
@@ -89,7 +89,9 @@ module Tasker
         # Schedule the delayed job
         Tasker::TaskRunnerJob.set(wait: delay_seconds.seconds).perform_later(task.task_id)
 
-        Rails.logger.debug("TaskReenqueuer: Task #{task.task_id} scheduled for re-enqueue in #{delay_seconds} seconds")
+        Rails.logger.debug do
+          "TaskReenqueuer: Task #{task.task_id} scheduled for re-enqueue in #{delay_seconds} seconds"
+        end
         true
       rescue StandardError => e
         Rails.logger.error("TaskReenqueuer: Failed to schedule delayed re-enqueue for task #{task.task_id}: #{e.message}")

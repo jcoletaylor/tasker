@@ -47,13 +47,13 @@ module Tasker
     # @param class_name [Class, String] The handler class to register
     # @return [void]
     def register(name, class_name)
-      if class_name.is_a?(Class)
-        # Store the class directly for anonymous classes
-        self.handler_classes[name.to_sym] = class_name
-      else
-        # Store as string for named classes (original behavior)
-        self.handler_classes[name.to_sym] = class_name.to_s
-      end
+      self.handler_classes[name.to_sym] = if class_name.is_a?(Class)
+                                            # Store the class directly for anonymous classes
+                                            class_name
+                                          else
+                                            # Store as string for named classes (original behavior)
+                                            class_name.to_s
+                                          end
     end
   end
 end

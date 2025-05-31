@@ -193,7 +193,7 @@ module Tasker
         raise Faraday::Error, "Failed to parse Retry-After header: #{e.message}"
       end
 
-      def _exponential_backoff(step, context = {})
+      def _exponential_backoff(step, _context = {})
         step.attempts ||= 1
         min_exponent = 2
         exponent = [step.attempts + 1, min_exponent].max

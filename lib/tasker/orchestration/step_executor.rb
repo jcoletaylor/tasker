@@ -45,10 +45,10 @@ module Tasker
 
         # PRESERVE: Original concurrent processing logic
         processed_steps = if processing_mode == 'concurrent'
-          execute_steps_concurrently(task, sequence, viable_steps, task_handler)
-        else
-          execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-        end
+                            execute_steps_concurrently(task, sequence, viable_steps, task_handler)
+                          else
+                            execute_steps_sequentially(task, sequence, viable_steps, task_handler)
+                          end
 
         # Fire completion event through orchestrator
         publish_event(
@@ -56,7 +56,9 @@ module Tasker
           {
             task_id: task.task_id,
             processed_count: processed_steps.size,
-            successful_count: processed_steps.count { |s| s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
+            successful_count: processed_steps.count do |s|
+              s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
+            end
           }
         )
 
@@ -107,7 +109,9 @@ module Tasker
       def execute_single_step(task, sequence, step, task_handler)
         # Only process pending steps
         unless step.state_machine.current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
-          Rails.logger.debug("StepExecutor: Skipping step #{step.workflow_step_id} - not pending (#{step.state_machine.current_state})")
+          Rails.logger.debug do
+            "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (#{step.state_machine.current_state})"
+          end
           return nil
         end
 
@@ -145,13 +149,12 @@ module Tasker
               }
             )
 
-            Rails.logger.debug("StepExecutor: Successfully completed step #{step.workflow_step_id}")
+            Rails.logger.debug { "StepExecutor: Successfully completed step #{step.workflow_step_id}" }
             step
           else
             Rails.logger.error("StepExecutor: Failed to transition step #{step.workflow_step_id} to complete")
             nil
           end
-
         rescue StandardError => e
           Rails.logger.error("StepExecutor: Error executing step #{step.workflow_step_id}: #{e.message}")
 

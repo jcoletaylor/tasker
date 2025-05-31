@@ -13,7 +13,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         retry_limit: 5,
         last_attempted_at: 30.seconds.ago,
         processed_at: 5.seconds.ago,
-        results: { 'output' => 'test result' }  # Use string keys to match database storage
+        results: { 'output' => 'test result' } # Use string keys to match database storage
       )
     end
   end
@@ -105,7 +105,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
     context 'for started events' do
       let(:step_with_inputs) do
         task.workflow_steps.first.tap do |step|
-          step.update!(inputs: { 'param1' => 'value1', 'param2' => 'value2' })  # Use string keys
+          step.update!(inputs: { 'param1' => 'value1', 'param2' => 'value2' }) # Use string keys
         end
       end
 
@@ -152,13 +152,13 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         expect(payload[:total_execution_duration]).to be_nil
         expect(payload[:current_execution_duration]).to be_a(Numeric)
         expect(payload[:current_execution_duration]).to be > 0
-        expect(payload[:current_execution_duration]).to be_within(10.0).of(120.0)  # ~2 minutes
+        expect(payload[:current_execution_duration]).to be_within(10.0).of(120.0) # ~2 minutes
 
         # Step statistics
-        expect(payload[:total_steps]).to eq(4)  # dummy workflow has 4 steps
-        expect(payload[:completed_steps]).to eq(1)  # Only first step completed
+        expect(payload[:total_steps]).to eq(4) # dummy workflow has 4 steps
+        expect(payload[:completed_steps]).to eq(1) # Only first step completed
         expect(payload[:failed_steps]).to eq(0)
-        expect(payload[:pending_steps]).to eq(3)  # 3 steps still pending
+        expect(payload[:pending_steps]).to eq(3) # 3 steps still pending
       end
     end
 
@@ -173,7 +173,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
           steps[0].update!(processed_at: 50.seconds.ago, processed: true)
           steps[1].update!(processed_at: 30.seconds.ago, processed: true)
           steps[2].update!(processed_at: 20.seconds.ago, processed: true)
-          steps[3].update!(processed_at: 10.seconds.ago, processed: true)  # This should be the latest
+          steps[3].update!(processed_at: 10.seconds.ago, processed: true) # This should be the latest
 
           # Mark ALL steps as complete via state machine
           steps.each { |step| complete_step_via_state_machine(step) }
@@ -196,7 +196,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         # Duration tracking - total duration available since all steps complete
         expect(payload[:total_execution_duration]).to be_a(Numeric)
         expect(payload[:total_execution_duration]).to be > 0
-        expect(payload[:current_execution_duration]).to be_nil  # Not applicable for completed tasks
+        expect(payload[:current_execution_duration]).to be_nil # Not applicable for completed tasks
         # Should be roughly 110 seconds (2 minutes - 10 seconds), allowing for test execution variance
         expect(payload[:total_execution_duration]).to be_within(15.0).of(110.0)
 
@@ -207,9 +207,9 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
 
         # Step statistics - all steps should be complete
         expect(payload[:total_steps]).to eq(4)
-        expect(payload[:completed_steps]).to eq(4)  # All steps completed
+        expect(payload[:completed_steps]).to eq(4) # All steps completed
         expect(payload[:failed_steps]).to eq(0)
-        expect(payload[:pending_steps]).to eq(0)  # No pending steps
+        expect(payload[:pending_steps]).to eq(0) # No pending steps
       end
     end
 
@@ -237,13 +237,13 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         # Duration tracking - current duration only
         expect(payload[:total_execution_duration]).to be_nil
         expect(payload[:current_execution_duration]).to be_a(Numeric)
-        expect(payload[:current_execution_duration]).to be_within(5.0).of(60.0)  # ~1 minute
+        expect(payload[:current_execution_duration]).to be_within(5.0).of(60.0) # ~1 minute
 
         # Step statistics
         expect(payload[:total_steps]).to eq(4)
-        expect(payload[:completed_steps]).to eq(0)  # No steps completed
+        expect(payload[:completed_steps]).to eq(0) # No steps completed
         expect(payload[:failed_steps]).to eq(0)
-        expect(payload[:pending_steps]).to eq(4)  # All steps pending
+        expect(payload[:pending_steps]).to eq(4) # All steps pending
       end
     end
 
@@ -279,7 +279,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
     let(:context) do
       {
         task_id: 'orchestration-task',
-        step_ids: ['step1', 'step2'],
+        step_ids: %w[step1 step2],
         processing_mode: 'concurrent'
       }
     end
@@ -298,7 +298,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
 
       # Context is merged in
       expect(payload[:task_id]).to eq('orchestration-task')
-      expect(payload[:step_ids]).to eq(['step1', 'step2'])
+      expect(payload[:step_ids]).to eq(%w[step1 step2])
       expect(payload[:processing_mode]).to eq('concurrent')
     end
   end

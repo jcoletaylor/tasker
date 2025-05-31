@@ -379,13 +379,15 @@
 60
 61
 62
-63</pre>
+63
+64</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 60</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_destroy'>destroy</span>
-  <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_update!'>update!</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>status:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#CANCELLED-constant" title="Tasker::Constants::TaskStatuses::CANCELLED (constant)">CANCELLED</a></span></span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='comment'># Use state machine to transition task to cancelled
+</span>  <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_transition_to!'>transition_to!</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#CANCELLED-constant" title="Tasker::Constants::TaskStatuses::CANCELLED (constant)">CANCELLED</a></span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='label'>status:</span> <span class='symbol'>:ok</span><span class='comma'>,</span> <span class='label'>json:</span> <span class='lbrace'>{</span> <span class='label'>cancelled:</span> <span class='kw'>true</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -533,7 +535,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:23 2025 by
+  Generated on Sat May 31 00:05:09 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

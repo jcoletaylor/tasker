@@ -40,9 +40,7 @@ module Tasker
         def subscribe_to_all_events(publisher)
           event_subscriptions.each do |event_constant, handler_method|
             # Filter at subscription time instead of runtime for better performance
-            if should_record_event?(event_constant)
-              publisher.subscribe(event_constant, &method(handler_method))
-            end
+            publisher.subscribe(event_constant, &method(handler_method)) if should_record_event?(event_constant)
           end
         end
 
@@ -101,7 +99,7 @@ module Tasker
 
         # Handle task cancellation events
         def handle_task_cancelled(event)
-          # Note: We'll need to add this constant when task cancellation is implemented
+          # NOTE: We'll need to add this constant when task cancellation is implemented
           event_name = 'task.cancelled'
           return unless should_record_event?(event_name)
 
@@ -167,7 +165,7 @@ module Tasker
 
         # Handle workflow iteration events
         def handle_workflow_iteration(event)
-          # Note: We'll need to add this constant when workflow iteration events are implemented
+          # NOTE: We'll need to add this constant when workflow iteration events are implemented
           event_name = 'workflow.iteration'
           return unless should_record_event?(event_name)
 
@@ -180,7 +178,7 @@ module Tasker
 
         # Handle batch processing events
         def handle_batch_processed(event)
-          # Note: We'll need to add this constant when batch processing events are implemented
+          # NOTE: We'll need to add this constant when batch processing events are implemented
           event_name = 'workflow.batch_processed'
           return unless should_record_event?(event_name)
 
@@ -452,7 +450,7 @@ module Tasker
 
           # Check if this specific event type is filtered out
           filtered_events = telemetry_config[:filtered_events] || []
-          !filtered_events.include?(event_name)
+          filtered_events.exclude?(event_name)
         end
 
         # Convert event identifier (constant or string) to a standard string format
@@ -466,19 +464,19 @@ module Tasker
           # This creates a mapping like Tasker::Constants::TaskEvents::COMPLETED => 'task.completed'
           case event_identifier.to_s
           when /Tasker::Constants::TaskEvents::(\w+)/
-            "task.#{$1.downcase}"
+            "task.#{::Regexp.last_match(1).downcase}"
           when /Tasker::Constants::StepEvents::(\w+)/
-            "step.#{$1.downcase}"
+            "step.#{::Regexp.last_match(1).downcase}"
           when /Tasker::Constants::WorkflowEvents::(\w+)/
-            "workflow.#{$1.downcase}"
+            "workflow.#{::Regexp.last_match(1).downcase}"
           when /Tasker::Constants::ObservabilityEvents::Task::(\w+)/
-            "task.#{$1.downcase}"
+            "task.#{::Regexp.last_match(1).downcase}"
           when /Tasker::Constants::ObservabilityEvents::Step::(\w+)/
-            "step.#{$1.downcase}"
+            "step.#{::Regexp.last_match(1).downcase}"
           when /Tasker::LifecycleEvents::Events::Task::(\w+)/
-            "task.#{$1.downcase}"
+            "task.#{::Regexp.last_match(1).downcase}"
           when /Tasker::LifecycleEvents::Events::Step::(\w+)/
-            "step.#{$1.downcase}"
+            "step.#{::Regexp.last_match(1).downcase}"
           else
             # Fallback: use the constant name directly
             event_identifier.to_s.split('::').last.downcase
@@ -538,7 +536,7 @@ module Tasker
         def safe_get(event, key, fallback = nil)
           if event.respond_to?(:key?) && event.key?(key)
             event[key]
-          elsif event.respond_to?(:has_key?) && event.has_key?(key.to_s)
+          elsif event.respond_to?(:has_key?) && event.key?(key.to_s)
             event[key.to_s]
           else
             fallback
@@ -620,12 +618,8 @@ module Tasker
             timestamp.to_time
           when String
             if timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
-              Time.zone.parse(timestamp)
-            else
-              Time.parse(timestamp)
             end
-          else
-            nil
+            Time.zone.parse(timestamp)
           end
         rescue StandardError
           nil

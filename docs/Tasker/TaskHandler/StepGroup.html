@@ -447,6 +447,54 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#debug_state-instance_method" title="#debug_state (instance method)">#<strong>debug_state</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get debugging state information for the step group.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#error%3F-instance_method" title="#error? (instance method)">#<strong>error?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if the task has any steps in error states.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#find_incomplete_steps-instance_method" title="#find_incomplete_steps (instance method)">#<strong>find_incomplete_steps</strong>(steps, visited_step_ids)  &#x21d2; void </a>
     
 
@@ -1374,6 +1422,156 @@
 </div>
     
       <div class="method_details ">
+  <h3 class="signature " id="debug_state-instance_method">
+  
+    #<strong>debug_state</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get debugging state information for the step group</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Debug information about the step group state</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/step_group.rb', line 167</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_debug_state'>debug_state</span>
+  <span class='lbrace'>{</span>
+    <span class='label'>total_steps:</span> <span class='ivar'>@sequence</span><span class='period'>.</span><span class='id identifier rubyid_steps'>steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>prior_incomplete_count:</span> <span class='id identifier rubyid_prior_incomplete_steps'>prior_incomplete_steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>complete_this_pass_count:</span> <span class='id identifier rubyid_this_pass_complete_steps'>this_pass_complete_steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>still_incomplete_count:</span> <span class='id identifier rubyid_still_incomplete_steps'>still_incomplete_steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>still_working_count:</span> <span class='id identifier rubyid_still_working_steps'>still_working_steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>step_statuses:</span> <span class='ivar'>@sequence</span><span class='period'>.</span><span class='id identifier rubyid_steps'>steps</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='lbrace'>{</span> <span class='label'>id:</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span><span class='comma'>,</span>
+    <span class='label'>is_complete:</span> <span class='id identifier rubyid_complete?'>complete?</span><span class='comma'>,</span>
+    <span class='label'>is_pending:</span> <span class='id identifier rubyid_pending?'>pending?</span><span class='comma'>,</span>
+    <span class='label'>has_errors:</span> <span class='id identifier rubyid_error?'>error?</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="error?-instance_method">
+  
+    #<strong>error?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if the task has any steps in error states</p>
+
+<p>A task has errors if any steps are in terminal error states that can’t be retried.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if the task has error steps</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+155
+156
+157
+158
+159
+160
+161
+162</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/step_group.rb', line 155</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_error?'>error?</span>
+  <span class='comment'># Use efficient database query with existing failed scope
+</span>  <span class='id identifier rubyid_step_ids'>step_ids</span> <span class='op'>=</span> <span class='ivar'>@sequence</span><span class='period'>.</span><span class='id identifier rubyid_steps'>steps</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>if</span> <span class='id identifier rubyid_step_ids'>step_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='comment'># Query for any steps in error state using the failed scope
+</span>  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_failed'>failed</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_step_ids'>step_ids</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
   <h3 class="signature " id="find_incomplete_steps-instance_method">
   
     #<strong>find_incomplete_steps</strong>(steps, visited_step_ids)  &#x21d2; <tt>void</tt> 
@@ -1540,7 +1738,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:23 2025 by
+  Generated on Sat May 31 00:05:08 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

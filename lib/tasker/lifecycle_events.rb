@@ -43,7 +43,7 @@ module Tasker
       # @param context [Hash] The context data associated with the event
       # @yield [void] Optional block to execute within the event context
       # @return [Object, nil] The result of the block if given, otherwise nil
-      def fire(event, context = {}, &block)
+      def fire(event, context = {})
         # Add timing information to context
         started_at = Time.current
         context = context.merge(fired_at: started_at)
@@ -97,7 +97,7 @@ module Tasker
       end
 
       # Backward compatibility methods (delegate to dry-events)
-      alias_method :fire_with_span, :fire
+      alias fire_with_span fire
     end
 
     # Nested event name constants for backward compatibility

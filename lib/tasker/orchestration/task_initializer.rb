@@ -24,9 +24,7 @@ module Tasker
         # @param task_request [Tasker::Types::TaskRequest] The task request
         # @param task_handler [Object] The task handler instance for schema validation
         # @return [Tasker::Task] The created task
-        def initialize_task!(task_request, task_handler)
-          new.initialize_task!(task_request, task_handler)
-        end
+        delegate :initialize_task!, to: :new
 
         # Start a task's execution
         #
@@ -34,9 +32,7 @@ module Tasker
         #
         # @param task [Tasker::Task] The task to start
         # @return [Boolean] True if the task was started successfully
-        def start_task!(task)
-          new.start_task!(task)
-        end
+        delegate :start_task!, to: :new
       end
 
       # Initialize a new task from a task request

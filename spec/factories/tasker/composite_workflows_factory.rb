@@ -10,7 +10,6 @@ FactoryBot.define do
     tags { %w[api integration testing] }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { cart_id: 42, api_endpoint: 'https://api.example.com' } }
 
     transient do
       with_dependencies { true }
@@ -18,7 +17,7 @@ FactoryBot.define do
     end
 
     # Use find_or_create pattern for named_task to avoid conflicts
-    before(:create) do |task, evaluator|
+    before(:create) do |task, _evaluator|
       # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
       # This handles cases where the named_task already exists from previous tests
       api_named_task = Tasker::NamedTask.find_or_create_by!(name: 'api_integration_example') do |named_task|
@@ -110,7 +109,6 @@ FactoryBot.define do
     reason { 'testing' }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { test: true, linear_workflow: true } }
 
     transient do
       step_count { 3 }
@@ -145,7 +143,6 @@ FactoryBot.define do
     reason { 'parallel_processing' }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { test: true, parallel_workflow: true, batch_size: 100 } }
 
     transient do
       parallel_count { 3 }
@@ -186,7 +183,6 @@ FactoryBot.define do
     named_task
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { test: true, with_transitions: true } }
 
     transient do
       transition_sequence { :complete } # :complete, :error, :retry, :cancel
@@ -289,7 +285,6 @@ FactoryBot.define do
     tags { %w[dummy testing] }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { dummy: true } }
 
     transient do
       step_states { :pending }
@@ -333,8 +328,10 @@ FactoryBot.define do
         if evaluator.step_states
           create(:workflow_step, evaluator.step_states, task: task, named_step: step_one, inputs: { dummy: true })
           ws2 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_two, inputs: { dummy: true })
-          ws3 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_three, inputs: { dummy: true })
-          ws4 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_four, inputs: { dummy: true })
+          ws3 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_three,
+                                                              inputs: { dummy: true })
+          ws4 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_four,
+                                                              inputs: { dummy: true })
         else
           # Create workflow steps without any state trait (for orchestration testing)
           create(:workflow_step, task: task, named_step: step_one, inputs: { dummy: true })

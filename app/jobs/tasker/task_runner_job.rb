@@ -13,9 +13,7 @@ module Tasker
     def perform(task_id)
       # Clear any pending reenqueue tracking when job starts
       # This ensures we don't have stale tracking entries
-      if defined?(Tasker::Orchestration::TaskFinalizer)
-        Tasker::Orchestration::TaskFinalizer.complete_reenqueue(task_id)
-      end
+      Tasker::Orchestration::TaskFinalizer.complete_reenqueue(task_id) if defined?(Tasker::Orchestration::TaskFinalizer)
 
       task = Tasker::Task.where(task_id: task_id).first
       return unless task
@@ -24,7 +22,7 @@ module Tasker
 
       # Since orchestration is guaranteed to be initialized at startup,
       # we can directly use it without fallback checks
-      Rails.logger.debug "TaskRunnerJob: Using event-driven orchestration for task #{task_id}"
+      Rails.logger.debug { "TaskRunnerJob: Using event-driven orchestration for task #{task_id}" }
       result = Tasker::Orchestration::Coordinator.process_task(task_id)
 
       unless result

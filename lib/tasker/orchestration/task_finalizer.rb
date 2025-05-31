@@ -23,12 +23,12 @@ module Tasker
       # @param sequence [Tasker::Types::StepSequence] The step sequence
       # @param processed_steps [Array<Tasker::WorkflowStep>] Recently processed steps
       # @return [Boolean] True if task is blocked by errors
-      def blocked_by_errors?(task, sequence, processed_steps)
+      def blocked_by_errors?(task, _sequence, _processed_steps)
         # Get steps that are in error state using the state machine scope
         error_steps = task.workflow_steps.failed
 
         if error_steps.exists?
-          Rails.logger.debug("TaskFinalizer: Task #{task.task_id} is blocked by #{error_steps.count} error steps")
+          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} is blocked by #{error_steps.count} error steps" }
 
           # Log instead of firing unregistered event
           Rails.logger.info("TaskFinalizer: Task #{task.task_id} blocked by #{error_steps.count} error steps: #{error_steps.joins(:named_step).pluck('tasker_named_steps.name')}")
@@ -44,7 +44,7 @@ module Tasker
       # @param task [Tasker::Task] The task to finalize
       # @param sequence [Tasker::Types::StepSequence] The step sequence
       # @param processed_steps [Array<Tasker::WorkflowStep>] All processed steps
-      def finalize_task_with_steps(task, sequence, processed_steps)
+      def finalize_task_with_steps(task, _sequence, processed_steps)
         # Fire finalization started event through orchestrator
         publish_event(
           Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED,
@@ -76,12 +76,11 @@ module Tasker
         step_group = Tasker::TaskHandler::StepGroup.build(task, sequence, [])
 
         # Express framework-level decisions through focused method calls
-        case
-        when step_group.complete?
+        if step_group.complete?
           finalize_complete_task(task)
-        when step_group.error?
+        elsif step_group.error?
           finalize_error_task(task, step_group)
-        when step_group.pending?
+        elsif step_group.pending?
           reenqueue_task(task)
         else
           handle_unclear_task_state(task, step_group)

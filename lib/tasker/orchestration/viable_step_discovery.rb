@@ -47,7 +47,7 @@ module Tasker
           )
         end
 
-        Rails.logger.debug("ViableStepDiscovery: Found #{viable_steps.size} viable steps for task #{task.task_id}")
+        Rails.logger.debug { "ViableStepDiscovery: Found #{viable_steps.size} viable steps for task #{task.task_id}" }
         viable_steps
       end
     end

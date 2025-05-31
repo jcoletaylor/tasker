@@ -79,17 +79,19 @@ module Tasker
       guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step|
         # Allow idempotent transitions (already in progress) or valid start transitions
         current_status = step.state_machine.current_state
-        Rails.logger.debug "StepStateMachine: Guard clause for IN_PROGRESS - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::IN_PROGRESS}"
+        Rails.logger.debug do
+          "StepStateMachine: Guard clause for IN_PROGRESS - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::IN_PROGRESS}"
+        end
 
         if current_status == Constants::WorkflowStepStatuses::IN_PROGRESS
-          Rails.logger.debug "StepStateMachine: Allowing idempotent transition to IN_PROGRESS"
+          Rails.logger.debug 'StepStateMachine: Allowing idempotent transition to IN_PROGRESS'
           return true # Idempotent
         end
 
         # Only allow start if step is pending AND dependencies are met
         result = current_status == Constants::WorkflowStepStatuses::PENDING &&
-          StepStateMachine.step_dependencies_met?(step)
-        Rails.logger.debug "StepStateMachine: Guard clause result for IN_PROGRESS: #{result}"
+                 StepStateMachine.step_dependencies_met?(step)
+        Rails.logger.debug { "StepStateMachine: Guard clause result for IN_PROGRESS: #{result}" }
         result
       end
 
@@ -105,17 +107,19 @@ module Tasker
       guard_transition(to: Constants::WorkflowStepStatuses::ERROR) do |step|
         # Allow idempotent transitions (already in error) or valid error transitions
         current_status = step.state_machine.current_state
-        Rails.logger.debug "StepStateMachine: Guard clause for ERROR - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::ERROR}"
+        Rails.logger.debug do
+          "StepStateMachine: Guard clause for ERROR - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::ERROR}"
+        end
 
         if current_status == Constants::WorkflowStepStatuses::ERROR
-          Rails.logger.debug "StepStateMachine: Allowing idempotent transition to ERROR"
+          Rails.logger.debug 'StepStateMachine: Allowing idempotent transition to ERROR'
           return true # Idempotent
         end
 
         # Allow error transition from in_progress or pending state
         result = [Constants::WorkflowStepStatuses::IN_PROGRESS,
-         Constants::WorkflowStepStatuses::PENDING].include?(current_status)
-        Rails.logger.debug "StepStateMachine: Guard clause result for ERROR: #{result}"
+                  Constants::WorkflowStepStatuses::PENDING].include?(current_status)
+        Rails.logger.debug { "StepStateMachine: Guard clause result for ERROR: #{result}" }
         result
       end
 
@@ -259,7 +263,7 @@ module Tasker
         # @param event_name [String] The event name
         # @param context [Hash] The base context
         # @return [Hash] Enhanced context with standardized payload structure
-        def build_standardized_payload(event_name, context)
+        def build_standardized_payload(_event_name, context)
           # Base payload with core identifiers
           enhanced_context = {
             # Core identifiers (always present)
@@ -287,10 +291,10 @@ module Tasker
 
           # Merge in any additional context provided
           enhanced_context.merge!(context.except(
-            :task_id, :step_id, :step_name, :from_state, :to_state,
-            :started_at, :completed_at, :execution_duration,
-            :error_message, :exception_class, :attempt_number, :transitioned_at
-          ))
+                                    :task_id, :step_id, :step_name, :from_state, :to_state,
+                                    :started_at, :completed_at, :execution_duration,
+                                    :error_message, :exception_class, :attempt_number, :transitioned_at
+                                  ))
 
           enhanced_context
         end

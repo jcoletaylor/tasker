@@ -74,7 +74,7 @@ module Tasker
       end
 
       # Guard clauses for transition validation
-      guard_transition(to: Constants::TaskStatuses::PENDING) do |task, transition|
+      guard_transition(to: Constants::TaskStatuses::PENDING) do |task, _transition|
         # Allow idempotent transitions (already pending) or valid transitions
         current_status = task.state_machine.current_state
         current_status == Constants::TaskStatuses::PENDING || # Idempotent
@@ -84,11 +84,10 @@ module Tasker
       guard_transition(to: Constants::TaskStatuses::IN_PROGRESS) do |task|
         # Allow idempotent transitions (already in progress) or valid transitions from pending
         current_status = task.state_machine.current_state
-        current_status == Constants::TaskStatuses::IN_PROGRESS || # Idempotent
-          current_status == Constants::TaskStatuses::PENDING
+        [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::PENDING].include?(current_status)
       end
 
-      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, transition|
+      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, _transition|
         # Allow idempotent transitions (already complete) or valid completion
         current_status = task.state_machine.current_state
         return true if current_status == Constants::TaskStatuses::COMPLETE # Idempotent
@@ -98,7 +97,7 @@ module Tasker
           !TaskStateMachine.task_has_incomplete_steps?(task)
       end
 
-      guard_transition(to: Constants::TaskStatuses::ERROR) do |task, transition|
+      guard_transition(to: Constants::TaskStatuses::ERROR) do |task, _transition|
         # Allow idempotent transitions (already in error) or valid error transitions
         current_status = task.state_machine.current_state
         return true if current_status == Constants::TaskStatuses::ERROR # Idempotent

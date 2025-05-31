@@ -24,7 +24,10 @@ module Tasker
       # @return [Object] The step handler
       # @raise [Tasker::ProceduralError] If no handler is registered for the step
       def get_step_handler_from_task_handler(step, task_handler)
-        raise(Tasker::ProceduralError, "No registered class for #{step.name}") unless task_handler.step_handler_class_map[step.name]
+        unless task_handler.step_handler_class_map[step.name]
+          raise(Tasker::ProceduralError,
+                "No registered class for #{step.name}")
+        end
 
         handler_config = task_handler.step_handler_config_map[step.name]
         handler_class = task_handler.step_handler_class_map[step.name].to_s.camelize.constantize
@@ -53,9 +56,9 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       def establish_step_dependencies_and_defaults_via_handler(task, steps, task_handler)
         # Call the task handler's hook method if it exists
-        if task_handler.respond_to?(:establish_step_dependencies_and_defaults)
-          task_handler.establish_step_dependencies_and_defaults(task, steps)
-        end
+        return unless task_handler.respond_to?(:establish_step_dependencies_and_defaults)
+
+        task_handler.establish_step_dependencies_and_defaults(task, steps)
       end
 
       # Update annotations using task handler hook
@@ -65,9 +68,9 @@ module Tasker
       # @param steps [Array<Tasker::WorkflowStep>] The processed steps
       # @param task_handler [Object] The task handler instance
       def update_annotations_via_handler(task, sequence, steps, task_handler)
-        if task_handler.respond_to?(:update_annotations)
-          task_handler.update_annotations(task, sequence, steps)
-        end
+        return unless task_handler.respond_to?(:update_annotations)
+
+        task_handler.update_annotations(task, sequence, steps)
       end
 
       # Validate context using task handler schema
@@ -91,7 +94,7 @@ module Tasker
       # @return [Boolean] True if concurrent processing is enabled
       def supports_concurrent_processing?(task_handler)
         task_handler.respond_to?(:use_concurrent_processing?) &&
-        task_handler.use_concurrent_processing?
+          task_handler.use_concurrent_processing?
       end
 
       # Get task handler instance for a task

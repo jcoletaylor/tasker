@@ -11,7 +11,6 @@ FactoryBot.define do
     requested_at { Time.current }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { test: true } }
 
     # Default state - managed by state machine
     complete { false }
@@ -95,7 +94,6 @@ FactoryBot.define do
       source_system { 'ecommerce_api' }
       reason { 'process_cart_checkout' }
       # ✅ FIX: Add cart_id context that the test expects
-      context { { cart_id: 42, api_endpoint: 'https://api.example.com' } }
     end
 
     trait :data_processing do

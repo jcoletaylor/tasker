@@ -34,7 +34,7 @@ module Tasker
         def initialize!
           return if @initialized
 
-          Rails.logger.info("Tasker::Orchestration::Coordinator: Initializing orchestration system")
+          Rails.logger.info('Tasker::Orchestration::Coordinator: Initializing orchestration system')
 
           # Initialize core orchestration components
           setup_orchestrator
@@ -44,7 +44,7 @@ module Tasker
           setup_telemetry_subscriber
 
           @initialized = true
-          Rails.logger.info("Tasker::Orchestration::Coordinator: Orchestration system initialized successfully")
+          Rails.logger.info('Tasker::Orchestration::Coordinator: Orchestration system initialized successfully')
         end
 
         # Reset initialization state (primarily for testing)
@@ -97,18 +97,17 @@ module Tasker
         # Set up the telemetry subscriber for comprehensive observability
         def setup_telemetry_subscriber
           # Ensure telemetry subscriber is connected to the lifecycle events system
-          begin
-            if defined?(Tasker::Events::Subscribers::TelemetrySubscriber)
-              Tasker::LifecycleEvents.publisher.tap do |publisher|
-                Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
-              end
-              Rails.logger.debug("Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully")
-            else
-              Rails.logger.debug("Tasker::Orchestration::Coordinator: TelemetrySubscriber not available")
+
+          if defined?(Tasker::Events::Subscribers::TelemetrySubscriber)
+            Tasker::LifecycleEvents.publisher.tap do |publisher|
+              Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
             end
-          rescue StandardError => e
-            Rails.logger.error("Tasker::Orchestration::Coordinator: Failed to setup telemetry subscriber: #{e.message}")
+            Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully')
+          else
+            Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber not available')
           end
+        rescue StandardError => e
+          Rails.logger.error("Tasker::Orchestration::Coordinator: Failed to setup telemetry subscriber: #{e.message}")
         end
       end
     end

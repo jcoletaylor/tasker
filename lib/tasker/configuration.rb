@@ -66,19 +66,19 @@ module Tasker
     def default_telemetry_config
       {
         # Batch processing options
-        batch_events: false,         # Set to true to enable event batching
+        batch_events: false, # Set to true to enable event batching
         buffer_size: 100,           # Maximum events to buffer before flushing
         flush_interval: 5.seconds,  # Maximum time between flushes
 
         # Event filtering options
-        filtered_events: [],        # List of event names to skip recording
+        filtered_events: [], # List of event names to skip recording
 
         # Performance options
-        enable_memoization: true,   # Cache frequently accessed attributes
+        enable_memoization: true, # Cache frequently accessed attributes
 
         # Production optimizations
-        async_processing: false,    # Process events asynchronously (future enhancement)
-        sampling_rate: 1.0         # Sample rate for events (1.0 = 100%, 0.1 = 10%)
+        async_processing: false, # Process events asynchronously (future enhancement)
+        sampling_rate: 1.0 # Sample rate for events (1.0 = 100%, 0.1 = 10%)
       }
     end
 

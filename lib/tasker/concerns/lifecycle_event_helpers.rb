@@ -70,7 +70,7 @@ module Tasker
         # Workflow events - use existing WorkflowEvents constants
         when :viable_steps_discovery_started
           # No existing constant - use a related one or raise error
-          raise ArgumentError, "Event :viable_steps_discovery_started not registered. Use existing workflow events."
+          raise ArgumentError, 'Event :viable_steps_discovery_started not registered. Use existing workflow events.'
         when :viable_steps_discovered
           Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED
         when :viable_steps_processing_started
@@ -85,7 +85,7 @@ module Tasker
           Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED
         when :task_blocked_by_errors
           # No existing constant - raise error to indicate missing registration
-          raise ArgumentError, "Event :task_blocked_by_errors not registered. Add to WorkflowEvents constants."
+          raise ArgumentError, 'Event :task_blocked_by_errors not registered. Add to WorkflowEvents constants.'
         when :task_requeued
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED
 

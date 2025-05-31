@@ -79,9 +79,9 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       # Verify the orchestration worked by checking task processing
       task.reload
       expect(task.status).to be_in([
-        Tasker::Constants::TaskStatuses::IN_PROGRESS,
-        Tasker::Constants::TaskStatuses::COMPLETE
-      ])
+                                     Tasker::Constants::TaskStatuses::IN_PROGRESS,
+                                     Tasker::Constants::TaskStatuses::COMPLETE
+                                   ])
     end
 
     it 'demonstrates the declarative vs imperative approach' do
@@ -328,9 +328,9 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       # Verify task processing worked
       task.reload
       expect(task.status).to be_in([
-        Tasker::Constants::TaskStatuses::IN_PROGRESS,
-        Tasker::Constants::TaskStatuses::COMPLETE
-      ])
+                                     Tasker::Constants::TaskStatuses::IN_PROGRESS,
+                                     Tasker::Constants::TaskStatuses::COMPLETE
+                                   ])
 
       # That's it! The event-driven system handles:
       # ✅ Step dependency resolution

@@ -18,14 +18,14 @@ class MinimalTestHandler
     ]
   end
 
-  def get_step_handler(step)
+  def get_step_handler(_step)
     MinimalTestStepHandler.new
   end
 end
 
 # Simple test step handler that actually does work
 class MinimalTestStepHandler
-  def handle(task, sequence, step)
+  def handle(task, _sequence, step)
     # Simple test logic - just mark as processed with realistic data
     step.results = {
       test: true,

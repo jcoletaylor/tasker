@@ -33,7 +33,7 @@ module Tasker
     delegate :name, to: :named_step
 
     # Optimized scopes for efficient querying using state machine transitions
-    scope :completed, -> {
+    scope :completed, lambda {
       joins(:workflow_step_transitions)
         .where(
           workflow_step_transitions: {
@@ -46,7 +46,7 @@ module Tasker
         )
     }
 
-    scope :failed, -> {
+    scope :failed, lambda {
       joins(:workflow_step_transitions)
         .where(
           workflow_step_transitions: {
@@ -56,26 +56,24 @@ module Tasker
         )
     }
 
-    scope :pending, -> {
+    scope :pending, lambda {
       # Include steps with no transitions (initial state) AND steps with pending/in_progress transitions
-      left_joins(:workflow_step_transitions)
-        .where(
-          workflow_step_transitions: { id: nil }  # No transitions (initial pending state)
-        ).or(
-          joins(:workflow_step_transitions)
-            .where(
-              workflow_step_transitions: {
-                most_recent: true,
-                to_state: [
-                  Constants::WorkflowStepStatuses::PENDING,
-                  Constants::WorkflowStepStatuses::IN_PROGRESS
-                ]
-              }
-            )
-        )
+      where.missing(:workflow_step_transitions)
+           .or(
+             joins(:workflow_step_transitions)
+               .where(
+                 workflow_step_transitions: {
+                   most_recent: true,
+                   to_state: [
+                     Constants::WorkflowStepStatuses::PENDING,
+                     Constants::WorkflowStepStatuses::IN_PROGRESS
+                   ]
+                 }
+               )
+           )
     }
 
-    scope :for_task, ->(task) {
+    scope :for_task, lambda { |task|
       where(task_id: task.task_id)
     }
 
@@ -110,7 +108,7 @@ module Tasker
         failed_steps: failed_count,
         pending_steps: pending_count,
         latest_completion_time: latest_completion_time,
-        all_complete: completed_count == total_steps && total_steps > 0
+        all_complete: completed_count == total_steps && total_steps.positive?
       }
     end
 

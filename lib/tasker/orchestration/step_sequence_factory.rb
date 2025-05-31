@@ -17,18 +17,14 @@ module Tasker
         # @param task [Tasker::Task] The task to get the sequence for
         # @param task_handler [Object] The task handler instance
         # @return [Tasker::Types::StepSequence] The sequence of workflow steps
-        def get_sequence(task, task_handler)
-          new.get_sequence(task, task_handler)
-        end
+        delegate :get_sequence, to: :new
 
         # Create sequence for a task (used during task initialization)
         #
         # @param task [Tasker::Task] The task to create sequence for
         # @param task_handler [Object] The task handler instance
         # @return [Tasker::Types::StepSequence] The created sequence
-        def create_sequence_for_task!(task, task_handler)
-          new.create_sequence_for_task!(task, task_handler)
-        end
+        delegate :create_sequence_for_task!, to: :new
       end
 
       # Get the step sequence for a task
@@ -62,9 +58,9 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       def establish_step_dependencies_and_defaults(task, steps, task_handler)
         # Call the task handler's hook method if it exists
-        if task_handler.respond_to?(:establish_step_dependencies_and_defaults)
-          task_handler.establish_step_dependencies_and_defaults(task, steps)
-        end
+        return unless task_handler.respond_to?(:establish_step_dependencies_and_defaults)
+
+        task_handler.establish_step_dependencies_and_defaults(task, steps)
       end
     end
   end

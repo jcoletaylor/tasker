@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Debug script to understand step state during creation
-puts "=== Step Creation Debug Script ==="
+puts '=== Step Creation Debug Script ==='
 
 # Load Rails environment
 require_relative 'spec/dummy/config/environment'
@@ -59,7 +61,7 @@ steps.each_with_index do |step, index|
   end
   puts "  - Processed: #{step.processed}"
   puts "  - In process: #{step.in_process}"
-  puts ""
+  puts ''
 end
 
 puts "\n=== Establishing dependencies ==="
@@ -73,7 +75,7 @@ task.workflow_steps.each_with_index do |step, index|
   puts "  - State machine current state: #{step.state_machine.current_state}"
   puts "  - Transitions count: #{step.workflow_step_transitions.count}"
   puts "  - Processed: #{step.processed}"
-  puts ""
+  puts ''
 end
 
-puts "=== Debug script complete ==="
+puts '=== Debug script complete ==='

@@ -147,11 +147,11 @@ module Tasker
           payload = {}
 
           # Calculate execution duration using last_attempted_at and processed_at
-          if step.last_attempted_at && step.processed_at
-            payload[:execution_duration] = (step.processed_at - step.last_attempted_at).round(3)
-          else
-            payload[:execution_duration] = 0.0
-          end
+          payload[:execution_duration] = if step.last_attempted_at && step.processed_at
+                                           (step.processed_at - step.last_attempted_at).round(3)
+                                         else
+                                           0.0
+                                         end
 
           # Include step results if available
           payload[:step_results] = step.results if step.results.present?
@@ -212,10 +212,10 @@ module Tasker
           if stats[:all_complete] && task.created_at && stats[:latest_completion_time]
             # True total execution duration - complete workflow
             payload[:total_execution_duration] = (stats[:latest_completion_time] - task.created_at).round(3)
-            payload[:current_execution_duration] = nil  # Not applicable for completed tasks
+            payload[:current_execution_duration] = nil # Not applicable for completed tasks
           elsif task.created_at
             # Current execution duration - task still in progress
-            payload[:total_execution_duration] = nil  # Not available until completion
+            payload[:total_execution_duration] = nil # Not available until completion
             payload[:current_execution_duration] = (Time.current - task.created_at).round(3)
           else
             # No timing information available
@@ -236,7 +236,7 @@ module Tasker
         #
         # @param task [Task] The completed task
         # @return [Hash] Completion-specific payload fields
-        def build_task_completion_specific_payload(task)
+        def build_task_completion_specific_payload(_task)
           {
             # Could add completion-specific metadata here if needed
             # For now, all the important data is in the timing/statistics method
@@ -248,7 +248,7 @@ module Tasker
         # @param task [Task] The failed task
         # @param additional_context [Hash] Additional context
         # @return [Hash] Task failure payload fields
-        def build_task_failure_payload(task, additional_context = {})
+        def build_task_failure_payload(_task, additional_context = {})
           payload = {}
 
           # Extract error information
@@ -259,8 +259,8 @@ module Tasker
 
           # Default error message if not provided
           payload[:error_message] = additional_context[:error_message] ||
-                                  additional_context[:error] ||
-                                  'Task execution failed'
+                                    additional_context[:error] ||
+                                    'Task execution failed'
 
           payload
         end
@@ -286,19 +286,19 @@ module Tasker
 
           # Primary error message (standardized key for TelemetrySubscriber)
           error_payload[:error_message] = additional_context[:error_message] ||
-                                        additional_context[:error] ||
-                                        step.results&.dig('error') ||
-                                        step.results&.dig(:error) ||
-                                        'Unknown error'
+                                          additional_context[:error] ||
+                                          step.results&.dig('error') ||
+                                          step.results&.dig(:error) ||
+                                          'Unknown error'
 
           # Exception class if available
-          if additional_context[:exception_object]
-            error_payload[:exception_class] = additional_context[:exception_object].class.name
-          elsif additional_context[:exception_class]
-            error_payload[:exception_class] = additional_context[:exception_class]
-          else
-            error_payload[:exception_class] = 'StandardError'
-          end
+          error_payload[:exception_class] = if additional_context[:exception_object]
+                                              additional_context[:exception_object].class.name
+                                            elsif additional_context[:exception_class]
+                                              additional_context[:exception_class]
+                                            else
+                                              'StandardError'
+                                            end
 
           # Backtrace if available
           if additional_context[:backtrace]

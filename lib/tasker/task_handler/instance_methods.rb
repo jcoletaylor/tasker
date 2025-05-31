@@ -177,9 +177,7 @@ module Tasker
         task_finalizer = Tasker::Orchestration::TaskFinalizer.new
 
         # Call update_annotations hook before finalizing
-        if self.respond_to?(:update_annotations)
-          self.update_annotations(task, sequence, processed_steps)
-        end
+        update_annotations(task, sequence, processed_steps) if respond_to?(:update_annotations)
 
         task_finalizer.finalize_task_with_steps(task, sequence, processed_steps)
       end
