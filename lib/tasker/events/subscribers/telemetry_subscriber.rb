@@ -13,7 +13,7 @@ module Tasker
       # - Integrating with existing instrumentation
       # - Providing defensive handling for missing payload keys
       # - Optimized event collection with batching and filtering
-      # - Using centralized event name constants for consistency
+      # - Using centralized event name constants for consistency throughout
       class TelemetrySubscriber
         # Buffer for batch event collection (if enabled)
         attr_reader :event_buffer, :last_flush_time
@@ -39,24 +39,39 @@ module Tasker
         # @param publisher [Tasker::Events::Publisher] The event publisher
         def subscribe_to_all_events(publisher)
           event_subscriptions.each do |event_constant, handler_method|
-            publisher.subscribe(event_constant, &method(handler_method))
+            # Filter at subscription time instead of runtime for better performance
+            if should_record_event?(event_constant)
+              publisher.subscribe(event_constant, &method(handler_method))
+            end
           end
         end
 
         # Handle task start events
+        def handle_task_initialized(event)
+          event_constant = Tasker::LifecycleEvents::Events::Task::INITIALIZE
+
+          attributes = extract_core_attributes(event).merge(
+            task_name: safe_get(event, :task_name, 'unknown_task'),
+            status: safe_get(event, :status, 'initialized')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        # Handle task start events
         def handle_task_started(event)
-          return unless should_record_event?('task.started')
+          event_constant = Tasker::LifecycleEvents::Events::Task::START
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task')
           )
 
-          record_metric('task.started', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle task completion events
         def handle_task_completed(event)
-          return unless should_record_event?('task.completed')
+          event_constant = Tasker::Constants::TaskEvents::COMPLETED
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task'),
@@ -67,12 +82,12 @@ module Tasker
             completed_steps: safe_get(event, :completed_steps, 0)
           )
 
-          record_metric('task.completed', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle task failure events
         def handle_task_failed(event)
-          return unless should_record_event?('task.failed')
+          event_constant = Tasker::Constants::TaskEvents::FAILED
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task'),
@@ -81,43 +96,37 @@ module Tasker
             failed_steps: safe_get(event, :failed_steps, 0)
           )
 
-          record_metric('task.failed', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle task cancellation events
         def handle_task_cancelled(event)
-          return unless should_record_event?('task.cancelled')
+          # Note: We'll need to add this constant when task cancellation is implemented
+          event_name = 'task.cancelled'
+          return unless should_record_event?(event_name)
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task')
           )
 
-          record_metric('task.cancelled', attributes)
-        end
-
-        # Handle step start events
-        def handle_step_started(event)
-          return unless should_record_event?('step.started')
-
-          attributes = extract_step_attributes(event)
-          record_metric('step.started', attributes)
+          record_metric(event_name, attributes)
         end
 
         # Handle step completion events
         def handle_step_completed(event)
-          return unless should_record_event?('step.completed')
+          event_constant = Tasker::Constants::StepEvents::COMPLETED
 
           attributes = extract_step_attributes(event).merge(
             execution_duration: safe_get(event, :execution_duration, 0.0),
             attempt_number: safe_get(event, :attempt_number, 1)
           )
 
-          record_metric('step.completed', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step failure events
         def handle_step_failed(event)
-          return unless should_record_event?('step.failed')
+          event_constant = Tasker::Constants::StepEvents::FAILED
 
           attributes = extract_step_attributes(event).merge(
             error: safe_get(event, :error_message, safe_get(event, :error, 'Unknown error')),
@@ -126,24 +135,26 @@ module Tasker
             retry_limit: safe_get(event, :retry_limit, 3)
           )
 
-          record_metric('step.failed', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step retry events
         def handle_step_retry(event)
-          return unless should_record_event?('step.retry')
+          event_constant = Tasker::Constants::StepEvents::RETRY_REQUESTED
+          return unless should_record_event?(event_constant)
 
           attributes = extract_step_attributes(event).merge(
             attempt_number: safe_get(event, :attempt_number, 1),
             retry_limit: safe_get(event, :retry_limit, 3)
           )
 
-          record_metric('step.retry', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step backoff events
         def handle_step_backoff(event)
-          return unless should_record_event?('step.backoff')
+          event_constant = Tasker::Constants::ObservabilityEvents::Step::BACKOFF
+          return unless should_record_event?(event_constant)
 
           attributes = extract_step_attributes(event).merge(
             backoff_seconds: safe_get(event, :backoff_seconds, 0),
@@ -151,30 +162,34 @@ module Tasker
             attempt_number: safe_get(event, :attempt_number, 1)
           )
 
-          record_metric('step.backoff', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle workflow iteration events
         def handle_workflow_iteration(event)
-          return unless should_record_event?('workflow.iteration')
+          # Note: We'll need to add this constant when workflow iteration events are implemented
+          event_name = 'workflow.iteration'
+          return unless should_record_event?(event_name)
 
           attributes = extract_core_attributes(event).merge(
             iteration: safe_get(event, :iteration, 1)
           )
 
-          record_metric('workflow.iteration', attributes)
+          record_metric(event_name, attributes)
         end
 
         # Handle batch processing events
         def handle_batch_processed(event)
-          return unless should_record_event?('workflow.batch_processed')
+          # Note: We'll need to add this constant when batch processing events are implemented
+          event_name = 'workflow.batch_processed'
+          return unless should_record_event?(event_name)
 
           attributes = extract_core_attributes(event).merge(
             step_count: safe_get(event, :count, safe_get(event, :step_count, 0)),
             processing_mode: safe_get(event, :processing_mode, 'unknown')
           )
 
-          record_metric('workflow.batch_processed', attributes)
+          record_metric(event_name, attributes)
         end
 
         # Flush any buffered events (for batch processing)
@@ -193,96 +208,214 @@ module Tasker
           Rails.logger.error("Failed to flush telemetry events: #{e.message}")
         end
 
-        # Additional lifecycle event handlers for complete coverage
-
-        # Handle task initialization events
-        def handle_task_initialized(event)
-          return unless should_record_event?('task.initialized')
-
-          attributes = extract_core_attributes(event).merge(
-            task_name: safe_get(event, :task_name, 'unknown_task'),
-            status: safe_get(event, :status, 'initialized')
-          )
-
-          record_metric('task.initialized', attributes)
-        end
-
         # Handle task processing events (task.handle)
         def handle_task_processing(event)
-          return unless should_record_event?('task.processing')
+          event_constant = Tasker::Constants::ObservabilityEvents::Task::HANDLE
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task')
           )
 
-          record_metric('task.processing', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle task enqueue events
         def handle_task_enqueued(event)
-          return unless should_record_event?('task.enqueued')
+          event_constant = Tasker::Constants::ObservabilityEvents::Task::ENQUEUE
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task'),
             queue_name: safe_get(event, :queue_name, 'default')
           )
 
-          record_metric('task.enqueued', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle task finalization events
         def handle_task_finalized(event)
-          return unless should_record_event?('task.finalized')
+          event_constant = Tasker::Constants::ObservabilityEvents::Task::FINALIZE
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task'),
             final_status: safe_get(event, :final_status, 'unknown')
           )
 
-          record_metric('task.finalized', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step discovery events (step.find_viable)
         def handle_step_discovery(event)
-          return unless should_record_event?('step.discovery')
+          event_constant = Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
             discovered_steps: safe_get(event, :count, safe_get(event, :step_count, 0)),
             step_names: safe_get(event, :step_names, '')
           )
 
-          record_metric('step.discovery', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step processing events (step.handle)
         def handle_step_processing(event)
-          return unless should_record_event?('step.processing')
+          event_constant = Tasker::Constants::ObservabilityEvents::Step::HANDLE
+          return unless should_record_event?(event_constant)
 
           attributes = extract_step_attributes(event)
-          record_metric('step.processing', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step skip events
         def handle_step_skipped(event)
-          return unless should_record_event?('step.skipped')
+          event_constant = Tasker::Constants::ObservabilityEvents::Step::SKIP
+          return unless should_record_event?(event_constant)
 
           attributes = extract_step_attributes(event).merge(
             skip_reason: safe_get(event, :skip_reason, 'unknown')
           )
 
-          record_metric('step.skipped', attributes)
+          record_metric(event_constant, attributes)
         end
 
         # Handle step max retries reached events
         def handle_step_max_retries(event)
-          return unless should_record_event?('step.max_retries_reached')
+          event_constant = Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED
+          return unless should_record_event?(event_constant)
 
           attributes = extract_step_attributes(event).merge(
             attempt_number: safe_get(event, :attempt_number, 1),
             retry_limit: safe_get(event, :retry_limit, 3)
           )
 
-          record_metric('step.max_retries_reached', attributes)
+          record_metric(event_constant, attributes)
+        end
+
+        # Handle task re-enqueue events (NEW)
+        def handle_task_reenqueue_started(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            reason: safe_get(event, :reason, 'unknown'),
+            current_status: safe_get(event, :current_status, 'unknown')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_task_reenqueue_requested(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            reason: safe_get(event, :reason, 'unknown')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_task_reenqueue_failed(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            reason: safe_get(event, :reason, 'unknown'),
+            error: safe_get(event, :error, 'Unknown error')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_task_reenqueue_delayed(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            reason: safe_get(event, :reason, 'unknown'),
+            delay_seconds: safe_get(event, :delay_seconds, 0),
+            scheduled_for: safe_get(event, :scheduled_for, Time.current.iso8601)
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        # Handle task finalization events (NEW)
+        def handle_task_finalization_started(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            total_processed_steps: safe_get(event, :total_processed_steps, 0)
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_task_finalization_completed(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            final_status: safe_get(event, :final_status, 'unknown')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        # Handle workflow orchestration events (NEW)
+        def handle_workflow_task_started(event)
+          event_constant = Tasker::Constants::WorkflowEvents::TASK_STARTED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event)
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_workflow_step_completed(event)
+          event_constant = Tasker::Constants::WorkflowEvents::STEP_COMPLETED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_step_attributes(event)
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_viable_steps_discovered(event)
+          event_constant = Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            viable_step_count: safe_get(event, :viable_step_count, 0),
+            step_names: safe_get(event, :step_names, []).join(',')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_steps_execution_started(event)
+          event_constant = Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            step_count: safe_get(event, :step_count, 0),
+            processing_mode: safe_get(event, :processing_mode, 'unknown')
+          )
+
+          record_metric(event_constant, attributes)
+        end
+
+        def handle_steps_execution_completed(event)
+          event_constant = Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED
+          return unless should_record_event?(event_constant)
+
+          attributes = extract_core_attributes(event).merge(
+            processed_step_count: safe_get(event, :processed_step_count, 0),
+            processing_mode: safe_get(event, :processing_mode, 'unknown')
+          )
+
+          record_metric(event_constant, attributes)
         end
 
         private
@@ -307,13 +440,49 @@ module Tasker
         end
 
         # Check if we should record this event based on configuration
-        def should_record_event?(event_name)
+        #
+        # @param event_identifier [String, Object] Event name or constant
+        # @return [Boolean] Whether to record this event
+        def should_record_event?(event_identifier)
           # Skip if telemetry is disabled
           return false unless telemetry_enabled?
+
+          # Convert event identifier to string for filtering
+          event_name = event_identifier_to_string(event_identifier)
 
           # Check if this specific event type is filtered out
           filtered_events = telemetry_config[:filtered_events] || []
           !filtered_events.include?(event_name)
+        end
+
+        # Convert event identifier (constant or string) to a standard string format
+        #
+        # @param event_identifier [String, Object] Event constant or string name
+        # @return [String] Standardized event name
+        def event_identifier_to_string(event_identifier)
+          return event_identifier if event_identifier.is_a?(String)
+
+          # For constants, convert to a standardized string format
+          # This creates a mapping like Tasker::Constants::TaskEvents::COMPLETED => 'task.completed'
+          case event_identifier.to_s
+          when /Tasker::Constants::TaskEvents::(\w+)/
+            "task.#{$1.downcase}"
+          when /Tasker::Constants::StepEvents::(\w+)/
+            "step.#{$1.downcase}"
+          when /Tasker::Constants::WorkflowEvents::(\w+)/
+            "workflow.#{$1.downcase}"
+          when /Tasker::Constants::ObservabilityEvents::Task::(\w+)/
+            "task.#{$1.downcase}"
+          when /Tasker::Constants::ObservabilityEvents::Step::(\w+)/
+            "step.#{$1.downcase}"
+          when /Tasker::LifecycleEvents::Events::Task::(\w+)/
+            "task.#{$1.downcase}"
+          when /Tasker::LifecycleEvents::Events::Step::(\w+)/
+            "step.#{$1.downcase}"
+          else
+            # Fallback: use the constant name directly
+            event_identifier.to_s.split('::').last.downcase
+          end
         end
 
         # Check if batching is enabled
@@ -377,8 +546,14 @@ module Tasker
         end
 
         # Record a metric using the instrumentation system
-        def record_metric(metric_name, attributes = {})
+        #
+        # @param event_identifier [String, Object] Event constant or string name
+        # @param attributes [Hash] Event attributes
+        def record_metric(event_identifier, attributes = {})
           return unless defined?(Tasker::Instrumentation)
+
+          # Convert event identifier to metric name
+          metric_name = event_identifier_to_metric_name(event_identifier)
 
           # Filter out nil values to avoid telemetry issues
           clean_attributes = attributes.compact
@@ -386,16 +561,29 @@ module Tasker
           if self.class.batching_enabled?
             # Add to buffer for batch processing
             @event_buffer << {
-              metric_name: "tasker.#{metric_name}",
+              metric_name: metric_name,
               attributes: clean_attributes,
               recorded_at: Time.current
             }
           else
             # Send immediately
-            send_metric("tasker.#{metric_name}", clean_attributes)
+            send_metric(metric_name, clean_attributes)
           end
         rescue StandardError => e
-          Rails.logger.error("Failed to record telemetry metric #{metric_name}: #{e.message}")
+          Rails.logger.error("Failed to record telemetry metric #{event_identifier}: #{e.message}")
+        end
+
+        # Convert event identifier to metric name for instrumentation
+        #
+        # @param event_identifier [String, Object] Event constant or string name
+        # @return [String] Metric name with 'tasker.' prefix
+        def event_identifier_to_metric_name(event_identifier)
+          if event_identifier.is_a?(String)
+            "tasker.#{event_identifier}"
+          else
+            base_name = event_identifier_to_string(event_identifier)
+            "tasker.#{base_name}"
+          end
         end
 
         # Actually send the metric to the instrumentation system
@@ -467,7 +655,24 @@ module Tasker
             Tasker::Constants::ObservabilityEvents::Step::HANDLE => :handle_step_processing,
             Tasker::Constants::ObservabilityEvents::Step::BACKOFF => :handle_step_backoff,
             Tasker::Constants::ObservabilityEvents::Step::SKIP => :handle_step_skipped,
-            Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED => :handle_step_max_retries
+            Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED => :handle_step_max_retries,
+
+            # NEW: Task re-enqueue events (from TaskReenqueuer)
+            Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED => :handle_task_reenqueue_started,
+            Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED => :handle_task_reenqueue_requested,
+            Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED => :handle_task_reenqueue_failed,
+            Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED => :handle_task_reenqueue_delayed,
+
+            # NEW: Task finalization events (from TaskFinalizer)
+            Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED => :handle_task_finalization_started,
+            Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED => :handle_task_finalization_completed,
+
+            # NEW: Workflow orchestration events
+            Tasker::Constants::WorkflowEvents::TASK_STARTED => :handle_workflow_task_started,
+            Tasker::Constants::WorkflowEvents::STEP_COMPLETED => :handle_workflow_step_completed,
+            Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED => :handle_viable_steps_discovered,
+            Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED => :handle_steps_execution_started,
+            Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED => :handle_steps_execution_completed
           }.freeze
         end
       end

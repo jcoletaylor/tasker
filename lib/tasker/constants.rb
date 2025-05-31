@@ -240,7 +240,11 @@ module Tasker
       TASK_FAILED = 'workflow.task_failed'
       TASK_FINALIZATION_STARTED = 'workflow.task_finalization_started'
       TASK_FINALIZATION_COMPLETED = 'workflow.task_finalization_completed'
+      TASK_REENQUEUE_STARTED = 'workflow.task_reenqueue_started'
       TASK_REENQUEUE_REQUESTED = 'workflow.task_reenqueue_requested'
+      TASK_REENQUEUE_FAILED = 'workflow.task_reenqueue_failed'
+      TASK_REENQUEUE_DELAYED = 'workflow.task_reenqueue_delayed'
+      TASK_STATE_UNCLEAR = 'workflow.task_state_unclear'
 
       # Step orchestration events
       STEP_COMPLETED = 'workflow.step_completed'
@@ -319,7 +323,11 @@ module Tasker
       WorkflowEvents::TASK_FAILED,
       WorkflowEvents::TASK_FINALIZATION_STARTED,
       WorkflowEvents::TASK_FINALIZATION_COMPLETED,
+      WorkflowEvents::TASK_REENQUEUE_STARTED,
       WorkflowEvents::TASK_REENQUEUE_REQUESTED,
+      WorkflowEvents::TASK_REENQUEUE_FAILED,
+      WorkflowEvents::TASK_REENQUEUE_DELAYED,
+      WorkflowEvents::TASK_STATE_UNCLEAR,
       WorkflowEvents::STEP_COMPLETED,
       WorkflowEvents::STEP_FAILED,
       WorkflowEvents::STEP_EXECUTION_FAILED,

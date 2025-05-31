@@ -330,10 +330,18 @@ FactoryBot.define do
         end
 
         # Create workflow steps
-        create(:workflow_step, evaluator.step_states, task: task, named_step: step_one, inputs: { dummy: true })
-        ws2 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_two, inputs: { dummy: true })
-        ws3 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_three, inputs: { dummy: true })
-        ws4 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_four, inputs: { dummy: true })
+        if evaluator.step_states
+          create(:workflow_step, evaluator.step_states, task: task, named_step: step_one, inputs: { dummy: true })
+          ws2 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_two, inputs: { dummy: true })
+          ws3 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_three, inputs: { dummy: true })
+          ws4 = create(:workflow_step, evaluator.step_states, task: task, named_step: step_four, inputs: { dummy: true })
+        else
+          # Create workflow steps without any state trait (for orchestration testing)
+          create(:workflow_step, task: task, named_step: step_one, inputs: { dummy: true })
+          ws2 = create(:workflow_step, task: task, named_step: step_two, inputs: { dummy: true })
+          ws3 = create(:workflow_step, task: task, named_step: step_three, inputs: { dummy: true })
+          ws4 = create(:workflow_step, task: task, named_step: step_four, inputs: { dummy: true })
+        end
 
         # Create step dependencies to match DummyTask structure
         # step_three depends on step_two, step_four depends on step_three
@@ -355,7 +363,7 @@ FactoryBot.define do
     # Trait specifically for event-driven orchestration testing
     # Creates tasks and steps in their initial pending state
     trait :for_orchestration do
-      step_states { :pending }
+      step_states { nil } # Don't apply any state trait initially
 
       # Ensure task starts in pending state for orchestration
       after(:create) do |task, _evaluator|
@@ -364,17 +372,26 @@ FactoryBot.define do
           task.update_columns(status: Tasker::Constants::TaskStatuses::PENDING)
         end
 
-        # Ensure all steps are in pending state
+        # Ensure all steps are in pending state with proper initial transitions
         task.workflow_steps.each do |step|
-          unless step.status == Tasker::Constants::WorkflowStepStatuses::PENDING
-            step.update_columns(
-              status: Tasker::Constants::WorkflowStepStatuses::PENDING,
-              processed: false,
-              in_process: false,
-              processed_at: nil,
-              attempts: 0
-            )
-          end
+          # Clear any existing transitions
+          step.workflow_step_transitions.destroy_all
+
+          # Create initial transition to pending state (this is the proper way)
+          step.workflow_step_transitions.create!(
+            to_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
+            sort_key: 0,
+            most_recent: true,
+            metadata: { created_by: 'factory_for_orchestration' }
+          )
+
+          # Set step attributes to pending state
+          step.update_columns(
+            processed: false,
+            in_process: false,
+            processed_at: nil,
+            attempts: 0
+          )
         end
       end
     end

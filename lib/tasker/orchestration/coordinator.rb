@@ -1,82 +1,56 @@
 # frozen_string_literal: true
 
+require_relative '../concerns/idempotent_state_transitions'
 require_relative 'orchestrator'
 require_relative 'viable_step_discovery'
 require_relative 'step_executor'
 require_relative 'task_finalizer'
+require_relative 'task_initializer'
+require_relative 'step_sequence_factory'
+require_relative 'task_reenqueuer'
 
 module Tasker
   module Orchestration
-    # Coordinator manages the setup and initialization of the event-driven workflow system
+    # Coordinator handles orchestration system initialization and monitoring
     #
-    # This module provides the main entry point for initializing the declarative workflow orchestration
-    # that replaces the imperative TaskHandler workflow loop.
-    module Coordinator
+    # This class ensures the orchestration system is properly initialized and provides
+    # observability into the system state. It does NOT handle task processing -
+    # that responsibility belongs to TaskHandler using the proven delegation pattern.
+    class Coordinator
+      include Tasker::Concerns::IdempotentStateTransitions
+
       class << self
-        # Include the concern methods at the class level
-        include Tasker::Concerns::IdempotentStateTransitions
-
-        # Initialize the complete workflow orchestration system
-        #
-        # This sets up all event subscriptions and coordinates the components:
-        # - Orchestrator: Handles state transition events
-        # - ViableStepDiscovery: Discovers which steps can be executed
-        # - StepExecutor: Executes viable steps
-        # - TaskFinalizer: Handles task completion and finalization
-        #
-        # @param event_bus [Tasker::Events::Bus] Optional event bus instance
-        def initialize!(event_bus = nil)
-          # Prevent double initialization
-          return if @initialized
-
-          Rails.logger.info('Tasker::Orchestration::Coordinator: Initializing event-driven workflow system')
-
-          # Use provided bus or default
-          bus = event_bus || Tasker::LifecycleEvents.bus
-
-          # Subscribe all workflow components to their respective events
-          setup_component_subscriptions(bus)
-
-          @initialized = true
-
-          Rails.logger.info('Tasker::Orchestration::Coordinator: Event-driven workflow system initialized successfully')
-        end
-
-        # Check if the system has been initialized
+        # Check if the orchestration system has been initialized
         #
         # @return [Boolean] True if initialized
         def initialized?
-          @initialized || false
+          @initialized == true
         end
 
-        # Trigger workflow orchestration for a specific task
+        # Initialize the orchestration system
         #
-        # This is the main entry point for starting workflow processing using the event-driven system
-        # instead of the imperative TaskHandler.handle method.
-        #
-        # @param task_id [Integer] The task ID to process
-        # @return [Boolean] True if processing started successfully, false if failed
-        def process_task(task_id)
-          Rails.logger.info("Tasker::Orchestration::Coordinator: Starting event-driven processing for task #{task_id}")
+        # Sets up all orchestration components, registers events, and connects subscribers.
+        # This method is idempotent and can be called multiple times safely.
+        def initialize!
+          return if @initialized
 
-          # Load the task and transition it to in_progress, which will trigger the orchestration
-          task = Tasker::Task.find(task_id)
+          Rails.logger.info("Tasker::Orchestration::Coordinator: Initializing orchestration system")
 
-          # Use the concern's safe_transition_to method
-          transition_result = safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
+          # Initialize core orchestration components
+          setup_orchestrator
+          setup_event_subscriptions
 
-          Rails.logger.debug("Tasker::Orchestration::Coordinator: Task #{task_id} transition result: #{transition_result}")
+          # Initialize telemetry and monitoring
+          setup_telemetry_subscriber
 
-          # The orchestration system is now event-driven and asynchronous
-          # The task will be processed through events, and if it needs reenqueuing,
-          # that will happen via TaskFinalizer which is terminal for this execution
+          @initialized = true
+          Rails.logger.info("Tasker::Orchestration::Coordinator: Orchestration system initialized successfully")
+        end
 
-          # Return true to indicate we successfully started orchestration
-          # The actual completion/reenqueuing happens asynchronously through events
-          true
-        rescue StandardError => e
-          Rails.logger.error("Tasker::Orchestration::Coordinator: Error processing task #{task_id}: #{e.message}")
-          false
+        # Reset initialization state (primarily for testing)
+        def reset!
+          @initialized = false
+          Rails.logger.debug('Tasker::Orchestration::Coordinator: Initialization state reset')
         end
 
         # Get statistics about the workflow orchestration system
@@ -89,29 +63,52 @@ module Tasker
               orchestrator: defined?(Tasker::Orchestration::Orchestrator),
               viable_step_discovery: defined?(Tasker::Orchestration::ViableStepDiscovery),
               step_executor: defined?(Tasker::Orchestration::StepExecutor),
-              task_finalizer: defined?(Tasker::Orchestration::TaskFinalizer)
+              task_finalizer: defined?(Tasker::Orchestration::TaskFinalizer),
+              task_reenqueuer: defined?(Tasker::Orchestration::TaskReenqueuer)
             },
-            event_bus_active: defined?(Tasker::LifecycleEvents) && Tasker::LifecycleEvents.bus.present?
+            event_bus_active: defined?(Tasker::LifecycleEvents) && Tasker::LifecycleEvents.bus.present?,
+            orchestrator_instance: @orchestrator&.class&.name
           }
+        end
+
+        # Get sequence for a task (utility method for orchestration components)
+        #
+        # @param task [Tasker::Task] The task
+        # @param task_handler [Object] The task handler
+        # @return [Tasker::Types::StepSequence] The step sequence
+        def get_sequence_for_task(task, task_handler)
+          Tasker::Orchestration::StepSequenceFactory.get_sequence(task, task_handler)
         end
 
         private
 
-        # Set up event subscriptions for all workflow components
-        #
-        # @param bus [Tasker::Events::Bus] The event bus to use for subscriptions
-        def setup_component_subscriptions(bus)
-          # Subscribe Orchestrator to state transition events
-          Tasker::Orchestration::Orchestrator.subscribe_to_state_events(bus)
+        # Set up the main orchestrator
+        def setup_orchestrator
+          @orchestrator = Tasker::Orchestration::Orchestrator.instance
+        end
 
-          # Subscribe ViableStepDiscovery to orchestration events
-          Tasker::Orchestration::ViableStepDiscovery.subscribe_to_orchestration_events(bus)
+        # Set up event subscriptions for orchestration components
+        def setup_event_subscriptions
+          # Currently using direct method delegation instead of event subscriptions
+          # for the core workflow loop. Events are used for observability.
+          # Future enhancement: Add event-driven workflow subscriptions here
+        end
 
-          # Subscribe StepExecutor to workflow events
-          Tasker::Orchestration::StepExecutor.subscribe_to_workflow_events(bus)
-
-          # Subscribe TaskFinalizer to workflow events
-          Tasker::Orchestration::TaskFinalizer.subscribe_to_workflow_events(bus)
+        # Set up the telemetry subscriber for comprehensive observability
+        def setup_telemetry_subscriber
+          # Ensure telemetry subscriber is connected to the lifecycle events system
+          begin
+            if defined?(Tasker::Events::Subscribers::TelemetrySubscriber)
+              Tasker::LifecycleEvents.publisher.tap do |publisher|
+                Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
+              end
+              Rails.logger.debug("Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully")
+            else
+              Rails.logger.debug("Tasker::Orchestration::Coordinator: TelemetrySubscriber not available")
+            end
+          rescue StandardError => e
+            Rails.logger.error("Tasker::Orchestration::Coordinator: Failed to setup telemetry subscriber: #{e.message}")
+          end
         end
       end
     end

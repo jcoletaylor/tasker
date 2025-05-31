@@ -248,6 +248,89 @@ module FactoryWorkflowHelpers
 
     handler
   end
+
+  # Create a dummy task following the real TaskRequest initialization pattern
+  # This mirrors how tasks are actually created in production but allows factory overrides
+  def create_dummy_task_via_request(options = {})
+    # Extract factory options vs task_request options
+    factory_options = options.extract!(:with_dependencies, :step_states, :complete_steps, :bypass_steps)
+
+    # Register the DummyTask handler first (essential for real workflow)
+    register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+
+    # Create a TaskRequest following the real-world pattern
+    task_request_params = {
+      name: DummyTask::TASK_REGISTRY_NAME,
+      initiator: 'test@example.com',
+      reason: 'testing orchestration',
+      source_system: 'test-system',
+      context: { dummy: true },
+      tags: %w[dummy testing orchestration],
+      bypass_steps: factory_options[:bypass_steps] || []
+    }.merge(options)
+
+    task_request = Tasker::Types::TaskRequest.new(task_request_params)
+
+    # Create task using the real initialization flow
+    task = Tasker::Task.create_with_defaults!(task_request)
+
+    # Let the task handler establish steps and dependencies (real-world pattern)
+    if factory_options.fetch(:with_dependencies, true)
+      task_handler = Tasker::HandlerFactory.instance.get(DummyTask::TASK_REGISTRY_NAME)
+
+      # This follows the real workflow initialization pattern:
+      # 1. Get step templates from the handler
+      # 2. Get steps for the task (creates workflow steps if they don't exist)
+      # 3. Establish dependencies and defaults
+      step_templates = task_handler.step_templates
+      steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
+      task_handler.establish_step_dependencies_and_defaults(task, steps)
+
+      # Reload task to get the created workflow steps
+      task.reload
+
+      # Handle step state configuration if specified
+      step_states = factory_options[:step_states] || :pending
+      complete_steps = factory_options[:complete_steps] || []
+
+      case step_states
+      when :pending
+        # Steps are already in pending state by default - no action needed
+        nil
+      when :some_complete
+        # Complete the first two steps (step-one and step-two)
+        complete_steps = [DummyTask::STEP_ONE, DummyTask::STEP_TWO] if complete_steps.empty?
+      end
+
+      # Complete specified steps using state machine transitions
+      complete_steps.each do |step_name|
+        step = task.workflow_steps.joins(:named_step).find_by(named_step: { name: step_name })
+        if step
+          step.state_machine.transition_to!(:in_progress)
+          step.state_machine.transition_to!(:complete)
+          step.update_columns(
+            processed: true,
+            processed_at: Time.current,
+            results: { dummy: true, step_name: step_name }
+          )
+        end
+      end
+    end
+
+    task
+  end
+
+  # Create a dummy task specifically for orchestration testing
+  # This ensures the task is in the proper pending state for event-driven processing
+  def create_dummy_task_for_orchestration_via_request(options = {})
+    # Force steps to pending state for orchestration testing
+    options = options.merge(
+      step_states: :pending,
+      complete_steps: []  # No pre-completed steps for orchestration testing
+    )
+
+    create_dummy_task_via_request(options)
+  end
 end
 
 # Include in RSpec configuration

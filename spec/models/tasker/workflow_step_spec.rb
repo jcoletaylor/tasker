@@ -8,6 +8,10 @@ module Tasker
   RSpec.describe(WorkflowStep) do
     before(:all) do
       DependentSystem.find_or_create_by!(name: 'dummy-system')
+
+      # Register both dummy task handlers
+      register_task_handler('dummy_task', DummyTask)
+      register_task_handler('dummy_task_two', DummyTask)
     end
 
     context 'Task and StepTemplate Logic' do

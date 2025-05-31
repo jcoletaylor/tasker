@@ -59,7 +59,8 @@ module Tasker
         # This ensures we start with a fresh task rather than working around with unique names
         cleanup_task_state_for_orchestration('dummy_task')
 
-        # Use the real DummyTask infrastructure as intended
+        # Use the factory pattern that creates tasks with proper pending states
+        # This ensures steps are created in pending state for orchestration processing
         task = create_dummy_task_for_orchestration(context: { dummy: true })
 
         # Execute the full workflow using task handler (now delegates to orchestration)

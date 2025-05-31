@@ -146,6 +146,37 @@ module Tasker
       def pending?
         still_working_steps.length.positive?
       end
+
+      # Check if the task has any steps in error states
+      #
+      # A task has errors if any steps are in terminal error states that can't be retried.
+      #
+      # @return [Boolean] True if the task has error steps
+      def error?
+        # Use efficient database query with existing failed scope
+        step_ids = @sequence.steps.map(&:workflow_step_id)
+        return false if step_ids.empty?
+
+        # Query for any steps in error state using the failed scope
+        Tasker::WorkflowStep.failed.where(workflow_step_id: step_ids).exists?
+      end
+
+      # Get debugging state information for the step group
+      #
+      # @return [Hash] Debug information about the step group state
+      def debug_state
+        {
+          total_steps: @sequence.steps.size,
+          prior_incomplete_count: prior_incomplete_steps.size,
+          complete_this_pass_count: this_pass_complete_steps.size,
+          still_incomplete_count: still_incomplete_steps.size,
+          still_working_count: still_working_steps.size,
+          step_statuses: @sequence.steps.map { |s| { id: s.workflow_step_id, name: s.name, status: s.status } },
+          is_complete: complete?,
+          is_pending: pending?,
+          has_errors: error?
+        }
+      end
     end
   end
 end
