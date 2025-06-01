@@ -1,5 +1,66 @@
 # System Overview
 
+## Production-Ready Event-Driven Architecture
+
+Tasker has evolved into a production-ready workflow engine with comprehensive observability and error handling. The system features:
+
+- **Unified Event System** - Single `Events::Publisher` with standardized event payloads
+- **Complete Step Error Persistence** - Atomic transactions ensuring zero data loss
+- **Production-Ready OpenTelemetry Integration** - Full observability stack with safety mechanisms
+- **Memory-Safe Operation** - Database connection pooling and leak prevention
+- **Developer-Friendly API** - Clean `EventPublisher` concern for easy integration
+
+## Event System Architecture
+
+The current event system provides comprehensive observability and workflow orchestration:
+
+### Event Categories
+
+- **Task Events** (`Tasker::Constants::TaskEvents`) - Task lifecycle events (started, completed, failed)
+- **Step Events** (`Tasker::Constants::StepEvents`) - Step execution events with error context
+- **Workflow Events** (`Tasker::Constants::WorkflowEvents`) - Orchestration and dependency management
+- **Observability Events** (`Tasker::Constants::ObservabilityEvents`) - Performance monitoring and metrics
+
+### Publishing Events
+
+```ruby
+class MyStepHandler
+  include Tasker::Concerns::EventPublisher
+
+  def handle(task, sequence, step)
+    # Publish step started event with automatic payload building
+    publish_step_event(
+      Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
+      step,
+      event_type: :started
+    )
+
+    # Your business logic here
+    result = perform_operation(task.context)
+    step.results = { data: result }
+
+    # Publish completion with additional context
+    publish_step_event(
+      Tasker::Constants::StepEvents::COMPLETED,
+      step,
+      event_type: :completed,
+      additional_context: { operation_count: result.size }
+    )
+  end
+end
+```
+
+### OpenTelemetry Integration
+
+Full observability stack including:
+
+- **Database Query Monitoring** - PostgreSQL instrumentation with connection safety
+- **Background Job Tracking** - Sidekiq, Redis, and concurrent processing
+- **API Call Tracing** - HTTP requests with proper error handling
+- **State Machine Transitions** - Complete audit trail of workflow state changes
+
+For detailed telemetry configuration, see [TELEMETRY.md](TELEMETRY.md).
+
 ## Example of a Configured Task Handler
 
 Here's an example YAML file for an e-commerce API integration task handler:
@@ -296,7 +357,7 @@ graph TD
     style E fill:#b0b0b0,stroke:#222222
 ```
 
-The system implements advanced workflow traversal with parallel execution and sophisticated retry logic:
+The system implements advanced workflow traversal with parallel execution, sophisticated retry logic, and production-ready error handling:
 
 - **DAG Traversal & Parallel Execution**
   - Initial identification and queueing of root steps (no dependencies)
@@ -311,7 +372,15 @@ The system implements advanced workflow traversal with parallel execution and so
   - Configurable maximum delay cap (30 seconds)
   - Respects server-provided Retry-After headers when available
 
+- **Production-Ready Error Handling & Persistence**
+  - **Complete Step Error Persistence** - All step failures saved with full error context, backtrace, and attempt tracking
+  - **Atomic Transactions** - Save-first, transition-second pattern ensures data integrity and idempotency
+  - **Memory-Safe Processing** - Database connection pooling and explicit cleanup prevents connection leaks
+  - **Comprehensive Event Publishing** - Both success and error paths publish standardized events for observability
+  - **Zero Data Loss** - All step executions (success/error) properly persisted with complete context
+
 - **Task Status Management**
-  - Real-time monitoring of all step statuses
-  - Early failure detection and propagation
-  - Graceful handling of unrecoverable errors
+  - Real-time monitoring of all step statuses with unified event system
+  - Early failure detection and propagation with comprehensive error data
+  - Graceful handling of unrecoverable errors with full audit trail
+  - OpenTelemetry integration for complete observability

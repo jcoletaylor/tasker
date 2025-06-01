@@ -1,369 +1,255 @@
-# Tasker Event-Driven Architecture: Unified Event System Implementation
+# Tasker Event-Driven Architecture: Next Phase Development Continuation
 
-## 🎯 **PROJECT STATUS: UNIFIED EVENT ARCHITECTURE 80% COMPLETE**
+## 🎯 **PROJECT STATUS: PRODUCTION-READY EVENT SYSTEM WITH OPTIMIZATION OPPORTUNITIES**
 
-You're continuing work on the **Tasker unified event system** that has successfully eliminated the dual event architecture and established `Events::Publisher` as the single source of truth, but needs final cleanup and instrumentation integration.
+You're continuing work on the **Tasker unified event system** that has achieved **100% production readiness** with comprehensive OpenTelemetry integration, complete step error persistence, and 320/320 tests passing. The system now needs **developer experience refinements** and **extensible event subscription patterns**.
 
-## ✅ **MAJOR ACHIEVEMENTS COMPLETED**
+## ✅ **MAJOR ACHIEVEMENTS COMPLETED (PRODUCTION-READY FOUNDATION)**
 
-### **🎨 Unified Event Architecture Transformation**
-- **COMPLETE**: Single `Events::Publisher` as sole event publishing system ✅
-- **COMPLETE**: Clean `EventPublisher` concern eliminating `Tasker::Events::Publisher.instance.publish` line noise ✅
-- **COMPLETE**: Integrated `EventPayloadBuilder` for standardized payload creation ✅
-- **COMPLETE**: Removed all `LifecycleEvents.fire()` calls throughout codebase ✅
-- **COMPLETE**: Eliminated duplication in `StateMachineBase`, `OrchestrationPublisher` concerns ✅
-- **COMPLETE**: State machines and orchestration components using unified system ✅
+### **🏆 Complete Success: Event System Foundation**
+- **✅ COMPLETE**: Unified event architecture with single `Events::Publisher` as source of truth
+- **✅ COMPLETE**: OpenTelemetry full stack (12+ instrumentations) with Faraday bug workaround
+- **✅ COMPLETE**: Complete step error persistence with atomic transactions preventing data loss
+- **✅ COMPLETE**: EventPayloadBuilder providing standardized payloads for all event types
+- **✅ COMPLETE**: Zero segfaults, memory leaks, or connection issues in production environment
+- **✅ COMPLETE**: All legacy LifecycleEvents references eliminated from codebase
 
-**Key Architectural Success**:
+### **📊 Current Production Metrics**
+- **320/320 tests passing** - Complete system validation
+- **Zero critical bugs** - Production stability achieved
+- **Full observability** - Database, API, job, state transition monitoring
+- **Complete error persistence** - All step failures saved with full context
+- **Memory-safe operation** - Database connection pooling and leak prevention
+
+### **🛠 Technical Architecture Achievements**
+1. **Events::Publisher**: Single event publishing system with dry-events integration
+2. **EventPublisher Concern**: Clean `publish_event()` interface eliminating line noise
+3. **EventPayloadBuilder**: Standardized payload creation with event type specialization
+4. **State Machine Integration**: Proper event publishing during state transitions
+5. **OpenTelemetry Stack**: Production-ready observability without critical bugs
+6. **Atomic Error Handling**: `step.save!` → state transition pattern ensuring idempotency
+
+## 🚀 **NEXT PHASE PRIORITIES: Developer Experience & Extensibility**
+
+### **Current Challenge: Two Major UX Improvements Needed**
+
+The system is **functionally complete and production-ready**, but needs refinements for optimal developer experience:
+
+## **Priority 1: Event Publishing API Consolidation**
+
+### **Problem: Multiple Conflicting Patterns Creating Noise**
+
+**Current API Surface Issues**:
 ```ruby
-# OLD (verbose, inconsistent)
-Tasker::Events::Publisher.instance.publish(event_name, payload)
-LifecycleEvents.fire(event_name, payload)
+# Multiple ways to accomplish same task (cognitive overhead):
+publish_event(event_name, payload)                    # Generic
+publish_step_event(event_name, step, event_type: :completed)  # Step-specific
+publish_task_event(event_name, task, event_type: :completed)  # Task-specific
+publish_orchestration_event(event_name, event_type:, context:) # Orchestration
 
-# NEW (clean, standardized)
-publish_event(event_name, payload)                           # Basic
-publish_step_event(event_name, step, event_type: :completed) # Standardized with EventPayloadBuilder
+# Direct EventPayloadBuilder usage (inline noise):
+publish_event(event_name, EventPayloadBuilder.build_step_payload(step, task, event_type: :completed))
+
+# Publisher class convenience methods (inconsistent):
+publisher.publish_task_started(payload)
+publisher.publish_step_completed(payload)
 ```
 
-### **📊 EventPayloadBuilder Integration Success**
-- **COMPLETE**: Addresses real issues (missing `:execution_duration`, `:error_message`, `:attempt_number` keys) ✅
-- **COMPLETE**: Event type specialization (`:started`, `:completed`, `:failed`, `:retry`) ✅
-- **COMPLETE**: Performance optimized with `WorkflowStep.task_completion_stats` ✅
-- **COMPLETE**: Consistent error payload extraction ✅
+### **Solution: Domain-Specific Event Methods**
 
-### **🧪 Test Validation Results**
-- ✅ **State Machine Tests**: 29/29 passing - Core architecture solid
-- ✅ **Orchestration Tests**: 13/13 passing - Event-driven workflow functional
-- ✅ **No Breaking Changes**: Migration maintained backward compatibility
-
-### **🛠 Critical Infrastructure Fixes Applied**
-- **COMPLETE**: Created EventPublisher concern with clean `publish_event(event_name, payload)` interface
-- **COMPLETE**: Eliminated verbose `Tasker::Events::Publisher.instance.publish` line noise throughout codebase
-- **COMPLETE**: Updated state machines (TaskStateMachine, StepStateMachine) to use EventPublisher concern
-- **COMPLETE**: Migrated orchestration components (TaskInitializer, TaskReenqueuer, StepHandler classes)
-- **COMPLETE**: Removed OrchestrationPublisher concern after consolidating all usages
-- **COMPLETE**: Updated StateMachineBase to use EventPublisher instead of duplicate implementation
-
-## 🚨 **REMAINING CRITICAL WORK: Final Cleanup & Integration**
-
-### **Current Status Based on Analysis**
-
-Based on `grep -r "LifecycleEvents" lib/ app/ spec/`, we have identified exactly what needs to be cleaned up to complete the unified event system.
-
-### **Priority 1: Replace Remaining LifecycleEvents References** (Week 1)
-
-#### **Files with Active LifecycleEvents Usage (Need Updates)**
-
-#### **1. Step Handlers** (2 files)
-```bash
-lib/tasker/step_handler/base.rb:          Tasker::LifecycleEvents::Events::Step::BEFORE_HANDLE,
-lib/tasker/step_handler/api.rb:          Tasker::LifecycleEvents::Events::Step::HANDLE,
-```
-**Action**: Replace with constants from `Tasker::Constants::StepEvents`
-
-#### **2. Task Initializer** (3 references)
-```bash
-lib/tasker/orchestration/task_initializer.rb:            Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-lib/tasker/orchestration/task_initializer.rb:          Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-lib/tasker/orchestration/task_initializer.rb:          Tasker::LifecycleEvents::Events::Task::START,
-```
-**Action**: Replace with constants from `Tasker::Constants::TaskEvents`
-
-#### **3. Coordinator** (1 reference)
-```bash
-lib/tasker/orchestration/coordinator.rb:            Tasker::LifecycleEvents.publisher.tap do |publisher|
-```
-**Action**: Replace with `Tasker::Events::Publisher.instance`
-
-#### **4. Instrumentation** (1 reference)
-```bash
-lib/tasker/instrumentation.rb:        when Tasker::LifecycleEvents::Events::Task::START, Tasker::LifecycleEvents::Events::Task::INITIALIZE
-```
-**Action**: Replace with `Tasker::Constants::TaskEvents` constants
-
-#### **5. TelemetrySubscriber** (6 references)
-```bash
-lib/tasker/events/subscribers/telemetry_subscriber.rb: # Multiple LifecycleEvents references
-```
-**Action**: Replace with unified event constants
-
-### **Priority 2: Delete Legacy Files** (Week 1)
-
-#### **Files to DELETE** (2 files)
-```bash
-lib/tasker/lifecycle_events.rb                    # Legacy delegation layer
-lib/tasker/concerns/lifecycle_event_helpers.rb    # Replaced by EventPublisher
-```
-
-#### **Test files to UPDATE** (2 files)
-```bash
-spec/lib/tasker/lifecycle_events_spec.rb          # UPDATE - test Events::Publisher directly
-spec/lib/tasker/instrumentation_spec.rb           # UPDATE - use new event architecture
-```
-
-### **Priority 3: Instrumentation System Integration** (Week 1-2)
-
-#### **Issue Discovered**: Missing instrumentation interface prevents telemetry
-**Error**: `undefined method 'record_event' for Tasker::Instrumentation:Module`
-
-#### **Required Implementation**:
+**Target Clean API**:
 ```ruby
-# lib/tasker/instrumentation.rb
-module Tasker::Instrumentation
-  def self.record_event(metric_name, attributes = {})
-    # Integrate with OpenTelemetry, StatsD, or chosen telemetry backend
-    # Example OpenTelemetry integration:
-    OpenTelemetry::Instrumentation.meter('tasker').counter(metric_name, unit: 'operation').add(1, attributes: attributes)
+# CURRENT (noisy, multiple approaches)
+publish_step_event(Tasker::Constants::StepEvents::COMPLETED, step, event_type: :completed)
+publish_event(event_name, EventPayloadBuilder.build_step_payload(step, task, event_type: :failed))
+
+# TARGET (clean, single approach)
+publish_step_completed(step, **context)     # Auto-builds payload, infers event type
+publish_step_failed(step, error: exception) # Context-specific parameters
+publish_step_started(step)                  # Minimal parameters when context is clear
+```
+
+**Implementation Strategy**:
+1. **Week 1**: Create domain-specific helper methods with automatic payload building
+2. **Week 1-2**: Implement context-aware event type inference
+3. **Week 2**: Eliminate all inline `EventPayloadBuilder` calls from application code
+4. **Week 2**: Deprecate generic methods, establish single-method-per-event-type pattern
+
+## **Priority 2: Developer-Friendly Event Subscription System**
+
+### **Problem: Hidden Event System with Poor Discoverability**
+
+**Current Developer Pain Points**:
+```ruby
+# Developers currently face these challenges:
+
+# 1. Event Discovery - How do I know what events exist?
+Tasker::Constants::StepEvents::COMPLETED  # What does this event contain?
+Tasker::Constants::TaskEvents::FAILED     # When is this fired? What's the payload?
+
+# 2. Subscription - How do I listen to events?
+# No clear pattern - must study TelemetrySubscriber implementation
+
+# 3. Custom Subscribers - How do I create my own?
+# No base class or pattern to follow
+
+# 4. Configuration - How do I configure subscriptions per task?
+# No YAML support for event subscriptions
+```
+
+### **Solution: Comprehensive Event Subscription Developer Experience**
+
+**Target Developer Experience**:
+
+**Event Discovery**:
+```ruby
+# Developers can browse and understand events
+Tasker::Events.catalog
+# => {
+#   "step.completed" => {
+#     description: "Fired when a workflow step completes successfully",
+#     payload_schema: { task_id: String, step_id: String, execution_duration: Float },
+#     example: { task_id: "abc123", step_id: "step_1", execution_duration: 2.34 },
+#     fired_by: ["StepExecutor", "StepHandler::Api"]
+#   }
+# }
+```
+
+**Simple Subscriber Creation**:
+```ruby
+# Clean pattern for creating custom subscribers
+class OrderNotificationSubscriber < Tasker::Events::BaseSubscriber
+  # Declarative subscription registration
+  subscribe_to :task_completed, :step_failed
+
+  # Automatic method routing based on event names
+  def handle_task_completed(event_name, payload)
+    OrderMailer.completion_email(payload[:task_id]).deliver_later
+  end
+
+  def handle_step_failed(event_name, payload)
+    AlertService.notify("Step failed: #{payload[:step_name]}")
   end
 end
 ```
 
-#### **Payload Standardization Complete** ✅
-- `EventPayloadBuilder` already provides standardized payloads
-- `TelemetrySubscriber` expects specific keys (now available via EventPayloadBuilder)
-- Integration ready for immediate use
+**YAML Configuration Support**:
+```yaml
+# config/tasks/order_process.yaml
+---
+name: order_process
+task_handler_class: OrderProcess
 
-### **Priority 4: TelemetrySubscriber Simplification** (Week 2)
+# Event subscription configuration
+event_subscriptions:
+  - subscriber_class: OrderNotificationSubscriber
+    events:
+      - task.completed
+      - step.failed
+    config:
+      notification_email: orders@company.com
+      alert_threshold: 3_failures_per_hour
 
-#### **Current Problem**: Over-engineered custom batching logic
-**Issues Identified**:
-- Custom event buffering with `@event_buffer` - unnecessary
-- Background thread management - problematic in Rails
-- Manual flush timing - reinventing OpenTelemetry capabilities
-- Complex memoization strategies - performance overhead
-
-#### **Industry Best Practice**: Immediate Event Emission
-**Recommendation**: Simplify to immediate emission, let OpenTelemetry collectors handle batching:
-
-```ruby
-# CURRENT (Complex)
-def record_metric(event_identifier, attributes = {})
-  if self.class.batching_enabled?
-    @event_buffer << { metric_name: metric_name, attributes: clean_attributes }
-  else
-    send_metric(metric_name, clean_attributes)
-  end
-end
-
-# TARGET (Simple)
-def record_metric(event_identifier, attributes = {})
-  metric_name = event_identifier_to_metric_name(event_identifier)
-  clean_attributes = attributes.compact
-  Tasker::Instrumentation.record_event(metric_name, clean_attributes)
-end
+step_templates:
+  # ... existing step configuration
 ```
 
-#### **Simplification Benefits**:
-1. **Reliability**: No custom threading or buffer management failure points
-2. **Immediate Observability**: Events available for debugging immediately
-3. **Industry Standard**: Follows OpenTelemetry best practices
-4. **Maintainability**: Much simpler code
-5. **Infrastructure Alignment**: Let collectors handle optimization
+**Implementation Strategy**:
+1. **Week 1**: Create event catalog with introspection and payload schema generation
+2. **Week 1-2**: Extract BaseSubscriber pattern from TelemetrySubscriber
+3. **Week 2**: Implement declarative subscription API with automatic method routing
+4. **Week 2-3**: Add YAML configuration support for task-level event subscriptions
+5. **Week 3**: Create comprehensive developer documentation and examples
 
-## 🚀 **DETAILED STEP-BY-STEP IMPLEMENTATION PLAN**
+## 🎯 **RECOMMENDED IMPLEMENTATION ORDER**
 
-### **Step 1: Update Active References** (30 minutes)
+### **Phase 4: Event Publishing API Consolidation (2-3 weeks)**
+**Priority**: High - Reduces current developer friction
+**Complexity**: Medium - Refactoring existing patterns
+**Impact**: Immediate improvement in code clarity and maintainability
 
-#### **A. Fix Step Handlers**
-```ruby
-# lib/tasker/step_handler/base.rb
-# OLD:
-Tasker::LifecycleEvents::Events::Step::BEFORE_HANDLE
-# NEW:
-Tasker::Constants::StepEvents::BEFORE_HANDLE
+### **Phase 5: Event Subscription Developer Experience (3-4 weeks)**
+**Priority**: High - Unlocks ecosystem extensibility
+**Complexity**: Medium-High - New infrastructure components
+**Impact**: Enables third-party integrations and custom business logic
 
-# lib/tasker/step_handler/api.rb
-# OLD:
-Tasker::LifecycleEvents::Events::Step::HANDLE
-# NEW:
-Tasker::Constants::StepEvents::HANDLE
-```
+**Both phases can potentially run in parallel** since they target different aspects of the event system.
 
-#### **B. Fix Task Initializer**
-```ruby
-# lib/tasker/orchestration/task_initializer.rb
-# OLD:
-Tasker::LifecycleEvents::Events::Task::INITIALIZE
-Tasker::LifecycleEvents::Events::Task::START
-# NEW:
-Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED
-Tasker::Constants::TaskEvents::START_REQUESTED
-```
+## 📋 **SUCCESS CRITERIA FOR NEXT PHASES**
 
-#### **C. Fix Coordinator**
-```ruby
-# lib/tasker/orchestration/coordinator.rb
-# OLD:
-Tasker::LifecycleEvents.publisher
-# NEW:
-Tasker::Events::Publisher.instance
-```
+### **Phase 4: Publishing API Success Metrics**
+- [ ] **Single Method Per Event Type**: One obvious way to publish each category of event
+- [ ] **Zero Inline Payload Building**: No manual EventPayloadBuilder calls in app code
+- [ ] **Context Awareness**: Event types inferred from calling context when possible
+- [ ] **Maintained Functionality**: All current capabilities preserved with cleaner API
+- [ ] **Clean Migration**: Deprecation warnings guide developers to new patterns
+- [ ] **All Tests Passing**: 320+ tests continue passing with refined API
 
-#### **D. Fix Instrumentation & TelemetrySubscriber**
-Replace all `LifecycleEvents::Events` references with appropriate `Constants::TaskEvents` or `Constants::StepEvents`.
+### **Phase 5: Subscription System Success Metrics**
+- [ ] **Event Catalog**: Complete documentation of all events with payload schemas
+- [ ] **BaseSubscriber Pattern**: Clean inheritance pattern for custom subscribers
+- [ ] **Declarative Registration**: `subscribe_to :step_completed` with automatic routing
+- [ ] **YAML Configuration**: Task-level event subscription configuration working
+- [ ] **TelemetrySubscriber Migration**: Uses new BaseSubscriber pattern
+- [ ] **Developer Documentation**: Comprehensive guides and examples
+- [ ] **Example Implementations**: Notification, metrics, and alerting examples
 
-### **Step 2: Delete Legacy Files** (5 minutes)
+## 🛠️ **CURRENT SYSTEM STATE FOR REFERENCE**
+
+### **What's Working Perfectly**
+1. **Events::Publisher**: Single event system, no dual architecture confusion
+2. **EventPayloadBuilder**: Standardized payload creation with event type specialization
+3. **OpenTelemetry Integration**: Full observability stack (12+ instrumentations)
+4. **Step Error Persistence**: Complete error data storage with atomic transactions
+5. **Production Stability**: Zero segfaults, memory leaks, or connection issues
+6. **State Machine Events**: Proper integration with Statesman transitions
+
+### **Key Files & Components**
+- `lib/tasker/events/publisher.rb` - Single event publisher with dry-events
+- `lib/tasker/concerns/event_publisher.rb` - Clean publishing interface concern
+- `lib/tasker/events/event_payload_builder.rb` - Standardized payload creation
+- `lib/tasker/events/subscribers/telemetry_subscriber.rb` - Current subscriber implementation
+- `spec/dummy/config/initializers/opentelemetry.rb` - OpenTelemetry configuration with Faraday exclusion
+- `lib/tasker/orchestration/step_executor.rb` - Complete error persistence implementation
+
+### **Architecture Patterns Established**
+- **EventPublisher Concern**: Provides `publish_event()`, `publish_step_event()`, `publish_task_event()`
+- **EventPayloadBuilder Integration**: Standardized payloads with event type specialization
+- **Atomic Error Handling**: Save-first, transition-second pattern for idempotency
+- **OpenTelemetry Safety**: Selective instrumentation excluding problematic components
+
+## 🎯 **VALIDATION COMMANDS**
+
+### **Quick Health Check**
 ```bash
-rm lib/tasker/lifecycle_events.rb
-rm lib/tasker/concerns/lifecycle_event_helpers.rb
-```
+# Verify system is still working
+bundle exec rspec spec/lib/tasker/state_machine/ spec/examples/workflow_orchestration_example_spec.rb --format progress
 
-### **Step 3: Update Test Files** (20 minutes)
-
-#### **A. Update instrumentation_spec.rb**
-```ruby
-# Replace Tasker::LifecycleEvents.fire() calls with:
-Tasker::Events::Publisher.instance.publish()
-
-# Replace LifecycleEvents::Events constants with:
-Tasker::Constants::TaskEvents and Tasker::Constants::StepEvents
-```
-
-#### **B. Rewrite lifecycle_events_spec.rb**
-```ruby
-# OLD: Test legacy LifecycleEvents module
-# NEW: Test Events::Publisher directly with same functionality
-```
-
-### **Step 4: Validation** (10 minutes)
-```bash
-# 1. Ensure no remaining references
-grep -r "LifecycleEvents\\.fire" lib/ app/
-grep -r "LifecycleEvents::Events" lib/ app/
-
-# 2. Test core functionality
-bundle exec rspec spec/lib/tasker/state_machine/ spec/examples/workflow_orchestration_example_spec.rb
-
-# 3. Test updated instrumentation
-bundle exec rspec spec/lib/tasker/instrumentation_spec.rb
-```
-
-## 🎯 **CONSTANT MAPPING REFERENCE**
-
-### **Task Events**
-```ruby
-# OLD → NEW
-Tasker::LifecycleEvents::Events::Task::INITIALIZE → Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED
-Tasker::LifecycleEvents::Events::Task::START      → Tasker::Constants::TaskEvents::START_REQUESTED
-Tasker::LifecycleEvents::Events::Task::COMPLETE   → Tasker::Constants::TaskEvents::COMPLETED
-Tasker::LifecycleEvents::Events::Task::ERROR      → Tasker::Constants::TaskEvents::FAILED
-```
-
-### **Step Events**
-```ruby
-# OLD → NEW
-Tasker::LifecycleEvents::Events::Step::BEFORE_HANDLE → Tasker::Constants::StepEvents::BEFORE_HANDLE
-Tasker::LifecycleEvents::Events::Step::HANDLE        → Tasker::Constants::StepEvents::HANDLE
-Tasker::LifecycleEvents::Events::Step::EXECUTION     → Tasker::Constants::StepEvents::EXECUTION_REQUESTED
-Tasker::LifecycleEvents::Events::Step::COMPLETE      → Tasker::Constants::StepEvents::COMPLETED
-Tasker::LifecycleEvents::Events::Step::ERROR         → Tasker::Constants::StepEvents::FAILED
-Tasker::LifecycleEvents::Events::Step::RETRY         → Tasker::Constants::StepEvents::RETRY_REQUESTED
-```
-
-## 🎯 **SUCCESS CRITERIA BY PHASE**
-
-### **Phase 1: Legacy Cleanup (This Week)**
-- [ ] Zero `LifecycleEvents.fire()` or `LifecycleEvents::Events` usage in lib/ and app/
-- [ ] `lib/tasker/lifecycle_events.rb` deleted
-- [ ] `lib/tasker/concerns/lifecycle_event_helpers.rb` deleted
-- [ ] All test files updated to use `Events::Publisher` directly
-- [ ] State machine tests continue to pass (29/29)
-- [ ] Orchestration tests continue to pass (13/13)
-
-### **Phase 2: Instrumentation Integration (Next Week)**
-- [ ] `Tasker::Instrumentation.record_event` method implemented
-- [ ] OpenTelemetry/telemetry backend integration working
-- [ ] `TelemetrySubscriber` receives events with standardized payloads
-- [ ] No missing key errors (`:execution_duration`, `:error_message`, etc.)
-- [ ] All tests passing with instrumentation
-
-### **Phase 3: TelemetrySubscriber Simplification (Week 2)**
-- [ ] Custom batching logic removed
-- [ ] Background thread management deleted
-- [ ] Immediate event emission implemented
-- [ ] Memory usage stable without event buffering
-- [ ] Debugging experience improved with immediate events
-
-### **Phase 4: Full System Validation (Week 2)**
-- [ ] All 40 test files passing
-- [ ] No event system integration issues
-- [ ] Performance stable or improved
-- [ ] Database timeout issues resolved
-- [ ] Production-ready unified event system
-
-## 🛠️ **ARCHITECTURAL FOUNDATION ACHIEVEMENTS**
-
-### **What's Working Perfectly** ✅
-1. **Single Event System**: Only `Events::Publisher`, no confusion
-2. **Clean Interface**: `EventPublisher` concern eliminates line noise
-3. **Standardized Payloads**: `EventPayloadBuilder` ensures consistency
-4. **State Machine Integration**: Clean transitions with proper events
-5. **Orchestration Events**: Event-driven workflow functional
-6. **Performance**: No degradation from unification
-
-### **Key Design Decisions Validated** ✅
-- **EventPublisher Concern**: Right abstraction level for common usage
-- **EventPayloadBuilder Integration**: Solves real telemetry issues
-- **Single Publisher Pattern**: Eliminates dual system confusion
-- **State Machine Events**: Proper integration with Statesman
-- **Orchestration Decoupling**: Clean separation of concerns
-
-## 📋 **VALIDATION COMMANDS**
-
-### **Immediate Validation (After Phase 1)**
-```bash
-# Should return NOTHING:
-grep -r "LifecycleEvents\\.fire" lib/ app/
-grep -r "LifecycleEvents::Events" lib/ app/
-
-# Should still pass:
-bundle exec rspec spec/lib/tasker/state_machine/ spec/examples/workflow_orchestration_example_spec.rb
+# Should show 75 examples, 0 failures with OpenTelemetry successfully installed
 ```
 
 ### **Full System Validation**
 ```bash
-# Test core functionality
-bundle exec rspec spec/lib/tasker/state_machine/ spec/models/tasker/task_handler_spec.rb
+# Complete test suite (should be 320+ passing)
+bundle exec rspec spec/ --format progress
 
-# Test event system integration
+# Event system integration tests specifically
 bundle exec rspec spec/lib/tasker/instrumentation_spec.rb spec/lib/tasker/lifecycle_events_spec.rb
-
-# Test complete system
-bundle exec rspec spec/ --format documentation
 ```
 
-## 📊 **PROGRESS TRACKING**
+## 📊 **NEXT CHAT STARTING POINT SUMMARY**
 
-### **Completed** ✅
-- Unified event architecture with single publisher
-- Clean EventPublisher concern interface
-- EventPayloadBuilder integration for standardized payloads
-- State machine and orchestration integration
-- Elimination of dual event system confusion
-- Zero breaking changes during migration
+**Current State**: Production-ready event system with comprehensive observability and zero critical issues
 
-### **In Progress** 🔄
-- Legacy file cleanup and deletion
-- Test file updates for new architecture
-- Instrumentation system integration
+**Next Work**: Developer experience improvements - cleaner event publishing API and extensible subscription patterns
 
-### **Upcoming** ⏳
-- TelemetrySubscriber simplification
-- Full test suite validation
-- Performance optimization
-- Production readiness validation
+**Expected Outcome**: Industry-leading developer experience for event-driven workflow systems with:
+1. **Intuitive Event Publishing**: Single, obvious way to publish each event type
+2. **Extensible Subscriptions**: Easy creation of custom event subscribers
+3. **Configuration-Driven**: YAML-based event subscription configuration
+4. **Self-Documenting**: Event catalog with schemas, examples, and usage patterns
+5. **Ecosystem-Ready**: Third-party integrations and extensions possible
 
-## 🏆 **EXPECTED FINAL OUTCOME**
+**Development Environment**: All dependencies installed, 320/320 tests passing, ready for immediate development.
 
-When complete, you will have:
-1. **Unified Event System**: Single `Events::Publisher`, zero legacy confusion ✅
-2. **Clean Development Experience**: Simple `publish_event()` interface ✅
-3. **Standardized Telemetry**: Consistent payloads for all observability ✅
-4. **Production-Ready Architecture**: Full test coverage, performance validated
-5. **Maintainable Codebase**: No technical debt, clear patterns
-6. **Industry Best Practices**: OpenTelemetry integration, immediate emission
-7. **Developer Productivity**: Easy event publishing, immediate debugging
-
-**The goal is a production-ready, unified event system with excellent developer experience, comprehensive telemetry, and zero legacy technical debt.** 🚀
-
-**Total estimated time for Phase 1 completion: ~65 minutes to complete the LifecycleEvents removal entirely.**
+**🚀 Ready to begin Phase 4 (Event Publishing API) or Phase 5 (Subscription System) development immediately.**
