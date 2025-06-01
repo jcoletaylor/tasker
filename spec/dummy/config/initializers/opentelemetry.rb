@@ -29,15 +29,15 @@ OpenTelemetry::SDK.configure do |c|
                                                                 'service.framework' => 'tasker'
                                                               })
 
-  # ⚠️  PRIORITY 0 FIX: Temporarily disable PG instrumentation that's causing segfault
-  # Use selective instrumentations instead of use_all to avoid PG instrumentation
-  c.use 'OpenTelemetry::Instrumentation::Rails'
-  c.use 'OpenTelemetry::Instrumentation::ActionPack'
-  c.use 'OpenTelemetry::Instrumentation::ActionView'
-  c.use 'OpenTelemetry::Instrumentation::ActiveJob'
-  c.use 'OpenTelemetry::Instrumentation::ActiveRecord'
-  c.use 'OpenTelemetry::Instrumentation::ActiveSupport'
-  c.use 'OpenTelemetry::Instrumentation::Rack'
-  # Explicitly skip PG instrumentation to prevent segfault:
-  # c.use 'OpenTelemetry::Instrumentation::PG'  # DISABLED
+  # ✅ FIXED: PG instrumentation re-enabled after memory and connection management improvements
+  # Tasker v1.6+ includes fixes for:
+  # - Database connection pooling with ActiveRecord::Base.connection_pool.with_connection
+  # - Memory leak prevention with explicit futures.clear() calls
+  # - Batched concurrent processing (MAX_CONCURRENT_STEPS = 3) to prevent connection exhaustion
+  # - Proper error persistence ensuring no dangling database connections
+
+  # Use all auto-instrumentations except Faraday (which has a known bug)
+  # The Faraday instrumentation incorrectly passes Faraday::Response objects instead of status codes
+  # causing "undefined method `to_i' for #<Faraday::Response>" errors
+  c.use_all({ 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } })
 end
