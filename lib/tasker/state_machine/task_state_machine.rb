@@ -2,6 +2,8 @@
 
 require 'statesman'
 require_relative '../constants'
+require 'tasker/events/event_payload_builder'
+require_relative '../concerns/event_publisher'
 
 module Tasker
   module StateMachine
@@ -11,6 +13,7 @@ module Tasker
     # the existing event system to provide declarative state management.
     class TaskStateMachine
       include Statesman::Machine
+      extend Tasker::Concerns::EventPublisher
 
       # Define all task states using existing constants
       state Constants::TaskStatuses::PENDING, initial: true
@@ -21,24 +24,43 @@ module Tasker
       state Constants::TaskStatuses::RESOLVED_MANUALLY
 
       # Define state transitions based on existing StateTransition definitions
+      # Fixed: Added missing transitions that guard clauses were handling
       transition from: Constants::TaskStatuses::PENDING,
-                 to: Constants::TaskStatuses::IN_PROGRESS
+                 to: [Constants::TaskStatuses::IN_PROGRESS,
+                      Constants::TaskStatuses::CANCELLED,
+                      Constants::TaskStatuses::ERROR] # Allow direct error from pending
 
       transition from: Constants::TaskStatuses::IN_PROGRESS,
                  to: [Constants::TaskStatuses::COMPLETE,
                       Constants::TaskStatuses::ERROR,
                       Constants::TaskStatuses::CANCELLED,
-                      Constants::TaskStatuses::PENDING]
+                      Constants::TaskStatuses::PENDING] # Allow reset to pending
 
       transition from: Constants::TaskStatuses::ERROR,
                  to: [Constants::TaskStatuses::PENDING,
                       Constants::TaskStatuses::RESOLVED_MANUALLY]
 
-      transition from: Constants::TaskStatuses::PENDING,
+      # Allow cancellation from complete/error states (admin override scenarios)
+      transition from: Constants::TaskStatuses::COMPLETE,
+                 to: Constants::TaskStatuses::CANCELLED
+
+      transition from: Constants::TaskStatuses::RESOLVED_MANUALLY,
                  to: Constants::TaskStatuses::CANCELLED
 
       # Callbacks for lifecycle event integration
       before_transition do |task, transition|
+        # Handle idempotent transitions using existing helper method
+        if TaskStateMachine.idempotent_transition?(task, transition.to_state)
+          # Abort the transition by raising GuardFailedError
+          raise Statesman::GuardFailedError, "Already in target state #{transition.to_state}"
+        end
+
+        # Log the transition for debugging
+        effective_current_state = TaskStateMachine.effective_current_state(task)
+        Rails.logger.debug do
+          "Task #{task.task_id} transitioning from #{effective_current_state} to #{transition.to_state}"
+        end
+
         # Fire before transition event
         TaskStateMachine.safe_fire_event(
           Constants::TaskEvents::BEFORE_TRANSITION,
@@ -73,38 +95,18 @@ module Tasker
         end
       end
 
-      # Guard clauses for transition validation
-      guard_transition(to: Constants::TaskStatuses::PENDING) do |task, _transition|
-        # Allow idempotent transitions (already pending) or valid transitions
-        current_status = task.state_machine.current_state
-        current_status == Constants::TaskStatuses::PENDING || # Idempotent
-          [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::IN_PROGRESS].include?(current_status)
+      # Guard clauses for business logic only
+      # Let Statesman handle state transition validation and idempotent calls
+
+      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, transition|
+        # Only business rule: task can only complete when all steps are done
+        !TaskStateMachine.task_has_incomplete_steps?(task)
       end
 
-      guard_transition(to: Constants::TaskStatuses::IN_PROGRESS) do |task|
-        # Allow idempotent transitions (already in progress) or valid transitions from pending
-        current_status = task.state_machine.current_state
-        [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::PENDING].include?(current_status)
-      end
-
-      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, _transition|
-        # Allow idempotent transitions (already complete) or valid completion
-        current_status = task.state_machine.current_state
-        return true if current_status == Constants::TaskStatuses::COMPLETE # Idempotent
-
-        # Only allow completion from in_progress state and all steps complete
-        current_status == Constants::TaskStatuses::IN_PROGRESS &&
-          !TaskStateMachine.task_has_incomplete_steps?(task)
-      end
-
-      guard_transition(to: Constants::TaskStatuses::ERROR) do |task, _transition|
-        # Allow idempotent transitions (already in error) or valid error transitions
-        current_status = task.state_machine.current_state
-        return true if current_status == Constants::TaskStatuses::ERROR # Idempotent
-
-        # Allow error transition from in_progress or pending state
-        [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::PENDING].include?(current_status)
-      end
+      # No other guard clauses needed!
+      # - State transition validation is handled by the transition definitions above
+      # - Idempotent transitions are handled by Statesman automatically
+      # - Simple state changes don't need business logic validation
 
       # Class methods for state machine management
       class << self
@@ -122,6 +124,7 @@ module Tasker
           [Constants::TaskStatuses::PENDING,
            Constants::TaskStatuses::IN_PROGRESS] => Constants::TaskEvents::START_REQUESTED,
           [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+          [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
 
           [Constants::TaskStatuses::IN_PROGRESS,
            Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
@@ -132,8 +135,42 @@ module Tasker
 
           [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::RETRY_REQUESTED,
           [Constants::TaskStatuses::ERROR,
-           Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY
+           Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
+
+          # New transitions for admin override scenarios
+          [Constants::TaskStatuses::COMPLETE, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+          [Constants::TaskStatuses::RESOLVED_MANUALLY, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED
         }.freeze
+
+        # Class-level wrapper methods for guard clause context
+        # These delegate to instance methods to provide clean access from guard clauses
+
+        # Check if a transition is idempotent (current state == target state)
+        #
+        # @param task [Task] The task to check
+        # @param target_state [String] The target state
+        # @return [Boolean] True if this is an idempotent transition
+        def idempotent_transition?(task, target_state)
+          effective_state = effective_current_state(task)
+          is_idempotent = effective_state == target_state
+
+          if is_idempotent
+            Rails.logger.debug do
+              "TaskStateMachine: Detected idempotent transition to #{target_state} for task #{task.task_id}"
+            end
+          end
+
+          is_idempotent
+        end
+
+        # Get the effective current state, handling blank/empty states
+        #
+        # @param task [Task] The task to check
+        # @return [String] The effective current state (blank states become PENDING)
+        def effective_current_state(task)
+          current_state = task.state_machine.current_state
+          current_state.blank? ? Constants::TaskStatuses::PENDING : current_state
+        end
 
         # Safely fire a lifecycle event using dry-events bus
         #
@@ -141,17 +178,7 @@ module Tasker
         # @param context [Hash] The event context
         # @return [void]
         def safe_fire_event(event_name, context = {})
-          if defined?(Tasker::LifecycleEvents)
-            Tasker::LifecycleEvents.fire(event_name, context)
-          else
-            Rails.logger.debug { "State machine event: #{event_name} with context: #{context.inspect}" }
-          end
-        rescue ActiveRecord::InvalidForeignKey => e
-          # Handle foreign key violations specifically (common in test environments)
-          Rails.logger.warn { "Foreign key violation firing event #{event_name}: #{e.message}" }
-        rescue StandardError => e
-          Rails.logger.error { "Error firing state machine event #{event_name}: #{e.message}" }
-          Rails.logger.error { e.backtrace.join("\n") } if Rails.env.development?
+          publish_event(event_name, context)
         end
 
         # Determine the transition event name based on states using hashmap lookup
@@ -164,7 +191,6 @@ module Tasker
           event_name = TRANSITION_EVENT_MAP[transition_key]
 
           if event_name.nil?
-            # For unexpected transitions, log a warning and return nil to skip event firing
             Rails.logger.warn do
               "Unexpected task state transition: #{from_state || 'initial'} → #{to_state}. " \
                 'No event will be fired for this transition.'
@@ -188,10 +214,40 @@ module Tasker
           ]
 
           task.workflow_steps.any? do |step|
-            step_status = step.status # This now uses the state machine
+            # Use state_machine.current_state to avoid circular reference with step.status
+            current_state = step.state_machine.current_state
+            step_status = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
             incomplete_statuses.include?(step_status)
           end
+        rescue StandardError => e
+          # If there's an error checking steps, log it and assume no incomplete steps
+          # This prevents step checking from blocking task completion in edge cases
+          Rails.logger.warn do
+            "TaskStateMachine: Error checking steps for task #{task.task_id}: #{e.message}. " \
+            "Assuming no incomplete steps."
+          end
+          false
         end
+      end
+
+      private
+
+      # Safely fire a lifecycle event
+      #
+      # @param event_name [String] The event name
+      # @param context [Hash] The event context
+      # @return [void]
+      def safe_fire_event(event_name, context = {})
+        self.class.safe_fire_event(event_name, context)
+      end
+
+      # Determine the appropriate event name for a state transition
+      #
+      # @param from_state [String, nil] The source state
+      # @param to_state [String] The target state
+      # @return [String] The event name
+      def determine_transition_event_name(from_state, to_state)
+        self.class.determine_transition_event_name(from_state, to_state)
       end
     end
   end

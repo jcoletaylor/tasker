@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/idempotent_state_transitions'
-require_relative 'orchestrator'
 require_relative 'viable_step_discovery'
 require_relative 'step_executor'
 require_relative 'task_finalizer'
@@ -37,7 +36,7 @@ module Tasker
           Rails.logger.info('Tasker::Orchestration::Coordinator: Initializing orchestration system')
 
           # Initialize core orchestration components
-          setup_orchestrator
+          setup_publisher
           setup_event_subscriptions
 
           # Initialize telemetry and monitoring
@@ -45,11 +44,16 @@ module Tasker
 
           @initialized = true
           Rails.logger.info('Tasker::Orchestration::Coordinator: Orchestration system initialized successfully')
+        rescue StandardError => e
+          Rails.logger.error("Tasker::Orchestration::Coordinator: Failed to initialize: #{e.message}")
+          @initialized = false
+          raise
         end
 
         # Reset initialization state (primarily for testing)
         def reset!
           @initialized = false
+          @publisher = nil
           Rails.logger.debug('Tasker::Orchestration::Coordinator: Initialization state reset')
         end
 
@@ -60,14 +64,13 @@ module Tasker
           {
             initialized: @initialized || false,
             components: {
-              orchestrator: defined?(Tasker::Orchestration::Orchestrator),
+              publisher: defined?(Tasker::Events::Publisher),
               viable_step_discovery: defined?(Tasker::Orchestration::ViableStepDiscovery),
               step_executor: defined?(Tasker::Orchestration::StepExecutor),
               task_finalizer: defined?(Tasker::Orchestration::TaskFinalizer),
               task_reenqueuer: defined?(Tasker::Orchestration::TaskReenqueuer)
             },
-            event_bus_active: defined?(Tasker::LifecycleEvents) && Tasker::LifecycleEvents.bus.present?,
-            orchestrator_instance: @orchestrator&.class&.name
+            publisher_instance: @publisher&.class&.name
           }
         end
 
@@ -82,9 +85,9 @@ module Tasker
 
         private
 
-        # Set up the main orchestrator
-        def setup_orchestrator
-          @orchestrator = Tasker::Orchestration::Orchestrator.instance
+        # Set up the main publisher
+        def setup_publisher
+          @publisher = Tasker::Events::Publisher.instance
         end
 
         # Set up event subscriptions for orchestration components

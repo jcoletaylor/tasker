@@ -1,38 +1,27 @@
 # frozen_string_literal: true
 
-require 'tasker/engine'
-# typed: false
+# Tasker: Queuable Multi-Step Tasks Made Easy-ish
+#
+# This is the main entry point for the Tasker gem. It sets up only the essential
+# dependencies needed for the gem to function, while letting the Rails engine
+# handle Rails-specific setup and autoloading.
 
-require 'tasker/constants'
+# Load version first (required for gemspec and other components)
 require 'tasker/version'
+
+# Core configuration that must be available before engine loads
 require 'tasker/configuration'
-require 'tasker/railtie' if defined?(Rails)
 
-require 'tasker/types'
-require 'tasker/types/step_template'
-require 'tasker/types/step_sequence'
-require 'tasker/types/task_request'
+# Essential runtime dependencies from gemspec
+require 'concurrent'
+require 'dry/events'
+require 'dry/types'
+require 'dry/struct'
+require 'dry/validation'
+require 'statesman'
 
-require 'tasker/identity_strategy'
-require 'tasker/handler_factory'
-require 'tasker/task_handler'
-require 'tasker/task_handler/class_methods'
-require 'tasker/task_handler/instance_methods'
-require 'tasker/task_handler/step_group'
-
-# New simplified event system
-require 'tasker/events/publisher'
-require 'tasker/events/bus'
-require 'tasker/events/subscribers/telemetry_subscriber'
-
-# Lifecycle events system
-require 'tasker/lifecycle_events'
-
-# State machine system
-require 'tasker/state_machine'
-
-# Workflow orchestration system
-require 'tasker/orchestration'
+# Load the Rails engine to handle Rails-specific setup
+require 'tasker/engine'
 
 # Main namespace for the Tasker gem
 #
@@ -50,6 +39,14 @@ module Tasker
 
   # Namespace for event system components used in Tasker
   module Events
+  end
+
+  # Namespace for orchestration components
+  module Orchestration
+  end
+
+  # Namespace for state machine components
+  module StateMachine
   end
 
   # Accesses the global configuration for Tasker

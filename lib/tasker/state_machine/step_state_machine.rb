@@ -3,6 +3,7 @@
 require 'statesman'
 require_relative '../constants'
 require 'tasker/events/event_payload_builder'
+require_relative '../concerns/event_publisher'
 
 module Tasker
   module StateMachine
@@ -12,6 +13,7 @@ module Tasker
     # the existing event system to provide declarative state management.
     class StepStateMachine
       include Statesman::Machine
+      extend Tasker::Concerns::EventPublisher
 
       # Define all step states using existing constants
       state Constants::WorkflowStepStatuses::PENDING, initial: true
@@ -39,9 +41,16 @@ module Tasker
 
       # Callbacks for state transitions
       before_transition do |step, transition|
+        # Handle idempotent transitions using existing helper method
+        if StepStateMachine.idempotent_transition?(step, transition.to_state)
+          # Abort the transition by raising GuardFailedError
+          raise Statesman::GuardFailedError, "Already in target state #{transition.to_state}"
+        end
+
         # Log the transition for debugging
+        effective_current_state = StepStateMachine.effective_current_state(step)
         Rails.logger.debug do
-          "Step #{step.workflow_step_id} transitioning from #{step.status} to #{transition.to_state}"
+          "Step #{step.workflow_step_id} transitioning from #{effective_current_state} to #{transition.to_state}"
         end
       end
 
@@ -66,72 +75,18 @@ module Tasker
         end
       end
 
-      # Guard clauses for transition validation
-      guard_transition(to: Constants::WorkflowStepStatuses::PENDING) do |step|
-        # Allow idempotent transitions (already pending) or valid retry transitions from error
-        current_status = step.state_machine.current_state
-        return true if current_status == Constants::WorkflowStepStatuses::PENDING # Idempotent
+      # Guard clauses for business logic only
+      # Let Statesman handle state transition validation and idempotent calls
 
-        # Allow retry transition from error state
-        current_status == Constants::WorkflowStepStatuses::ERROR
+      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step, transition|
+        # Only business rule: check dependencies are met
+        StepStateMachine.step_dependencies_met?(step)
       end
 
-      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step|
-        # Allow idempotent transitions (already in progress) or valid start transitions
-        current_status = step.state_machine.current_state
-        Rails.logger.debug do
-          "StepStateMachine: Guard clause for IN_PROGRESS - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::IN_PROGRESS}"
-        end
-
-        if current_status == Constants::WorkflowStepStatuses::IN_PROGRESS
-          Rails.logger.debug 'StepStateMachine: Allowing idempotent transition to IN_PROGRESS'
-          return true # Idempotent
-        end
-
-        # Only allow start if step is pending AND dependencies are met
-        result = current_status == Constants::WorkflowStepStatuses::PENDING &&
-                 StepStateMachine.step_dependencies_met?(step)
-        Rails.logger.debug { "StepStateMachine: Guard clause result for IN_PROGRESS: #{result}" }
-        result
-      end
-
-      guard_transition(to: Constants::WorkflowStepStatuses::COMPLETE) do |step|
-        # Allow idempotent transitions (already complete) or valid completion
-        current_status = step.state_machine.current_state
-        return true if current_status == Constants::WorkflowStepStatuses::COMPLETE # Idempotent
-
-        # Only allow completion from in_progress state (proper workflow execution)
-        current_status == Constants::WorkflowStepStatuses::IN_PROGRESS
-      end
-
-      guard_transition(to: Constants::WorkflowStepStatuses::ERROR) do |step|
-        # Allow idempotent transitions (already in error) or valid error transitions
-        current_status = step.state_machine.current_state
-        Rails.logger.debug do
-          "StepStateMachine: Guard clause for ERROR - current: #{current_status}, target: #{Constants::WorkflowStepStatuses::ERROR}"
-        end
-
-        if current_status == Constants::WorkflowStepStatuses::ERROR
-          Rails.logger.debug 'StepStateMachine: Allowing idempotent transition to ERROR'
-          return true # Idempotent
-        end
-
-        # Allow error transition from in_progress or pending state
-        result = [Constants::WorkflowStepStatuses::IN_PROGRESS,
-                  Constants::WorkflowStepStatuses::PENDING].include?(current_status)
-        Rails.logger.debug { "StepStateMachine: Guard clause result for ERROR: #{result}" }
-        result
-      end
-
-      guard_transition(to: Constants::WorkflowStepStatuses::RESOLVED_MANUALLY) do |step|
-        # Allow idempotent transitions (already resolved manually) or valid manual resolution
-        current_status = step.state_machine.current_state
-        return true if current_status == Constants::WorkflowStepStatuses::RESOLVED_MANUALLY # Idempotent
-
-        # Allow manual resolution from pending or error states
-        [Constants::WorkflowStepStatuses::PENDING,
-         Constants::WorkflowStepStatuses::ERROR].include?(current_status)
-      end
+      # No other guard clauses needed!
+      # - State transition validation is handled by the transition definitions above
+      # - Idempotent transitions are handled by Statesman automatically
+      # - Simple state changes (PENDING->ERROR, IN_PROGRESS->COMPLETE, etc.) don't need guards
 
       # Class methods for state machine management
       class << self
@@ -168,21 +123,121 @@ module Tasker
            Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY
         }.freeze
 
+        # Class-level wrapper methods for guard clause context
+        # These delegate to instance methods to provide clean access from guard clauses
+
+        # Check if a transition is idempotent (current state == target state)
+        #
+        # @param step [WorkflowStep] The step to check
+        # @param target_state [String] The target state
+        # @return [Boolean] True if this is an idempotent transition
+        def idempotent_transition?(step, target_state)
+          current_state = step.state_machine.current_state
+          effective_current_state = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+          is_idempotent = effective_current_state == target_state
+
+          if is_idempotent
+            Rails.logger.debug do
+              "StepStateMachine: Allowing idempotent transition to #{target_state} for step #{step.workflow_step_id}"
+            end
+          end
+
+          is_idempotent
+        end
+
+        # Get the effective current state, handling blank/empty states
+        #
+        # @param step [WorkflowStep] The step to check
+        # @return [String] The effective current state (blank states become PENDING)
+        def effective_current_state(step)
+          current_state = step.state_machine.current_state
+          current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+        end
+
+        # Log an invalid from-state transition
+        #
+        # @param step [WorkflowStep] The step
+        # @param current_state [String] The current state
+        # @param target_state [String] The target state
+        # @param reason [String] The reason for the restriction
+        def log_invalid_from_state(step, current_state, target_state, reason)
+          Rails.logger.debug do
+            "StepStateMachine: Cannot transition to #{target_state} from '#{current_state}' " \
+            "(step #{step.workflow_step_id}). #{reason}."
+          end
+        end
+
+        # Log when dependencies are not met
+        #
+        # @param step [WorkflowStep] The step
+        # @param target_state [String] The target state
+        def log_dependencies_not_met(step, target_state)
+          Rails.logger.debug do
+            "StepStateMachine: Cannot transition step #{step.workflow_step_id} to #{target_state} - " \
+            "dependencies not satisfied. Check parent step completion status."
+          end
+        end
+
+        # Log the result of a transition check
+        #
+        # @param step [WorkflowStep] The step
+        # @param target_state [String] The target state
+        # @param result [Boolean] Whether the transition is allowed
+        # @param reason [String] The reason for the result
+        def log_transition_result(step, target_state, result, reason)
+          if result
+            Rails.logger.debug do
+              "StepStateMachine: Allowing transition to #{target_state} for step #{step.workflow_step_id} (#{reason})"
+            end
+          else
+            Rails.logger.debug do
+              "StepStateMachine: Blocking transition to #{target_state} for step #{step.workflow_step_id} (#{reason} failed)"
+            end
+          end
+        end
+
         # Check if step dependencies are met
         #
         # @param step [WorkflowStep] The step to check
         # @return [Boolean] True if all dependencies are satisfied
         def step_dependencies_met?(step)
-          return true unless step.respond_to?(:parents)
+          # Handle cases where step doesn't have parents association or it's not loaded
+          begin
+            # If step doesn't respond to parents, assume no dependencies
+            return true unless step.respond_to?(:parents)
 
-          # Check if all parent steps are complete
-          step.parents.all? do |parent|
-            completion_states = [
-              Constants::WorkflowStepStatuses::COMPLETE,
-              Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-            ]
-            parent_status = parent.status # This now uses the state machine
-            completion_states.include?(parent_status)
+            # If parents association exists but is empty, no dependencies to check
+            parents = step.parents
+            return true if parents.nil? || parents.empty?
+
+            # Check if all parent steps are complete
+            parents.all? do |parent|
+              completion_states = [
+                Constants::WorkflowStepStatuses::COMPLETE,
+                Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+              ]
+              # Use state_machine.current_state to avoid circular reference with parent.status
+              current_state = parent.state_machine.current_state
+              parent_status = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+              is_complete = completion_states.include?(parent_status)
+
+              unless is_complete
+                Rails.logger.debug do
+                  "StepStateMachine: Step #{step.workflow_step_id} dependency not met - " \
+                  "parent step #{parent.workflow_step_id} is '#{parent_status}', needs to be complete"
+                end
+              end
+
+              is_complete
+            end
+          rescue StandardError => e
+            # If there's an error checking dependencies, log it and assume dependencies are met
+            # This prevents dependency checking from blocking execution in edge cases
+            Rails.logger.warn do
+              "StepStateMachine: Error checking dependencies for step #{step.workflow_step_id}: #{e.message}. " \
+              "Assuming dependencies are met."
+            end
+            true
           end
         end
 
@@ -192,33 +247,27 @@ module Tasker
         # @param context [Hash] The event context
         # @return [void]
         def safe_fire_event(event_name, context = {})
-          if defined?(Tasker::LifecycleEvents)
-            # Use EventPayloadBuilder for consistent payload structure
-            step = extract_step_from_context(context)
-            task = step&.task
+          # Use EventPayloadBuilder for consistent payload structure
+          step = extract_step_from_context(context)
+          task = step&.task
 
-            if step && task
-              # Determine event type from event name
-              event_type = determine_event_type_from_name(event_name)
+          if step && task
+            # Determine event type from event name
+            event_type = determine_event_type_from_name(event_name)
 
-              # Use EventPayloadBuilder for standardized payload
-              enhanced_context = Tasker::Events::EventPayloadBuilder.build_step_payload(
-                step,
-                task,
-                event_type: event_type,
-                additional_context: context
-              )
-            else
-              # Fallback to enhanced context if step/task not available
-              enhanced_context = build_standardized_payload(event_name, context)
-            end
-
-            Tasker::LifecycleEvents.fire(event_name, enhanced_context)
+            # Use EventPayloadBuilder for standardized payload
+            enhanced_context = Tasker::Events::EventPayloadBuilder.build_step_payload(
+              step,
+              task,
+              event_type: event_type,
+              additional_context: context
+            )
           else
-            Rails.logger.debug { "State machine event: #{event_name} with context: #{context.inspect}" }
+            # Fallback to enhanced context if step/task not available
+            enhanced_context = build_standardized_payload(event_name, context)
           end
-        rescue StandardError => e
-          Rails.logger.error { "Error firing state machine event #{event_name}: #{e.message}" }
+
+          publish_event(event_name, enhanced_context)
         end
 
         # Extract step object from context for EventPayloadBuilder

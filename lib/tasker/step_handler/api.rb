@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'faraday'
+require_relative '../concerns/event_publisher'
+
 module Tasker
   module StepHandler
     # Handles API-based workflow steps by making HTTP requests
@@ -13,6 +15,8 @@ module Tasker
     #     end
     #   end
     class Api < Base
+      include Tasker::Concerns::EventPublisher
+
       # @return [Faraday::Connection] The Faraday connection for making HTTP requests
       attr_reader :connection
 
@@ -113,7 +117,7 @@ module Tasker
         }
 
         # Fire the handle event with span tracing
-        Tasker::LifecycleEvents.fire_with_span(
+        publish_event(
           Tasker::LifecycleEvents::Events::Step::HANDLE,
           span_context
         ) do
@@ -170,7 +174,7 @@ module Tasker
           step.backoff_request_seconds = backoff_seconds
 
           # Fire the backoff event with the retry time
-          Tasker::LifecycleEvents.fire(
+          publish_event(
             Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
             {
               backoff_seconds: backoff_seconds,
@@ -217,7 +221,7 @@ module Tasker
         step.last_attempted_at = Time.zone.now
 
         # Fire the backoff event with the calculated retry time
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
           {
             backoff_seconds: retry_delay,

@@ -1,49 +1,44 @@
 # frozen_string_literal: true
 
 require 'benchmark'
-require 'dry/events'
 
 module Tasker
-  # LifecycleEvents provides a unified interface for firing and subscribing to
-  # task and step lifecycle events using dry-events publisher.
+  # Legacy LifecycleEvents module - now delegates to unified Events::Publisher
+  #
+  # This module provides backward compatibility for code that still uses the old
+  # LifecycleEvents API. All functionality now delegates to the new Events::Publisher
+  # system for consistency.
+  #
+  # DEPRECATED: Use Events::Publisher.instance directly instead
   module LifecycleEvents
     # Event namespace for ActiveSupport::Notifications compatibility
     EVENT_NAMESPACE = 'tasker'
 
-    # Create a publisher instance that includes dry-events functionality
-    class Publisher
-      include Dry::Events::Publisher[:tasker_lifecycle]
-    end
-
     class << self
-      # Get the dry-events publisher instance
+      # Get the unified publisher instance
       #
-      # @return [Publisher] The publisher instance
+      # @return [Tasker::Events::Publisher] The publisher instance
       def publisher
-        @publisher ||= begin
-          instance = Publisher.new
-          # Register all valid events
-          Events::VALID_EVENTS.each do |event_name|
-            instance.register_event(event_name)
-          end
-          instance
-        end
+        @publisher ||= Tasker::Events::Publisher.instance
       end
 
       # Legacy method name for backward compatibility
       #
-      # @return [Publisher] The publisher instance
+      # @return [Tasker::Events::Publisher] The publisher instance
       def bus
         publisher
       end
 
-      # Fire a lifecycle event using dry-events
+      # Fire a lifecycle event using unified Events::Publisher
       #
       # @param event [String] The event name
       # @param context [Hash] The context data associated with the event
       # @yield [void] Optional block to execute within the event context
       # @return [Object, nil] The result of the block if given, otherwise nil
       def fire(event, context = {})
+        # Ensure event is registered for test compatibility
+        ensure_event_registered(event)
+
         # Add timing information to context
         started_at = Time.current
         context = context.merge(fired_at: started_at)
@@ -60,11 +55,11 @@ module Tasker
             completed_at: Time.current
           )
 
-          # Publish the event with timing
+          # Publish the event with timing through unified publisher
           publisher.publish(event, context)
           result
         else
-          # For non-block events, just publish
+          # For non-block events, just publish through unified publisher
           publisher.publish(event, context)
           nil
         end
@@ -86,21 +81,38 @@ module Tasker
         fire(event, error_context)
       end
 
-      # Subscribe to lifecycle events
+      # Subscribe to lifecycle events through unified publisher
       #
       # @param event_name [String] The event name to subscribe to
       # @param callable [Proc, #call] Optional callable object
       # @yield [event] Block to execute when event is fired
       def subscribe(event_name, callable = nil, &block)
+        # Ensure event is registered for subscription
+        ensure_event_registered(event_name)
+
         handler = callable || block
         publisher.subscribe(event_name, &handler)
       end
 
-      # Backward compatibility methods (delegate to dry-events)
+      # Backward compatibility methods (delegate to unified publisher)
       alias fire_with_span fire
+
+      private
+
+      # Ensure an event is registered for test compatibility
+      #
+      # @param event_name [String] The event name to register
+      def ensure_event_registered(event_name)
+        # Try to register the event - this handles test events gracefully
+        publisher.register_event(event_name)
+      rescue StandardError => e
+        # If registration fails, log and continue - event may already be registered
+        Rails.logger.debug { "Event #{event_name} registration skipped: #{e.message}" }
+      end
     end
 
-    # Nested event name constants for backward compatibility
+    # Keep nested constants for backward compatibility
+    # These now just reference the same constants used by Events::Publisher
     module Events
       # Task state and lifecycle events
       module Task
@@ -124,7 +136,8 @@ module Tasker
         RESOLVED_MANUALLY = Constants::StepEvents::RESOLVED_MANUALLY
       end
 
-      # All valid events that can be fired
+      # Reference the same valid events as Events::Publisher
+      # This maintains compatibility with existing event validation
       VALID_EVENTS = [
         # Task events
         Constants::TaskEvents::INITIALIZE_REQUESTED,

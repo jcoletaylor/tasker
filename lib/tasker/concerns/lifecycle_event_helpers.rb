@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'tasker/lifecycle_events'
+require_relative 'event_publisher'
 
 module Tasker
   module Concerns
@@ -11,6 +12,7 @@ module Tasker
     # the event firing capabilities.
     module LifecycleEventHelpers
       extend ActiveSupport::Concern
+      include EventPublisher
 
       private
 
@@ -26,7 +28,7 @@ module Tasker
         payload[:timestamp] ||= Time.current
 
         # Fire the event - this will fail if event isn't registered (which is what we want)
-        Tasker::LifecycleEvents.fire(event_constant, payload)
+        publish_event(event_constant, payload)
       end
 
       # Fire a lifecycle error event with exception details

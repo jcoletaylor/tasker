@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../concerns/event_publisher'
+
 module Tasker
   module StepHandler
     # Base class for all step handlers that defines the common interface
@@ -8,6 +10,8 @@ module Tasker
     # Step handlers are responsible for executing the actual logic of
     # workflow steps and reporting results.
     class Base
+      include Tasker::Concerns::EventPublisher
+
       # Creates a new step handler instance
       #
       # @param config [Object, nil] Optional configuration for the handler
@@ -27,7 +31,7 @@ module Tasker
       # @return [Object] The result of processing the step
       def handle(task, sequence, step)
         # Fire the before_handle event
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::LifecycleEvents::Events::Step::BEFORE_HANDLE,
           {
             task_id: task.task_id,

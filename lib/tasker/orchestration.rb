@@ -7,7 +7,7 @@
 # events and publisher/subscriber patterns.
 #
 # Components:
-# - Orchestrator: Coordinates workflow execution through event-driven orchestration
+# - Events::Publisher: Unified event publisher for all workflow events (singleton)
 # - ViableStepDiscovery: Discovers which steps can be executed based on workflow state
 # - StepExecutor: Handles the execution of workflow steps via state machine transitions
 # - TaskFinalizer: Handles task completion and finalization logic
@@ -17,8 +17,8 @@
 #   # Initialize the workflow orchestration system (do this once at startup)
 #   Tasker::Orchestration::Coordinator.initialize!
 #
-#   # Process a task using the event-driven system
-#   success = Tasker::Orchestration::Coordinator.process_task(task_id)
+#   # Access the unified event publisher
+#   publisher = Tasker::Events::Publisher.instance
 #
 # Benefits:
 # - Declarative: Steps declare what events they respond to
@@ -28,13 +28,18 @@
 # - Concurrent-Safe: State machines handle race conditions
 # - Audit Trail: Complete history of all state transitions
 
+# Explicitly require orchestration components for predictable loading
+require_relative 'orchestration/viable_step_discovery'
+require_relative 'orchestration/step_executor'
+require_relative 'orchestration/task_finalizer'
+require_relative 'orchestration/task_initializer'
+require_relative 'orchestration/task_reenqueuer'
+require_relative 'orchestration/step_sequence_factory'
+require_relative 'orchestration/coordinator'
+
 module Tasker
   module Orchestration
-    # Autoload orchestration components
-    autoload :Orchestrator, 'tasker/orchestration/orchestrator'
-    autoload :ViableStepDiscovery, 'tasker/orchestration/viable_step_discovery'
-    autoload :StepExecutor, 'tasker/orchestration/step_executor'
-    autoload :TaskFinalizer, 'tasker/orchestration/task_finalizer'
-    autoload :Coordinator, 'tasker/orchestration/coordinator'
+    # All orchestration components are now explicitly loaded above
+    # This provides predictable loading order and avoids autoload complexity
   end
 end

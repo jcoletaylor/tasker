@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/idempotent_state_transitions'
+require_relative '../concerns/event_publisher'
 require 'tasker/events/event_payload_builder'
 
 module Tasker
@@ -14,6 +15,7 @@ module Tasker
     # - Enqueuing tasks for processing
     class TaskInitializer
       include Tasker::Concerns::IdempotentStateTransitions
+      include Tasker::Concerns::EventPublisher
 
       class << self
         # Initialize a new task from a task request
@@ -50,7 +52,7 @@ module Tasker
             task.errors.add(:context, error)
           end
 
-          Tasker::LifecycleEvents.fire(
+          publish_event(
             Tasker::LifecycleEvents::Events::Task::INITIALIZE,
             { task_name: task_request.name, status: 'error', errors: context_errors }
           )
@@ -63,7 +65,7 @@ module Tasker
           StepSequenceFactory.create_sequence_for_task!(task, task_handler)
         end
 
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::LifecycleEvents::Events::Task::INITIALIZE,
           { task_id: task.task_id, task_name: task.name, status: 'success' }
         )
@@ -94,7 +96,7 @@ module Tasker
           return false
         end
 
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::LifecycleEvents::Events::Task::START,
           { task_id: task.task_id, task_name: task.name, task_context: task.context }
         )
@@ -128,7 +130,7 @@ module Tasker
           }
         )
 
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
           payload
         )

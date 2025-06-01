@@ -3,7 +3,8 @@
 require 'concurrent'
 require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/lifecycle_event_helpers'
-require_relative '../concerns/orchestration_publisher'
+require_relative '../concerns/event_publisher'
+require_relative '../types/step_sequence'
 
 module Tasker
   module Orchestration
@@ -15,7 +16,7 @@ module Tasker
     class StepExecutor
       include Tasker::Concerns::IdempotentStateTransitions
       include Tasker::Concerns::LifecycleEventHelpers
-      include Tasker::Concerns::OrchestrationPublisher
+      include Tasker::Concerns::EventPublisher
 
       # Execute a collection of viable steps
       #
@@ -65,38 +66,24 @@ module Tasker
         processed_steps.compact
       end
 
-      private
-
-      # Execute steps concurrently using concurrent-ruby
+      # Handle viable steps discovered event
       #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_concurrently(task, sequence, viable_steps, task_handler)
-        # Use concurrent-ruby for parallel execution
-        futures = viable_steps.map do |step|
-          Concurrent::Future.execute do
-            execute_single_step(task, sequence, step, task_handler)
-          end
-        end
-
-        # Wait for all futures to complete and collect results
-        futures.map(&:value)
-      end
-
-      # Execute steps sequentially
+      # Convenience method for event-driven workflows that takes an event payload
+      # and executes the discovered steps.
       #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-        viable_steps.map do |step|
-          execute_single_step(task, sequence, step, task_handler)
-        end
+      # @param event [Hash] Event payload with task_id, step_ids, and processing_mode
+      def handle_viable_steps_discovered(event)
+        task_id = event[:task_id]
+        step_ids = event[:step_ids] || []
+
+        return [] if step_ids.empty?
+
+        task = Tasker::Task.find(task_id)
+        task_handler = Tasker::HandlerFactory.instance.get(task.name)
+        sequence = Tasker::Orchestration::StepSequenceFactory.get_sequence(task, task_handler)
+        viable_steps = task.workflow_steps.where(workflow_step_id: step_ids)
+
+        execute_steps(task, sequence, viable_steps, task_handler)
       end
 
       # Execute a single step with state machine transitions and error handling
@@ -107,10 +94,25 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Tasker::WorkflowStep, nil] The executed step or nil if failed
       def execute_single_step(task, sequence, step, task_handler)
+        # Ensure step has a proper state before processing
+        current_state = step.state_machine.current_state
+
+        # Handle case where step doesn't have initial state
+        if current_state.blank?
+          Rails.logger.debug { "StepExecutor: Step #{step.workflow_step_id} has no state, setting to pending" }
+          unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
+            Rails.logger.error("StepExecutor: Failed to initialize step #{step.workflow_step_id} to pending state")
+            return nil
+          end
+          # Reload to get updated state after transition
+          step.reload
+          current_state = step.state_machine.current_state
+        end
+
         # Only process pending steps
-        unless step.state_machine.current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
+        unless current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
           Rails.logger.debug do
-            "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (#{step.state_machine.current_state})"
+            "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (current: '#{current_state}')"
           end
           return nil
         end
@@ -128,7 +130,13 @@ module Tasker
 
           # Transition to in_progress using state machine
           unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-            Rails.logger.warn("StepExecutor: Failed to transition step #{step.workflow_step_id} to in_progress")
+            current_state = step.state_machine.current_state
+            Rails.logger.warn do
+              "StepExecutor: Cannot start step #{step.workflow_step_id} - transition from '#{current_state}' " \
+              "to 'in_progress' blocked. This may be due to: " \
+              "1) Step not in pending state, 2) Dependencies not met, or 3) Guard clause restrictions. " \
+              "Check step dependencies and current state."
+            end
             return nil
           end
 
@@ -175,6 +183,40 @@ module Tasker
           )
 
           nil
+        end
+      end
+
+      private
+
+      # Execute steps concurrently using concurrent-ruby
+      #
+      # @param task [Tasker::Task] The task containing the steps
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
+      # @param task_handler [Object] The task handler instance
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def execute_steps_concurrently(task, sequence, viable_steps, task_handler)
+        # Use concurrent-ruby for parallel execution
+        futures = viable_steps.map do |step|
+          Concurrent::Future.execute do
+            execute_single_step(task, sequence, step, task_handler)
+          end
+        end
+
+        # Wait for all futures to complete and collect results
+        futures.map(&:value)
+      end
+
+      # Execute steps sequentially
+      #
+      # @param task [Tasker::Task] The task containing the steps
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
+      # @param task_handler [Object] The task handler instance
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def execute_steps_sequentially(task, sequence, viable_steps, task_handler)
+        viable_steps.map do |step|
+          execute_single_step(task, sequence, step, task_handler)
         end
       end
 

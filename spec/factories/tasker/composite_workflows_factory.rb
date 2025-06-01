@@ -285,6 +285,7 @@ FactoryBot.define do
     tags { %w[dummy testing] }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { dummy: true, test: true } }
 
     transient do
       step_states { :pending }

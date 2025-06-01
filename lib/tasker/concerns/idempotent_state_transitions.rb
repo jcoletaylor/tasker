@@ -37,6 +37,18 @@ module Tasker
 
         state_machine_object.state_machine.transition_to!(target_state, metadata)
         true
+      rescue Statesman::GuardFailedError => e
+        Rails.logger.debug do
+          "#{self.class.name}: Guard clause prevented transition of #{state_machine_object.class.name} " \
+          "#{state_machine_object.id} from '#{current_state}' to '#{target_state}': #{e.message}"
+        end
+        false
+      rescue Statesman::TransitionFailedError => e
+        Rails.logger.warn do
+          "#{self.class.name}: Invalid transition for #{state_machine_object.class.name} " \
+          "#{state_machine_object.id} from '#{current_state}' to '#{target_state}': #{e.message}"
+        end
+        false
       rescue StandardError => e
         Rails.logger.error do
           "#{self.class.name}: Failed to transition #{state_machine_object.class.name} #{state_machine_object.id} " \

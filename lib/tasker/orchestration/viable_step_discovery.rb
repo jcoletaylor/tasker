@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/lifecycle_event_helpers'
-require_relative '../concerns/orchestration_publisher'
+require_relative '../concerns/event_publisher'
+require_relative '../types/step_sequence'
 
 module Tasker
   module Orchestration
@@ -12,7 +13,7 @@ module Tasker
     # for observability. No complex event subscriptions needed.
     class ViableStepDiscovery
       include Tasker::Concerns::LifecycleEventHelpers
-      include Tasker::Concerns::OrchestrationPublisher
+      include Tasker::Concerns::EventPublisher
 
       # Find viable steps for execution
       #
@@ -49,6 +50,20 @@ module Tasker
 
         Rails.logger.debug { "ViableStepDiscovery: Found #{viable_steps.size} viable steps for task #{task.task_id}" }
         viable_steps
+      end
+
+      # Discover viable steps for a task by task ID
+      #
+      # Convenience method for testing and external usage that loads a task
+      # and gets its sequence before calling find_viable_steps.
+      #
+      # @param task_id [String] The task ID to discover steps for
+      # @return [Array<Tasker::WorkflowStep>] Array of viable steps
+      def discover_steps_for_task(task_id)
+        task = Tasker::Task.find(task_id)
+        task_handler = Tasker::HandlerFactory.instance.get(task.name)
+        sequence = Tasker::Orchestration::StepSequenceFactory.get_sequence(task, task_handler)
+        find_viable_steps(task, sequence)
       end
     end
   end

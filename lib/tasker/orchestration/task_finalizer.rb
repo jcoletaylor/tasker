@@ -2,7 +2,7 @@
 
 require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/lifecycle_event_helpers'
-require_relative '../concerns/orchestration_publisher'
+require_relative '../concerns/event_publisher'
 require_relative '../task_handler/step_group'
 require_relative 'task_reenqueuer'
 
@@ -15,7 +15,7 @@ module Tasker
     class TaskFinalizer
       include Tasker::Concerns::IdempotentStateTransitions
       include Tasker::Concerns::LifecycleEventHelpers
-      include Tasker::Concerns::OrchestrationPublisher
+      include Tasker::Concerns::EventPublisher
 
       # Check if the task is blocked by errors
       #
@@ -85,6 +85,17 @@ module Tasker
         else
           handle_unclear_task_state(task, step_group)
         end
+      end
+
+      # Handle no viable steps event
+      #
+      # Convenience method for event-driven workflows when no viable steps are found.
+      # This triggers task finalization to determine next action.
+      #
+      # @param event [Hash] Event payload with task_id
+      def handle_no_viable_steps(event)
+        task_id = event[:task_id] || event
+        finalize_task(task_id)
       end
 
       private

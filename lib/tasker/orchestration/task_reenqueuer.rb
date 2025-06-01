@@ -2,6 +2,7 @@
 
 require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/lifecycle_event_helpers'
+require_relative '../concerns/event_publisher'
 
 module Tasker
   module Orchestration
@@ -13,6 +14,7 @@ module Tasker
     class TaskReenqueuer
       include Tasker::Concerns::IdempotentStateTransitions
       include Tasker::Concerns::LifecycleEventHelpers
+      include Tasker::Concerns::EventPublisher
 
       # Re-enqueue a task for continued processing
       #
@@ -21,7 +23,7 @@ module Tasker
       # @return [Boolean] True if re-enqueueing was successful
       def reenqueue_task(task, reason: 'pending_steps_remaining')
         # Fire re-enqueue started event
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED,
           {
             task_id: task.task_id,
@@ -40,7 +42,7 @@ module Tasker
         Tasker::TaskRunnerJob.perform_later(task.task_id)
 
         # Fire re-enqueue completed event
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED,
           {
             task_id: task.task_id,
@@ -53,7 +55,7 @@ module Tasker
         true
       rescue StandardError => e
         # Fire re-enqueue failed event
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED,
           {
             task_id: task.task_id,
@@ -75,7 +77,7 @@ module Tasker
       # @return [Boolean] True if scheduling was successful
       def reenqueue_task_delayed(task, delay_seconds:, reason: 'retry_backoff')
         # Fire delayed re-enqueue started event
-        Tasker::LifecycleEvents.fire(
+        publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED,
           {
             task_id: task.task_id,

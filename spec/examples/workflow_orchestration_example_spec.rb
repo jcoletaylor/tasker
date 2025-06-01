@@ -9,7 +9,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
   # event-driven workflow orchestration system that replaces the imperative
   # TaskHandler workflow loop.
 
-  let(:orchestrator) { Tasker::Orchestration::Orchestrator.instance }
+  let(:publisher) { Tasker::Events::Publisher.instance }
 
   before do
     # Ensure clean state for each test
@@ -30,7 +30,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       # Verify all components are loaded and subscribed
       stats = Tasker::Orchestration::Coordinator.statistics
       expect(stats[:initialized]).to be true
-      expect(stats[:components][:orchestrator]).to be_truthy
+      expect(stats[:components][:publisher]).to be_truthy
       expect(stats[:components][:viable_step_discovery]).to be_truthy
       expect(stats[:components][:step_executor]).to be_truthy
       expect(stats[:components][:task_finalizer]).to be_truthy
@@ -44,7 +44,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       expect(stats).to include(
         initialized: true,
         components: hash_including(
-          orchestrator: be_truthy,
+          publisher: be_truthy,
           viable_step_discovery: be_truthy,
           step_executor: be_truthy,
           task_finalizer: be_truthy
@@ -60,15 +60,15 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
     end
 
     it 'processes a task through the complete event-driven workflow' do
-      # Track events fired during processing using the orchestrator
+      # Track events fired during processing using the publisher
       fired_events = []
 
       # Subscribe to key workflow events for verification
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
         fired_events << { type: 'task_started', data: event }
       end
 
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
         fired_events << { type: 'viable_steps_discovered', data: event }
       end
 
@@ -106,9 +106,9 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       end.to change { task.reload.status }.from(initial_status)
 
       # The rest happens automatically via events:
-      # 1. Orchestrator publishes workflow events
-      # 2. ViableStepDiscovery finds steps, publishes via orchestrator
-      # 3. StepExecutor executes steps, publishes completion via orchestrator
+      # 1. Publisher publishes workflow events
+      # 2. ViableStepDiscovery finds steps, publishes via publisher
+      # 3. StepExecutor executes steps, publishes completion via publisher
       # 4. Events cascade until TaskFinalizer completes the task
     end
   end
@@ -119,16 +119,16 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       create_dummy_task_for_orchestration
     end
 
-    describe 'Orchestrator' do
+    describe 'Publisher' do
       it 'coordinates workflow execution through single publisher pattern' do
-        # Verify orchestrator is the single publisher
-        expect(orchestrator).to respond_to(:publish_step_completed)
-        expect(orchestrator).to respond_to(:publish_viable_steps_discovered)
-        expect(orchestrator).to respond_to(:publish_task_completed)
+        # Verify publisher is the single publisher
+        expect(publisher).to respond_to(:publish_step_completed)
+        expect(publisher).to respond_to(:publish_viable_steps_discovered)
+        expect(publisher).to respond_to(:publish_task_completed)
 
         # Test publishing events
         expect do
-          orchestrator.publish_step_completed(
+          publisher.publish_step_completed(
             task_id: task.task_id,
             step_id: task.workflow_steps.first.workflow_step_id,
             step_name: task.workflow_steps.first.name
@@ -202,19 +202,19 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       event_flow = []
 
       # Subscribe to workflow orchestration events via the single publisher
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
         event_flow << { category: 'orchestration', event: 'task_started', data: event }
       end
 
-      orchestrator.subscribe(Tasker::Constants::StepEvents::COMPLETED) do |event|
+      publisher.subscribe(Tasker::Constants::StepEvents::COMPLETED) do |event|
         event_flow << { category: 'orchestration', event: 'step_completed', data: event }
       end
 
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
         event_flow << { category: 'orchestration', event: 'viable_steps_discovered', data: event }
       end
 
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS) do |event|
         event_flow << { category: 'orchestration', event: 'no_viable_steps', data: event }
       end
 
@@ -245,7 +245,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       monitoring_events = []
 
       # Custom subscriber using the single publisher pattern
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
         monitoring_events << {
           type: 'task_started',
           task_id: event[:task_id],
@@ -253,7 +253,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
         }
       end
 
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED) do |event|
         monitoring_events << {
           type: 'steps_discovered',
           task_id: event[:task_id],
@@ -277,26 +277,26 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
     end
 
     it 'demonstrates key benefits of the event-driven system' do
-      # ✅ Single Publisher Pattern: Orchestrator is the only publisher
-      expect(Tasker::Orchestration::Orchestrator).to respond_to(:instance)
+      # ✅ Single Publisher Pattern: Publisher is the only publisher
+      expect(Tasker::Events::Publisher).to respond_to(:instance)
       expect(Tasker::Orchestration::StepExecutor).to respond_to(:new)
       expect(Tasker::Orchestration::ViableStepDiscovery).to respond_to(:new)
       expect(Tasker::Orchestration::TaskFinalizer).to respond_to(:new)
 
       # ✅ Testable: Each component can be tested in isolation
-      orchestrator = Tasker::Orchestration::Orchestrator.instance
+      publisher = Tasker::Events::Publisher.instance
       discovery = Tasker::Orchestration::ViableStepDiscovery.new
       executor = Tasker::Orchestration::StepExecutor.new
       finalizer = Tasker::Orchestration::TaskFinalizer.new
 
-      expect(orchestrator).to be_a(Tasker::Orchestration::Orchestrator)
+      expect(publisher).to be_a(Tasker::Events::Publisher)
       expect(discovery).to be_a(Tasker::Orchestration::ViableStepDiscovery)
       expect(executor).to be_a(Tasker::Orchestration::StepExecutor)
       expect(finalizer).to be_a(Tasker::Orchestration::TaskFinalizer)
 
       # ✅ Observable: Rich event stream for debugging and monitoring
       events_captured = []
-      orchestrator.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
+      publisher.subscribe(Tasker::Constants::WorkflowEvents::TASK_STARTED) do |event|
         events_captured << event
       end
 
@@ -346,14 +346,14 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
       # Capture all events for debugging using the single publisher
       debug_log = []
 
-      # Subscribe to all workflow events via orchestrator
+      # Subscribe to all workflow events via publisher
       [
         Tasker::Constants::WorkflowEvents::TASK_STARTED,
         Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED,
         Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
         Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS
       ].each do |event_name|
-        orchestrator.subscribe(event_name) do |event|
+        publisher.subscribe(event_name) do |event|
           debug_log << {
             event: event_name,
             timestamp: Time.current,
