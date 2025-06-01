@@ -89,6 +89,11 @@
   
   
   
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span></dd>
+  </dl>
+  
   
 
   
@@ -345,6 +350,13 @@
   
   
   
+  
+  
+  
+  
+  
+  
+  
   <h3 class="inherited">Methods inherited from <span class='object_link'><a href="Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></h3>
   <p class="inherited"><span class='object_link'><a href="Base.html#process-instance_method" title="Tasker::StepHandler::Base#process (method)">#process</a></span></p>
 <div id="constructor_details" class="method_details_list">
@@ -416,13 +428,13 @@
       <pre class="lines">
 
 
-95
-96
-97
-98</pre>
+99
+100
+101
+102</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 95</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>config:</span> <span class='const'><span class='object_link'><a href="Api/Config.html" title="Tasker::StepHandler::Api::Config (class)">Config</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Api/Config.html#initialize-instance_method" title="Tasker::StepHandler::Api::Config#initialize (method)">new</a></span></span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='label'>config:</span> <span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
@@ -484,12 +496,12 @@
       <pre class="lines">
 
 
-20
-21
-22</pre>
+24
+25
+26</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 20</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 24</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
   <span class='ivar'>@config</span>
@@ -545,12 +557,12 @@
       <pre class="lines">
 
 
-17
-18
-19</pre>
+21
+22
+23</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 17</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_connection'>connection</span>
   <span class='ivar'>@connection</span>
@@ -681,18 +693,18 @@
       <pre class="lines">
 
 
-138
-139
-140
-141
-142
 143
 144
 145
-146</pre>
+146
+147
+148
+149
+150
+151</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 143</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='comment'># Example from the Faraday docs:
@@ -786,10 +798,6 @@
       <pre class="lines">
 
 
-106
-107
-108
-109
 110
 111
 112
@@ -809,31 +817,37 @@
 126
 127
 128
-129</pre>
+129
+130
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 106</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/api.rb', line 110</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='comment'># Get the context for events and spans
-</span>  <span class='id identifier rubyid_span_context'>span_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-    <span class='label'>span_name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>api.</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
-    <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
-    <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
-  <span class='rbrace'>}</span>
+  <span class='comment'># Fire the handle event
+</span>  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
+    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html#HANDLE-constant" title="Tasker::Constants::StepEvents::HANDLE (constant)">HANDLE</a></span></span><span class='comma'>,</span>
+    <span class='lbrace'>{</span>
+      <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+      <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+      <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+    <span class='rbrace'>}</span>
+  <span class='rparen'>)</span>
 
-  <span class='comment'># Fire the handle event with span tracing
-</span>  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fire_with_span'>fire_with_span</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents/Events.html" title="Tasker::LifecycleEvents::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents/Events/Step.html" title="Tasker::LifecycleEvents::Events::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'>HANDLE</span><span class='comma'>,</span>
-    <span class='id identifier rubyid_span_context'>span_context</span>
-  <span class='rparen'>)</span> <span class='kw'>do</span>
+  <span class='kw'>begin</span>
     <span class='id identifier rubyid_response'>response</span> <span class='op'>=</span> <span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
     <span class='id identifier rubyid__process_response'>_process_response</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_response'>response</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_response'>response</span>
   <span class='kw'>rescue</span> <span class='const'>Faraday</span><span class='op'>::</span><span class='const'>Error</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
     <span class='kw'>if</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_response'>response</span> <span class='op'>&amp;&amp;</span> <span class='const'><span class='object_link'><a href="#BACKOFF_ERROR_CODES-constant" title="Tasker::StepHandler::Api::BACKOFF_ERROR_CODES (constant)">BACKOFF_ERROR_CODES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_response'>response</span><span class='op'>&amp;.</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid__handle_too_many_requests'>_handle_too_many_requests</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_response'>response</span><span class='comma'>,</span> <span class='id identifier rubyid_span_context'>span_context</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid__handle_too_many_requests'>_handle_too_many_requests</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_response'>response</span><span class='comma'>,</span> <span class='lbrace'>{</span>
+                                  <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+                                  <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+                                <span class='rbrace'>}</span><span class='rparen'>)</span>
     <span class='kw'>end</span>
     <span class='id identifier rubyid_raise'>raise</span>
   <span class='kw'>end</span>
@@ -848,7 +862,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:08 2025 by
+  Generated on Sat May 31 23:13:23 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

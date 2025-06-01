@@ -53,8 +53,13 @@ module Tasker
           end
 
           publish_event(
-            Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-            { task_name: task_request.name, status: 'error', errors: context_errors }
+            Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
+            {
+              task_id: task.task_id,
+              task_name: task.name,
+              error_message: context_errors.join(', '),
+              initialization_failed: true
+            }
           )
           return task
         end
@@ -66,8 +71,12 @@ module Tasker
         end
 
         publish_event(
-          Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-          { task_id: task.task_id, task_name: task.name, status: 'success' }
+          Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
+          {
+            task_id: task.task_id,
+            task_name: task.name,
+            step_count: task.workflow_steps.count
+          }
         )
 
         enqueue_task(task)
@@ -89,16 +98,31 @@ module Tasker
         task.context = ActiveSupport::HashWithIndifferentAccess.new(task.context)
 
         # Use state machine to transition task to in_progress
-        transition_result = safe_transition_to(task, Tasker::Constants::TaskStatuses::IN_PROGRESS)
+        unless safe_transition_to(task, Tasker::Constants::TaskStatuses::IN_PROGRESS, {
+                                    initialization_completed: true,
+                                    step_dependencies_established: task.workflow_steps.count
+                                  })
 
-        unless transition_result
-          Rails.logger.warn("TaskInitializer: Failed to transition task #{task.task_id} to in_progress")
+          publish_event(
+            Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
+            {
+              task_id: task.task_id,
+              task_name: task.name,
+              error_message: 'Failed to transition to in_progress',
+              initialization_failed: true
+            }
+          )
+
           return false
         end
 
         publish_event(
-          Tasker::LifecycleEvents::Events::Task::START,
-          { task_id: task.task_id, task_name: task.name, task_context: task.context }
+          Tasker::Constants::TaskEvents::START_REQUESTED,
+          {
+            task_id: task.task_id,
+            task_name: task.name,
+            task_context: task.context
+          }
         )
 
         true

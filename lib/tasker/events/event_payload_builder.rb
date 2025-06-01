@@ -12,7 +12,7 @@ module Tasker
     #
     # Usage:
     #   payload = EventPayloadBuilder.build_step_payload(step, task, event_type: :completed)
-    #   Tasker::LifecycleEvents.fire('step.completed', payload)
+    #   Tasker::Events::Publisher.instance.publish('step.completed', payload)
     class EventPayloadBuilder
       class << self
         # Build standardized payload for step events

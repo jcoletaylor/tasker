@@ -165,6 +165,10 @@ module Tasker
       INITIALIZE_REQUESTED = 'step.initialize_requested'
       # Step execution is being requested
       EXECUTION_REQUESTED = 'step.execution_requested'
+      # Before step handling begins
+      BEFORE_HANDLE = 'step.before_handle'
+      # Step is being handled/processed
+      HANDLE = 'step.handle'
       # Step has completed successfully
       COMPLETED = 'step.completed'
       # Step has failed with an error
@@ -195,6 +199,8 @@ module Tasker
     VALID_STEP_EVENTS = [
       StepEvents::INITIALIZE_REQUESTED,
       StepEvents::EXECUTION_REQUESTED,
+      StepEvents::BEFORE_HANDLE,
+      StepEvents::HANDLE,
       StepEvents::COMPLETED,
       StepEvents::FAILED,
       StepEvents::RETRY_REQUESTED,
@@ -275,6 +281,8 @@ module Tasker
       # Step state events
       StepEvents::INITIALIZE_REQUESTED,
       StepEvents::EXECUTION_REQUESTED,
+      StepEvents::BEFORE_HANDLE,
+      StepEvents::HANDLE,
       StepEvents::COMPLETED,
       StepEvents::FAILED,
       StepEvents::RETRY_REQUESTED,
@@ -302,12 +310,6 @@ module Tasker
       ObservabilityEvents::Step::SKIP,
       ObservabilityEvents::Step::MAX_RETRIES_REACHED
     ].freeze
-
-    # Lifecycle initialization events (for task/step initialization)
-    module LifecycleEvents
-      TASK_INITIALIZE_REQUESTED = 'task.initialize_requested'
-      TASK_START_REQUESTED = 'task.start_requested'
-    end
 
     # Test events for testing infrastructure
     module TestEvents
@@ -337,12 +339,6 @@ module Tasker
       WorkflowEvents::STEPS_EXECUTION_COMPLETED,
       WorkflowEvents::NO_VIABLE_STEPS,
       WorkflowEvents::ORCHESTRATION_REQUESTED
-    ].freeze
-
-    # All valid lifecycle events
-    VALID_LIFECYCLE_EVENTS = [
-      LifecycleEvents::TASK_INITIALIZE_REQUESTED,
-      LifecycleEvents::TASK_START_REQUESTED
     ].freeze
 
     # All valid test events

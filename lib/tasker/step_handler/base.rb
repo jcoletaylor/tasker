@@ -32,7 +32,7 @@ module Tasker
       def handle(task, sequence, step)
         # Fire the before_handle event
         publish_event(
-          Tasker::LifecycleEvents::Events::Step::BEFORE_HANDLE,
+          Tasker::Constants::StepEvents::BEFORE_HANDLE,
           {
             task_id: task.task_id,
             step_id: step.workflow_step_id,

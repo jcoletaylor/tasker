@@ -87,6 +87,11 @@
   
   
   
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span></dd>
+  </dl>
+  
   
 
   
@@ -208,7 +213,14 @@
     </ul>
   
 
-<div id="constructor_details" class="method_details_list">
+
+  
+  
+  
+  
+  
+  
+  <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
   
     <div class="method_details first">
@@ -259,12 +271,12 @@
       <pre class="lines">
 
 
-15
-16
-17</pre>
+19
+20
+21</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 15</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 19</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>config:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span>
@@ -379,10 +391,6 @@
       <pre class="lines">
 
 
-28
-29
-30
-31
 32
 33
 34
@@ -392,15 +400,19 @@
 38
 39
 40
-41</pre>
+41
+42
+43
+44
+45</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 32</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='comment'># Fire the before_handle event
-</span>  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fire'><span class='object_link'><a href="../LifecycleEvents.html#fire-class_method" title="Tasker::LifecycleEvents.fire (method)">fire</a></span></span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents/Events.html" title="Tasker::LifecycleEvents::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents/Events/Step.html" title="Tasker::LifecycleEvents::Events::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'>BEFORE_HANDLE</span><span class='comma'>,</span>
+</span>  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
+    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html#BEFORE_HANDLE-constant" title="Tasker::Constants::StepEvents::BEFORE_HANDLE (constant)">BEFORE_HANDLE</a></span></span><span class='comma'>,</span>
     <span class='lbrace'>{</span>
       <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
       <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
@@ -512,12 +524,12 @@
       <pre class="lines">
 
 
-50
-51
-52</pre>
+54
+55
+56</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 50</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 54</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Subclasses must implement this method</span><span class='tstring_end'>&#39;</span></span>
@@ -532,7 +544,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:08 2025 by
+  Generated on Sat May 31 23:13:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

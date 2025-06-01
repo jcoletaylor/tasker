@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'dry/events'
+require 'singleton'
 require_relative '../concerns/idempotent_state_transitions'
 
 module Tasker
@@ -14,62 +15,50 @@ module Tasker
     class Publisher
       include Dry::Events::Publisher[:tasker]
       include Tasker::Concerns::IdempotentStateTransitions
-
-      # Singleton pattern for global event publishing (merged from Orchestrator)
-      def self.instance
-        @instance ||= new
-      end
-
-      private_class_method :new
+      include Singleton
 
       def initialize
         # Register all events during initialization
         register_all_events
+        register_state_machine_events
+        register_workflow_events
+        register_test_events if Rails.env.local?
+      end
+
+      # Override the base publish method to ensure timestamp is always present
+      def publish(event_name, payload = {})
+        # Ensure timestamp is always present in the payload
+        enhanced_payload = {
+          timestamp: Time.current
+        }.merge(payload)
+
+        # Call the parent publish method
+        super(event_name, enhanced_payload)
       end
 
       private
 
-      # Register all event types
+      # Register all standard Tasker events
       def register_all_events
-        register_state_machine_events
-        register_lifecycle_events
-        register_observability_events
-        register_workflow_events
-        register_test_events
-      end
-
-      # Register state machine transition events
-      def register_state_machine_events
+        # Register task events
         register_event(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED)
         register_event(Tasker::Constants::TaskEvents::START_REQUESTED)
-        register_event(Tasker::Constants::TaskEvents::BEFORE_TRANSITION)
         register_event(Tasker::Constants::TaskEvents::COMPLETED)
         register_event(Tasker::Constants::TaskEvents::FAILED)
-        register_event(Tasker::Constants::TaskEvents::RETRY_REQUESTED)
-        register_event(Tasker::Constants::TaskEvents::RESOLVED_MANUALLY)
         register_event(Tasker::Constants::TaskEvents::CANCELLED)
+        register_event(Tasker::Constants::TaskEvents::RETRY_REQUESTED)
 
+        # Register step events
         register_event(Tasker::Constants::StepEvents::INITIALIZE_REQUESTED)
         register_event(Tasker::Constants::StepEvents::EXECUTION_REQUESTED)
-        register_event(Tasker::Constants::StepEvents::BEFORE_TRANSITION)
         register_event(Tasker::Constants::StepEvents::COMPLETED)
         register_event(Tasker::Constants::StepEvents::FAILED)
         register_event(Tasker::Constants::StepEvents::RETRY_REQUESTED)
-        register_event(Tasker::Constants::StepEvents::RESOLVED_MANUALLY)
         register_event(Tasker::Constants::StepEvents::CANCELLED)
-      end
+        register_event(Tasker::Constants::StepEvents::BEFORE_HANDLE)
+        register_event(Tasker::Constants::StepEvents::HANDLE)
 
-      # Register lifecycle events (these align with LifecycleEvents)
-      def register_lifecycle_events
-        # Register if constants exist
-        if defined?(Tasker::Constants::LifecycleEvents)
-          register_event(Tasker::Constants::LifecycleEvents::TASK_INITIALIZE_REQUESTED)
-          register_event(Tasker::Constants::LifecycleEvents::TASK_START_REQUESTED)
-        end
-      end
-
-      # Register observability/process tracking events
-      def register_observability_events
+        # Register observability events for telemetry
         register_event(Tasker::Constants::ObservabilityEvents::Task::HANDLE)
         register_event(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE)
         register_event(Tasker::Constants::ObservabilityEvents::Task::FINALIZE)
@@ -78,6 +67,14 @@ module Tasker
         register_event(Tasker::Constants::ObservabilityEvents::Step::BACKOFF)
         register_event(Tasker::Constants::ObservabilityEvents::Step::SKIP)
         register_event(Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED)
+      end
+
+      # Register state machine transition events
+      def register_state_machine_events
+        register_event(Tasker::Constants::TaskEvents::BEFORE_TRANSITION)
+        register_event(Tasker::Constants::TaskEvents::RESOLVED_MANUALLY)
+
+        register_event(Tasker::Constants::StepEvents::BEFORE_TRANSITION)
       end
 
       # Register workflow orchestration events (comprehensive set from both Publisher and Orchestrator)
@@ -112,15 +109,13 @@ module Tasker
 
       # Register test events for testing
       def register_test_events
-        # Register test events if constants exist
-        if defined?(Tasker::Constants::TestEvents)
-          register_event(Tasker::Constants::TestEvents::BASIC_EVENT)
-          register_event(Tasker::Constants::TestEvents::SLOW_EVENT)
-          register_event(Tasker::Constants::TestEvents::TEST_EVENT)
-        end
+        # Register test events - fail hard if constants don't exist
+        register_event(Tasker::Constants::TestEvents::BASIC_EVENT)
+        register_event(Tasker::Constants::TestEvents::SLOW_EVENT)
+        register_event(Tasker::Constants::TestEvents::TEST_EVENT)
 
         # Also register common test event patterns
-        register_event('Test.Event')  # Common test event name
+        register_event('Test.Event') # Common test event name
       end
 
       public
@@ -134,8 +129,7 @@ module Tasker
         event_data = {
           task_id: task.respond_to?(:task_id) ? task.task_id : task.id,
           task_name: task.respond_to?(:name) ? task.name : nil,
-          status: task.respond_to?(:status) ? task.status : nil,
-          timestamp: Time.current
+          status: task.respond_to?(:status) ? task.status : nil
         }.merge(metadata).compact
 
         publish(event_name, event_data)
@@ -151,8 +145,7 @@ module Tasker
           step_id: step.respond_to?(:workflow_step_id) ? step.workflow_step_id : step.id,
           step_name: step.respond_to?(:name) ? step.name : nil,
           task_id: step.respond_to?(:task_id) ? step.task_id : nil,
-          status: step.respond_to?(:status) ? step.status : nil,
-          timestamp: Time.current
+          status: step.respond_to?(:status) ? step.status : nil
         }.merge(metadata).compact
 
         publish(event_name, event_data)
@@ -163,10 +156,7 @@ module Tasker
       # @param event_name [String] The event name
       # @param context [Hash] The event context
       def publish_workflow_event(event_name, context = {})
-        event_data = {
-          timestamp: Time.current
-        }.merge(context).compact
-
+        event_data = context.compact
         publish(event_name, event_data)
       end
 
@@ -175,10 +165,7 @@ module Tasker
       # @param event_name [String] The event name
       # @param payload [Hash] The event payload
       def publish_event(event_name, payload = {})
-        event_data = {
-          timestamp: Time.current
-        }.merge(payload).compact
-
+        event_data = payload.compact
         publish(event_name, event_data)
       end
 

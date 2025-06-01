@@ -54,7 +54,7 @@ RSpec.describe 'FactoryBot factories', type: :model do
 
     it 'creates named_task with api_integration trait' do
       task = create(:named_task, :api_integration)
-      expect(task.name).to eq('api_integration_example')
+      expect(task.name).to eq('api_integration_task')
       expect(task.description).to include('API integration')
     end
 
@@ -66,7 +66,7 @@ RSpec.describe 'FactoryBot factories', type: :model do
 
     it 'creates task with api_integration trait' do
       task = create(:task, :api_integration)
-      expect(task.named_task.name).to eq('api_integration_example')
+      expect(task.named_task.name).to eq('api_integration_task')
       expect(task.context).to have_key('cart_id')
     end
 
@@ -131,7 +131,7 @@ RSpec.describe 'FactoryBot factories', type: :model do
     it 'creates api_integration_workflow with all dependencies' do
       workflow = create(:api_integration_workflow)
       expect(workflow).to be_valid
-      expect(workflow.named_task.name).to eq('api_integration_example')
+      expect(workflow.named_task.name).to eq('api_integration_task')
       expect(workflow.workflow_steps.count).to eq(5)
 
       # Check step names using includes instead of joins

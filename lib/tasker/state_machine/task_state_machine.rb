@@ -98,7 +98,7 @@ module Tasker
       # Guard clauses for business logic only
       # Let Statesman handle state transition validation and idempotent calls
 
-      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, transition|
+      guard_transition(to: Constants::TaskStatuses::COMPLETE) do |task, _transition|
         # Only business rule: task can only complete when all steps are done
         !TaskStateMachine.task_has_incomplete_steps?(task)
       end
@@ -139,7 +139,8 @@ module Tasker
 
           # New transitions for admin override scenarios
           [Constants::TaskStatuses::COMPLETE, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
-          [Constants::TaskStatuses::RESOLVED_MANUALLY, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED
+          [Constants::TaskStatuses::RESOLVED_MANUALLY,
+           Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED
         }.freeze
 
         # Class-level wrapper methods for guard clause context
@@ -169,7 +170,7 @@ module Tasker
         # @return [String] The effective current state (blank states become PENDING)
         def effective_current_state(task)
           current_state = task.state_machine.current_state
-          current_state.blank? ? Constants::TaskStatuses::PENDING : current_state
+          current_state.presence || Constants::TaskStatuses::PENDING
         end
 
         # Safely fire a lifecycle event using dry-events bus
@@ -216,7 +217,7 @@ module Tasker
           task.workflow_steps.any? do |step|
             # Use state_machine.current_state to avoid circular reference with step.status
             current_state = step.state_machine.current_state
-            step_status = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+            step_status = current_state.presence || Constants::WorkflowStepStatuses::PENDING
             incomplete_statuses.include?(step_status)
           end
         rescue StandardError => e
@@ -224,7 +225,7 @@ module Tasker
           # This prevents step checking from blocking task completion in edge cases
           Rails.logger.warn do
             "TaskStateMachine: Error checking steps for task #{task.task_id}: #{e.message}. " \
-            "Assuming no incomplete steps."
+              'Assuming no incomplete steps.'
           end
           false
         end

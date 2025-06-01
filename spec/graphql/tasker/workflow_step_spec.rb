@@ -12,7 +12,7 @@ module Tasker
       # Register the handler for factory usage
       register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
 
-      # Create task using factory approach
+      # Create task using factory approach - but don't run the handler
       @task = create_dummy_task_workflow(
         context: { dummy: true },
         reason: "setup workflow step test #{Time.now.to_f}",
@@ -20,12 +20,10 @@ module Tasker
         source_system: 'test'
       )
 
-      # Process the task to generate workflow steps
-      @factory = Tasker::HandlerFactory.instance
-      @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
-      @handler.handle(@task)
-      @task.reload
+      # Simply get the first step and mark it as processed using factory helpers
+      # This avoids triggering the complex orchestration system
       @step = @task.workflow_steps.first
+      complete_step_via_state_machine(@step)
     end
 
     context 'queries' do

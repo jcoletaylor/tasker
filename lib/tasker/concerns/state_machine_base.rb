@@ -74,19 +74,14 @@ module Tasker
         def effective_current_state(object)
           current_state = object.state_machine.current_state
 
-          if current_state.blank?
-            # Return appropriate default based on object type
-            case object.class.name
-            when /Task/
-              Constants::TaskStatuses::PENDING
-            when /WorkflowStep/
-              Constants::WorkflowStepStatuses::PENDING
-            else
-              current_state
-            end
-          else
-            current_state
-          end
+          current_state.presence || case object.class.name
+                                    when /Task/
+                                      Constants::TaskStatuses::PENDING
+                                    when /WorkflowStep/
+                                      Constants::WorkflowStepStatuses::PENDING
+                                    else
+                                      current_state
+                                    end
         end
 
         # Get a consistent object identifier for logging
@@ -153,8 +148,8 @@ module Tasker
         # @param reason [String] The reason for the restriction
         def log_invalid_from_state(object, current_state, target_state, reason)
           Rails.logger.debug do
-            "#{self.name}: Cannot transition to #{target_state} from '#{current_state}' " \
-            "(#{object.class.name} #{object_id(object)}). #{reason}."
+            "#{name}: Cannot transition to #{target_state} from '#{current_state}' " \
+              "(#{object.class.name} #{object_id(object)}). #{reason}."
           end
         end
 
@@ -165,7 +160,7 @@ module Tasker
         # @param reason [String] The specific reason
         def log_condition_not_met(object, target_state, reason)
           Rails.logger.debug do
-            "#{self.name}: Cannot transition #{object.class.name} #{object_id(object)} to #{target_state} - #{reason}"
+            "#{name}: Cannot transition #{object.class.name} #{object_id(object)} to #{target_state} - #{reason}"
           end
         end
 
@@ -178,35 +173,31 @@ module Tasker
         def log_transition_result(object, target_state, result, reason)
           if result
             Rails.logger.debug do
-              "#{self.name}: Allowing transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason})"
+              "#{name}: Allowing transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason})"
             end
           else
             Rails.logger.debug do
-              "#{self.name}: Blocking transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason} failed)"
+              "#{name}: Blocking transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason} failed)"
             end
           end
         end
       end
 
       # Access to class methods from instance methods
-      module StateMachineBase::ClassMethods
-        def idempotent_transition?(object, target_state)
-          StateMachineBase.idempotent_transition?(object, target_state)
-        end
+      module StateMachineBase
+        module ClassMethods
+          delegate :idempotent_transition?, to: :StateMachineBase
 
-        def effective_current_state(object)
-          StateMachineBase.effective_current_state(object)
-        end
+          delegate :effective_current_state, to: :StateMachineBase
 
-        def object_id(object)
-          StateMachineBase.object_id(object)
-        end
+          delegate :object_id, to: :StateMachineBase
 
-        # Use EventPublisher for consistent event publishing
-        def publish_event(event_name, context = {})
-          # Create a temporary object to access the concern method
-          publisher = Object.new.extend(EventPublisher)
-          publisher.send(:publish_event, event_name, context)
+          # Use EventPublisher for consistent event publishing
+          def publish_event(event_name, context = {})
+            # Create a temporary object to access the concern method
+            publisher = Object.new.extend(EventPublisher)
+            publisher.send(:publish_event, event_name, context)
+          end
         end
       end
 

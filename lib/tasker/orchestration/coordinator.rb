@@ -102,7 +102,7 @@ module Tasker
           # Ensure telemetry subscriber is connected to the lifecycle events system
 
           if defined?(Tasker::Events::Subscribers::TelemetrySubscriber)
-            Tasker::LifecycleEvents.publisher.tap do |publisher|
+            Tasker::Events::Publisher.instance.tap do |publisher|
               Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
             end
             Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully')

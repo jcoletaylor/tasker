@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/idempotent_state_transitions'
-require_relative '../concerns/lifecycle_event_helpers'
 require_relative '../concerns/event_publisher'
 
 module Tasker
@@ -13,7 +12,6 @@ module Tasker
     # from the mechanics of how re-enqueueing works.
     class TaskReenqueuer
       include Tasker::Concerns::IdempotentStateTransitions
-      include Tasker::Concerns::LifecycleEventHelpers
       include Tasker::Concerns::EventPublisher
 
       # Re-enqueue a task for continued processing

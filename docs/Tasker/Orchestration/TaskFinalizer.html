@@ -89,7 +89,7 @@
   
   <dl>
       <dt>Includes:</dt>
-      <dd><span class='object_link'><a href="../Concerns/IdempotentStateTransitions.html" title="Tasker::Concerns::IdempotentStateTransitions (module)">Concerns::IdempotentStateTransitions</a></span>, <span class='object_link'><a href="../Concerns/LifecycleEventHelpers.html" title="Tasker::Concerns::LifecycleEventHelpers (module)">Concerns::LifecycleEventHelpers</a></span>, <span class='object_link'><a href="../Concerns/OrchestrationPublisher.html" title="Tasker::Concerns::OrchestrationPublisher (module)">Concerns::OrchestrationPublisher</a></span></dd>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span>, <span class='object_link'><a href="../Concerns/IdempotentStateTransitions.html" title="Tasker::Concerns::IdempotentStateTransitions (module)">Concerns::IdempotentStateTransitions</a></span></dd>
   </dl>
   
   
@@ -204,17 +204,34 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handle_no_viable_steps-instance_method" title="#handle_no_viable_steps (instance method)">#<strong>handle_no_viable_steps</strong>(event)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Handle no viable steps event.</p>
+</div></span>
+  
+</li>
+
+      
     </ul>
   
 
 
-  
-  
-  
-  
-  
-  
-  
   
   
   
@@ -335,6 +352,8 @@
       <pre class="lines">
 
 
+24
+25
 26
 27
 28
@@ -347,12 +366,10 @@
 35
 36
 37
-38
-39
-40</pre>
+38</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 26</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 24</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_blocked_by_errors?'>blocked_by_errors?</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid__processed_steps'>_processed_steps</span><span class='rparen'>)</span>
   <span class='comment'># Get steps that are in error state using the state machine scope
@@ -420,6 +437,8 @@
       <pre class="lines">
 
 
+71
+72
 73
 74
 75
@@ -433,12 +452,10 @@
 83
 84
 85
-86
-87
-88</pre>
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 73</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 71</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
@@ -539,6 +556,8 @@
       <pre class="lines">
 
 
+45
+46
 47
 48
 49
@@ -558,12 +577,10 @@
 63
 64
 65
-66
-67
-68</pre>
+66</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_finalize_task_with_steps'>finalize_task_with_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='rparen'>)</span>
   <span class='comment'># Fire finalization started event through orchestrator
@@ -592,12 +609,77 @@
 </table>
 </div>
     
+      <div class="method_details ">
+  <h3 class="signature " id="handle_no_viable_steps-instance_method">
+  
+    #<strong>handle_no_viable_steps</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Handle no viable steps event</p>
+
+<p>Convenience method for event-driven workflows when no viable steps are found. This triggers task finalization to determine next action.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Event payload with task_id</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+94
+95
+96
+97</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 94</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_no_viable_steps'>handle_no_viable_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_event'>event</span>
+  <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:09 2025 by
+  Generated on Sat May 31 23:13:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

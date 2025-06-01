@@ -2,7 +2,6 @@
 
 require 'concurrent'
 require_relative '../concerns/idempotent_state_transitions'
-require_relative '../concerns/lifecycle_event_helpers'
 require_relative '../concerns/event_publisher'
 require_relative '../types/step_sequence'
 
@@ -15,8 +14,10 @@ module Tasker
     # It fires lifecycle events for observability.
     class StepExecutor
       include Tasker::Concerns::IdempotentStateTransitions
-      include Tasker::Concerns::LifecycleEventHelpers
       include Tasker::Concerns::EventPublisher
+
+      # ⚠️  PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion
+      MAX_CONCURRENT_STEPS = 3
 
       # Execute a collection of viable steps
       #
@@ -94,99 +95,184 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Tasker::WorkflowStep, nil] The executed step or nil if failed
       def execute_single_step(task, sequence, step, task_handler)
-        # Ensure step has a proper state before processing
-        current_state = step.state_machine.current_state
+        # Guard clauses - fail fast if preconditions aren't met
+        return nil unless validate_step_preconditions(step)
+        return nil unless ensure_step_has_initial_state(step)
+        return nil unless step_ready_for_execution?(step)
 
-        # Handle case where step doesn't have initial state
-        if current_state.blank?
-          Rails.logger.debug { "StepExecutor: Step #{step.workflow_step_id} has no state, setting to pending" }
-          unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
-            Rails.logger.error("StepExecutor: Failed to initialize step #{step.workflow_step_id} to pending state")
-            return nil
-          end
-          # Reload to get updated state after transition
-          step.reload
-          current_state = step.state_machine.current_state
-        end
-
-        # Only process pending steps
-        unless current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
-          Rails.logger.debug do
-            "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (current: '#{current_state}')"
-          end
-          return nil
-        end
-
-        begin
-          # Fire step execution started event through orchestrator
-          publish_event(
-            Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
-            {
-              task_id: task.task_id,
-              step_id: step.workflow_step_id,
-              step_name: step.name
-            }
-          )
-
-          # Transition to in_progress using state machine
-          unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-            current_state = step.state_machine.current_state
-            Rails.logger.warn do
-              "StepExecutor: Cannot start step #{step.workflow_step_id} - transition from '#{current_state}' " \
-              "to 'in_progress' blocked. This may be due to: " \
-              "1) Step not in pending state, 2) Dependencies not met, or 3) Guard clause restrictions. " \
-              "Check step dependencies and current state."
-            end
-            return nil
-          end
-
-          # Get the step handler and execute it
-          step_handler = task_handler.get_step_handler(step)
-          step_handler.handle(task, sequence, step)
-
-          # Transition to complete
-          if safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-            # Fire completion event through orchestrator
-            publish_event(
-              Tasker::Constants::StepEvents::COMPLETED,
-              {
-                task_id: task.task_id,
-                step_id: step.workflow_step_id,
-                step_name: step.name,
-                execution_duration: step.processed_at&.-(step.updated_at)
-              }
-            )
-
-            Rails.logger.debug { "StepExecutor: Successfully completed step #{step.workflow_step_id}" }
-            step
-          else
-            Rails.logger.error("StepExecutor: Failed to transition step #{step.workflow_step_id} to complete")
-            nil
-          end
-        rescue StandardError => e
-          Rails.logger.error("StepExecutor: Error executing step #{step.workflow_step_id}: #{e.message}")
-
-          # Transition to error state
-          safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::ERROR)
-
-          # Fire error event through orchestrator
-          publish_event(
-            Tasker::Constants::StepEvents::FAILED,
-            {
-              task_id: task.task_id,
-              step_id: step.workflow_step_id,
-              step_name: step.name,
-              error_message: e.message,
-              error_class: e.class.name,
-              backtrace: e.backtrace&.first(10)
-            }
-          )
-
-          nil
-        end
+        # Main execution workflow
+        execute_step_workflow(task, sequence, step, task_handler)
+      rescue StandardError => e
+        handle_step_execution_error(task, step, e)
+        nil
       end
 
       private
+
+      # Validate that the step and database connection are ready
+      def validate_step_preconditions(step)
+        unless ActiveRecord::Base.connection.active?
+          Rails.logger.error("StepExecutor: Database connection inactive for step #{step&.workflow_step_id}")
+          return false
+        end
+
+        step = step.reload if step&.persisted?
+        unless step
+          Rails.logger.error('StepExecutor: Step is nil or not persisted')
+          return false
+        end
+
+        true
+      rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
+        Rails.logger.error("StepExecutor: Database connection error for step #{step&.workflow_step_id}: #{e.message}")
+        false
+      rescue StandardError => e
+        Rails.logger.error("StepExecutor: Unexpected error checking step #{step&.workflow_step_id}: #{e.message}")
+        false
+      end
+
+      # Ensure step has an initial state, set to pending if blank
+      def ensure_step_has_initial_state(step)
+        current_state = step.state_machine.current_state
+        return true if current_state.present?
+
+        Rails.logger.debug { "StepExecutor: Step #{step.workflow_step_id} has no state, setting to pending" }
+        unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
+          Rails.logger.error("StepExecutor: Failed to initialize step #{step.workflow_step_id} to pending state")
+          return false
+        end
+
+        step.reload
+        true
+      end
+
+      # Check if step is in the correct state for execution
+      def step_ready_for_execution?(step)
+        current_state = step.state_machine.current_state
+        return true if current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
+
+        Rails.logger.debug do
+          "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (current: '#{current_state}')"
+        end
+        false
+      end
+
+      # Execute the main step workflow: transition -> execute -> complete
+      def execute_step_workflow(task, sequence, step, task_handler)
+        publish_execution_started_event(task, step)
+
+        return nil unless transition_step_to_in_progress(step)
+
+        execute_step_handler(task, sequence, step, task_handler)
+        complete_step_execution(task, step)
+      end
+
+      # Publish event for step execution start
+      def publish_execution_started_event(task, step)
+        publish_event(
+          Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
+          {
+            task_id: task.task_id,
+            step_id: step.workflow_step_id,
+            step_name: step.name
+          }
+        )
+      end
+
+      # Transition step to in_progress state
+      def transition_step_to_in_progress(step)
+        unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+          current_state = step.state_machine.current_state
+          Rails.logger.warn do
+            "StepExecutor: Cannot start step #{step.workflow_step_id} - transition from '#{current_state}' " \
+              "to 'in_progress' blocked. Check step dependencies and current state."
+          end
+          return false
+        end
+        true
+      end
+
+      # Execute the actual step handler logic
+      def execute_step_handler(task, sequence, step, task_handler)
+        step_handler = task_handler.get_step_handler(step)
+        step_handler.handle(task, sequence, step)
+      end
+
+      # Complete step execution and publish completion event
+      #
+      # This method ensures atomic completion by wrapping both the step save
+      # and state transition in a database transaction. This is critical for
+      # idempotency: if either operation fails, the step remains in "in_progress"
+      # and can be safely retried without repeating the actual work.
+      def complete_step_execution(task, step)
+        completed_step = nil
+
+        # Use database transaction to ensure atomic completion
+        ActiveRecord::Base.transaction do
+          # STEP 1: Save the step results first
+          # This persists the output of the work that has already been performed
+          step.save!
+
+          # STEP 2: Transition to complete state
+          # This marks the step as done, but only if the save succeeded
+          unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+            Rails.logger.error("StepExecutor: Failed to transition step #{step.workflow_step_id} to complete")
+            # Raise exception to trigger transaction rollback
+            raise ActiveRecord::Rollback, "Failed to transition step #{step.workflow_step_id} to complete state"
+          end
+
+          completed_step = step
+        end
+
+        # If we got here, both save and transition succeeded
+        unless completed_step
+          Rails.logger.error("StepExecutor: Step completion transaction rolled back for step #{step.workflow_step_id}")
+          return nil
+        end
+
+        # Publish completion event outside transaction (for performance)
+        publish_event(
+          Tasker::Constants::StepEvents::COMPLETED,
+          {
+            task_id: task.task_id,
+            step_id: step.workflow_step_id,
+            step_name: step.name,
+            execution_duration: step.processed_at&.-(step.updated_at)
+          }
+        )
+
+        Rails.logger.debug { "StepExecutor: Successfully completed step #{step.workflow_step_id}" }
+        completed_step
+      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
+        Rails.logger.error("StepExecutor: Failed to save step #{step.workflow_step_id}: #{e.message}")
+        nil
+      rescue StandardError => e
+        Rails.logger.error("StepExecutor: Unexpected error completing step #{step.workflow_step_id}: #{e.message}")
+        nil
+      end
+
+      # Handle errors that occur during step execution
+      def handle_step_execution_error(task, step, error)
+        Rails.logger.error("StepExecutor: Error executing step #{step.workflow_step_id}: #{error.message}")
+
+        # Attempt to transition to error state
+        safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::ERROR)
+
+        # Publish error event
+        publish_event(
+          Tasker::Constants::StepEvents::FAILED,
+          {
+            task_id: task.task_id,
+            step_id: step.workflow_step_id,
+            step_name: step.name,
+            error_message: error.message,
+            error_class: error.class.name,
+            backtrace: error.backtrace&.first(10)
+          }
+        )
+      rescue StandardError => e
+        Rails.logger.error("StepExecutor: Failed to handle error for step #{step.workflow_step_id}: #{e.message}")
+      end
 
       # Execute steps concurrently using concurrent-ruby
       #
@@ -196,15 +282,31 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Array<Tasker::WorkflowStep>] Processed steps
       def execute_steps_concurrently(task, sequence, viable_steps, task_handler)
-        # Use concurrent-ruby for parallel execution
-        futures = viable_steps.map do |step|
-          Concurrent::Future.execute do
-            execute_single_step(task, sequence, step, task_handler)
+        # ⚠️  PRIORITY 0 FIX: Process in smaller batches to prevent database connection exhaustion
+        results = []
+
+        viable_steps.each_slice(MAX_CONCURRENT_STEPS) do |step_batch|
+          # Use concurrent-ruby for parallel execution within batch
+          futures = step_batch.map do |step|
+            Concurrent::Future.execute do
+              # Ensure each future has its own database connection
+              ActiveRecord::Base.connection_pool.with_connection do
+                execute_single_step(task, sequence, step, task_handler)
+              end
+            end
+          end
+
+          # Wait for batch to complete and collect results
+          begin
+            batch_results = futures.map(&:value)
+            results.concat(batch_results.compact)
+          ensure
+            # ⚠️  MEMORY FIX: Explicitly clear future references to prevent memory leaks
+            futures.clear
           end
         end
 
-        # Wait for all futures to complete and collect results
-        futures.map(&:value)
+        results
       end
 
       # Execute steps sequentially

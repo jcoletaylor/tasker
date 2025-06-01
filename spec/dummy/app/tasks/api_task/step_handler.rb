@@ -19,9 +19,19 @@ module ApiTask
       # we then use the get_from_results method to extract the cart from the results
       # this is valuable because the handle method automates exponential backoff and retries
       # and we don't want to have to reimplement that
-      def handle(_task, _sequence, step)
+      def handle(task, sequence, step)
         super
         step.results = get_from_results(step.results, 'cart')
+      rescue Faraday::Error => e
+        # Handle error case - process the error response and extract error message
+        step.results = if e.response
+                         get_from_results(e.response, 'cart')
+                       else
+                         { 'error' => e.message }
+                       end
+
+        # Re-raise the exception so the step executor can handle it properly
+        raise
       end
     end
 
@@ -31,9 +41,19 @@ module ApiTask
         connection.get('/products')
       end
 
-      def handle(_task, _sequence, step)
+      def handle(task, sequence, step)
         super
         step.results = get_from_results(step.results, 'products')
+      rescue Faraday::Error => e
+        # Handle error case - process the error response and extract error message
+        step.results = if e.response
+                         get_from_results(e.response, 'products')
+                       else
+                         { 'error' => e.message }
+                       end
+
+        # Re-raise the exception so the step executor can handle it properly
+        raise
       end
     end
 

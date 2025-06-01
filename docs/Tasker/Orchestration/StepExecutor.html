@@ -89,7 +89,7 @@
   
   <dl>
       <dt>Includes:</dt>
-      <dd><span class='object_link'><a href="../Concerns/IdempotentStateTransitions.html" title="Tasker::Concerns::IdempotentStateTransitions (module)">Concerns::IdempotentStateTransitions</a></span>, <span class='object_link'><a href="../Concerns/LifecycleEventHelpers.html" title="Tasker::Concerns::LifecycleEventHelpers (module)">Concerns::LifecycleEventHelpers</a></span>, <span class='object_link'><a href="../Concerns/OrchestrationPublisher.html" title="Tasker::Concerns::OrchestrationPublisher (module)">Concerns::OrchestrationPublisher</a></span></dd>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span>, <span class='object_link'><a href="../Concerns/IdempotentStateTransitions.html" title="Tasker::Concerns::IdempotentStateTransitions (module)">Concerns::IdempotentStateTransitions</a></span></dd>
   </dl>
   
   
@@ -118,6 +118,33 @@
   
 
 </div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="MAX_CONCURRENT_STEPS-constant" class="">MAX_CONCURRENT_STEPS =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>⚠️ PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='int'>3</span></pre></dd>
+      
+    </dl>
+  
+
 
 
 
@@ -131,6 +158,30 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#execute_single_step-instance_method" title="#execute_single_step (instance method)">#<strong>execute_single_step</strong>(task, sequence, step, task_handler)  &#x21d2; Tasker::WorkflowStep<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Execute a single step with state machine transitions and error handling.</p>
+</div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -156,17 +207,34 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handle_viable_steps_discovered-instance_method" title="#handle_viable_steps_discovered (instance method)">#<strong>handle_viable_steps_discovered</strong>(event)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Handle viable steps discovered event.</p>
+</div></span>
+  
+</li>
+
+      
     </ul>
   
 
 
-  
-  
-  
-  
-  
-  
-  
   
   
   
@@ -192,7 +260,152 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="execute_steps-instance_method">
+  <h3 class="signature first" id="execute_single_step-instance_method">
+  
+    #<strong>execute_single_step</strong>(task, sequence, step, task_handler)  &#x21d2; <tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Execute a single step with state machine transitions and error handling</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task containing the step</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>sequence</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Types/StepSequence.html" title="Tasker::Types::StepSequence (class)">Tasker::Types::StepSequence</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The step sequence</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>step</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The step to execute</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>task_handler</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task handler instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The executed step or nil if failed</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 97</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_execute_single_step'>execute_single_step</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
+  <span class='comment'># Guard clauses - fail fast if preconditions aren&#39;t met
+</span>  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_validate_step_preconditions'>validate_step_preconditions</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_ensure_step_has_initial_state'>ensure_step_has_initial_state</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_step_ready_for_execution?'>step_ready_for_execution?</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+
+  <span class='comment'># Main execution workflow
+</span>  <span class='id identifier rubyid_execute_step_workflow'>execute_step_workflow</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_handle_step_execution_error'>handle_step_execution_error</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
+  <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="execute_steps-instance_method">
   
     #<strong>execute_steps</strong>(task, sequence, viable_steps, task_handler)  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span>&gt;</tt> 
   
@@ -305,8 +518,6 @@
       <pre class="lines">
 
 
-30
-31
 32
 33
 34
@@ -341,10 +552,12 @@
 63
 64
 65
-66</pre>
+66
+67
+68</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 30</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 32</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execute_steps'>execute_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -388,12 +601,95 @@
 </table>
 </div>
     
+      <div class="method_details ">
+  <h3 class="signature " id="handle_viable_steps_discovered-instance_method">
+  
+    #<strong>handle_viable_steps_discovered</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Handle viable steps discovered event</p>
+
+<p>Convenience method for event-driven workflows that takes an event payload and executes the discovered steps.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Event payload with task_id, step_ids, and processing_mode</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 76</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_viable_steps_discovered'>handle_viable_steps_discovered</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_step_ids'>step_ids</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:step_ids</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_step_ids'>step_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task_handler'>task_handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_sequence'>sequence</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepSequenceFactory.html" title="Tasker::Orchestration::StepSequenceFactory (class)">StepSequenceFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_get_sequence'><span class='object_link'><a href="StepSequenceFactory.html#get_sequence-class_method" title="Tasker::Orchestration::StepSequenceFactory.get_sequence (method)">get_sequence</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_viable_steps'>viable_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_step_ids'>step_ids</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_execute_steps'>execute_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:09 2025 by
+  Generated on Sat May 31 23:13:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

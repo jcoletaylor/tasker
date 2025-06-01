@@ -106,7 +106,7 @@
 
 <p>This class solves the payload standardization issues identified during factory migration: - Missing :execution_duration keys in step completion events - Missing :error_message keys in step failure events - Missing :attempt_number keys for retry tracking - Inconsistent payload structure across different event publishers</p>
 
-<p>Usage: payload = EventPayloadBuilder.build_step_payload(step, task, event_type: :completed) Tasker::LifecycleEvents.fire(‘step.completed’, payload)</p>
+<p>Usage: payload = EventPayloadBuilder.build_step_payload(step, task, event_type: :completed) Tasker::Events::Publisher.instance.publish(‘step.completed’, payload)</p>
 
 
   </div>
@@ -716,7 +716,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:09 2025 by
+  Generated on Sat May 31 23:13:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

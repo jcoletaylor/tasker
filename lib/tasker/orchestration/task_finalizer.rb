@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/idempotent_state_transitions'
-require_relative '../concerns/lifecycle_event_helpers'
 require_relative '../concerns/event_publisher'
 require_relative '../task_handler/step_group'
 require_relative 'task_reenqueuer'
@@ -14,7 +13,6 @@ module Tasker
     # lifecycle events for observability. No complex event subscriptions needed.
     class TaskFinalizer
       include Tasker::Concerns::IdempotentStateTransitions
-      include Tasker::Concerns::LifecycleEventHelpers
       include Tasker::Concerns::EventPublisher
 
       # Check if the task is blocked by errors

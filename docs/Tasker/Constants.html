@@ -100,7 +100,7 @@
 <p class="children">
   
     
-      <strong class="modules">Modules:</strong> <span class='object_link'><a href="Constants/LifecycleEvents.html" title="Tasker::Constants::LifecycleEvents (module)">LifecycleEvents</a></span>, <span class='object_link'><a href="Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span>, <span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span>, <span class='object_link'><a href="Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span>, <span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span>, <span class='object_link'><a href="Constants/TestEvents.html" title="Tasker::Constants::TestEvents (module)">TestEvents</a></span>, <span class='object_link'><a href="Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span>, <span class='object_link'><a href="Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span>
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span>, <span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span>, <span class='object_link'><a href="Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span>, <span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span>, <span class='object_link'><a href="Constants/TestEvents.html" title="Tasker::Constants::TestEvents (module)">TestEvents</a></span>, <span class='object_link'><a href="Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span>, <span class='object_link'><a href="Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span>
     
   
     
@@ -348,6 +348,8 @@
         <dd><pre class="code"><span class='lbracket'>[</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::StepEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#EXECUTION_REQUESTED-constant" title="Tasker::Constants::StepEvents::EXECUTION_REQUESTED (constant)">EXECUTION_REQUESTED</a></span></span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#BEFORE_HANDLE-constant" title="Tasker::Constants::StepEvents::BEFORE_HANDLE (constant)">BEFORE_HANDLE</a></span></span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#HANDLE-constant" title="Tasker::Constants::StepEvents::HANDLE (constant)">HANDLE</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#COMPLETED-constant" title="Tasker::Constants::StepEvents::COMPLETED (constant)">COMPLETED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#FAILED-constant" title="Tasker::Constants::StepEvents::FAILED (constant)">FAILED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#RETRY_REQUESTED-constant" title="Tasker::Constants::StepEvents::RETRY_REQUESTED (constant)">RETRY_REQUESTED</a></span></span><span class='comma'>,</span>
@@ -384,6 +386,8 @@
   <span class='comment'># Step state events
 </span>  <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::StepEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#EXECUTION_REQUESTED-constant" title="Tasker::Constants::StepEvents::EXECUTION_REQUESTED (constant)">EXECUTION_REQUESTED</a></span></span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#BEFORE_HANDLE-constant" title="Tasker::Constants::StepEvents::BEFORE_HANDLE (constant)">BEFORE_HANDLE</a></span></span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#HANDLE-constant" title="Tasker::Constants::StepEvents::HANDLE (constant)">HANDLE</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#COMPLETED-constant" title="Tasker::Constants::StepEvents::COMPLETED (constant)">COMPLETED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#FAILED-constant" title="Tasker::Constants::StepEvents::FAILED (constant)">FAILED</a></span></span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/StepEvents.html#RETRY_REQUESTED-constant" title="Tasker::Constants::StepEvents::RETRY_REQUESTED (constant)">RETRY_REQUESTED</a></span></span><span class='comma'>,</span>
@@ -448,25 +452,6 @@
   <span class='const'><span class='object_link'><a href="Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/WorkflowEvents.html#ORCHESTRATION_REQUESTED-constant" title="Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED (constant)">ORCHESTRATION_REQUESTED</a></span></span>
 <span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
       
-        <dt id="VALID_LIFECYCLE_EVENTS-constant" class="">VALID_LIFECYCLE_EVENTS =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>All valid lifecycle events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='lbracket'>[</span>
-  <span class='const'><span class='object_link'><a href="Constants/LifecycleEvents.html" title="Tasker::Constants::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/LifecycleEvents.html#TASK_INITIALIZE_REQUESTED-constant" title="Tasker::Constants::LifecycleEvents::TASK_INITIALIZE_REQUESTED (constant)">TASK_INITIALIZE_REQUESTED</a></span></span><span class='comma'>,</span>
-  <span class='const'><span class='object_link'><a href="Constants/LifecycleEvents.html" title="Tasker::Constants::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/LifecycleEvents.html#TASK_START_REQUESTED-constant" title="Tasker::Constants::LifecycleEvents::TASK_START_REQUESTED (constant)">TASK_START_REQUESTED</a></span></span>
-<span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
-      
         <dt id="VALID_TEST_EVENTS-constant" class="">VALID_TEST_EVENTS =
           <div class="docstring">
   <div class="discussion">
@@ -501,7 +486,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:07 2025 by
+  Generated on Sat May 31 23:13:23 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

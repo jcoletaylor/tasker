@@ -78,7 +78,7 @@ module Tasker
       # Guard clauses for business logic only
       # Let Statesman handle state transition validation and idempotent calls
 
-      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step, transition|
+      guard_transition(to: Constants::WorkflowStepStatuses::IN_PROGRESS) do |step, _transition|
         # Only business rule: check dependencies are met
         StepStateMachine.step_dependencies_met?(step)
       end
@@ -133,7 +133,7 @@ module Tasker
         # @return [Boolean] True if this is an idempotent transition
         def idempotent_transition?(step, target_state)
           current_state = step.state_machine.current_state
-          effective_current_state = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+          effective_current_state = current_state.presence || Constants::WorkflowStepStatuses::PENDING
           is_idempotent = effective_current_state == target_state
 
           if is_idempotent
@@ -151,7 +151,7 @@ module Tasker
         # @return [String] The effective current state (blank states become PENDING)
         def effective_current_state(step)
           current_state = step.state_machine.current_state
-          current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
+          current_state.presence || Constants::WorkflowStepStatuses::PENDING
         end
 
         # Log an invalid from-state transition
@@ -163,7 +163,7 @@ module Tasker
         def log_invalid_from_state(step, current_state, target_state, reason)
           Rails.logger.debug do
             "StepStateMachine: Cannot transition to #{target_state} from '#{current_state}' " \
-            "(step #{step.workflow_step_id}). #{reason}."
+              "(step #{step.workflow_step_id}). #{reason}."
           end
         end
 
@@ -174,7 +174,7 @@ module Tasker
         def log_dependencies_not_met(step, target_state)
           Rails.logger.debug do
             "StepStateMachine: Cannot transition step #{step.workflow_step_id} to #{target_state} - " \
-            "dependencies not satisfied. Check parent step completion status."
+              'dependencies not satisfied. Check parent step completion status.'
           end
         end
 
@@ -202,43 +202,42 @@ module Tasker
         # @return [Boolean] True if all dependencies are satisfied
         def step_dependencies_met?(step)
           # Handle cases where step doesn't have parents association or it's not loaded
-          begin
-            # If step doesn't respond to parents, assume no dependencies
-            return true unless step.respond_to?(:parents)
 
-            # If parents association exists but is empty, no dependencies to check
-            parents = step.parents
-            return true if parents.nil? || parents.empty?
+          # If step doesn't respond to parents, assume no dependencies
+          return true unless step.respond_to?(:parents)
 
-            # Check if all parent steps are complete
-            parents.all? do |parent|
-              completion_states = [
-                Constants::WorkflowStepStatuses::COMPLETE,
-                Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-              ]
-              # Use state_machine.current_state to avoid circular reference with parent.status
-              current_state = parent.state_machine.current_state
-              parent_status = current_state.blank? ? Constants::WorkflowStepStatuses::PENDING : current_state
-              is_complete = completion_states.include?(parent_status)
+          # If parents association exists but is empty, no dependencies to check
+          parents = step.parents
+          return true if parents.blank?
 
-              unless is_complete
-                Rails.logger.debug do
-                  "StepStateMachine: Step #{step.workflow_step_id} dependency not met - " \
+          # Check if all parent steps are complete
+          parents.all? do |parent|
+            completion_states = [
+              Constants::WorkflowStepStatuses::COMPLETE,
+              Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+            ]
+            # Use state_machine.current_state to avoid circular reference with parent.status
+            current_state = parent.state_machine.current_state
+            parent_status = current_state.presence || Constants::WorkflowStepStatuses::PENDING
+            is_complete = completion_states.include?(parent_status)
+
+            unless is_complete
+              Rails.logger.debug do
+                "StepStateMachine: Step #{step.workflow_step_id} dependency not met - " \
                   "parent step #{parent.workflow_step_id} is '#{parent_status}', needs to be complete"
-                end
               end
+            end
 
-              is_complete
-            end
-          rescue StandardError => e
-            # If there's an error checking dependencies, log it and assume dependencies are met
-            # This prevents dependency checking from blocking execution in edge cases
-            Rails.logger.warn do
-              "StepStateMachine: Error checking dependencies for step #{step.workflow_step_id}: #{e.message}. " \
-              "Assuming dependencies are met."
-            end
-            true
+            is_complete
           end
+        rescue StandardError => e
+          # If there's an error checking dependencies, log it and assume dependencies are met
+          # This prevents dependency checking from blocking execution in edge cases
+          Rails.logger.warn do
+            "StepStateMachine: Error checking dependencies for step #{step.workflow_step_id}: #{e.message}. " \
+              'Assuming dependencies are met.'
+          end
+          true
         end
 
         # Safely fire a lifecycle event using dry-events bus

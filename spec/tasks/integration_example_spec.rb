@@ -61,8 +61,12 @@ RSpec.describe ApiTask::IntegrationExample do
   # Factory-based step completion helper (replacement for complete_steps method)
   def complete_steps(step_names)
     step_names.each do |step_name|
+      # Get fresh sequence for each step to ensure updated results are visible
+      fresh_sequence = get_sequence_for_task(task)
       step = find_step_by_name(task, step_name)
-      task_handler.handle_one_step(task, step_sequence, step)
+      task_handler.handle_one_step(task, fresh_sequence, step)
+      step.reload # Reload step to get updated results from database
+
       log_step_results(step) unless step.complete?
       expect(step.status).to eq(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
     end

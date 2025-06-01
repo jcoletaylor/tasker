@@ -30,13 +30,13 @@ module Tasker
     initializer 'tasker.setup', before: :load_config_initializers do |_app|
       # Load core components that need explicit initialization
       require 'tasker/constants'
+      require 'tasker/configuration'
+      require 'tasker/instrumentation'
       require 'tasker/types'
       require 'tasker/handler_factory'
       require 'tasker/identity_strategy'
       require 'tasker/task_handler'
       require 'tasker/task_builder'
-      require 'tasker/lifecycle_events'
-      require 'tasker/instrumentation'
       require 'tasker/state_machine'
       require 'tasker/orchestration'
       require 'tasker/events/publisher'
@@ -55,9 +55,7 @@ module Tasker
     initializer 'tasker.orchestration', after: :load_config_initializers do |_app|
       # Initialize the orchestration system for production use
       # This happens after config initializers so user config can override
-      if Rails.env.production? || Rails.env.development?
-        Tasker::Orchestration::Coordinator.initialize!
-      end
+      Tasker::Orchestration::Coordinator.initialize! if Rails.env.production? || Rails.env.development?
     end
 
     class << self

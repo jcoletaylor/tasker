@@ -10,6 +10,7 @@ FactoryBot.define do
     tags { %w[api integration testing] }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { cart_id: 123, user_id: 456 } }
 
     transient do
       with_dependencies { true }
@@ -18,9 +19,9 @@ FactoryBot.define do
 
     # Use find_or_create pattern for named_task to avoid conflicts
     before(:create) do |task, _evaluator|
-      # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
-      # This handles cases where the named_task already exists from previous tests
-      api_named_task = Tasker::NamedTask.find_or_create_by!(name: 'api_integration_example') do |named_task|
+      # ✅ FACTORY CONSISTENCY: Use the correct task handler registration name
+      # This must match ApiTask::IntegrationExample::TASK_REGISTRY_NAME which is 'api_integration_task'
+      api_named_task = Tasker::NamedTask.find_or_create_by!(name: 'api_integration_task') do |named_task|
         named_task.description = 'API integration workflow task'
       end
 
@@ -109,6 +110,7 @@ FactoryBot.define do
     reason { 'testing' }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { workflow_type: 'linear', test: true } }
 
     transient do
       step_count { 3 }
@@ -143,6 +145,7 @@ FactoryBot.define do
     reason { 'parallel_processing' }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { batch_id: 789, chunk_size: 100 } }
 
     transient do
       parallel_count { 3 }
@@ -183,6 +186,7 @@ FactoryBot.define do
     named_task
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
+    context { { transitions_test: true } }
 
     transient do
       transition_sequence { :complete } # :complete, :error, :retry, :cancel
@@ -302,7 +306,11 @@ FactoryBot.define do
       task.named_task = dummy_named_task
     end
 
+    # ✅ FIX: Create initial task transition to pending state for proper status
     after(:create) do |task, evaluator|
+      # Create initial task transition to pending state so status method works correctly
+      create(:task_transition, :initial_transition, task: task, most_recent: true)
+
       if evaluator.with_dependencies
         # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
         # This handles cases where the dependent system already exists from before(:all) blocks

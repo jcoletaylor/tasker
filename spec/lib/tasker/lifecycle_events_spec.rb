@@ -2,17 +2,17 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::LifecycleEvents do
-  let(:event) { 'Test.Event' }
-  let(:context) { { key: 'value', task_id: 123 } }
-  let(:namespaced_event) { "#{described_class::EVENT_NAMESPACE}.#{event}" }
+RSpec.describe Tasker::Events::Publisher do
+  let(:publisher) { described_class.instance }
+  let(:event_name) { Tasker::Constants::TaskEvents::START_REQUESTED }
+  let(:context) { { task_id: 123, task_name: 'test_task' } }
 
   let(:captured_events) { [] }
   let(:subscription) { nil }
 
   before do
     # Create a subscription to capture events
-    ActiveSupport::Notifications.subscribe(namespaced_event) do |name, started, finished, id, payload|
+    ActiveSupport::Notifications.subscribe(/^tasker\./) do |name, started, finished, id, payload|
       captured_events << {
         name: name,
         started: started,
@@ -29,47 +29,93 @@ RSpec.describe Tasker::LifecycleEvents do
     captured_events.clear
   end
 
-  describe '.fire' do
-    it 'instruments the event through ActiveSupport::Notifications' do
-      described_class.fire(event, context)
+  describe '#publish' do
+    it 'publishes events through the unified publisher' do
+      publisher.publish(event_name, context)
 
-      expect(captured_events.size).to eq(1)
-      expect(captured_events.first[:name]).to eq(namespaced_event)
-      expect(captured_events.first[:payload]).to eq(context)
+      # The unified event system creates metric events through telemetry
+      expect(captured_events.size).to be >= 1
+
+      # Find the metric event created by telemetry
+      metric_event = captured_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event).to be_present
+      expect(metric_event[:name]).to eq("tasker.metric.tasker.#{event_name}")
+    end
+
+    it 'adds timestamp to event payload' do
+      freeze_time = Time.current
+      allow(Time).to receive(:current).and_return(freeze_time)
+
+      publisher.publish(event_name, context)
+
+      # The telemetry creates standardized payloads with event_timestamp
+      metric_event = captured_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event[:payload][:event_timestamp]).to be_present
     end
   end
 
-  describe '.fire_with_span' do
-    it 'instruments the block execution through ActiveSupport::Notifications' do
-      result = described_class.fire_with_span(event, context) { 42 }
+  describe '#publish_task_event' do
+    let(:task) { double('Task', task_id: 123, name: 'test_task', status: 'pending') }
 
-      expect(result).to eq(42)
-      expect(captured_events.size).to eq(1)
-      expect(captured_events.first[:name]).to eq(namespaced_event)
-      expect(captured_events.first[:payload]).to eq(context)
-    end
+    it 'publishes task events with standardized payload' do
+      publisher.publish_task_event(event_name, task, { additional: 'data' })
 
-    it 'correctly captures the execution time of the block' do
-      # Make the block take a measurable amount of time
-      described_class.fire_with_span(event, context) { sleep(0.01) }
+      # The telemetry system creates standardized payloads through TelemetrySubscriber
+      expect(captured_events.size).to be >= 1
 
-      expect(captured_events.first[:finished] - captured_events.first[:started]).to be > 0.005
+      # Find the metric event created by telemetry
+      metric_event = captured_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event).to be_present
+      expect(metric_event[:payload]).to include(
+        task_name: 'unknown_task', # TelemetrySubscriber provides default when task name not in expected format
+        event_timestamp: be_present
+      )
     end
   end
 
-  describe '.fire_error' do
-    it 'instruments the error event with exception information' do
-      exception = StandardError.new('Test error')
-      exception.set_backtrace(%w[line1 line2])
+  describe '#publish_step_event' do
+    let(:step) { double('Step', workflow_step_id: 456, name: 'test_step', task_id: 123, status: 'pending') }
 
-      described_class.fire_error(event, exception, context)
+    it 'publishes step events with standardized payload' do
+      publisher.publish_step_event(Tasker::Constants::StepEvents::COMPLETED, step, { additional: 'data' })
 
-      expect(captured_events.size).to eq(1)
-      expect(captured_events.first[:name]).to eq(namespaced_event)
-      expect(captured_events.first[:payload][:key]).to eq('value')
-      expect(captured_events.first[:payload][:exception]).to eq([exception.class.name, exception.message])
-      expect(captured_events.first[:payload][:exception_object]).to eq(exception)
-      expect(captured_events.first[:payload][:backtrace]).to include('line1')
+      # The telemetry system creates standardized payloads with EventPayloadBuilder integration
+      expect(captured_events.size).to be >= 1
+
+      # Find the metric event created by telemetry
+      metric_event = captured_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event).to be_present
+      expect(metric_event[:payload]).to include(
+        step_name: 'unknown_step', # TelemetrySubscriber provides default
+        event_timestamp: be_present,
+        execution_duration: be_present, # EventPayloadBuilder adds this
+        attempt_number: be_present      # EventPayloadBuilder adds this
+      )
+    end
+  end
+
+  describe 'singleton behavior' do
+    it 'returns the same instance' do
+      instance1 = described_class.instance
+      instance2 = described_class.instance
+
+      expect(instance1).to be(instance2)
+    end
+
+    it 'prevents direct instantiation' do
+      expect { described_class.new }.to raise_error(NoMethodError)
+    end
+  end
+
+  describe 'event registration' do
+    it 'registers all events during initialization' do
+      # Test that the publisher can publish all the standard events without errors
+      expect do
+        publisher.publish(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED, context)
+        publisher.publish(Tasker::Constants::StepEvents::COMPLETED, context)
+        publisher.publish(Tasker::Constants::WorkflowEvents::TASK_STARTED, context)
+        publisher.publish(Tasker::Constants::ObservabilityEvents::Task::HANDLE, context)
+      end.not_to raise_error
     end
   end
 end

@@ -353,12 +353,12 @@
       <pre class="lines">
 
 
-79
-80
-81</pre>
+82
+83
+84</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 82</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_sequence_for_task'>get_sequence_for_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepSequenceFactory.html" title="Tasker::Orchestration::StepSequenceFactory (class)">StepSequenceFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_get_sequence'><span class='object_link'><a href="StepSequenceFactory.html#get_sequence-class_method" title="Tasker::Orchestration::StepSequenceFactory.get_sequence (method)">get_sequence</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
@@ -396,6 +396,7 @@
       <pre class="lines">
 
 
+33
 34
 35
 36
@@ -410,10 +411,13 @@
 45
 46
 47
-48</pre>
+48
+49
+50
+51</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 34</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize!'>initialize!</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@initialized</span>
@@ -421,7 +425,7 @@
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker::Orchestration::Coordinator: Initializing orchestration system</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 
   <span class='comment'># Initialize core orchestration components
-</span>  <span class='id identifier rubyid_setup_orchestrator'>setup_orchestrator</span>
+</span>  <span class='id identifier rubyid_setup_publisher'>setup_publisher</span>
   <span class='id identifier rubyid_setup_event_subscriptions'>setup_event_subscriptions</span>
 
   <span class='comment'># Initialize telemetry and monitoring
@@ -429,6 +433,10 @@
 
   <span class='ivar'>@initialized</span> <span class='op'>=</span> <span class='kw'>true</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker::Orchestration::Coordinator: Orchestration system initialized successfully</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tasker::Orchestration::Coordinator: Failed to initialize: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='ivar'>@initialized</span> <span class='op'>=</span> <span class='kw'>false</span>
+  <span class='id identifier rubyid_raise'>raise</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -479,12 +487,12 @@
       <pre class="lines">
 
 
+25
 26
-27
-28</pre>
+27</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 26</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 25</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialized?'>initialized?</span>
   <span class='ivar'>@initialized</span> <span class='op'>==</span> <span class='kw'>true</span>
@@ -520,16 +528,18 @@
       <pre class="lines">
 
 
-51
-52
-53
-54</pre>
+54
+55
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 51</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 54</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reset!'>reset!</span>
   <span class='ivar'>@initialized</span> <span class='op'>=</span> <span class='kw'>false</span>
+  <span class='ivar'>@publisher</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker::Orchestration::Coordinator: Initialization state reset</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -581,10 +591,6 @@
       <pre class="lines">
 
 
-59
-60
-61
-62
 63
 64
 65
@@ -594,23 +600,25 @@
 69
 70
 71
-72</pre>
+72
+73
+74
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 59</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/coordinator.rb', line 63</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_statistics'>statistics</span>
   <span class='lbrace'>{</span>
     <span class='label'>initialized:</span> <span class='ivar'>@initialized</span> <span class='op'>||</span> <span class='kw'>false</span><span class='comma'>,</span>
     <span class='label'>components:</span> <span class='lbrace'>{</span>
-      <span class='label'>orchestrator:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Orchestrator.html" title="Tasker::Orchestration::Orchestrator (class)">Orchestrator</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
+      <span class='label'>publisher:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Events/Publisher.html" title="Tasker::Events::Publisher (class)">Publisher</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
       <span class='label'>viable_step_discovery:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ViableStepDiscovery.html" title="Tasker::Orchestration::ViableStepDiscovery (class)">ViableStepDiscovery</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
       <span class='label'>step_executor:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepExecutor.html" title="Tasker::Orchestration::StepExecutor (class)">StepExecutor</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
       <span class='label'>task_finalizer:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskFinalizer.html" title="Tasker::Orchestration::TaskFinalizer (class)">TaskFinalizer</a></span></span><span class='rparen'>)</span><span class='comma'>,</span>
       <span class='label'>task_reenqueuer:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskReenqueuer.html" title="Tasker::Orchestration::TaskReenqueuer (class)">TaskReenqueuer</a></span></span><span class='rparen'>)</span>
     <span class='rbrace'>}</span><span class='comma'>,</span>
-    <span class='label'>event_bus_active:</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../LifecycleEvents.html" title="Tasker::LifecycleEvents (module)">LifecycleEvents</a></span></span><span class='period'>.</span><span class='id identifier rubyid_bus'><span class='object_link'><a href="../LifecycleEvents.html#bus-class_method" title="Tasker::LifecycleEvents.bus (method)">bus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_present?'>present?</span><span class='comma'>,</span>
-    <span class='label'>orchestrator_instance:</span> <span class='ivar'>@orchestrator</span><span class='op'>&amp;.</span><span class='id identifier rubyid_class'>class</span><span class='op'>&amp;.</span><span class='id identifier rubyid_name'>name</span>
+    <span class='label'>publisher_instance:</span> <span class='ivar'>@publisher</span><span class='op'>&amp;.</span><span class='id identifier rubyid_class'>class</span><span class='op'>&amp;.</span><span class='id identifier rubyid_name'>name</span>
   <span class='rbrace'>}</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -623,7 +631,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:09 2025 by
+  Generated on Sat May 31 23:13:24 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

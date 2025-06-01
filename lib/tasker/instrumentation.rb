@@ -113,9 +113,12 @@ module Tasker
           config.otel_telemetry_service_version
         )
 
+        # Strip metric prefix if present to get the original event name
+        clean_event = event.sub(/^metric\.tasker\./, '')
+
         # Dispatch to appropriate handler based on event type
-        case event
-        when Tasker::LifecycleEvents::Events::Task::START, Tasker::LifecycleEvents::Events::Task::INITIALIZE
+        case clean_event
+        when Tasker::Constants::TaskEvents::START_REQUESTED, Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED
           handle_task_start(tracer, event, payload)
         when Tasker::Constants::TaskEvents::COMPLETED, Tasker::Constants::TaskEvents::FAILED
           handle_task_completion(tracer, event, payload)

@@ -6,7 +6,7 @@ FactoryBot.define do
     description { "Test task: #{name}" }
 
     trait :api_integration do
-      name { 'api_integration_example' }
+      name { 'api_integration_task' }
       description { 'API integration workflow task' }
     end
 
@@ -33,6 +33,11 @@ FactoryBot.define do
     trait :dummy_task_two do
       name { 'dummy_task_two' }
       description { 'Second dummy task variant for testing' }
+    end
+
+    trait :api_integration_example do
+      name { 'api_integration_example' }
+      description { 'API integration example task' }
     end
   end
 end

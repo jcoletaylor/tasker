@@ -11,7 +11,7 @@ FactoryBot.define do
     requested_at { Time.current }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { dummy: true, test: true } }
+    context { { test: true } }
 
     # Default state - managed by state machine
     complete { false }
@@ -80,23 +80,23 @@ FactoryBot.define do
 
     # Context variations
     trait :with_cart_context do
-      context { { cart_id: 12345, user_id: 67890, test: true } }
+      context { { cart_id: 456, user_id: 789 } }
     end
 
     trait :with_order_context do
-      context { { order_id: 98765, customer_id: 54321, test: true } }
+      context { { order_id: 123, customer_id: 456 } }
     end
 
     trait :with_complex_context do
-      context { {
-        cart_id: 12345,
-        user_id: 67890,
-        order_id: 98765,
-        customer_id: 54321,
-        payment_method: 'credit_card',
-        shipping_address: { city: 'San Francisco', state: 'CA' },
-        test: true
-      } }
+      context {
+        {
+          cart_id: 123,
+          user_id: 456,
+          order_id: 789,
+          shipping_address: { street: '123 Main St', city: 'Anytown' },
+          items: [{ id: 1, quantity: 2 }, { id: 2, quantity: 1 }]
+        }
+      }
     end
 
     # Task type traits
@@ -106,7 +106,7 @@ FactoryBot.define do
       source_system { 'ecommerce_api' }
       reason { 'process_cart_checkout' }
       # ✅ FIX: Add cart_id context that the test expects
-      context { { cart_id: 12345, api_version: 'v2', test: true } }
+      context { { cart_id: 123 } }
     end
 
     trait :data_processing do

@@ -12,15 +12,9 @@ module Tasker
       # - Using minimal ceremony for event processing
       # - Integrating with existing instrumentation
       # - Providing defensive handling for missing payload keys
-      # - Optimized event collection with batching and filtering
-      # - Using centralized event name constants for consistency throughout
+      # - Immediate event emission (no batching or threading)
       class TelemetrySubscriber
-        # Buffer for batch event collection (if enabled)
-        attr_reader :event_buffer, :last_flush_time
-
         def initialize
-          @event_buffer = []
-          @last_flush_time = Time.current
           @memoized_attributes = {}
         end
 
@@ -30,8 +24,6 @@ module Tasker
         def self.subscribe(publisher)
           subscriber = new
           subscriber.subscribe_to_all_events(publisher)
-          # Start the batch flusher if batching is enabled
-          subscriber.start_batch_flusher if batching_enabled?
         end
 
         # Subscribe to all relevant events using a mapping approach
@@ -44,21 +36,22 @@ module Tasker
           end
         end
 
-        # Handle task start events
+        # Handle task initialization events (task.initialize)
         def handle_task_initialized(event)
-          event_constant = Tasker::LifecycleEvents::Events::Task::INITIALIZE
+          event_constant = Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
-            task_name: safe_get(event, :task_name, 'unknown_task'),
-            status: safe_get(event, :status, 'initialized')
+            task_name: safe_get(event, :task_name, 'unknown_task')
           )
 
           record_metric(event_constant, attributes)
         end
 
-        # Handle task start events
+        # Handle task start events (task.start)
         def handle_task_started(event)
-          event_constant = Tasker::LifecycleEvents::Events::Task::START
+          event_constant = Tasker::Constants::TaskEvents::START_REQUESTED
+          return unless should_record_event?(event_constant)
 
           attributes = extract_core_attributes(event).merge(
             task_name: safe_get(event, :task_name, 'unknown_task')
@@ -188,22 +181,6 @@ module Tasker
           )
 
           record_metric(event_name, attributes)
-        end
-
-        # Flush any buffered events (for batch processing)
-        def flush_events!
-          return if @event_buffer.empty?
-
-          events_to_flush = @event_buffer.dup
-          @event_buffer.clear
-          @last_flush_time = Time.current
-
-          # Send all buffered events in one batch
-          events_to_flush.each do |buffered_event|
-            send_metric(buffered_event[:metric_name], buffered_event[:attributes])
-          end
-        rescue StandardError => e
-          Rails.logger.error("Failed to flush telemetry events: #{e.message}")
         end
 
         # Handle task processing events (task.handle)
@@ -453,41 +430,31 @@ module Tasker
           filtered_events.exclude?(event_name)
         end
 
-        # Convert event identifier (constant or string) to a standard string format
+        # Convert event identifier to a descriptive string for use in telemetry
         #
         # @param event_identifier [String, Object] Event constant or string name
-        # @return [String] Standardized event name
+        # @return [String] String representation for telemetry
         def event_identifier_to_string(event_identifier)
-          return event_identifier if event_identifier.is_a?(String)
-
-          # For constants, convert to a standardized string format
-          # This creates a mapping like Tasker::Constants::TaskEvents::COMPLETED => 'task.completed'
-          case event_identifier.to_s
-          when /Tasker::Constants::TaskEvents::(\w+)/
-            "task.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::Constants::StepEvents::(\w+)/
-            "step.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::Constants::WorkflowEvents::(\w+)/
-            "workflow.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::Constants::ObservabilityEvents::Task::(\w+)/
-            "task.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::Constants::ObservabilityEvents::Step::(\w+)/
-            "step.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::LifecycleEvents::Events::Task::(\w+)/
-            "task.#{::Regexp.last_match(1).downcase}"
-          when /Tasker::LifecycleEvents::Events::Step::(\w+)/
-            "step.#{::Regexp.last_match(1).downcase}"
+          if event_identifier.is_a?(String)
+            event_identifier
           else
-            # Fallback: use the constant name directly
-            event_identifier.to_s.split('::').last.downcase
+            # Convert constant to descriptive string
+            case event_identifier.to_s
+            when /Tasker::Constants::TaskEvents::(\w+)/
+              "task.#{Regexp.last_match(1).downcase}"
+            when /Tasker::Constants::StepEvents::(\w+)/
+              "step.#{Regexp.last_match(1).downcase}"
+            when /Tasker::Constants::WorkflowEvents::(\w+)/
+              "workflow.#{Regexp.last_match(1).downcase}"
+            when /Tasker::Constants::ObservabilityEvents::Task::(\w+)/
+              "task.#{Regexp.last_match(1).downcase}"
+            when /Tasker::Constants::ObservabilityEvents::Step::(\w+)/
+              "step.#{Regexp.last_match(1).downcase}"
+            else
+              # Fallback: use the constant name directly
+              event_identifier.to_s.split('::').last.downcase
+            end
           end
-        end
-
-        # Check if batching is enabled
-        def self.batching_enabled?
-          # Get configuration from an instance to access telemetry_config
-          config = Tasker.configuration.telemetry_config || {}
-          config[:batch_events] || false
         end
 
         # Get telemetry configuration
@@ -498,33 +465,6 @@ module Tasker
         # Check if telemetry is enabled
         def telemetry_enabled?
           Tasker.configuration.enable_telemetry != false
-        end
-
-        # Start the batch flusher background task
-        def start_batch_flusher
-          return unless self.class.batching_enabled?
-
-          flush_interval = telemetry_config[:flush_interval] || 5.seconds
-
-          Thread.new do
-            loop do
-              sleep(flush_interval)
-              flush_events! if should_flush?
-            end
-          rescue StandardError => e
-            Rails.logger.error("Telemetry batch flusher error: #{e.message}")
-          end
-        end
-
-        # Check if we should flush based on time or buffer size
-        def should_flush?
-          return false if @event_buffer.empty?
-
-          time_threshold = telemetry_config[:flush_interval] || 5.seconds
-          size_threshold = telemetry_config[:buffer_size] || 100
-
-          time_elapsed = Time.current - @last_flush_time
-          time_elapsed >= time_threshold || @event_buffer.size >= size_threshold
         end
 
         # Safely get a value from event payload with optional fallback
@@ -556,17 +496,7 @@ module Tasker
           # Filter out nil values to avoid telemetry issues
           clean_attributes = attributes.compact
 
-          if self.class.batching_enabled?
-            # Add to buffer for batch processing
-            @event_buffer << {
-              metric_name: metric_name,
-              attributes: clean_attributes,
-              recorded_at: Time.current
-            }
-          else
-            # Send immediately
-            send_metric(metric_name, clean_attributes)
-          end
+          send_metric(metric_name, clean_attributes)
         rescue StandardError => e
           Rails.logger.error("Failed to record telemetry metric #{event_identifier}: #{e.message}")
         end
@@ -632,8 +562,8 @@ module Tasker
         def event_subscriptions
           @event_subscriptions ||= {
             # State events (using modern state machine events for direct mappings)
-            Tasker::LifecycleEvents::Events::Task::INITIALIZE => :handle_task_initialized,
-            Tasker::LifecycleEvents::Events::Task::START => :handle_task_started,
+            Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED => :handle_task_initialized,
+            Tasker::Constants::TaskEvents::START_REQUESTED => :handle_task_started,
             Tasker::Constants::TaskEvents::COMPLETED => :handle_task_completed,  # Modern replacement for task.complete
             Tasker::Constants::TaskEvents::FAILED => :handle_task_failed,        # Modern replacement for task.error
 

@@ -108,25 +108,26 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The current step being handled
       # @return [void]
       def handle(task, sequence, step)
-        # Get the context for events and spans
-        span_context = {
-          span_name: "api.#{step.name}",
-          task_id: task.task_id,
-          step_id: step.workflow_step_id,
-          step_name: step.name
-        }
-
-        # Fire the handle event with span tracing
+        # Fire the handle event
         publish_event(
-          Tasker::LifecycleEvents::Events::Step::HANDLE,
-          span_context
-        ) do
+          Tasker::Constants::StepEvents::HANDLE,
+          {
+            task_id: task.task_id,
+            step_id: step.workflow_step_id,
+            step_name: step.name
+          }
+        )
+
+        begin
           response = call(task, sequence, step)
           _process_response(step, response)
           step.results = response
         rescue Faraday::Error => e
           if e.response && BACKOFF_ERROR_CODES.include?(e.response&.status)
-            _handle_too_many_requests(step, e.response, span_context)
+            _handle_too_many_requests(step, e.response, {
+                                        step_id: step.workflow_step_id,
+                                        step_name: step.name
+                                      })
           end
           raise
         end

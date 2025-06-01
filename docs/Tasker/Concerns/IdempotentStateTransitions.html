@@ -81,7 +81,7 @@
   
   <dl>
     <dt>Included in:</dt>
-    <dd><span class='object_link'><a href="../Orchestration/Coordinator.html" title="Tasker::Orchestration::Coordinator (class)">Orchestration::Coordinator</a></span>, <span class='object_link'><a href="../Orchestration/Orchestrator.html" title="Tasker::Orchestration::Orchestrator (class)">Orchestration::Orchestrator</a></span>, <span class='object_link'><a href="../Orchestration/StepExecutor.html" title="Tasker::Orchestration::StepExecutor (class)">Orchestration::StepExecutor</a></span>, <span class='object_link'><a href="../Orchestration/TaskFinalizer.html" title="Tasker::Orchestration::TaskFinalizer (class)">Orchestration::TaskFinalizer</a></span>, <span class='object_link'><a href="../Orchestration/TaskInitializer.html" title="Tasker::Orchestration::TaskInitializer (class)">Orchestration::TaskInitializer</a></span>, <span class='object_link'><a href="../Orchestration/TaskReenqueuer.html" title="Tasker::Orchestration::TaskReenqueuer (class)">Orchestration::TaskReenqueuer</a></span></dd>
+    <dd><span class='object_link'><a href="../Events/Publisher.html" title="Tasker::Events::Publisher (class)">Events::Publisher</a></span>, <span class='object_link'><a href="../Orchestration/Coordinator.html" title="Tasker::Orchestration::Coordinator (class)">Orchestration::Coordinator</a></span>, <span class='object_link'><a href="../Orchestration/StepExecutor.html" title="Tasker::Orchestration::StepExecutor (class)">Orchestration::StepExecutor</a></span>, <span class='object_link'><a href="../Orchestration/TaskFinalizer.html" title="Tasker::Orchestration::TaskFinalizer (class)">Orchestration::TaskFinalizer</a></span>, <span class='object_link'><a href="../Orchestration/TaskInitializer.html" title="Tasker::Orchestration::TaskInitializer (class)">Orchestration::TaskInitializer</a></span>, <span class='object_link'><a href="../Orchestration/TaskReenqueuer.html" title="Tasker::Orchestration::TaskReenqueuer (class)">Orchestration::TaskReenqueuer</a></span></dd>
   </dl>
   
 
@@ -341,18 +341,6 @@
       <pre class="lines">
 
 
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
 67
 68
 69
@@ -369,10 +357,22 @@
 80
 81
 82
-83</pre>
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 55</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 67</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_conditional_transition_to'>conditional_transition_to</span><span class='lparen'>(</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_allowed_from_states'>allowed_from_states</span><span class='comma'>,</span> <span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_state'>current_state</span> <span class='op'>=</span> <span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_current_state'>current_state</span>
@@ -488,15 +488,15 @@
       <pre class="lines">
 
 
-106
-107
-108
-109
-110
-111</pre>
+118
+119
+120
+121
+122
+123</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 106</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 118</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_in_any_state?'>in_any_state?</span><span class='lparen'>(</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='comma'>,</span> <span class='id identifier rubyid_states'>states</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_state'>current_state</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_current_state'>safe_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='rparen'>)</span>
@@ -573,20 +573,20 @@
       <pre class="lines">
 
 
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99</pre>
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_safe_current_state'>safe_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:state_machine</span><span class='rparen'>)</span>
@@ -728,7 +728,19 @@
 43
 44
 45
-46</pre>
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/concerns/idempotent_state_transitions.rb', line 22</span>
@@ -751,6 +763,18 @@
 
   <span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_transition_to!'>transition_to!</span><span class='lparen'>(</span><span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_metadata'>metadata</span><span class='rparen'>)</span>
   <span class='kw'>true</span>
+<span class='kw'>rescue</span> <span class='const'>Statesman</span><span class='op'>::</span><span class='const'>GuardFailedError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Guard clause prevented transition of </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span> \
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'> from &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_current_state'>current_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39; to &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='kw'>false</span>
+<span class='kw'>rescue</span> <span class='const'>Statesman</span><span class='op'>::</span><span class='const'>TransitionFailedError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='kw'>do</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Invalid transition for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span> \
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'> from &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_current_state'>current_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39; to &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='kw'>false</span>
 <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span> <span class='kw'>do</span>
     <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Failed to transition </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_state_machine_object'>state_machine_object</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='tstring_end'>&quot;</span></span> \
@@ -768,7 +792,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 00:05:07 2025 by
+  Generated on Sat May 31 23:13:23 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

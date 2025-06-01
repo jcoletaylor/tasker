@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../concerns/lifecycle_event_helpers'
+require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/event_publisher'
 require_relative '../types/step_sequence'
 
@@ -12,7 +12,6 @@ module Tasker
     # WorkflowStep.get_viable_steps logic while firing lifecycle events
     # for observability. No complex event subscriptions needed.
     class ViableStepDiscovery
-      include Tasker::Concerns::LifecycleEventHelpers
       include Tasker::Concerns::EventPublisher
 
       # Find viable steps for execution

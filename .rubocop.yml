@@ -17,10 +17,35 @@ AllCops:
 Style/Documentation:
   Enabled: false
 
+# Factory-specific configurations to prevent aggressive code removal
+Style/EmptyBlockParameter:
+  Exclude:
+    - 'spec/factories/**/*'
+
+Style/ExplicitBlockArgument:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# Factories often have blocks that look "unused" but contain DSL attributes
+Style/SymbolProc:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# Factory trait blocks often look redundant but define important variations
+Style/RedundantBegin:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# Factory DSL often uses blocks that look like they could be simplified
+Style/BlockDelimiters:
+  Exclude:
+    - 'spec/factories/**/*'
+
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'lib/tasks/**/*'
+    - 'spec/factories/**/*'  # Factories often have very long setup blocks
   Max: 120
 
 Metrics/MethodLength:
@@ -47,8 +72,32 @@ Capybara/RSpec/PredicateMatcher:
 RSpec/MultipleExpectations:
   Enabled: false
 
-Rspec/ExampleLength:
+RSpec/ExampleLength:
   Enabled: false
 
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
+
+# Factory-specific RSpec exclusions
+FactoryBot/CreateList:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# Factories often define many attributes that look like "excessive" setup
+RSpec/ExcessiveDocstringSpacing:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# FactoryBot DSL uses 'context' for attributes, not RSpec example groups
+RSpec/EmptyExampleGroup:
+  Exclude:
+    - 'spec/factories/**/*'
+
+RSpec/MissingExampleGroupArgument:
+  Exclude:
+    - 'spec/factories/**/*'
+
+# Factory update_columns calls are intentional for test setup
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'spec/factories/**/*'

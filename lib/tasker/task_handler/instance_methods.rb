@@ -2,9 +2,9 @@
 # frozen_string_literal: true
 
 require 'json-schema'
-require 'tasker/lifecycle_events'
+require 'tasker/constants'
+require 'tasker/types/step_sequence'
 require 'tasker/events/event_payload_builder'
-require_relative '../concerns/lifecycle_event_helpers'
 
 module Tasker
   module TaskHandler
@@ -17,8 +17,6 @@ module Tasker
     # This implementation uses the proven loop-based approach while delegating
     # actual implementation to orchestration classes for better observability.
     module InstanceMethods
-      include Tasker::Concerns::LifecycleEventHelpers
-
       # Initialize a new task from a task request
       #
       # Creates a task record, validates the context against the schema,
@@ -129,7 +127,34 @@ module Tasker
         handler_class.new(config: handler_config)
       end
 
+      # Handle execution of a single step
+      #
+      # This is a convenience method for testing that executes a single step.
+      # Delegates to StepExecutor for consistent behavior.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param step [Tasker::WorkflowStep] The step to execute
+      # @return [Tasker::WorkflowStep] The processed step
+      def handle_one_step(task, sequence, step)
+        step_executor.execute_single_step(task, sequence, step, self)
+      end
+
       private
+
+      # Memoized step executor for consistent reuse
+      #
+      # @return [Tasker::Orchestration::StepExecutor] The step executor instance
+      def step_executor
+        @step_executor ||= Tasker::Orchestration::StepExecutor.new
+      end
+
+      # Memoized task finalizer for consistent reuse
+      #
+      # @return [Tasker::Orchestration::TaskFinalizer] The task finalizer instance
+      def task_finalizer
+        @task_finalizer ||= Tasker::Orchestration::TaskFinalizer.new
+      end
 
       # Find viable steps for execution
       #
@@ -153,7 +178,6 @@ module Tasker
       # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
       # @return [Array<Tasker::WorkflowStep>] Processed steps
       def handle_viable_steps(task, sequence, viable_steps)
-        step_executor = Tasker::Orchestration::StepExecutor.new
         step_executor.execute_steps(task, sequence, viable_steps, self)
       end
 
@@ -164,7 +188,6 @@ module Tasker
       # @param processed_steps [Array<Tasker::WorkflowStep>] Recently processed steps
       # @return [Boolean] True if blocked by errors
       def blocked_by_errors?(task, sequence, processed_steps)
-        task_finalizer = Tasker::Orchestration::TaskFinalizer.new
         task_finalizer.blocked_by_errors?(task, sequence, processed_steps)
       end
 
@@ -174,8 +197,6 @@ module Tasker
       # @param sequence [Tasker::Types::StepSequence] The final step sequence
       # @param processed_steps [Array<Tasker::WorkflowStep>] All processed steps
       def finalize(task, sequence, processed_steps)
-        task_finalizer = Tasker::Orchestration::TaskFinalizer.new
-
         # Call update_annotations hook before finalizing
         update_annotations(task, sequence, processed_steps) if respond_to?(:update_annotations)
 
