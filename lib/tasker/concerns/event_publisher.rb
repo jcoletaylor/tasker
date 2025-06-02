@@ -6,9 +6,20 @@ module Tasker
   module Concerns
     # EventPublisher provides a clean interface for publishing events
     #
-    # This concern eliminates the line noise of repeatedly calling
-    # Tasker::Events::Publisher.instance.publish throughout the codebase
-    # while maintaining proper error handling and standardized payload creation.
+    # This concern provides domain-specific event publishing methods that automatically
+    # build standardized payloads using EventPayloadBuilder. Each method corresponds
+    # to a specific event type with context-appropriate parameters.
+    #
+    # Usage:
+    #   include Tasker::Concerns::EventPublisher
+    #
+    #   # Step events
+    #   publish_step_completed(step, operation_count: 42)
+    #   publish_step_failed(step, error: exception)
+    #
+    #   # Task events
+    #   publish_task_started(task)
+    #   publish_task_completed(task, total_duration: 120.5)
     module EventPublisher
       extend ActiveSupport::Concern
 
@@ -33,65 +44,7 @@ module Tasker
       end
 
       # ========================================================================
-      # LEGACY METHODS (Preserved for backward compatibility during migration)
-      # ========================================================================
-
-      # Publish a standardized step event using EventPayloadBuilder
-      #
-      # @deprecated Use domain-specific methods like publish_step_completed(step) instead
-      # @param event_name [String] The event name/constant
-      # @param step [WorkflowStep] The step object
-      # @param event_type [Symbol] The event type (:started, :completed, :failed, :retry)
-      # @param additional_context [Hash] Additional context to merge
-      # @return [void]
-      def publish_step_event(event_name, step, event_type:, additional_context: {})
-        task = step.task
-        payload = Tasker::Events::EventPayloadBuilder.build_step_payload(
-          step,
-          task,
-          event_type: event_type,
-          additional_context: additional_context
-        )
-
-        publish_event(event_name, payload)
-      end
-
-      # Publish a standardized task event using EventPayloadBuilder
-      #
-      # @deprecated Use domain-specific methods like publish_task_completed(task) instead
-      # @param event_name [String] The event name/constant
-      # @param task [Task] The task object
-      # @param event_type [Symbol] The event type (:started, :completed, :failed)
-      # @param additional_context [Hash] Additional context to merge
-      # @return [void]
-      def publish_task_event(event_name, task, event_type:, additional_context: {})
-        payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
-          task,
-          event_type: event_type,
-          additional_context: additional_context
-        )
-
-        publish_event(event_name, payload)
-      end
-
-      # Publish a standardized orchestration event using EventPayloadBuilder
-      #
-      # @deprecated Use domain-specific methods like publish_workflow_task_started() instead
-      # @param event_name [String] The event name/constant
-      # @param event_type [Symbol] The orchestration event type
-      # @param context [Hash] The orchestration context
-      # @return [void]
-      def publish_orchestration_event(event_name, event_type:, context: {})
-        payload = Tasker::Events::EventPayloadBuilder.build_orchestration_payload(
-          event_type: event_type,
-          context: context
-        )
-
-        publish_event(event_name, payload)
-      end
-
-      # ========================================================================
-      # CLEAN DOMAIN-SPECIFIC EVENT PUBLISHING METHODS (Phase 4 Implementation)
+      # CLEAN DOMAIN-SPECIFIC EVENT PUBLISHING METHODS
       # ========================================================================
 
       # Step Lifecycle Events - Clean API with automatic payload building
@@ -336,7 +289,7 @@ module Tasker
       end
 
       # ========================================================================
-      # CONTEXT-AWARE EVENT PUBLISHING (Advanced Phase 4 feature)
+      # CONTEXT-AWARE EVENT PUBLISHING (Advanced feature)
       # ========================================================================
 
       # Automatically determine and publish the appropriate step event based on step state

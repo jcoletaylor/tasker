@@ -120,19 +120,40 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
     end
 
     describe 'Publisher' do
-      it 'coordinates workflow execution through single publisher pattern' do
-        # Verify publisher is the single publisher
-        expect(publisher).to respond_to(:publish_step_completed)
-        expect(publisher).to respond_to(:publish_viable_steps_discovered)
-        expect(publisher).to respond_to(:publish_task_completed)
+      it 'provides core event infrastructure for the system' do
+        # Verify publisher provides core infrastructure
+        expect(publisher).to respond_to(:publish)
+        expect(publisher).to respond_to(:subscribe)
 
-        # Test publishing events
+        # Test core publishing functionality
         expect do
-          publisher.publish_step_completed(
-            task_id: task.task_id,
-            step_id: task.workflow_steps.first.workflow_step_id,
-            step_name: task.workflow_steps.first.name
+          publisher.publish(
+            Tasker::Constants::WorkflowEvents::STEP_COMPLETED,
+            {
+              task_id: task.task_id,
+              step_id: task.workflow_steps.first.workflow_step_id,
+              step_name: task.workflow_steps.first.name
+            }
           )
+        end.not_to raise_error
+      end
+
+      it 'serves as the backend for EventPublisher concern' do
+        # Create a test class that uses the EventPublisher concern
+        test_class = Class.new do
+          include Tasker::Concerns::EventPublisher
+
+          def test_publish_step_completed(step)
+            publish_step_completed(step, test_context: 'spec')
+          end
+        end
+
+        test_instance = test_class.new
+        step = task.workflow_steps.first
+
+        # Test that the concern uses the Publisher as its backend
+        expect do
+          test_instance.test_publish_step_completed(step)
         end.not_to raise_error
       end
     end

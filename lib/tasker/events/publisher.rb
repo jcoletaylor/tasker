@@ -6,12 +6,17 @@ require_relative '../concerns/idempotent_state_transitions'
 
 module Tasker
   module Events
-    # Unified event publisher for the Tasker system
+    # Core event infrastructure for the Tasker system
     #
-    # This publisher provides a comprehensive interface for emitting lifecycle events,
-    # workflow orchestration events, and observability events throughout the Tasker
-    # system using dry-events best practices. It serves as the single event publisher
-    # for all components including orchestration.
+    # This publisher provides the core event infrastructure using dry-events.
+    # It handles event registration and basic publishing capabilities.
+    #
+    # For application usage, use the EventPublisher concern which provides
+    # clean domain-specific methods that build standardized payloads:
+    #
+    #   include Tasker::Concerns::EventPublisher
+    #   publish_step_completed(step, additional_context: {...})
+    #   publish_task_failed(task, error_message: "...")
     class Publisher
       include Dry::Events::Publisher[:tasker]
       include Tasker::Concerns::IdempotentStateTransitions
@@ -25,7 +30,15 @@ module Tasker
         register_test_events if Rails.env.local?
       end
 
-      # Override the base publish method to ensure timestamp is always present
+      # Core publish method with automatic timestamp enhancement
+      #
+      # This is the primary method used by the EventPublisher concern.
+      # Applications should use the EventPublisher concern methods instead
+      # of calling this directly.
+      #
+      # @param event_name [String] The event name
+      # @param payload [Hash] The event payload
+      # @return [void]
       def publish(event_name, payload = {})
         # Ensure timestamp is always present in the payload
         enhanced_payload = {
@@ -77,7 +90,7 @@ module Tasker
         register_event(Tasker::Constants::StepEvents::BEFORE_TRANSITION)
       end
 
-      # Register workflow orchestration events (comprehensive set from both Publisher and Orchestrator)
+      # Register workflow orchestration events
       def register_workflow_events
         # Task lifecycle events
         register_event(Tasker::Constants::WorkflowEvents::TASK_STARTED)
@@ -116,80 +129,6 @@ module Tasker
 
         # Also register common test event patterns
         register_event('Test.Event') # Common test event name
-      end
-
-      public
-
-      # Publish a task lifecycle event
-      #
-      # @param event_name [String] The event name
-      # @param task [Object] The task object
-      # @param metadata [Hash] Additional event data
-      def publish_task_event(event_name, task, metadata = {})
-        event_data = {
-          task_id: task.respond_to?(:task_id) ? task.task_id : task.id,
-          task_name: task.respond_to?(:name) ? task.name : nil,
-          status: task.respond_to?(:status) ? task.status : nil
-        }.merge(metadata).compact
-
-        publish(event_name, event_data)
-      end
-
-      # Publish a step lifecycle event
-      #
-      # @param event_name [String] The event name
-      # @param step [Object] The step object
-      # @param metadata [Hash] Additional event data
-      def publish_step_event(event_name, step, metadata = {})
-        event_data = {
-          step_id: step.respond_to?(:workflow_step_id) ? step.workflow_step_id : step.id,
-          step_name: step.respond_to?(:name) ? step.name : nil,
-          task_id: step.respond_to?(:task_id) ? step.task_id : nil,
-          status: step.respond_to?(:status) ? step.status : nil
-        }.merge(metadata).compact
-
-        publish(event_name, event_data)
-      end
-
-      # Publish a workflow orchestration event (merged from Orchestrator)
-      #
-      # @param event_name [String] The event name
-      # @param context [Hash] The event context
-      def publish_workflow_event(event_name, context = {})
-        event_data = context.compact
-        publish(event_name, event_data)
-      end
-
-      # Publish a generic event with minimal ceremony
-      #
-      # @param event_name [String] The event name
-      # @param payload [Hash] The event payload
-      def publish_event(event_name, payload = {})
-        event_data = payload.compact
-        publish(event_name, event_data)
-      end
-
-      # Convenience methods for common workflow events (merged from Orchestrator)
-      # These provide a more intuitive API for the orchestration components
-
-      def publish_task_started(payload = {})
-        publish_workflow_event(Tasker::Constants::WorkflowEvents::TASK_STARTED, payload)
-      end
-
-      def publish_task_completed(payload = {})
-        publish_workflow_event(Tasker::Constants::WorkflowEvents::TASK_COMPLETED, payload)
-      end
-
-      def publish_step_completed(payload = {})
-        publish_workflow_event(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, payload)
-      end
-
-      def publish_viable_steps_discovered(payload = {})
-        publish_workflow_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, payload)
-      end
-
-      def publish_no_viable_steps(payload = {})
-        publish_workflow_event(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, payload)
       end
     end
   end

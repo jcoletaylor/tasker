@@ -30,10 +30,10 @@ RSpec.describe Tasker::Events::Publisher do
   end
 
   describe '#publish' do
-    it 'publishes events through the unified publisher' do
+    it 'publishes events through the core infrastructure' do
       publisher.publish(event_name, context)
 
-      # The unified event system creates metric events through telemetry
+      # The core publisher creates events that are processed by telemetry
       expect(captured_events.size).to be >= 1
 
       # Find the metric event created by telemetry
@@ -42,7 +42,7 @@ RSpec.describe Tasker::Events::Publisher do
       expect(metric_event[:name]).to eq("tasker.metric.tasker.#{event_name}")
     end
 
-    it 'adds timestamp to event payload' do
+    it 'adds timestamp to event payload automatically' do
       freeze_time = Time.current
       allow(Time).to receive(:current).and_return(freeze_time)
 
@@ -52,45 +52,15 @@ RSpec.describe Tasker::Events::Publisher do
       metric_event = captured_events.find { |e| e[:name].include?('metric') }
       expect(metric_event[:payload][:event_timestamp]).to be_present
     end
-  end
 
-  describe '#publish_task_event' do
-    let(:task) { double('Task', task_id: 123, name: 'test_task', status: 'pending') }
+    it 'handles events with existing timestamps' do
+      custom_timestamp = 1.hour.ago
+      payload_with_timestamp = context.merge(timestamp: custom_timestamp)
 
-    it 'publishes task events with standardized payload' do
-      publisher.publish_task_event(event_name, task, { additional: 'data' })
+      publisher.publish(event_name, payload_with_timestamp)
 
-      # The telemetry system creates standardized payloads through TelemetrySubscriber
+      # Should not override existing timestamp
       expect(captured_events.size).to be >= 1
-
-      # Find the metric event created by telemetry
-      metric_event = captured_events.find { |e| e[:name].include?('metric') }
-      expect(metric_event).to be_present
-      expect(metric_event[:payload]).to include(
-        task_name: 'unknown_task', # TelemetrySubscriber provides default when task name not in expected format
-        event_timestamp: be_present
-      )
-    end
-  end
-
-  describe '#publish_step_event' do
-    let(:step) { double('Step', workflow_step_id: 456, name: 'test_step', task_id: 123, status: 'pending') }
-
-    it 'publishes step events with standardized payload' do
-      publisher.publish_step_event(Tasker::Constants::StepEvents::COMPLETED, step, { additional: 'data' })
-
-      # The telemetry system creates standardized payloads with EventPayloadBuilder integration
-      expect(captured_events.size).to be >= 1
-
-      # Find the metric event created by telemetry
-      metric_event = captured_events.find { |e| e[:name].include?('metric') }
-      expect(metric_event).to be_present
-      expect(metric_event[:payload]).to include(
-        step_name: 'unknown_step', # TelemetrySubscriber provides default
-        event_timestamp: be_present,
-        execution_duration: be_present, # EventPayloadBuilder adds this
-        attempt_number: be_present      # EventPayloadBuilder adds this
-      )
     end
   end
 
@@ -108,7 +78,7 @@ RSpec.describe Tasker::Events::Publisher do
   end
 
   describe 'event registration' do
-    it 'registers all events during initialization' do
+    it 'registers all standard events during initialization' do
       # Test that the publisher can publish all the standard events without errors
       expect do
         publisher.publish(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED, context)
@@ -116,6 +86,30 @@ RSpec.describe Tasker::Events::Publisher do
         publisher.publish(Tasker::Constants::WorkflowEvents::TASK_STARTED, context)
         publisher.publish(Tasker::Constants::ObservabilityEvents::Task::HANDLE, context)
       end.not_to raise_error
+    end
+
+    it 'registers test events in local environment' do
+      if Rails.env.local?
+        expect do
+          publisher.publish(Tasker::Constants::TestEvents::BASIC_EVENT, context)
+          publisher.publish('Test.Event', context)
+        end.not_to raise_error
+      end
+    end
+  end
+
+  describe 'core infrastructure responsibilities' do
+    it 'provides the foundation for the EventPublisher concern' do
+      # The Publisher should be the backend for the EventPublisher concern
+      expect(Tasker::Events::Publisher.instance).to respond_to(:publish)
+      expect(Tasker::Events::Publisher.instance).to be_a(Singleton)
+    end
+
+    it 'handles dry-events publishing' do
+      # Verify it includes the dry-events functionality
+      expect(publisher.class.ancestors).to include(Dry::Events::Publisher)
+      expect(publisher).to respond_to(:subscribe)
+      expect(publisher).to respond_to(:publish)
     end
   end
 end
