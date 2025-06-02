@@ -266,11 +266,11 @@ class MyCustomStepHandler < Tasker::StepHandler::Base
     # 2. publish_step_completed(step) - fired after successful completion
     # 3. publish_step_failed(step, error: exception) - fired if exception occurs
 
-    # Just implement your business logic:
+    # Just implement your business logic and return the results:
     result = perform_complex_operation(task.context)
-    step.results = { success: true, data: result }
+    { success: true, data: result }
 
-    # No need to manually publish events - they happen automatically!
+    # No need to manually publish events or set step.results - they happen automatically!
   end
 end
 ```
@@ -310,6 +310,7 @@ end
 - ✅ **Implement `process()`** for regular step handlers (your business logic)
 - ✅ **Implement `process()`** for API step handlers (your HTTP request)
 - ✅ **Optionally override `process()`** in API handlers for custom response handling
+- ✅ **Optionally override `process_results()`** to customize how return values are stored in `step.results`
 - ⚠️ **Never override `handle()`** - it's framework-only code that publishes events and coordinates execution
 
 #### Alternative: Manual Event Publishing (Advanced Use Cases)
@@ -322,23 +323,24 @@ For special cases where you need additional custom events, you can still manuall
 class MyStepHandlerWithCustomEvents < Tasker::StepHandler::Base
   include Tasker::Concerns::EventPublisher
 
-  def handle(task, sequence, step)
-    # Automatic events still fire around this method
-
-    # Custom domain-specific event (in addition to automatic ones)
+  def process(task, sequence, step)
+    # Custom domain-specific event (before your business logic)
     publish_event('order.validation_started', {
       order_id: task.context['order_id'],
       validation_rules: get_validation_rules
     })
 
     # Your business logic
-    validate_order(task.context)
+    validation_result = validate_order(task.context)
 
-    # Another custom event
+    # Another custom event (after your business logic)
     publish_event('order.validation_completed', {
       order_id: task.context['order_id'],
-      validation_passed: true
+      validation_passed: validation_result[:passed]
     })
+
+    # Return results - they will be stored in step.results automatically
+    { validation_passed: validation_result[:passed], details: validation_result[:details] }
   end
 end
 ```
@@ -481,4 +483,44 @@ Look for these log patterns:
 - `Instrumentation: OpenTelemetry::Instrumentation::* was successfully installed`
 - `Instrumentation: OpenTelemetry::Instrumentation::Faraday failed to install` (expected)
 - Event publishing errors: `Error publishing event * :`
+
+### Customizing Result Processing
+
+Both regular and API step handlers support the `process_results()` method for customizing how results are stored:
+
+```ruby
+class MyApiStepHandlerWithCustomResults < Tasker::StepHandler::Api
+  def process(task, _sequence, _step)
+    # Make your API call
+    connection.get("/users/#{task.context['user_id']}")
+  end
+
+  # Customize how the API response gets stored
+  def process_results(step, process_output, initial_results)
+    # Automatic events still fire around the entire handle() flow
+    # This method just customizes result storage
+
+    if process_output.status == 200
+      user_data = JSON.parse(process_output.body)
+      step.results = {
+        user: user_data,
+        fetched_at: Time.current,
+        success: true
+      }
+    else
+      step.results = {
+        success: false,
+        error_status: process_output.status,
+        error_message: "Failed to fetch user data"
+      }
+    end
+  end
+end
+```
+
+**Benefits of `process_results()` Pattern:**
+- **Separation of Concerns**: Business logic in `process()`, result formatting in `process_results()`
+- **Automatic Event Publishing**: Events fire regardless of how you customize result storage
+- **Flexible Result Processing**: Transform raw API responses or computation results before storage
+- **Consistent Interface**: Same pattern works for both regular and API step handlers
 

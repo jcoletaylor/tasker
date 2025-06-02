@@ -36,15 +36,15 @@ module ApiTask
       end
     end
 
-    class ProductsValidateStepHandler
-      def handle(_task, sequence, step)
+    class ProductsValidateStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, step)
         cart = _get_cart(sequence)
         products = _get_products(sequence)
         valid_products = _valid_cart_products(cart, products)
 
         raise "No valid products found for cart: #{cart.id}" if valid_products.empty?
 
-        step.results = { valid_products: valid_products.map(&:to_h) }
+        { valid_products: valid_products.map(&:to_h) }
       end
 
       private
@@ -84,14 +84,14 @@ module ApiTask
       end
     end
 
-    class CreateOrderStepHandler
-      def handle(_task, sequence, step)
+    class CreateOrderStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, step)
         cart = _get_cart(sequence)
         valid_products = _get_valid_products(sequence)
 
         order = _build_order(cart, valid_products)
 
-        step.results = { order_id: order.id }
+        { order_id: order.id }
       end
 
       private
@@ -133,13 +133,13 @@ module ApiTask
       end
     end
 
-    class PublishEventStepHandler
-      def handle(_task, sequence, step)
+    class PublishEventStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, step)
         order_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_CREATE_ORDER)
         order_id = order_step.results.deep_symbolize_keys[:order_id]
 
         publish_results = ApiTask::EventBus.publish('ExampleOrderCreated', order_id)
-        step.results = { published: true, publish_results: publish_results }
+        { published: true, publish_results: publish_results }
       end
     end
   end

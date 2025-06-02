@@ -30,9 +30,9 @@ This guide will walk you through the fundamentals of using Tasker to build compl
   - [Defining Step Dependencies](#defining-step-dependencies)
     - [How Dependencies Work](#how-dependencies-work)
   - [Customizing Behavior](#customizing-behavior)
-    - [Override the `handle` Method](#override-the-handle-method)
     - [Separating API Calls with `process`](#separating-api-calls-with-process)
     - [Processing Results](#processing-results)
+    - [Customizing Result Processing](#customizing-result-processing)
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
   - [Best Practices](#best-practices)
   - [Telemetry and Observability](#telemetry-and-observability)
@@ -175,12 +175,12 @@ task = handler.initialize_task!(task_request)
 
 ## Step Handlers
 
-Step handlers implement the actual logic for each step in a task. They must define a `process` method that performs the work:
+Step handlers implement the actual logic for each step in a task. They must define a `process` method that performs the work and returns the results:
 
 ```ruby
 module OrderProcess
   module StepHandler
-    class FetchOrderHandler
+    class FetchOrderHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
         # Get data from the task context
         order_id = task.context['order_id']
@@ -188,8 +188,8 @@ module OrderProcess
         # Perform the work
         order = Order.find(order_id)
 
-        # Store results in the step
-        step.results = { order: order.as_json }
+        # Return results - they will be stored in step.results automatically
+        { order: order.as_json }
       end
     end
   end
@@ -198,17 +198,24 @@ end
 
 ### Key Methods
 
-- `process(task, sequence, step)`: Required method that executes the step's business logic
+- `process(task, sequence, step)`: Required method that executes the step's business logic and returns results
   - `task`: The Tasker::Task instance being processed
   - `sequence`: The Tasker::Types::StepSequence containing all steps
   - `step`: The current Tasker::WorkflowStep being executed
+  - **Return value**: The results to be stored in `step.results` (handled automatically)
+
+- `process_results(step, process_output, initial_results)`: Optional method to customize result storage
+  - `step`: The current Tasker::WorkflowStep being executed
+  - `process_output`: The return value from your `process()` method
+  - `initial_results`: The value of `step.results` before `process()` was called
+  - **Override this**: When you need to transform or format results before storing them
 
 **Important**: Step lifecycle events are **automatically published** around your `process` method:
 - `step_started` event fired before your method executes
 - `step_completed` event fired after successful completion
 - `step_failed` event fired if an exception occurs
 
-Simply implement your business logic in `process()` - event publishing happens automatically!
+Simply implement your business logic in `process()` and return your results - event publishing and result storage happen automatically!
 
 ⚠️  **Never override the `handle()` method** - it's framework-only code that coordinates event publishing and calls your `process()` method.
 
@@ -227,30 +234,33 @@ To create an API step handler, inherit from `Tasker::StepHandler::Api` and imple
 class FetchOrderStatusHandler < Tasker::StepHandler::Api
   def process(task, _sequence, _step)
     order_id = task.context['order_id']
-    # Make the API call using the provided connection
+    # Make the API call - returns Faraday::Response
     connection.get("/orders/#{order_id}/status")
   end
-end
-```
 
-For custom response processing, you can optionally override the `process` method:
-
-```ruby
-class FetchOrderStatusHandler < Tasker::StepHandler::Api
-  def process(task, sequence, step)
-    # Let the parent class handle the API call and set results
-    super
-
-    # Process the results further if needed
-    status_data = step.results&.body&.dig('data', 'status')
-    step.results = { status: status_data }
+  # Override to customize how the API response is stored
+  def process_results(step, process_output, initial_results)
+    # Extract and transform the API response data
+    if process_output.status == 200
+      response_data = JSON.parse(process_output.body)
+      step.results = {
+        status: response_data['status'],
+        last_updated: response_data['updated_at'],
+        success: true
+      }
+    else
+      step.results = {
+        success: false,
+        error: "API returned status #{process_output.status}"
+      }
+    end
   end
 end
 ```
 
 **Key Points:**
 - ✅ **Always implement `process()`** - This makes your HTTP request
-- ✅ **Optionally override `process()`** - For custom response processing
+- ✅ **Optionally override `process_results()`** - For custom response processing
 - ⚠️ **Never override `handle()`** - Framework-only method for event publishing and coordination
 
 ### API Step Handler Configuration
@@ -298,14 +308,13 @@ Steps are executed in the order defined by their dependencies. There are two way
 
 ## Customizing Behavior
 
-There are several ways to customize Tasker's behavior:
+There are several ways to customize Tasker's behavior using the `process` method:
 
-### Override the `handle` Method
+### Separating API Calls with `process`
 
-The `handle` method is the primary entry point for step execution. Override it to implement custom logic:
+For API step handlers, the `process` method is the developer extension point for making HTTP requests:
 
 ```ruby
-# Example from spec/dummy/app/tasks/api_task/step_handler.rb
 class CartFetchStepHandler < Tasker::StepHandler::Api
   include ApiTask::ApiUtils
 
@@ -314,56 +323,75 @@ class CartFetchStepHandler < Tasker::StepHandler::Api
     connection.get("/carts/#{cart_id}")
   end
 
-  # Override handle while keeping the parent class behavior
-  def handle(_task, _sequence, step)
-    # Call super to get the API handling and retry logic
-    super
-    # Then extract and transform the results
-    step.results = get_from_results(step.results, 'cart')
+  # Override process_results to do custom response processing
+  def process_results(step, process_output, initial_results)
+    # Extract and process the cart data from the API response
+    step.results = get_from_results(process_output, 'cart')
   end
-end
-```
-
-### Separating API Calls with `process`
-
-For API step handlers, the `process` method simplifies making requests:
-
-```ruby
-def process(task, _sequence, _step)
-  # Focus only on building and making the request
-  # The parent class's handle method will call this method
-  # and handle retries and exponential backoff
-  user_id = task.context['user_id']
-  connection.get("/users/#{user_id}/profile")
 end
 ```
 
 ### Processing Results
 
-You can process and transform API responses by overriding `handle`:
+For regular step handlers, implement your business logic in the `process` method:
 
 ```ruby
-def handle(task, sequence, step)
-  # Let the parent class make the API call
-  super
+module OrderProcess
+  module StepHandler
+    class FetchOrderHandler < Tasker::StepHandler::Base
+      def process(task, sequence, step)
+        # Get data from the task context
+        order_id = task.context['order_id']
 
-  # Now the response is in step.results
-  # Extract what you need and transform
-  if step.results.status == 200
-    data = JSON.parse(step.results.body)
-    step.results = { profile: data['user_profile'] }
-  else
-    raise "API error: #{step.results.status}"
+        # Perform the work
+        order = Order.find(order_id)
+
+        # Return results - they will be stored in step.results automatically
+        { order: order.as_json }
+      end
+    end
   end
 end
 ```
+
+### Customizing Result Processing
+
+If you need to customize how the return value from `process()` gets stored in `step.results`, you can override the `process_results()` method:
+
+```ruby
+class DataTransformHandler < Tasker::StepHandler::Base
+  def process(task, sequence, step)
+    # Your business logic that returns raw data
+    raw_data = fetch_external_data(task.context)
+    raw_data  # Return raw data
+  end
+
+  # Override to customize how results are stored
+  def process_results(step, process_output, initial_results)
+    # Transform the raw output before storing
+    transformed_data = {
+      processed_at: Time.current,
+      data: process_output.transform_keys(&:underscore),
+      record_count: process_output.size
+    }
+
+    step.results = transformed_data
+  end
+end
+```
+
+**Key Points:**
+- The framework calls `process_results(step, process_output, initial_results)` after your `process()` method
+- `process_output` is the return value from your `process()` method
+- `initial_results` is the value of `step.results` before `process()` was called
+- If you manually set `step.results` in your `process()` method, `process_results()` respects that and won't override it
 
 ### Accessing Data from Previous Steps
 
 Steps often need data from previous steps:
 
 ```ruby
-def handle(_task, sequence, step)
+def process(_task, sequence, step)
   # Find a specific step by name
   cart_step = sequence.find_step_by_name('fetch_cart')
 
@@ -371,10 +399,10 @@ def handle(_task, sequence, step)
   cart_data = cart_step.results['cart']
 
   # Use the data
-  process_cart(cart_data)
+  processed_cart = process_cart(cart_data)
 
-  # Store your own results
-  step.results = { processed: true }
+  # Return your results
+  { processed: true, cart_data: processed_cart }
 end
 ```
 
@@ -391,14 +419,14 @@ end
 
 ```ruby
 # Example of good error handling
-def handle(task, sequence, step)
+def process(task, sequence, step)
   begin
     # Attempt the operation
     result = perform_complex_operation(task.context)
-    step.results = { success: true, data: result }
+    { success: true, data: result }
   rescue StandardError => e
-    # Record detailed error information
-    step.results = {
+    # Return error information - framework will still publish step_failed event
+    {
       success: false,
       error: e.message,
       error_type: e.class.name,

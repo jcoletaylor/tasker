@@ -85,11 +85,17 @@ module Tasker
       def handle(task, sequence, step)
         Rails.logger.debug { "StepHandler: Starting execution of step #{step.workflow_step_id} (#{step.name})" }
 
+        # Store initial results state to detect if developer set them manually
+        initial_results = step.results
+
         # Call the developer-implemented process method
-        result = process(task, sequence, step)
+        process_output = process(task, sequence, step)
+
+        # Process results using overridable method, respecting developer customization
+        process_results(step, process_output, initial_results)
 
         Rails.logger.debug { "StepHandler: Completed execution of step #{step.workflow_step_id} (#{step.name})" }
-        result
+        process_output
       end
 
       # Developer extension point - implement your business logic here
@@ -100,12 +106,40 @@ module Tasker
       # - Automatically publish step_completed after this method succeeds
       # - Automatically publish step_failed if this method raises an exception
       #
+      # Return your results from this method - they will be stored in step.results
+      # automatically via process_results(). You can override process_results() to
+      # customize how the return value gets stored.
+      #
       # @param task [Tasker::Task] The task being executed
       # @param sequence [Tasker::Types::StepSequence] The sequence of steps
       # @param step [Tasker::WorkflowStep] The current step being handled
+      # @return [Object] The results of processing - will be stored in step.results
       # @raise [NotImplementedError] If not implemented by a subclass
       def process(task, sequence, step)
         raise NotImplementedError, 'Subclasses must implement the process method. This is your extension point for business logic.'
+      end
+
+      # Process the output from process() method and store in step.results
+      #
+      # ✅ OVERRIDE THIS METHOD: To customize how process() output is stored
+      #
+      # This method provides a clean extension point for customizing how the return
+      # value from your process() method gets stored in step.results. The default
+      # behavior is to store the returned value directly.
+      #
+      # @param step [Tasker::WorkflowStep] The current step
+      # @param process_output [Object] The return value from process() method
+      # @param initial_results [Object] The value of step.results before process() was called
+      # @return [void]
+      def process_results(step, process_output, initial_results)
+        # If developer already set step.results in their process() method, respect it
+        if step.results != initial_results
+          Rails.logger.debug { "StepHandler: Developer set custom results in process() method - respecting custom results" }
+          return
+        end
+
+        # Default behavior: store the return value from process()
+        step.results = process_output
       end
 
       protected
