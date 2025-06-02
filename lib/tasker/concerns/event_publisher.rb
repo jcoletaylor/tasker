@@ -366,8 +366,6 @@ module Tasker
         end
       end
 
-      private
-
       # Infer step event type from step state and context
       #
       # @param step [WorkflowStep] The step object

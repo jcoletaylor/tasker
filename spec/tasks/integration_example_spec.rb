@@ -18,7 +18,7 @@ RSpec.describe ApiTask::IntegrationExample do
     register_task_handler(described_class::TASK_REGISTRY_NAME, described_class)
 
     # Stub cart endpoint
-    stubs.get("/carts/#{cart_id}") do |env|
+    stubs.get("/carts/#{cart_id}") do |_env|
       cart = ApiTask::Actions::Cart.find(cart_id)
       raise Faraday::ResourceNotFound.new('Cart not found', nil) unless cart
 
@@ -29,14 +29,14 @@ RSpec.describe ApiTask::IntegrationExample do
       ]
     end
 
-    stubs.get('/carts/999999') do |env|
+    stubs.get('/carts/999999') do |_env|
       # Create the error response and raise exception
-      response_body = { error: 'Cart not found' }.to_json
+      { error: 'Cart not found' }.to_json
       raise Faraday::ResourceNotFound.new('Cart not found', nil)
     end
 
     # Stub products endpoint
-    stubs.get('/products') do |env|
+    stubs.get('/products') do |_env|
       products = ApiTask::Actions::Product.all
       [
         200,

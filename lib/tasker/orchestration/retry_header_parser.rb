@@ -69,9 +69,9 @@ module Tasker
           # The caller will get the capped value when we return it
         end
 
-        if seconds < 0
-          raise Faraday::Error, "Retry-After header resulted in negative wait time: #{seconds}"
-        end
+        return unless seconds.negative?
+
+        raise Faraday::Error, "Retry-After header resulted in negative wait time: #{seconds}"
       end
     end
   end

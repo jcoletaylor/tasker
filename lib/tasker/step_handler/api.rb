@@ -271,7 +271,9 @@ module Tasker
       def process_results(step, process_output, initial_results)
         # If developer already set step.results in their process() method, respect it
         if step.results != initial_results
-          Rails.logger.debug { "StepHandler: Developer set custom results in process() method - respecting custom results" }
+          Rails.logger.debug do
+            'StepHandler: Developer set custom results in process() method - respecting custom results'
+          end
           return
         end
 

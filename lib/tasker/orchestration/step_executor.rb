@@ -180,7 +180,7 @@ module Tasker
       end
 
       # Publish event for step execution start
-      def publish_execution_started_event(task, step)
+      def publish_execution_started_event(_task, step)
         # Use clean API for step execution start
         publish_step_started(step)
       end
@@ -190,7 +190,7 @@ module Tasker
         unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
           current_state = step.state_machine.current_state
           error_message = "Cannot transition step #{step.workflow_step_id} from '#{current_state}' to 'in_progress'. " \
-                         "Check step dependencies and current state."
+                          'Check step dependencies and current state.'
 
           Rails.logger.warn("StepExecutor: #{error_message}")
           raise Tasker::ProceduralError, error_message

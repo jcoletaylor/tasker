@@ -20,7 +20,7 @@ class DummyTask
   class Handler < Tasker::StepHandler::Base
     # the process method is the developer extension point for step handlers
     # it should return the results, which will be stored in step.results automatically
-    def process(_task, _sequence, step)
+    def process(_task, _sequence, _step)
       # task and sequence are passed in case the task context or the sequence's prior steps
       # may contain data that is necessary for the handling of this step
       { dummy: true }

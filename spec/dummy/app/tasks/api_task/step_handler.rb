@@ -16,7 +16,7 @@ module ApiTask
       end
 
       # Override process_results to do custom response processing
-      def process_results(step, process_output, initial_results)
+      def process_results(step, process_output, _initial_results)
         # Extract and process the cart data from the API response
         step.results = get_from_results(process_output, 'cart')
       end
@@ -30,14 +30,14 @@ module ApiTask
       end
 
       # Override process_results to do custom response processing
-      def process_results(step, process_output, initial_results)
+      def process_results(step, process_output, _initial_results)
         # Extract and process the products data from the API response
         step.results = get_from_results(process_output, 'products')
       end
     end
 
     class ProductsValidateStepHandler < Tasker::StepHandler::Base
-      def process(_task, sequence, step)
+      def process(_task, sequence, _step)
         cart = _get_cart(sequence)
         products = _get_products(sequence)
         valid_products = _valid_cart_products(cart, products)
@@ -85,7 +85,7 @@ module ApiTask
     end
 
     class CreateOrderStepHandler < Tasker::StepHandler::Base
-      def process(_task, sequence, step)
+      def process(_task, sequence, _step)
         cart = _get_cart(sequence)
         valid_products = _get_valid_products(sequence)
 
@@ -134,7 +134,7 @@ module ApiTask
     end
 
     class PublishEventStepHandler < Tasker::StepHandler::Base
-      def process(_task, sequence, step)
+      def process(_task, sequence, _step)
         order_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_CREATE_ORDER)
         order_id = order_step.results.deep_symbolize_keys[:order_id]
 

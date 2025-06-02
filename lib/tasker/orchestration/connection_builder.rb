@@ -18,10 +18,10 @@ module Tasker
       def build_connection(config, &connection_block)
         validate_config(config)
 
-        Rails.logger.debug(
+        Rails.logger.debug do
           "ConnectionBuilder: Building connection to #{config.url} " \
-          "with #{config.params.keys.size} params and #{config.headers.keys.size} headers"
-        )
+            "with #{config.params.keys.size} params and #{config.headers.keys.size} headers"
+        end
 
         connection = Faraday.new(
           url: config.url,
@@ -32,8 +32,8 @@ module Tasker
 
         # Apply custom configuration block if provided
         if connection_block
-          Rails.logger.debug("ConnectionBuilder: Applying custom connection configuration")
-          connection_block.call(connection)
+          Rails.logger.debug('ConnectionBuilder: Applying custom connection configuration')
+          yield(connection)
         end
 
         connection
@@ -49,23 +49,17 @@ module Tasker
       # @param config [Object] Configuration to validate
       # @raise [ArgumentError] If configuration is invalid
       def validate_config(config)
-        if config.nil?
-          raise ArgumentError, "Configuration cannot be nil"
-        end
+        raise ArgumentError, 'Configuration cannot be nil' if config.nil?
 
-        unless config.respond_to?(:url)
-          raise ArgumentError, "Configuration must respond to :url"
-        end
+        raise ArgumentError, 'Configuration must respond to :url' unless config.respond_to?(:url)
 
-        if config.url.nil? || config.url.strip.empty?
-          raise ArgumentError, "Configuration URL cannot be nil or empty"
-        end
+        raise ArgumentError, 'Configuration URL cannot be nil or empty' if config.url.nil? || config.url.strip.empty?
 
         # Validate URL format
         begin
           uri = URI.parse(config.url)
           unless uri.scheme && uri.host
-            raise ArgumentError, "Configuration URL must be a valid URI with scheme and host"
+            raise ArgumentError, 'Configuration URL must be a valid URI with scheme and host'
           end
         rescue URI::InvalidURIError => e
           raise ArgumentError, "Configuration URL is not a valid URI: #{e.message}"

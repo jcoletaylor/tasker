@@ -135,7 +135,7 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The step being backed off
       # @param backoff_seconds [Float] Calculated backoff delay
       # @param context [Hash] Response context
-      def publish_exponential_backoff_event(step, backoff_seconds, context)
+      def publish_exponential_backoff_event(step, backoff_seconds, _context)
         min_exponent = 2
         exponent = [step.attempts + 1, min_exponent].max
 
@@ -160,15 +160,18 @@ module Tasker
       def backoff_enabled?
         return true unless @config # Default to enabled if no config
 
-        @config.respond_to?(:enable_exponential_backoff) ?
-          @config.enable_exponential_backoff : true
+        if @config.respond_to?(:enable_exponential_backoff)
+          @config.enable_exponential_backoff
+        else
+          true
+        end
       end
 
       # Get retry delay from configuration
       #
       # @return [Float] Base retry delay in seconds
       def retry_delay
-        return 1.0 unless @config&.respond_to?(:retry_delay)
+        return 1.0 unless @config.respond_to?(:retry_delay)
 
         @config.retry_delay || 1.0
       end
@@ -177,7 +180,7 @@ module Tasker
       #
       # @return [Float] Jitter factor for randomness (0.0-1.0)
       def jitter_factor_value
-        return rand unless @config&.respond_to?(:jitter_factor)
+        return rand unless @config.respond_to?(:jitter_factor)
 
         @config.jitter_factor || rand
       end

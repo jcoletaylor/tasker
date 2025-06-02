@@ -34,7 +34,7 @@ module Tasker
 
         begin
           # Call the original handle method implemented by the framework
-          result = super(task, sequence, step)
+          result = super
 
           # Publish step completed event automatically
           publish_step_completed(step)
@@ -116,7 +116,8 @@ module Tasker
       # @return [Object] The results of processing - will be stored in step.results
       # @raise [NotImplementedError] If not implemented by a subclass
       def process(task, sequence, step)
-        raise NotImplementedError, 'Subclasses must implement the process method. This is your extension point for business logic.'
+        raise NotImplementedError,
+              'Subclasses must implement the process method. This is your extension point for business logic.'
       end
 
       # Process the output from process() method and store in step.results
@@ -134,7 +135,9 @@ module Tasker
       def process_results(step, process_output, initial_results)
         # If developer already set step.results in their process() method, respect it
         if step.results != initial_results
-          Rails.logger.debug { "StepHandler: Developer set custom results in process() method - respecting custom results" }
+          Rails.logger.debug do
+            'StepHandler: Developer set custom results in process() method - respecting custom results'
+          end
           return
         end
 

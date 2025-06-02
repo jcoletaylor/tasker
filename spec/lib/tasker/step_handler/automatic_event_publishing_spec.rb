@@ -15,16 +15,16 @@ RSpec.describe Tasker::StepHandler::Base do
   class TestStepHandler < Tasker::StepHandler::Base
     attr_reader :execution_result
 
-    def process(task, sequence, step)
-      @execution_result = "test_result"
-      step.results = { test: "success" }
+    def process(_task, _sequence, step)
+      @execution_result = 'test_result'
+      step.results = { test: 'success' }
     end
   end
 
   # Test step handler that raises an exception (CORRECT PATTERN)
   class FailingStepHandler < Tasker::StepHandler::Base
-    def process(task, sequence, step)
-      raise StandardError, "Test error"
+    def process(_task, _sequence, _step)
+      raise StandardError, 'Test error'
     end
   end
 
@@ -67,8 +67,8 @@ RSpec.describe Tasker::StepHandler::Base do
       it 'executes the developer business logic correctly' do
         handler.handle(task, sequence, step)
 
-        expect(handler.execution_result).to eq("test_result")
-        expect(step.results).to eq({ "test" => "success" })
+        expect(handler.execution_result).to eq('test_result')
+        expect(step.results).to eq({ 'test' => 'success' })
       end
 
       it 'maintains step state correctly during framework coordination' do
@@ -94,7 +94,7 @@ RSpec.describe Tasker::StepHandler::Base do
       it 'automatically publishes step_started and step_failed events when process() fails' do
         expect do
           handler.handle(task, sequence, step)
-        end.to raise_error(StandardError, "Test error")
+        end.to raise_error(StandardError, 'Test error')
 
         expect(handler).to have_received(:publish_step_started).with(step)
         expect(handler).to have_received(:publish_step_failed).with(step, error: instance_of(StandardError))
@@ -103,7 +103,7 @@ RSpec.describe Tasker::StepHandler::Base do
       it 're-raises the original exception from developer process() method' do
         expect do
           handler.handle(task, sequence, step)
-        end.to raise_error(StandardError, "Test error")
+        end.to raise_error(StandardError, 'Test error')
       end
 
       it 'preserves step data integrity during error in framework coordination' do
@@ -122,10 +122,10 @@ RSpec.describe Tasker::StepHandler::Base do
 
   describe 'framework handle() method coordination' do
     it 'places AutomaticEventPublishing before Base in the method lookup chain' do
-      ancestors = Tasker::StepHandler::Base.ancestors
+      ancestors = described_class.ancestors
 
       auto_publishing_index = ancestors.index(Tasker::StepHandler::AutomaticEventPublishing)
-      base_index = ancestors.index(Tasker::StepHandler::Base)
+      base_index = ancestors.index(described_class)
 
       expect(auto_publishing_index).to be < base_index
     end

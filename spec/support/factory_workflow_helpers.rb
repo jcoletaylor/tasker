@@ -244,9 +244,7 @@ module FactoryWorkflowHelpers
       step_handler = original_get_step_handler.call(step)
 
       # For API step handlers, override the connection that was built during initialization
-      if step_handler.is_a?(Tasker::StepHandler::Api)
-        step_handler.instance_variable_set(:@connection, connection)
-      end
+      step_handler.instance_variable_set(:@connection, connection) if step_handler.is_a?(Tasker::StepHandler::Api)
 
       step_handler
     end

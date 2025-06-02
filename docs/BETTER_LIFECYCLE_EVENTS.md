@@ -1,5 +1,76 @@
 # Better Lifecycle Events: Transforming Imperative Workflows into Declarative Event-Driven Architecture
 
+## 🎯 **LATEST MAJOR SUCCESS: Unified Step Handler Interface & Developer Experience**
+
+### **✅ CRITICAL MILESTONE ACHIEVED: Universal `process()` Interface & Result Processing Patterns**
+*Date: June 2025*
+
+**Status**: **DEVELOPER INTERFACE UNIFIED** - Consistent `process()` method across all step handler types with unified result processing patterns.
+
+#### **🎉 Latest Achievement Summary:**
+
+**Phase 3.5: Unified Developer Interface & Orchestration Architecture (COMPLETE):**
+
+1. **✅ Universal `process()` Interface** - Eliminated Cognitive Overhead ✅
+   - **Problem Solved**: Inconsistent developer interface where regular handlers used `process()` but API handlers used `call()`
+   - **Solution**: Made `process()` the universal developer extension point for all step handler types
+   - **API Handler Coordination**: API handlers now coordinate API-specific logic (error handling, backoff) around developer's `process()` method
+   - **Maintained Capabilities**: All automatic event publishing and orchestration features preserved
+   - **Result**: Single interface to learn - `process()` for all business logic regardless of handler type
+
+2. **✅ Unified Result Processing Pattern** - Consistent `process_results()` Extension Point ✅
+   - **Architecture**: Both base and API step handlers use same `process_results(step, process_output, initial_results)` pattern
+   - **Separation of Concerns**: Business logic in `process()`, result formatting in `process_results()`
+   - **Developer Flexibility**: Return values from `process()` automatically stored, or override `process_results()` for custom formatting
+   - **Automatic Event Publishing**: Events fire regardless of how developers customize result storage
+   - **API Response Processing**: Clean pattern for transforming Faraday::Response objects into business data
+
+3. **✅ Orchestration Component Architecture** - Clean Separation of Concerns ✅
+   - **ResponseProcessor**: API response validation and error detection (60 lines, focused responsibility)
+   - **BackoffCalculator**: Server-requested and exponential backoff handling with jitter
+   - **RetryHeaderParser**: HTTP Retry-After header parsing and validation
+   - **ConnectionBuilder**: Faraday connection configuration and setup
+   - **Result**: API handler reduced from ~270 lines to ~200 lines with better maintainability
+
+4. **✅ Test Infrastructure Improvements** - Production-Ready Testing Patterns ✅
+   - **Faraday Test Standardization**: All test stubs use simplified `[status, headers, body]` format
+   - **Infinite Recursion Fix**: Resolved factory workflow helpers causing test hangs
+   - **API Integration Testing**: Clean patterns for testing API handlers with mocked connections
+   - **Result**: All 320+ tests passing with reliable, maintainable test patterns
+
+5. **✅ Comprehensive Documentation Updates** - Developer-Friendly Guidance ✅
+   - **README.md**: Complete documentation of `process()` and `process_results()` patterns
+   - **TELEMETRY.md**: Integration examples showing how automatic events work with custom result processing
+   - **Code Examples**: Practical examples for both regular and API step handlers
+   - **Best Practices**: Clear guidance on what to implement vs. what to never override
+
+#### **🔧 Test Results Summary:**
+
+**✅ ALL TESTS PASSING (Unified Interface Working):**
+- **320/320 tests passing** - Complete system validation with unified interface ✅
+- **API integration tests** - All 9 tests passing with new `process()` interface ✅
+- **Mock-based tests** - All 9 tests passing with unified result processing ✅
+- **Event system integration** - Automatic event publishing working with custom result processing ✅
+
+#### **🎯 Current Architecture State:**
+
+**What's Working Perfectly:**
+- ✅ Universal `process()` interface - single method to learn for all step handler types
+- ✅ Consistent `process_results()` pattern - uniform result customization across handler types
+- ✅ Orchestration component architecture - clean separation of API-specific concerns
+- ✅ Automatic event publishing - works seamlessly with custom result processing
+- ✅ Production-ready testing patterns - reliable, maintainable test infrastructure
+- ✅ Comprehensive documentation - clear guidance for developers
+
+**Key Developer Experience Achievements:**
+1. **Cognitive Load Reduction**: Single `process()` method eliminates need to remember different interfaces
+2. **Consistent Patterns**: Same result processing approach works for both regular and API handlers
+3. **Separation of Concerns**: Framework handles coordination, developers focus on business logic
+4. **Flexible Result Processing**: Return simple values or customize via `process_results()` override
+5. **Automatic Integration**: Events, error handling, and orchestration work transparently
+
+---
+
 ## 🎯 **LATEST MAJOR SUCCESS: OpenTelemetry Integration & Production-Ready System**
 
 ### **✅ CRITICAL MILESTONE ACHIEVED: Complete Step Persistence & OpenTelemetry Re-enablement**

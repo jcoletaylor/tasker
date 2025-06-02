@@ -89,7 +89,7 @@
   
   <dl>
       <dt>Includes:</dt>
-      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span></dd>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span>, <span class='object_link'><a href="AutomaticEventPublishing.html" title="Tasker::StepHandler::AutomaticEventPublishing (module)">AutomaticEventPublishing</a></span></dd>
   </dl>
   
   
@@ -109,7 +109,7 @@
     
 <p>Base class for all step handlers that defines the common interface and provides lifecycle event handling</p>
 
-<p>Step handlers are responsible for executing the actual logic of workflow steps and reporting results.</p>
+<p>⚠️ IMPORTANT DEVELOPER GUIDANCE: - NEVER override the handle() method - it’s framework-only code - ALWAYS implement the process() method - that’s your extension point - The handle() method automatically publishes lifecycle events and calls your process() method</p>
 
 
   </div>
@@ -124,6 +124,40 @@
 
 
 
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="protected ">
+  <span class="summary_signature">
+    
+      <a href="#config-instance_method" title="#config (instance method)">#<strong>config</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  <span class="note title protected">protected</span>
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Access to configuration passed during initialization.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
 
 
 
@@ -154,7 +188,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Handles the execution of a workflow step.</p>
+<p>Framework method that coordinates step execution with automatic event publishing.</p>
 </div></span>
   
 </li>
@@ -204,7 +238,31 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>The main processing logic for a step Subclasses must implement this method.</p>
+<p>Developer extension point - implement your business logic here.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#process_results-instance_method" title="#process_results (instance method)">#<strong>process_results</strong>(step, process_output, initial_results)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Process the output from process() method and store in step.results.</p>
 </div></span>
   
 </li>
@@ -214,6 +272,12 @@
   
 
 
+  
+  
+  
+  
+  
+  
   
   
   
@@ -271,12 +335,12 @@
       <pre class="lines">
 
 
-19
-20
-21</pre>
+69
+70
+71</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 19</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 69</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>config:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span>
@@ -287,6 +351,54 @@
 </div>
   
 </div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="config-instance_method">
+  
+    #<strong>config</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly, protected)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Access to configuration passed during initialization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+151
+152
+153</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 151</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
+  <span class='ivar'>@config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 
   <div id="instance_method_details" class="method_details_list">
@@ -305,9 +417,9 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Handles the execution of a workflow step</p>
+<p>Framework method that coordinates step execution with automatic event publishing</p>
 
-<p>Fires lifecycle events before handling the step and then delegates to the subclass’s implementation of the process method.</p>
+<p>⚠️ NEVER OVERRIDE THIS METHOD IN SUBCLASSES This method is framework-only code that: 1. Is automatically wrapped with event publishing via AutomaticEventPublishing 2. Calls the developer-implemented process() method 3. Handles framework-level concerns like logging and error propagation</p>
 
 
   </div>
@@ -391,37 +503,39 @@
       <pre class="lines">
 
 
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45</pre>
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 85</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='comment'># Fire the before_handle event
-</span>  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/StepEvents.html#BEFORE_HANDLE-constant" title="Tasker::Constants::StepEvents::BEFORE_HANDLE (constant)">BEFORE_HANDLE</a></span></span><span class='comma'>,</span>
-    <span class='lbrace'>{</span>
-      <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
-      <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
-      <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
-    <span class='rbrace'>}</span>
-  <span class='rparen'>)</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepHandler: Starting execution of step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
 
-  <span class='comment'># Subclasses should implement the process method
-</span>  <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+  <span class='comment'># Store initial results state to detect if developer set them manually
+</span>  <span class='id identifier rubyid_initial_results'>initial_results</span> <span class='op'>=</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span>
+
+  <span class='comment'># Call the developer-implemented process method
+</span>  <span class='id identifier rubyid_process_output'>process_output</span> <span class='op'>=</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+
+  <span class='comment'># Process results using overridable method, respecting developer customization
+</span>  <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
+
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepHandler: Completed execution of step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_process_output'>process_output</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -440,7 +554,11 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>The main processing logic for a step Subclasses must implement this method</p>
+<p>Developer extension point - implement your business logic here</p>
+
+<p>✅ ALWAYS IMPLEMENT THIS METHOD IN SUBCLASSES This is where you put your step’s business logic. The framework will: - Automatically publish step_started before calling this method - Automatically publish step_completed after this method succeeds - Automatically publish step_failed if this method raises an exception</p>
+
+<p>Return your results from this method - they will be stored in step.results automatically via process_results(). You can override process_results() to customize how the return value gets stored.</p>
 
 
   </div>
@@ -499,6 +617,24 @@
   
 </ul>
 
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The results of processing - will be stored in step.results</p>
+</div>
+      
+    </li>
+  
+</ul>
 <p class="tag_title">Raises:</p>
 <ul class="raise">
   
@@ -524,15 +660,132 @@
       <pre class="lines">
 
 
-54
-55
-56</pre>
+118
+119
+120
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 118</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Subclasses must implement this method</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span>
+        <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Subclasses must implement the process method. This is your extension point for business logic.</span><span class='tstring_end'>&#39;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="process_results-instance_method">
+  
+    #<strong>process_results</strong>(step, process_output, initial_results)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Process the output from process() method and store in step.results</p>
+
+<p>✅ OVERRIDE THIS METHOD: To customize how process() output is stored</p>
+
+<p>This method provides a clean extension point for customizing how the return value from your process() method gets stored in step.results. The default behavior is to store the returned value directly.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>step</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The current step</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>process_output</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The return value from process() method</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>initial_results</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The value of step.results before process() was called</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 135</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
+  <span class='comment'># If developer already set step.results in their process() method, respect it
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>!=</span> <span class='id identifier rubyid_initial_results'>initial_results</span>
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>StepHandler: Developer set custom results in process() method - respecting custom results</span><span class='tstring_end'>&#39;</span></span>
+    <span class='kw'>end</span>
+    <span class='kw'>return</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Default behavior: store the return value from process()
+</span>  <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_process_output'>process_output</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -544,7 +797,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat May 31 23:13:24 2025 by
+  Generated on Sun Jun  1 21:57:53 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

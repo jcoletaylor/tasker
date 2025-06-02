@@ -36,7 +36,7 @@ module Tasker
 
           # Log the backoff error for observability
           Rails.logger.warn(
-            "ResponseProcessor: API response requires backoff handling - " \
+            'ResponseProcessor: API response requires backoff handling - ' \
             "Status: #{status}, Step: #{step.name} (#{step.workflow_step_id})"
           )
 
@@ -45,7 +45,7 @@ module Tasker
         else
           # Other error statuses don't require backoff but should still fail
           Rails.logger.error(
-            "ResponseProcessor: API response indicates non-backoff error - " \
+            'ResponseProcessor: API response indicates non-backoff error - ' \
             "Status: #{status}, Step: #{step.name} (#{step.workflow_step_id})"
           )
 
@@ -70,7 +70,7 @@ module Tasker
           # Fallback - log and raise error for unexpected response types
           Rails.logger.error(
             "ResponseProcessor: Unexpected response type #{response.class}, " \
-            "expected Faraday::Response or Hash"
+            'expected Faraday::Response or Hash'
           )
           raise ArgumentError, "Cannot extract status from response of type #{response.class}"
         end
