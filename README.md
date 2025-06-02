@@ -106,7 +106,7 @@ rails generate task_handler OrderProcess
 This creates:
 
 - A task handler class in `app/tasks/order_process.rb`
-- A YAML configuration in `config/tasks/order_process.yaml`
+- A YAML configuration in `config/tasker/tasks/order_process.yaml`
 - A spec file in `spec/tasks/order_process_spec.rb`
 
 ### Task Handler YAML Configuration

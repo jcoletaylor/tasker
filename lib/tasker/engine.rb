@@ -53,9 +53,15 @@ module Tasker
 
     # Initialize orchestration system after Rails is fully loaded
     initializer 'tasker.orchestration', after: :load_config_initializers do |_app|
-      # Initialize the orchestration system for production use
-      # This happens after config initializers so user config can override
-      Tasker::Orchestration::Coordinator.initialize! if Rails.env.production? || Rails.env.development?
+      # Initialize the orchestration system in all environments
+      # This ensures consistent behavior between test, development, and production
+      Tasker::Orchestration::Coordinator.initialize!
+    end
+
+    config.generators do |g|
+      g.test_framework :rspec
+      g.fixture_replacement :factory_bot
+      g.factory_bot dir: 'spec/factories'
     end
 
     class << self

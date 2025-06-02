@@ -45,8 +45,30 @@ module FactoryWorkflowHelpers
 
   # Complete a step using state machine (replacement for helper.mark_step_complete)
   def complete_step_via_state_machine(step)
-    step.state_machine.transition_to!(:in_progress)
-    step.state_machine.transition_to!(:complete)
+    # Handle dependencies first - complete any parent steps that aren't already complete
+    complete_step_dependencies(step)
+
+    # Get current state - be defensive about state transitions
+    current_state = step.state_machine.current_state
+    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+    # Only transition if not already complete
+    completion_states = [
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+    ]
+
+    unless completion_states.include?(current_state)
+      # Transition to in_progress if not already there
+      unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+        step.state_machine.transition_to!(:in_progress)
+      end
+
+      # Transition to complete
+      step.state_machine.transition_to!(:complete)
+    end
+
+    # Always ensure step data is properly set for completed state
     step.update_columns(
       processed: true,
       processed_at: Time.current,
@@ -67,32 +89,50 @@ module FactoryWorkflowHelpers
   def complete_step_with_results(step, step_name = nil)
     step_name ||= step.named_step.name
 
-    # Set step to in progress
-    step.state_machine.transition_to!(:in_progress)
+    # Get current state and be defensive about transitions
+    current_state = step.state_machine.current_state
+    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
 
-    # Set step-specific results based on step name
-    results = case step_name
-              when 'fetch_cart'
-                { cart: { id: 1, items: [{ product_id: 1, quantity: 2 }] } }
-              when 'fetch_products'
-                { products: [{ id: 1, name: 'Test Product', in_stock: true }] }
-              when 'validate_products'
-                { valid_products: [{ id: 1, validated: true }] }
-              when 'create_order'
-                { order_id: SecureRandom.uuid }
-              when 'publish_event'
-                { published: true, publish_results: { status: 'placed_pending_fulfillment' } }
-              else
-                { dummy: true, other: true }
-              end
+    # Only transition through in_progress if not already complete
+    completion_states = [
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+    ]
 
-    # Complete step with results
-    step.state_machine.transition_to!(:complete)
-    step.update_columns(
-      processed: true,
-      processed_at: Time.current,
-      results: results
-    )
+    unless completion_states.include?(current_state)
+      # Set step to in progress if not already there or beyond
+      unless [
+        Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+        Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+        Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+      ].include?(current_state)
+        step.state_machine.transition_to!(:in_progress)
+      end
+
+      # Set step-specific results based on step name
+      results = case step_name
+                when 'fetch_cart'
+                  { cart: { id: 1, items: [{ product_id: 1, quantity: 2 }] } }
+                when 'fetch_products'
+                  { products: [{ id: 1, name: 'Test Product', in_stock: true }] }
+                when 'validate_products'
+                  { valid_products: [{ id: 1, validated: true }] }
+                when 'create_order'
+                  { order_id: SecureRandom.uuid }
+                when 'publish_event'
+                  { published: true, publish_results: { status: 'placed_pending_fulfillment' } }
+                else
+                  { dummy: true, other: true }
+                end
+
+      # Complete step with results
+      step.state_machine.transition_to!(:complete)
+      step.update_columns(
+        processed: true,
+        processed_at: Time.current,
+        results: results
+      )
+    end
 
     step
   end
@@ -133,7 +173,19 @@ module FactoryWorkflowHelpers
 
   # Set step to in_progress (replacement for step.update!({ in_process: true }))
   def set_step_in_progress(step)
-    step.state_machine.transition_to!(:in_progress)
+    current_state = step.state_machine.current_state
+    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+    # Only transition if not already in progress or beyond
+    unless [
+      Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY,
+      Tasker::Constants::WorkflowStepStatuses::ERROR
+    ].include?(current_state)
+      step.state_machine.transition_to!(:in_progress)
+    end
+
     step.update_columns(in_process: true)
     step
   end
@@ -334,6 +386,40 @@ module FactoryWorkflowHelpers
 
     create_dummy_task_via_request(options)
   end
+
+  private
+
+  # Complete any dependencies for a step to ensure state machine guards pass
+  def complete_step_dependencies(step)
+    return unless step.respond_to?(:parents)
+
+    parents = step.parents
+    return if parents.blank?
+
+    parents.each do |parent|
+      # Check if parent is already complete
+      completion_states = [
+        Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+        Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+      ]
+      current_state = parent.state_machine.current_state
+      parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
+
+      # If parent isn't complete, complete it recursively
+      unless completion_states.include?(parent_status)
+        Rails.logger.debug do
+          "Test Helper: Completing parent step #{parent.workflow_step_id} (currently #{parent_status}) to satisfy dependency for step #{step.workflow_step_id}"
+        end
+        complete_step_via_state_machine(parent)
+      else
+        Rails.logger.debug do
+          "Test Helper: Parent step #{parent.workflow_step_id} already complete (#{parent_status}) - skipping"
+        end
+      end
+    end
+  end
+
+  public
 end
 
 # Include in RSpec configuration

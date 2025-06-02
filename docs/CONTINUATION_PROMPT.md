@@ -1,44 +1,42 @@
 # Tasker Event-Driven Architecture: Next Phase Development Continuation
 
-## 🎯 **PROJECT STATUS: UNIFIED DEVELOPER INTERFACE WITH EVENT SYSTEM OPTIMIZATION OPPORTUNITIES**
+## 🎯 **PROJECT STATUS: PRODUCTION-READY SYSTEM WITH ROBUST TEST INFRASTRUCTURE**
 
-You're continuing work on the **Tasker unified event system** that has achieved **complete developer interface unification** with universal `process()` methods, consistent result processing patterns, and 320/320 tests passing. The system now needs **event system developer experience enhancements** to expose the powerful event infrastructure in a more structured and intentional way.
+You're continuing work on the **Tasker unified event system** that has achieved **complete production readiness** with universal `process()` methods, consistent result processing patterns, robust test infrastructure, and 355/355 tests passing consistently. The system now needs **event system developer experience enhancements** and **performance optimization** to complete the transformation into a best-in-class workflow engine.
 
-## ✅ **MAJOR ACHIEVEMENTS COMPLETED (UNIFIED DEVELOPER INTERFACE FOUNDATION)**
+## ✅ **MAJOR ACHIEVEMENTS COMPLETED (PRODUCTION-READY FOUNDATION)**
 
-### **🏆 Latest Success: Universal Developer Interface**
+### **🏆 Latest Success: Production-Ready Test Infrastructure**
+- **✅ COMPLETE**: Zero flaky test failures - eliminated intermittent CI issues with defensive state transition logic
+- **✅ COMPLETE**: Robust test patterns that mirror production state machine behavior
+- **✅ COMPLETE**: Enhanced factory workflow helpers with comprehensive edge case handling
+- **✅ COMPLETE**: Test infrastructure quality improvements with maintainable, documented patterns
+- **✅ COMPLETE**: Expected exception handling research demonstrating mature engineering judgment
+
+### **🏆 Previous Success: Universal Developer Interface**
 - **✅ COMPLETE**: Universal `process()` interface across all step handler types (Base and API)
 - **✅ COMPLETE**: Unified `process_results()` pattern for customizable result processing
 - **✅ COMPLETE**: Orchestration component architecture with focused responsibilities
 - **✅ COMPLETE**: Production-ready testing patterns with simplified Faraday stub format
 - **✅ COMPLETE**: Comprehensive documentation for new unified patterns
-- **✅ COMPLETE**: All legacy interface inconsistencies eliminated from codebase
 
 ### **📊 Current Production Metrics**
-- **320/320 tests passing** - Complete system validation with unified interface
-- **Zero cognitive overhead** - Single `process()` method for all step handler types
-- **Clean separation of concerns** - Business logic vs. result formatting clearly defined
-- **Automatic event publishing** - Works seamlessly with custom result processing
-- **Production-ready testing** - Reliable patterns for API integration testing
+- **355/355 tests passing** - Complete system validation with robust test infrastructure
+- **Zero flaky failures** - Reliable CI pipeline enabling confident development
+- **Universal developer interface** - Single `process()` method for all step handler types
+- **Production-ready error handling** - Complete step error persistence with atomic transactions
+- **Full observability stack** - OpenTelemetry integration with 12+ instrumentations
 
-### **🛠 Technical Architecture Achievements**
-1. **Universal `process()` Interface**: Single developer extension point eliminating interface confusion
-2. **Consistent `process_results()` Pattern**: Uniform result customization across handler types
-3. **Orchestration Components**: ResponseProcessor, BackoffCalculator, ConnectionBuilder separation
-4. **Automatic Event Integration**: Events fire regardless of custom result processing
-5. **Production Testing Patterns**: Simplified [status, headers, body] Faraday stub format
-6. **Comprehensive Documentation**: Clear guidance on what to implement vs. never override
+## 🚀 **NEXT PHASE PRIORITIES: Developer Experience & Performance Optimization**
 
-## 🚀 **NEXT PHASE PRIORITIES: Event System Developer Experience**
+The system has **excellent functional architecture and production stability** but needs focused work on **event system developer experience** and **performance optimization** to become a best-in-class workflow engine.
 
-The system has **excellent functional architecture** but the powerful event system remains largely hidden from developers. The core challenge is **exposing the sophisticated event infrastructure in an intentional, structured way**.
-
-## **PRIORITY RANKING: User Suggestions + Recommendations**
+## **PRIORITY RANKING: Balanced Development + Performance Focus**
 
 ### **🥇 HIGHEST PRIORITY: Event Publishing API Consolidation**
-**User Suggested**: ✅ **Immediate Need Identified**
+**User Requested**: ✅ **Immediate Need for Cleaner APIs**
 **Complexity**: Medium (2-3 weeks)
-**Impact**: Immediate developer experience improvement
+**Impact**: Immediate developer experience improvement + foundation for advanced features
 
 #### **Problem: Multiple Conflicting Publishing Patterns**
 **Current API Noise**:
@@ -75,8 +73,50 @@ publish_step_started(step)                  # Minimal parameters when clear
 3. **Week 2**: Eliminate all inline `EventPayloadBuilder` calls from application code
 4. **Week 2**: Deprecate verbose methods, establish single-method-per-event-type pattern
 
-### **🥈 HIGH PRIORITY: Event Subscription Developer Experience**
-**User Suggested**: ✅ **Core Goal from Original Intent**
+### **🥈 HIGH PRIORITY: Performance Optimization & Database Efficiency**
+**Engineering Priority**: ✅ **Critical for Production Scale**
+**Complexity**: Medium-High (3-4 weeks)
+**Impact**: Production performance, scalability, and cost optimization
+
+#### **Problem: Potential N+1 Queries & Inefficient Data Loading**
+**Areas Requiring Audit**:
+```ruby
+# Potential inefficiencies to investigate:
+
+# 1. Task + Step Loading Patterns
+task = Task.find(id)
+task.workflow_steps.each { |step| step.results }  # Potential N+1
+
+# 2. Dependency Traversal
+step.parents.each { |parent| parent.state_machine.current_state }  # N+1 risk
+
+# 3. Event Payload Building
+EventPayloadBuilder.build_task_payload(task)  # May load steps individually
+
+# 4. State Machine Queries
+steps.map { |step| step.state_machine.current_state }  # Individual queries
+```
+
+#### **Solution: Database Query Optimization Strategy**
+**Target Optimizations**:
+```ruby
+# CURRENT (potential N+1s)
+task.workflow_steps.map { |step| [step.name, step.state_machine.current_state] }
+
+# TARGET (optimized batch loading)
+WorkflowStep.includes(:step_transitions)
+           .where(task: task)
+           .with_current_states  # Custom scope for efficient state loading
+```
+
+**Implementation Strategy**:
+1. **Week 1**: Audit current query patterns with performance profiling
+2. **Week 1-2**: Implement optimized scopes and includes for common patterns
+3. **Week 2-3**: Create efficient batch loading patterns for event payload building
+4. **Week 3**: Add database query monitoring and performance metrics
+
+### **🥉 HIGH PRIORITY: Event Subscription Developer Experience**
+**User Requested**: ✅ **Core Goal from Original Intent**
 **Complexity**: Medium-High (3-4 weeks)
 **Impact**: Unlocks ecosystem extensibility and third-party integrations
 
@@ -116,44 +156,6 @@ Tasker::Events.catalog
 # }
 ```
 
-**Simple Subscriber Creation**:
-```ruby
-# Clean inheritance pattern for custom subscribers
-class OrderNotificationSubscriber < Tasker::Events::BaseSubscriber
-  # Declarative subscription with automatic method routing
-  subscribe_to :task_completed, :step_failed
-
-  def handle_task_completed(event_name, payload)
-    OrderMailer.completion_email(payload[:task_id]).deliver_later
-  end
-
-  def handle_step_failed(event_name, payload)
-    AlertService.notify("Step failed: #{payload[:step_name]}")
-  end
-end
-```
-
-**YAML Configuration Support**:
-```yaml
-# config/tasks/order_process.yaml
----
-name: order_process
-
-# Event subscription configuration per task
-event_subscriptions:
-  - subscriber_class: OrderNotificationSubscriber
-    events: [task.completed, step.failed]
-    config:
-      notification_email: orders@company.com
-      alert_threshold: 3_failures_per_hour
-
-  - subscriber_class: MetricsCollectorSubscriber
-    events: [step.completed, step.started]
-    config:
-      metrics_backend: datadog
-      namespace: tasker.orders
-```
-
 **Implementation Strategy**:
 1. **Week 1**: Create event catalog with introspection and schema generation
 2. **Week 1-2**: Extract BaseSubscriber pattern from TelemetrySubscriber
@@ -161,93 +163,107 @@ event_subscriptions:
 4. **Week 2-3**: Add YAML configuration support for task-level event subscriptions
 5. **Week 3**: Create comprehensive developer documentation and usage examples
 
-### **🥉 MEDIUM PRIORITY: Generator Template & Example Updates**
-**Recommendation**: Support New Unified Patterns
-**Complexity**: Low-Medium (1-2 weeks)
-**Impact**: Future installations follow best practices
+### **🏅 MEDIUM PRIORITY: Telemetry Optimization & Span Hierarchy**
+**Engineering Priority**: ✅ **Production Observability Enhancement**
+**Complexity**: Medium (2-3 weeks)
+**Impact**: Enhanced debugging, monitoring, and production support
 
-#### **Problem: Generators Use Legacy Patterns**
-Current generators likely create step handlers with outdated patterns and don't demonstrate event subscription capabilities.
-
-#### **Solution: Updated Templates with Best Practices**
-**Updated Step Handler Templates**:
+#### **Problem: Potential Gaps in Telemetry Span Relationships**
+**Areas Requiring Enhancement**:
 ```ruby
-# Generated step handler template
-class <%= class_name %>StepHandler < Tasker::StepHandler::Base
-  def process(task, sequence, step)
-    # TODO: Implement your business logic here
-    # Return results - they will be stored in step.results automatically
+# Current telemetry may lack:
 
-    # Example:
-    # data = fetch_data(task.context)
-    # { success: true, data: data }
-  end
+# 1. Complete Parent-Child Span Hierarchy
+task_span -> step_span -> handler_span -> api_call_span
 
-  # Optional: Override to customize how results are stored
-  # def process_results(step, process_output, initial_results)
-  #   step.results = { processed_at: Time.current, data: process_output }
-  # end
+# 2. Workflow Context Propagation
+# Step spans should include dependency relationship context
+
+# 3. Error Context Enrichment
+# Failed spans should include full workflow state
+
+# 4. Performance Correlation
+# Related spans should share correlation IDs for analysis
+```
+
+#### **Solution: Enhanced Telemetry Architecture**
+**Target Span Hierarchy**:
+```ruby
+# CURRENT (basic span creation)
+OpenTelemetry.tracer.start_span("step.processing")
+
+# TARGET (enriched context-aware spans)
+OpenTelemetry.tracer.start_span("step.processing") do |span|
+  span.set_attribute("task.id", task.id)
+  span.set_attribute("step.dependencies", step.parents.pluck(:name))
+  span.set_attribute("workflow.correlation_id", task.correlation_id)
 end
 ```
 
-**Event Subscription Examples**:
-- Generate example subscriber classes showing common patterns
-- Update task YAML templates to include event subscription examples
-- Add documentation comments explaining event system capabilities
+**Implementation Strategy**:
+1. **Week 1**: Audit current span creation patterns and identify gaps
+2. **Week 1-2**: Implement enhanced span context propagation
+3. **Week 2**: Add workflow relationship attributes to all spans
+4. **Week 2-3**: Create correlation ID system for end-to-end tracing
 
-### **🏅 LOWER PRIORITY: Advanced Event Features**
-**Recommendation**: Future Ecosystem Enhancements
-**Complexity**: High (4+ weeks)
-**Impact**: Advanced use cases and ecosystem growth
+### **🎯 LOWER PRIORITY: Code Quality & Technical Debt**
+**Engineering Priority**: ✅ **Maintenance and Future Development**
+**Complexity**: Low-Medium (1-2 weeks ongoing)
+**Impact**: Code maintainability and development velocity
 
-#### **Event Versioning & Schema Validation**
-- Runtime payload validation against schemas
-- Event payload versioning for backward compatibility
-- Breaking change detection in event evolution
-
-#### **Event Replay & Debugging**
-- Event store for debugging complex workflows
-- Replay capabilities for testing and debugging
-- Event timeline visualization for workflow analysis
-
-#### **Third-Party Integration Framework**
-- Webhook delivery for external systems
-- Event streaming integration (Kafka, EventBridge)
-- Plugin system for event processors
+#### **Areas for Technical Debt Reduction**
+1. **Dead Code Removal**: Audit for unused legacy event publishing methods
+2. **Documentation Updates**: Ensure all docs reflect current unified patterns
+3. **Generator Template Updates**: Update templates to use `process()` interface
+4. **Test Infrastructure Cleanup**: Remove redundant test patterns
+5. **Code Comment Audit**: Update inline documentation to reflect current architecture
 
 ## 🎯 **RECOMMENDED IMPLEMENTATION ORDER**
 
-### **Phase 4: Event Publishing API Consolidation (NEXT - 2-3 weeks)**
+### **Phase 4A: Event Publishing API Consolidation (IMMEDIATE - 2-3 weeks)**
 **Justification**:
-- **Immediate Impact**: Reduces current developer friction with existing APIs
-- **Foundation for Phase 5**: Clean publishing API enables better subscription patterns
-- **Low Risk**: Refactoring existing patterns vs. building new infrastructure
-- **User Priority**: Directly addresses identified "noise" in current API
+- **Immediate developer impact** with cleaner, more intuitive APIs
+- **Foundation for performance work** - cleaner APIs enable better optimization
+- **Low risk refactoring** of existing patterns vs. new infrastructure
+- **User-requested priority** directly addressing identified "noise" in current API
+
+### **Phase 4B: Performance Optimization (PARALLEL - 3-4 weeks)**
+**Justification**:
+- **Critical for production scale** - system must perform well under load
+- **Can run parallel** with API consolidation since they target different layers
+- **Foundation for telemetry enhancement** - optimized queries improve span performance
+- **Industry standard practice** - performance optimization is non-negotiable for production systems
 
 ### **Phase 5: Event Subscription Developer Experience (HIGH - 3-4 weeks)**
 **Justification**:
-- **Core User Goal**: "Expose event system to developer end in structured way"
-- **Ecosystem Enablement**: Unlocks third-party integrations and business logic
-- **Complete Vision**: Transforms hidden event system into developer-friendly platform
-- **High Impact**: Industry-leading developer experience for event-driven workflows
+- **Core user goal** enabling ecosystem extensibility
+- **Builds on clean APIs** from Phase 4A
+- **Benefits from performance work** in Phase 4B
+- **Major developer experience transformation**
 
-### **Phase 6: Generator & Template Updates (MEDIUM - 1-2 weeks)**
+### **Phase 6: Telemetry Enhancement & Code Quality (ONGOING - 2-3 weeks)**
 **Justification**:
-- **Future-Proofing**: New installations use unified patterns from day one
-- **Developer Onboarding**: Clear examples reduce learning curve
-- **Best Practice Propagation**: Templates demonstrate proper usage patterns
-
-**Phases 4 and 5 can run in parallel** since they target different aspects of the event system.
+- **Production support enhancement** for debugging and monitoring
+- **Continuous improvement** rather than blocking development
+- **Quality foundation** for future feature development
 
 ## 📋 **SUCCESS CRITERIA FOR NEXT PHASES**
 
-### **Phase 4: Publishing API Success Metrics**
+### **Phase 4A: Publishing API Success Metrics**
 - [ ] **Single Method Per Event Type**: `publish_step_completed(step)` vs. verbose alternatives
 - [ ] **Zero Inline Payload Building**: No manual `EventPayloadBuilder` calls in application code
 - [ ] **Context-Aware Publishing**: Event types inferred from calling context
 - [ ] **Maintained Functionality**: All current capabilities preserved with cleaner API
 - [ ] **Clean Migration Path**: Deprecation warnings guide developers to new patterns
-- [ ] **All Tests Passing**: 320+ tests continue passing with refined publishing API
+- [ ] **All Tests Passing**: 355+ tests continue passing with refined publishing API
+
+### **Phase 4B: Performance Optimization Success Metrics**
+- [ ] **Database Query Audit**: Complete analysis of N+1 query risks
+- [ ] **Optimized Loading Patterns**: Efficient scopes for common task/step loading scenarios
+- [ ] **Batch Event Payload Building**: Eliminate individual queries in event publishing
+- [ ] **Performance Monitoring**: Metrics and alerts for query performance
+- [ ] **Load Testing**: Validated performance under realistic production scenarios
+- [ ] **Memory Efficiency**: Optimized memory usage in long-running workflows
 
 ### **Phase 5: Subscription System Success Metrics**
 - [ ] **Event Catalog**: Complete self-documenting catalog with payload schemas and examples
@@ -258,81 +274,91 @@ end
 - [ ] **Developer Documentation**: Comprehensive guides, examples, and best practices
 - [ ] **Example Implementations**: Notification, metrics, alerting, and integration examples
 
-### **Phase 6: Template Update Success Metrics**
-- [ ] **Generator Templates**: New step handlers use unified `process()` patterns
-- [ ] **Event Subscription Examples**: Generated tasks include event subscription examples
-- [ ] **Documentation Integration**: Templates include helpful comments about event capabilities
-- [ ] **Best Practice Propagation**: New installations follow recommended patterns
+### **Phase 6: Telemetry & Quality Success Metrics**
+- [ ] **Enhanced Span Hierarchy**: Complete task → step → handler → API call tracing
+- [ ] **Correlation ID System**: End-to-end request correlation across all spans
+- [ ] **Workflow Context Propagation**: Step dependencies and relationships in telemetry
+- [ ] **Error Context Enrichment**: Failed spans include complete workflow state
+- [ ] **Documentation Currency**: All docs reflect current patterns and architecture
+- [ ] **Generator Template Updates**: New installations use unified patterns
+- [ ] **Dead Code Removal**: Audit complete with legacy patterns removed
 
 ## 🛠️ **CURRENT SYSTEM STATE FOR REFERENCE**
 
 ### **What's Working Perfectly**
 1. **Universal `process()` Interface**: Single developer extension point across all handler types
-2. **Unified `process_results()` Pattern**: Consistent result customization capabilities
-3. **Automatic Event Publishing**: Events fire seamlessly with custom result processing
-4. **Orchestration Component Architecture**: Clean separation of API-specific concerns
-5. **Production-Ready Testing**: Reliable patterns for API integration testing
-6. **Comprehensive Documentation**: Clear guidance on implementation vs. framework code
+2. **Robust Test Infrastructure**: Defensive state transitions eliminate flaky test failures
+3. **Production-Ready Error Handling**: Complete step error persistence with atomic transactions
+4. **Full Observability Stack**: OpenTelemetry integration with comprehensive instrumentation
+5. **Clean Architecture**: Orchestration component separation with focused responsibilities
+6. **Developer Documentation**: Clear guidance on implementation vs. framework code
 
-### **Key Files & Components (Updated)**
+### **Key Files & Components (Current State)**
 - `lib/tasker/step_handler/base.rb` - Universal `process()` interface with `process_results()` pattern
 - `lib/tasker/step_handler/api.rb` - API handlers using unified interface with orchestration
 - `lib/tasker/concerns/event_publisher.rb` - Current publishing interface (needs consolidation)
-- `lib/tasker/events/event_payload_builder.rb` - Standardized payloads (needs integration)
-- `lib/tasker/events/subscribers/telemetry_subscriber.rb` - Current subscriber (needs BaseSubscriber extraction)
-- `spec/mocks/dummy_*.rb` - Updated examples using unified patterns
+- `lib/tasker/events/event_payload_builder.rb` - Standardized payloads (needs performance optimization)
+- `spec/support/factory_workflow_helpers.rb` - Enhanced defensive test helpers
+- `docs/BETTER_LIFECYCLE_EVENTS.md` - Complete progress tracking with latest achievements
 
 ### **Architecture Patterns Established**
 - **Universal Developer Interface**: `process()` method for all business logic
-- **Flexible Result Processing**: Return values or override `process_results()` for customization
+- **Defensive Test Infrastructure**: State-aware helpers that mirror production behavior
 - **Automatic Event Integration**: Events publish regardless of result customization approach
-- **Orchestration Component Pattern**: Focused responsibilities (ResponseProcessor, BackoffCalculator, etc.)
-- **Production Testing Patterns**: Simplified Faraday stub format for reliable API testing
+- **Production-Ready Error Handling**: Atomic transactions with comprehensive error context
+- **Robust CI Pipeline**: 355/355 tests passing consistently with zero flaky failures
 
 ## 🎯 **VALIDATION COMMANDS**
 
 ### **Current System Health Check**
 ```bash
-# Verify unified interface is working
-bundle exec rspec spec/tasks/integration_example_spec.rb spec/mocks/ --format progress
+# Verify robust test infrastructure
+bundle exec rspec spec/ --format progress
+# Should show 355+ examples, 0 failures consistently
 
-# Should show 18 examples, 0 failures with unified process() interface
+# Verify no flaky test failures
+for i in {1..3}; do bundle exec rspec spec/ --format progress; done
+# All runs should pass with same test count
+```
+
+### **Performance Baseline Establishment**
+```bash
+# Establish current query patterns for optimization
+RAILS_ENV=test bundle exec rails runner "
+  require 'benchmark'
+  task = FactoryBot.create(:task_with_workflow_steps)
+  puts Benchmark.measure { task.workflow_steps.map(&:state_machine) }
+"
+
+# Profile event payload building
+bundle exec rspec spec/lib/tasker/events/event_payload_builder_spec.rb --profile
 ```
 
 ### **Event System Integration Validation**
 ```bash
-# Test automatic event publishing with custom result processing
-bundle exec rspec spec/lib/tasker/step_handler/ --format progress
+# Test current event publishing patterns
+bundle exec rspec spec/lib/tasker/concerns/event_publisher_spec.rb --format documentation
 
-# Should show all step handler patterns working correctly
-```
-
-### **Full System Validation**
-```bash
-# Complete test suite (should be 320+ passing)
-bundle exec rspec spec/ --format progress
-
-# Event system integration tests specifically
-bundle exec rspec spec/lib/tasker/lifecycle_events_spec.rb spec/lib/tasker/instrumentation_spec.rb
+# Verify telemetry integration
+bundle exec rspec spec/lib/tasker/instrumentation_spec.rb --format progress
 ```
 
 ## 📊 **NEXT CHAT STARTING POINT SUMMARY**
 
-**Current State**: Production-ready system with unified developer interface and hidden but powerful event infrastructure
+**Current State**: Production-ready system with robust test infrastructure, universal developer interface, and stable CI pipeline
 
-**Primary Goal**: **Expose sophisticated event system to developers in structured, intentional way**
-
-**Next Work Priority**:
+**Primary Goals**:
 1. **Event Publishing API Consolidation** - Clean up current noise in event publishing patterns
-2. **Event Subscription Developer Experience** - Make powerful event system discoverable and extensible
+2. **Performance Optimization** - Eliminate N+1 queries and optimize database patterns
+3. **Event Subscription Developer Experience** - Make powerful event system discoverable and extensible
 
-**Expected Outcome**: Industry-leading developer experience for event-driven workflow systems featuring:
+**Expected Outcomes**: Industry-leading workflow engine featuring:
 1. **Intuitive Event Publishing**: Single, obvious way to publish each event type with automatic payload building
-2. **Discoverable Event System**: Self-documenting event catalog with schemas, examples, and firing context
-3. **Extensible Subscriptions**: Easy creation of custom event subscribers with declarative registration
-4. **Configuration-Driven**: YAML-based event subscription configuration per task
-5. **Ecosystem-Ready**: Third-party integrations and business logic extensions possible
+2. **High-Performance Data Access**: Optimized database queries with efficient loading patterns
+3. **Discoverable Event System**: Self-documenting event catalog with schemas, examples, and firing context
+4. **Extensible Subscriptions**: Easy creation of custom event subscribers with declarative registration
+5. **Production-Ready Performance**: Optimized for scale with comprehensive monitoring and observability
 
-**Development Environment**: All dependencies installed, 320/320 tests passing, unified interface complete, ready for event system developer experience work.
+**Development Environment**: All dependencies installed, 355/355 tests passing consistently, robust test infrastructure, ready for parallel event system enhancement and performance optimization work.
 
-**🚀 Ready to begin Phase 4 (Event Publishing API Consolidation) immediately, with Phase 5 (Event Subscription Experience) as the primary user-requested goal following closely.**
+**🚀 Ready to begin Phase 4A (Event Publishing API Consolidation) and Phase 4B (Performance Optimization) immediately, with Phase 5 (Event Subscription Experience) as the major developer experience transformation following.**

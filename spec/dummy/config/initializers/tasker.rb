@@ -5,8 +5,8 @@ Tasker.configuration do |config|
   # Directory within app/ where task handlers are stored (default: 'tasks')
   # config.task_handler_directory = 'custom_tasks'
 
-  # Directory within config/ where task YAML configs are stored (default: 'tasks')
-  # config.task_config_directory = 'workflows'
+  # Directory within config/ where task YAML configs are stored (default: 'tasker/tasks')
+  # config.task_config_directory = 'custom_tasks'
 
   # Strategy for generating task identity hashes (options: :default, :hash, :custom)
   # :default - Uses a GUID/UUID for each task (no duplicate detection)

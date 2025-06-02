@@ -110,38 +110,74 @@ module Tasker
 
       # Class methods for state machine management
       class << self
-        # Hashmap for efficient event name lookup based on state transitions
-        TRANSITION_EVENT_MAP = {
-          # Initial state transitions (from nil/initial)
-          [nil, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
-          [nil, Constants::TaskStatuses::IN_PROGRESS] => Constants::TaskEvents::START_REQUESTED,
-          [nil, Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
-          [nil, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
-          [nil, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
-          [nil, Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
+        # Lazy-loaded hashmap for efficient event name lookup based on state transitions
+        # This is built on first access to avoid referencing constants before they're created
+        def transition_event_map
+          @transition_event_map ||= build_transition_event_map
+        end
 
-          # Normal state transitions
-          [Constants::TaskStatuses::PENDING,
-           Constants::TaskStatuses::IN_PROGRESS] => Constants::TaskEvents::START_REQUESTED,
-          [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
-          [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
+        # Build the transition event map when needed
+        def build_transition_event_map
+          # Load mappings from YAML (single source of truth)
+          yaml_file = File.join(Tasker::Engine.root, 'config', 'tasker', 'system_events.yml')
 
-          [Constants::TaskStatuses::IN_PROGRESS,
-           Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
-          [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
-          [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
-          [Constants::TaskStatuses::IN_PROGRESS,
-           Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+          if File.exist?(yaml_file)
+            yaml_data = YAML.load_file(yaml_file)
+            mappings = yaml_data.dig('state_machine_mappings', 'task_transitions') || []
 
-          [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::RETRY_REQUESTED,
-          [Constants::TaskStatuses::ERROR,
-           Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
+            # Convert YAML mappings to hash format
+            transition_map = {}
+            mappings.each do |mapping|
+              from_state = mapping['from_state'] # nil for initial transitions
+              to_state = mapping['to_state']
+              event_constant = mapping['event_constant']
 
-          # New transitions for admin override scenarios
-          [Constants::TaskStatuses::COMPLETE, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
-          [Constants::TaskStatuses::RESOLVED_MANUALLY,
-           Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED
-        }.freeze
+              # Convert to our internal format
+              transition_map[[from_state, to_state]] = event_constant
+            end
+
+            transition_map.freeze
+          else
+            # Fallback to hardcoded mappings if YAML not available
+            Rails.logger.warn("Tasker: system_events.yml not found, using fallback mappings")
+            build_fallback_transition_map
+          end
+        end
+
+        # Fallback mappings in case YAML is not available
+        def build_fallback_transition_map
+          {
+            # Initial state transitions (from nil/initial)
+            [nil, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
+            [nil, Constants::TaskStatuses::IN_PROGRESS] => Constants::TaskEvents::START_REQUESTED,
+            [nil, Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
+            [nil, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
+            [nil, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+            [nil, Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
+
+            # Normal state transitions
+            [Constants::TaskStatuses::PENDING,
+             Constants::TaskStatuses::IN_PROGRESS] => Constants::TaskEvents::START_REQUESTED,
+            [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+            [Constants::TaskStatuses::PENDING, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
+
+            [Constants::TaskStatuses::IN_PROGRESS,
+             Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
+            [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
+            [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
+            [Constants::TaskStatuses::IN_PROGRESS,
+             Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+
+            [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::RETRY_REQUESTED,
+            [Constants::TaskStatuses::ERROR,
+             Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
+
+            # New transitions for admin override scenarios
+            [Constants::TaskStatuses::COMPLETE, Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
+            [Constants::TaskStatuses::RESOLVED_MANUALLY,
+             Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED
+          }.freeze
+        end
 
         # Class-level wrapper methods for guard clause context
         # These delegate to instance methods to provide clean access from guard clauses
@@ -189,7 +225,7 @@ module Tasker
         # @return [String, nil] The event name or nil if no mapping exists
         def determine_transition_event_name(from_state, to_state)
           transition_key = [from_state, to_state]
-          event_name = TRANSITION_EVENT_MAP[transition_key]
+          event_name = transition_event_map[transition_key]
 
           if event_name.nil?
             Rails.logger.warn do

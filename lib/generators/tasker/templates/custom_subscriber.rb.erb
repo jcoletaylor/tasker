@@ -1,0 +1,72 @@
+# frozen_string_literal: true
+
+# Example Custom Events Subscriber for <%= application_name.humanize %>
+#
+# This subscriber demonstrates how to create custom event handlers
+# for your application-specific events.
+class CustomEventsSubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  # Subscribe to custom events defined in config/tasker/events.yml
+  # Note: Use clean event names - the system handles namespace protection internally
+  subscribe_to 'order.processed',
+               'payment.completed',
+               'notification.sent'
+
+  # Handle order processed events
+  def handle_order_processed(event)
+    order_id = safe_get(event, :order_id)
+    customer_id = safe_get(event, :customer_id)
+    total_amount = safe_get(event, :total_amount)
+
+    Rails.logger.info("Order #{order_id} processed for customer #{customer_id}, total: $#{total_amount}")
+
+    # Example: Send completion notification
+    # OrderCompletionMailer.order_processed(order_id).deliver_later
+
+    # Example: Update analytics
+    # Analytics.track_order_completion(order_id: order_id, amount: total_amount)
+  end
+
+  # Handle payment completion events
+  def handle_payment_completed(event)
+    payment_id = safe_get(event, :payment_id)
+    order_id = safe_get(event, :order_id)
+    payment_method = safe_get(event, :payment_method)
+
+    Rails.logger.info("Payment #{payment_id} completed for order #{order_id} via #{payment_method}")
+
+    # Example: Record payment metrics
+    # PaymentMetrics.record_completion(payment_id: payment_id, method: payment_method)
+
+    # Example: Trigger fulfillment
+    # FulfillmentService.process_order(order_id)
+  end
+
+  # Handle notification sent events
+  def handle_notification_sent(event)
+    notification_id = safe_get(event, :notification_id)
+    recipient = safe_get(event, :recipient)
+    channel = safe_get(event, :channel)
+    success = safe_get(event, :success)
+
+    if success
+      Rails.logger.info("Notification #{notification_id} sent to #{recipient} via #{channel}")
+
+      # Example: Update delivery metrics
+      # NotificationMetrics.record_delivery(notification_id: notification_id, channel: channel)
+    else
+      Rails.logger.warn("Failed to send notification #{notification_id} to #{recipient}")
+
+      # Example: Retry or escalate
+      # NotificationRetryService.schedule_retry(notification_id)
+    end
+  end
+
+  # Optional: Override to add subscriber-specific filtering
+  # def should_process_event?(event_constant)
+  #   # Only process events during business hours
+  #   Time.current.hour.between?(9, 17)
+  # end
+end
+
+# Register the subscriber (add this to an initializer)
+# CustomEventsSubscriber.subscribe(Tasker::Events::Publisher.instance)

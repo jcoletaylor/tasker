@@ -11,6 +11,9 @@ module Tasker
     # This publisher provides the core event infrastructure using dry-events.
     # It handles event registration and basic publishing capabilities.
     #
+    # Events are now statically defined in constants.rb and registered here.
+    # State machine mappings and metadata are loaded from YAML.
+    #
     # For application usage, use the EventPublisher concern which provides
     # clean domain-specific methods that build standardized payloads:
     #
@@ -23,11 +26,8 @@ module Tasker
       include Singleton
 
       def initialize
-        # Register all events during initialization
-        register_all_events
-        register_state_machine_events
-        register_workflow_events
-        register_test_events if Rails.env.local?
+        # Register all static events from constants
+        register_static_events
       end
 
       # Core publish method with automatic timestamp enhancement
@@ -51,84 +51,79 @@ module Tasker
 
       private
 
-      # Register all standard Tasker events
-      def register_all_events
-        # Register task events
-        register_event(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED)
-        register_event(Tasker::Constants::TaskEvents::START_REQUESTED)
-        register_event(Tasker::Constants::TaskEvents::COMPLETED)
-        register_event(Tasker::Constants::TaskEvents::FAILED)
-        register_event(Tasker::Constants::TaskEvents::CANCELLED)
-        register_event(Tasker::Constants::TaskEvents::RETRY_REQUESTED)
+      # Register all events from static constants
+      #
+      # This uses the statically defined constants instead of runtime generation
+      def register_static_events
+        Rails.logger.info("Tasker: Registering events from static constants")
 
-        # Register step events
-        register_event(Tasker::Constants::StepEvents::INITIALIZE_REQUESTED)
-        register_event(Tasker::Constants::StepEvents::EXECUTION_REQUESTED)
-        register_event(Tasker::Constants::StepEvents::COMPLETED)
-        register_event(Tasker::Constants::StepEvents::FAILED)
-        register_event(Tasker::Constants::StepEvents::RETRY_REQUESTED)
-        register_event(Tasker::Constants::StepEvents::CANCELLED)
-        register_event(Tasker::Constants::StepEvents::BEFORE_HANDLE)
-        register_event(Tasker::Constants::StepEvents::HANDLE)
+        event_count = 0
 
-        # Register observability events for telemetry
-        register_event(Tasker::Constants::ObservabilityEvents::Task::HANDLE)
-        register_event(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE)
-        register_event(Tasker::Constants::ObservabilityEvents::Task::FINALIZE)
-        register_event(Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE)
-        register_event(Tasker::Constants::ObservabilityEvents::Step::HANDLE)
-        register_event(Tasker::Constants::ObservabilityEvents::Step::BACKOFF)
-        register_event(Tasker::Constants::ObservabilityEvents::Step::SKIP)
-        register_event(Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED)
+        # Register Task Events
+        Tasker::Constants::TaskEvents.constants.each do |const_name|
+          event_constant = Tasker::Constants::TaskEvents.const_get(const_name)
+          register_event(event_constant)
+          event_count += 1
+        end
+
+        # Register Step Events
+        Tasker::Constants::StepEvents.constants.each do |const_name|
+          event_constant = Tasker::Constants::StepEvents.const_get(const_name)
+          register_event(event_constant)
+          event_count += 1
+        end
+
+        # Register Workflow Events
+        Tasker::Constants::WorkflowEvents.constants.each do |const_name|
+          event_constant = Tasker::Constants::WorkflowEvents.const_get(const_name)
+          register_event(event_constant)
+          event_count += 1
+        end
+
+        # Register Observability Events
+        register_observability_events
+        event_count += count_observability_events
+
+        # Register Test Events (for testing environments)
+        register_test_events
+        event_count += count_test_events
+
+        Rails.logger.info("Tasker: Successfully registered #{event_count} events from static constants")
       end
 
-      # Register state machine transition events
-      def register_state_machine_events
-        register_event(Tasker::Constants::TaskEvents::BEFORE_TRANSITION)
-        register_event(Tasker::Constants::TaskEvents::RESOLVED_MANUALLY)
+      # Register nested observability events
+      def register_observability_events
+        # Task observability events
+        Tasker::Constants::ObservabilityEvents::Task.constants.each do |const_name|
+          event_constant = Tasker::Constants::ObservabilityEvents::Task.const_get(const_name)
+          register_event(event_constant)
+        end
 
-        register_event(Tasker::Constants::StepEvents::BEFORE_TRANSITION)
+        # Step observability events
+        Tasker::Constants::ObservabilityEvents::Step.constants.each do |const_name|
+          event_constant = Tasker::Constants::ObservabilityEvents::Step.const_get(const_name)
+          register_event(event_constant)
+        end
       end
 
-      # Register workflow orchestration events
-      def register_workflow_events
-        # Task lifecycle events
-        register_event(Tasker::Constants::WorkflowEvents::TASK_STARTED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_COMPLETED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_FAILED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_STATE_UNCLEAR)
-
-        # Step lifecycle events
-        register_event(Tasker::Constants::WorkflowEvents::STEP_COMPLETED)
-        register_event(Tasker::Constants::WorkflowEvents::STEP_FAILED)
-        register_event(Tasker::Constants::WorkflowEvents::STEP_EXECUTION_FAILED)
-
-        # Workflow discovery and orchestration events
-        register_event(Tasker::Constants::WorkflowEvents::ORCHESTRATION_REQUESTED)
-        register_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED)
-        register_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_BATCH_READY)
-        register_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED)
-        register_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED)
-        register_event(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS)
-
-        # Task finalization events
-        register_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED)
-        register_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED)
-      end
-
-      # Register test events for testing
+      # Register test events for testing environments
       def register_test_events
-        # Register test events - fail hard if constants don't exist
-        register_event(Tasker::Constants::TestEvents::BASIC_EVENT)
-        register_event(Tasker::Constants::TestEvents::SLOW_EVENT)
-        register_event(Tasker::Constants::TestEvents::TEST_EVENT)
+        Tasker::Constants::TestEvents.constants.each do |const_name|
+          event_constant = Tasker::Constants::TestEvents.const_get(const_name)
+          register_event(event_constant)
+        end
+      end
 
-        # Also register common test event patterns
-        register_event('Test.Event') # Common test event name
+      # Count observability events for logging
+      def count_observability_events
+        task_count = Tasker::Constants::ObservabilityEvents::Task.constants.size
+        step_count = Tasker::Constants::ObservabilityEvents::Step.constants.size
+        task_count + step_count
+      end
+
+      # Count test events for logging
+      def count_test_events
+        Tasker::Constants::TestEvents.constants.size
       end
     end
   end

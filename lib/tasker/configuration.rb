@@ -28,16 +28,19 @@ module Tasker
     #   @return [Boolean] Whether telemetry is enabled
     # @!attribute [rw] telemetry_config
     #   @return [Hash] Advanced telemetry configuration options
+    # @!attribute [rw] custom_events_directories
+    #   @return [Array<String>] Directories to search for custom event YAML files
     attr_accessor :task_handler_directory, :task_config_directory, :default_module_namespace,
                   :identity_strategy, :identity_strategy_class, :filter_parameters, :telemetry_filter_mask,
-                  :otel_telemetry_service_name, :otel_telemetry_service_version, :enable_telemetry, :telemetry_config
+                  :otel_telemetry_service_name, :otel_telemetry_service_version, :enable_telemetry, :telemetry_config,
+                  :custom_events_directories
 
     # Initialize a new configuration with default values
     #
     # @return [Configuration] A new configuration instance
     def initialize
       @task_handler_directory = 'tasks'
-      @task_config_directory = 'tasks'
+      @task_config_directory = 'tasker/tasks'
       @default_module_namespace = nil
       @identity_strategy = :default
       @identity_strategy_class = nil
@@ -47,6 +50,7 @@ module Tasker
       @otel_telemetry_service_version = Tasker::VERSION
       @enable_telemetry = true
       @telemetry_config = default_telemetry_config
+      @custom_events_directories = default_custom_events_directories
     end
 
     # Get the default filter parameters from Rails or use a default set
@@ -80,6 +84,15 @@ module Tasker
         async_processing: false, # Process events asynchronously (future enhancement)
         sampling_rate: 1.0 # Sample rate for events (1.0 = 100%, 0.1 = 10%)
       }
+    end
+
+    # Get default custom events directories
+    #
+    # @return [Array<String>] Default directories to search for custom events
+    def default_custom_events_directories
+      [
+        'config/tasker/events'
+      ]
     end
 
     # Creates and returns an appropriate identity strategy instance
@@ -129,6 +142,22 @@ module Tasker
     # @return [Boolean] True if batching is enabled
     def telemetry_batching_enabled?
       telemetry_config[:batch_events] || false
+    end
+
+    # Add custom event directories to the existing configuration
+    #
+    # @param directories [Array<String>] Additional directories to search for events
+    # @return [Array<String>] The updated directories list
+    def add_custom_events_directories(*directories)
+      @custom_events_directories = (custom_events_directories + directories.flatten).uniq
+    end
+
+    # Set custom event directories (replaces the default list)
+    #
+    # @param directories [Array<String>] Directories to search for events
+    # @return [Array<String>] The new directories list
+    def set_custom_events_directories(directories)
+      @custom_events_directories = directories.flatten
     end
 
     # Get or create the global configuration

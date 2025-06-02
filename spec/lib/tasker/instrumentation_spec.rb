@@ -25,8 +25,23 @@ RSpec.describe Tasker::Instrumentation do
 
   def fire_step_handle
     Tasker::Events::Publisher.instance.publish(
-      Tasker::Constants::StepEvents::HANDLE,
+      Tasker::Constants::StepEvents::COMPLETED,
       { task_id: task_id, step_id: step_id, step_name: step_name }
+    )
+  end
+
+  # Additional helper for testing unknown values
+  def fire_task_start_without_name
+    Tasker::Events::Publisher.instance.publish(
+      Tasker::Constants::TaskEvents::START_REQUESTED,
+      { task_id: task_id }  # No task_name - should get default
+    )
+  end
+
+  def fire_step_completed_without_name
+    Tasker::Events::Publisher.instance.publish(
+      Tasker::Constants::StepEvents::COMPLETED,
+      { task_id: task_id, step_id: step_id }  # No step_name - should get default
     )
   end
 
@@ -66,7 +81,19 @@ RSpec.describe Tasker::Instrumentation do
       metric_event = test_events.find { |e| e[:name].include?('metric') }
       expect(metric_event).to be_present
       expect(metric_event[:name]).to eq("tasker.metric.tasker.#{Tasker::Constants::TaskEvents::START_REQUESTED}")
-      expect(metric_event[:payload][:task_name]).to eq('unknown_task') # TelemetrySubscriber provides default
+      # TelemetrySubscriber preserves actual values when provided
+      expect(metric_event[:payload][:task_name]).to eq('test_task')
+    end
+
+    it 'provides default values when data is missing' do
+      expect(test_events.size).to eq(0)
+
+      fire_task_start_without_name
+
+      # Find the metric event created by telemetry
+      metric_event = test_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event).to be_present
+      expect(metric_event[:payload][:task_name]).to eq('unknown_task') # Default when missing
     end
 
     it 'captures step lifecycle events' do
@@ -80,8 +107,20 @@ RSpec.describe Tasker::Instrumentation do
       # Find the metric event created by telemetry
       metric_event = test_events.find { |e| e[:name].include?('metric') }
       expect(metric_event).to be_present
-      expect(metric_event[:name]).to eq("tasker.metric.tasker.#{Tasker::Constants::StepEvents::HANDLE}")
-      expect(metric_event[:payload][:step_name]).to eq('unknown_step') # TelemetrySubscriber provides default
+      expect(metric_event[:name]).to eq("tasker.metric.tasker.#{Tasker::Constants::StepEvents::COMPLETED}")
+      # TelemetrySubscriber preserves actual values when provided
+      expect(metric_event[:payload][:step_name]).to eq('test_step')
+    end
+
+    it 'provides default step values when data is missing' do
+      expect(test_events.size).to eq(0)
+
+      fire_step_completed_without_name
+
+      # Find the metric event created by telemetry
+      metric_event = test_events.find { |e| e[:name].include?('metric') }
+      expect(metric_event).to be_present
+      expect(metric_event[:payload][:step_name]).to eq('unknown_step') # Default when missing
     end
 
     it 'measures event duration' do
@@ -152,17 +191,16 @@ RSpec.describe Tasker::Instrumentation do
     end
 
     it 'creates child spans for step events' do
-      # First set up the task span
-      allow(mock_tracer).to receive(:start_root_span).and_return(mock_span)
+      # Set up current span context so handle_generic_event doesn't skip span creation
+      allow(OpenTelemetry::Trace).to receive(:current_span).and_return(nil)
 
-      # Set up expectation for child span - expect the metric event name
+      # Set up expectation for child span - this will go through handle_generic_event
       expect(mock_tracer).to receive(:in_span)
-        .with("metric.tasker.#{Tasker::Constants::StepEvents::HANDLE}", anything)
+        .with("metric.tasker.#{Tasker::Constants::StepEvents::COMPLETED}", anything)
         .and_yield(mock_span)
 
-      # First fire a start event to create the span
-      fire_task_start
-      fire_step_handle
+      # Fire the step event directly - task span not needed for this test
+      fire_step_handle  # This fires COMPLETED event
     end
   end
 

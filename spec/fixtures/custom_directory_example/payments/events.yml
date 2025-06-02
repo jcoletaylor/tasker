@@ -1,0 +1,41 @@
+---
+# Payment-specific events organized by domain
+# This demonstrates organizing events by business domain
+
+events:
+  custom:
+    payment_attempted:
+      constant: "payment.attempted"
+      description: "Fired when a payment attempt is made"
+      payload_schema:
+        payment_id: { type: "String", required: true }
+        order_id: { type: "String", required: true }
+        amount: { type: "Float", required: true }
+        payment_method: { type: "String", required: true }
+        gateway: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PaymentGateway", "PaymentService"]
+
+    payment_failed:
+      constant: "payment.failed"
+      description: "Fired when a payment fails"
+      payload_schema:
+        payment_id: { type: "String", required: true }
+        order_id: { type: "String", required: true }
+        failure_reason: { type: "String", required: true }
+        error_code: { type: "String", required: false }
+        retry_allowed: { type: "Boolean", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PaymentGateway", "PaymentService"]
+
+    refund_processed:
+      constant: "refund.processed"
+      description: "Fired when a refund is successfully processed"
+      payload_schema:
+        refund_id: { type: "String", required: true }
+        original_payment_id: { type: "String", required: true }
+        order_id: { type: "String", required: true }
+        refund_amount: { type: "Float", required: true }
+        reason: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["RefundService", "PaymentService"]
