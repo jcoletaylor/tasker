@@ -126,12 +126,12 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         create_dummy_task_workflow(reason: 'incomplete_payload_test').tap do |task|
           task.update!(created_at: 2.minutes.ago)
 
-          # Complete only some steps (not all)
-          steps = task.workflow_steps.to_a
-          steps[0].update!(processed_at: 30.seconds.ago, processed: true)
-          complete_step_via_state_machine(steps[0])
+          # Complete only STEP_ONE by name (not by array position to avoid ordering issues)
+          step_one = find_step_by_name(task, DummyTask::STEP_ONE)
+          step_one.update!(processed_at: 30.seconds.ago, processed: true)
+          complete_step_via_state_machine(step_one)
 
-          # Leave other steps incomplete - steps[1], steps[2], steps[3] remain pending
+          # Leave other steps incomplete - STEP_TWO, STEP_THREE, STEP_FOUR remain pending
         end
       end
 
@@ -154,11 +154,11 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
         expect(payload[:current_execution_duration]).to be > 0
         expect(payload[:current_execution_duration]).to be_within(10.0).of(120.0) # ~2 minutes
 
-        # Step statistics
+        # Step statistics - verify exact expected counts
         expect(payload[:total_steps]).to eq(4) # dummy workflow has 4 steps
-        expect(payload[:completed_steps]).to eq(1) # Only first step completed
+        expect(payload[:completed_steps]).to eq(1) # Only STEP_ONE completed
         expect(payload[:failed_steps]).to eq(0)
-        expect(payload[:pending_steps]).to eq(3) # 3 steps still pending
+        expect(payload[:pending_steps]).to eq(3) # STEP_TWO, STEP_THREE, STEP_FOUR still pending
       end
     end
 

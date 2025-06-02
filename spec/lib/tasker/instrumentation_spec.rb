@@ -34,14 +34,14 @@ RSpec.describe Tasker::Instrumentation do
   def fire_task_start_without_name
     Tasker::Events::Publisher.instance.publish(
       Tasker::Constants::TaskEvents::START_REQUESTED,
-      { task_id: task_id }  # No task_name - should get default
+      { task_id: task_id } # No task_name - should get default
     )
   end
 
   def fire_step_completed_without_name
     Tasker::Events::Publisher.instance.publish(
       Tasker::Constants::StepEvents::COMPLETED,
-      { task_id: task_id, step_id: step_id }  # No step_name - should get default
+      { task_id: task_id, step_id: step_id } # No step_name - should get default
     )
   end
 
@@ -200,7 +200,7 @@ RSpec.describe Tasker::Instrumentation do
         .and_yield(mock_span)
 
       # Fire the step event directly - task span not needed for this test
-      fire_step_handle  # This fires COMPLETED event
+      fire_step_handle # This fires COMPLETED event
     end
   end
 

@@ -27,10 +27,10 @@ module Tasker
     end
 
     def create_example_subscriber
-      if options[:create_example]
-        template 'custom_subscriber.rb.erb', 'app/subscribers/custom_events_subscriber.rb'
-        say 'Created app/subscribers/custom_events_subscriber.rb', :green
-      end
+      return unless options[:create_example]
+
+      template 'custom_subscriber.rb.erb', 'app/subscribers/custom_events_subscriber.rb'
+      say 'Created app/subscribers/custom_events_subscriber.rb', :green
     end
 
     def display_setup_instructions

@@ -35,7 +35,7 @@ module Tasker
         # @param event_name [String, Symbol] The event name
         # @return [Hash, nil] Event information or nil if not found
         def event_info(event_name)
-          definition = Tasker::Constants::EventDefinitions.find_by_constant(event_name.to_s)
+          definition = Tasker::Constants::EventDefinitions.find_by(constant: event_name.to_s)
           return nil unless definition
 
           format_event_info(definition)
@@ -87,37 +87,41 @@ module Tasker
           @custom_events << event_name unless @custom_events.include?(event_name)
 
           # Add to catalog if metadata provided
-          if metadata.any?
-            @catalog ||= {}
-            @catalog[event_name] = {
-              name: event_name,
-              category: 'custom',
-              description: metadata[:description] || 'Custom event',
-              payload_schema: metadata[:payload_schema] || {},
-              example_payload: metadata[:example] || {},
-              fired_by: metadata[:fired_by] || ['Custom']
-            }
-          end
+          return unless metadata.any?
+
+          @catalog ||= {}
+          @catalog[event_name] = {
+            name: event_name,
+            category: 'custom',
+            description: metadata[:description] || 'Custom event',
+            payload_schema: metadata[:payload_schema] || {},
+            example_payload: metadata[:example] || {},
+            fired_by: metadata[:fired_by] || ['Custom']
+          }
         end
 
         # Pretty print the catalog for console exploration
         #
         # @return [void]
         def print_catalog
-          puts "\n📊 Tasker Event Catalog"
-          puts "=" * 50
+          Rails.logger.debug "\n📊 Tasker Event Catalog"
+          Rails.logger.debug '=' * 50
 
           %w[task step workflow observability custom].each do |category|
             events = catalog.select { |_, event| event[:category] == category }
             next if events.empty?
 
-            puts "\n🔹 #{category.capitalize} Events:"
-            events.each do |_, event|
-              puts "  #{event[:name]}"
-              puts "    Description: #{event[:description]}"
-              puts "    Fired by: #{event[:fired_by].join(', ')}"
-              puts "    Payload: #{event[:payload_schema].keys.join(', ')}" if event[:payload_schema].any?
-              puts
+            Rails.logger.debug { "\n🔹 #{category.capitalize} Events:" }
+            events.each_value do |event|
+              Rails.logger.debug { "  #{event[:name]}" }
+              Rails.logger.debug { "    Description: #{event[:description]}" }
+              Rails.logger.debug { "    Fired by: #{event[:fired_by].join(', ')}" }
+              if event[:payload_schema].any?
+                Rails.logger.debug do
+                  "    Payload: #{event[:payload_schema].keys.join(', ')}"
+                end
+              end
+              Rails.logger.debug
             end
           end
         end
@@ -131,7 +135,7 @@ module Tasker
         def build_catalog_from_definitions
           catalog = {}
 
-          Tasker::Constants::EventDefinitions.all_events.each do |category, events|
+          Tasker::Constants::EventDefinitions.all_events.each_value do |events|
             events.each do |key, event_definition|
               event_constant = event_definition[:constant]
               catalog[event_constant] = format_event_info(event_definition.merge(key: key))
@@ -164,19 +168,19 @@ module Tasker
           example = {}
           schema.each do |key, type|
             example[key] = case type
-                          when 'String'
-                            key.to_s.include?('id') ? "#{key}_123" : "example_#{key}"
-                          when 'Integer'
-                            key.to_s.include?('count') ? 5 : 1
-                          when 'Float'
-                            2.34
-                          when 'Time'
-                            Time.current
-                          when 'Array<String>'
-                            ["item1", "item2"]
-                          else
-                            "example_#{key}"
-                          end
+                           when 'String'
+                             key.to_s.include?('id') ? "#{key}_123" : "example_#{key}"
+                           when 'Integer'
+                             key.to_s.include?('count') ? 5 : 1
+                           when 'Float'
+                             2.34
+                           when 'Time'
+                             Time.current
+                           when 'Array<String>'
+                             %w[item1 item2]
+                           else
+                             "example_#{key}"
+                           end
           end
           example
         end

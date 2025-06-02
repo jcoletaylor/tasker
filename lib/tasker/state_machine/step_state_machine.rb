@@ -119,7 +119,7 @@ module Tasker
             transition_map.freeze
           else
             # Fallback to hardcoded mappings if YAML not available
-            Rails.logger.warn("Tasker: system_events.yml not found, using fallback mappings")
+            Rails.logger.warn('Tasker: system_events.yml not found, using fallback mappings')
             build_fallback_transition_map
           end
         end

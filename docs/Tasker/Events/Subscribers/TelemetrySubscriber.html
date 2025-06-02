@@ -69,10 +69,12 @@
   <dl>
     <dt>Inherits:</dt>
     <dd>
-      <span class="inheritName">Object</span>
+      <span class="inheritName"><span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
       
         <ul class="fullTree">
           <li>Object</li>
+          
+            <li class="next"><span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></li>
           
             <li class="next">Tasker::Events::Subscribers::TelemetrySubscriber</li>
           
@@ -104,7 +106,7 @@
     
 <p>TelemetrySubscriber handles telemetry events for observability</p>
 
-<p>This subscriber demonstrates dry-events best practices by: - Keeping event handlers simple and focused - Using minimal ceremony for event processing - Integrating with existing instrumentation - Providing defensive handling for missing payload keys - Immediate event emission (no batching or threading)</p>
+<p>This subscriber now inherits from BaseSubscriber and uses the declarative subscription pattern with consistent constant usage. It demonstrates how to create specialized subscribers that focus on specific business logic (telemetry) while leveraging the common subscription infrastructure.</p>
 
 
   </div>
@@ -121,92 +123,11 @@
 
   
     <h2>
-      Class Method Summary
-      <small><a href="#" class="summary_toggle">collapse</a></small>
-    </h2>
-
-    <ul class="summary">
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#subscribe-class_method" title="subscribe (class method)">.<strong>subscribe</strong>(publisher)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Subscribe to all events we care about.</p>
-</div></span>
-  
-</li>
-
-      
-    </ul>
-  
-    <h2>
       Instance Method Summary
       <small><a href="#" class="summary_toggle">collapse</a></small>
     </h2>
 
     <ul class="summary">
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_batch_processed-instance_method" title="#handle_batch_processed (instance method)">#<strong>handle_batch_processed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle batch processing events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_step_backoff-instance_method" title="#handle_step_backoff (instance method)">#<strong>handle_step_backoff</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle step backoff events.</p>
-</div></span>
-  
-</li>
-
       
         <li class="public ">
   <span class="summary_signature">
@@ -235,7 +156,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_step_discovery-instance_method" title="#handle_step_discovery (instance method)">#<strong>handle_step_discovery</strong>(event)  &#x21d2; Object </a>
+      <a href="#handle_step_execution_requested-instance_method" title="#handle_step_execution_requested (instance method)">#<strong>handle_step_execution_requested</strong>(event)  &#x21d2; Object </a>
     
 
     
@@ -250,7 +171,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Handle step discovery events (step.find_viable).</p>
+<p>Handle step execution requested events.</p>
 </div></span>
   
 </li>
@@ -283,55 +204,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_step_max_retries-instance_method" title="#handle_step_max_retries (instance method)">#<strong>handle_step_max_retries</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle step max retries reached events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_step_processing-instance_method" title="#handle_step_processing (instance method)">#<strong>handle_step_processing</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle step processing events (step.handle).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_step_retry-instance_method" title="#handle_step_retry (instance method)">#<strong>handle_step_retry</strong>(event)  &#x21d2; Object </a>
+      <a href="#handle_step_retry_requested-instance_method" title="#handle_step_retry_requested (instance method)">#<strong>handle_step_retry_requested</strong>(event)  &#x21d2; Object </a>
     
 
     
@@ -347,98 +220,6 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Handle step retry events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_step_skipped-instance_method" title="#handle_step_skipped (instance method)">#<strong>handle_step_skipped</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle step skip events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_steps_execution_completed-instance_method" title="#handle_steps_execution_completed (instance method)">#<strong>handle_steps_execution_completed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_steps_execution_started-instance_method" title="#handle_steps_execution_started (instance method)">#<strong>handle_steps_execution_started</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_cancelled-instance_method" title="#handle_task_cancelled (instance method)">#<strong>handle_task_cancelled</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle task cancellation events.</p>
 </div></span>
   
 </li>
@@ -471,30 +252,6 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_task_enqueued-instance_method" title="#handle_task_enqueued (instance method)">#<strong>handle_task_enqueued</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle task enqueue events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#handle_task_failed-instance_method" title="#handle_task_failed (instance method)">#<strong>handle_task_failed</strong>(event)  &#x21d2; Object </a>
     
 
@@ -519,29 +276,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_task_finalization_completed-instance_method" title="#handle_task_finalization_completed (instance method)">#<strong>handle_task_finalization_completed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_finalization_started-instance_method" title="#handle_task_finalization_started (instance method)">#<strong>handle_task_finalization_started</strong>(event)  &#x21d2; Object </a>
+      <a href="#handle_task_initialize_requested-instance_method" title="#handle_task_initialize_requested (instance method)">#<strong>handle_task_initialize_requested</strong>(event)  &#x21d2; Object </a>
     
 
     
@@ -556,7 +291,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Handle task finalization events (NEW).</p>
+<p>Handle task initialization events.</p>
 </div></span>
   
 </li>
@@ -565,7 +300,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#handle_task_finalized-instance_method" title="#handle_task_finalized (instance method)">#<strong>handle_task_finalized</strong>(event)  &#x21d2; Object </a>
+      <a href="#handle_task_start_requested-instance_method" title="#handle_task_start_requested (instance method)">#<strong>handle_task_start_requested</strong>(event)  &#x21d2; Object </a>
     
 
     
@@ -580,16 +315,16 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Handle task finalization events.</p>
+<p>Handle task start events.</p>
 </div></span>
   
 </li>
 
       
-        <li class="public ">
+        <li class="protected ">
   <span class="summary_signature">
     
-      <a href="#handle_task_initialized-instance_method" title="#handle_task_initialized (instance method)">#<strong>handle_task_initialized</strong>(event)  &#x21d2; Object </a>
+      <a href="#should_process_event%3F-instance_method" title="#should_process_event? (instance method)">#<strong>should_process_event?</strong>(event_constant)  &#x21d2; Boolean </a>
     
 
     
@@ -597,294 +332,14 @@
   
   
   
-  
+  <span class="note title protected">protected</span>
   
   
   
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Handle task initialization events (task.initialize).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_processing-instance_method" title="#handle_task_processing (instance method)">#<strong>handle_task_processing</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle task processing events (task.handle).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_reenqueue_delayed-instance_method" title="#handle_task_reenqueue_delayed (instance method)">#<strong>handle_task_reenqueue_delayed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_reenqueue_failed-instance_method" title="#handle_task_reenqueue_failed (instance method)">#<strong>handle_task_reenqueue_failed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_reenqueue_requested-instance_method" title="#handle_task_reenqueue_requested (instance method)">#<strong>handle_task_reenqueue_requested</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_reenqueue_started-instance_method" title="#handle_task_reenqueue_started (instance method)">#<strong>handle_task_reenqueue_started</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle task re-enqueue events (NEW).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_task_started-instance_method" title="#handle_task_started (instance method)">#<strong>handle_task_started</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle task start events (task.start).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_viable_steps_discovered-instance_method" title="#handle_viable_steps_discovered (instance method)">#<strong>handle_viable_steps_discovered</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_workflow_iteration-instance_method" title="#handle_workflow_iteration (instance method)">#<strong>handle_workflow_iteration</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle workflow iteration events.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_workflow_step_completed-instance_method" title="#handle_workflow_step_completed (instance method)">#<strong>handle_workflow_step_completed</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#handle_workflow_task_started-instance_method" title="#handle_workflow_task_started (instance method)">#<strong>handle_workflow_task_started</strong>(event)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Handle workflow orchestration events (NEW).</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>  &#x21d2; TelemetrySubscriber </a>
-    
-
-    
-  </span>
-  
-  
-    <span class="note title constructor">constructor</span>
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>A new instance of TelemetrySubscriber.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#subscribe_to_all_events-instance_method" title="#subscribe_to_all_events (instance method)">#<strong>subscribe_to_all_events</strong>(publisher)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Subscribe to all relevant events using a mapping approach.</p>
+<p>Override BaseSubscriber to add telemetry-specific filtering.</p>
 </div></span>
   
 </li>
@@ -893,246 +348,31 @@
     </ul>
   
 
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods inherited from <span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="BaseSubscriber.html#build_event_subscriptions-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#build_event_subscriptions (method)">#build_event_subscriptions</a></span>, <span class='object_link'><a href="BaseSubscriber.html#custom_event%3F-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#custom_event? (method)">#custom_event?</a></span>, <span class='object_link'><a href="BaseSubscriber.html#event_subscriptions-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#event_subscriptions (method)">#event_subscriptions</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_core_attributes-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_core_attributes (method)">#extract_core_attributes</a></span>, <span class='object_link'><a href="BaseSubscriber.html#filter_events-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.filter_events (method)">filter_events</a></span>, <span class='object_link'><a href="BaseSubscriber.html#generate_handler_method_name-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#generate_handler_method_name (method)">#generate_handler_method_name</a></span>, <span class='object_link'><a href="BaseSubscriber.html#initialize-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#initialize (method)">#initialize</a></span>, <span class='object_link'><a href="BaseSubscriber.html#resolve_internal_event_constant-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#resolve_internal_event_constant (method)">#resolve_internal_event_constant</a></span>, <span class='object_link'><a href="BaseSubscriber.html#safe_get-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#safe_get (method)">#safe_get</a></span>, <span class='object_link'><a href="BaseSubscriber.html#should_handle_event%3F-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#should_handle_event? (method)">#should_handle_event?</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.subscribe (method)">subscribe</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe_to-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.subscribe_to (method)">subscribe_to</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe_to_publisher-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#subscribe_to_publisher (method)">#subscribe_to_publisher</a></span></p>
 <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
   
-    <div class="method_details first">
-  <h3 class="signature first" id="initialize-instance_method">
-  
-    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Events::Subscribers::TelemetrySubscriber (class)">TelemetrySubscriber</a></span></tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Returns a new instance of TelemetrySubscriber.</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-17
-18
-19</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 17</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
-  <span class='ivar'>@memoized_attributes</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
+    <p class="notice">This class inherits a constructor from <span class='object_link'><a href="BaseSubscriber.html#initialize-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#initialize (method)">Tasker::Events::Subscribers::BaseSubscriber</a></span></p>
   
 </div>
 
-
-  <div id="class_method_details" class="method_details_list">
-    <h2>Class Method Details</h2>
-
-    
-      <div class="method_details first">
-  <h3 class="signature first" id="subscribe-class_method">
-  
-    .<strong>subscribe</strong>(publisher)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Subscribe to all events we care about</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>publisher</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="../Publisher.html" title="Tasker::Events::Publisher (class)">Tasker::Events::Publisher</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The event publisher</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-24
-25
-26
-27</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 24</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_subscribe'>subscribe</span><span class='lparen'>(</span><span class='id identifier rubyid_publisher'>publisher</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_subscriber'>subscriber</span> <span class='op'>=</span> <span class='id identifier rubyid_new'>new</span>
-  <span class='id identifier rubyid_subscriber'>subscriber</span><span class='period'>.</span><span class='id identifier rubyid_subscribe_to_all_events'>subscribe_to_all_events</span><span class='lparen'>(</span><span class='id identifier rubyid_publisher'>publisher</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-  </div>
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="handle_batch_processed-instance_method">
-  
-    #<strong>handle_batch_processed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle batch processing events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-173
-174
-175
-176
-177
-178
-179
-180
-181
-182
-183
-184</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 173</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_batch_processed'>handle_batch_processed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='comment'># NOTE: We&#39;ll need to add this constant when batch processing events are implemented
-</span>  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>workflow.batch_processed</span><span class='tstring_end'>&#39;</span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>step_count:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:count</span><span class='comma'>,</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:step_count</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>processing_mode:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:processing_mode</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_step_backoff-instance_method">
-  
-    #<strong>handle_step_backoff</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle step backoff events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-146
-147
-148
-149
-150
-151
-152
-153
-154
-155
-156
-157</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 146</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_backoff'>handle_step_backoff</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html#BACKOFF-constant" title="Tasker::Constants::ObservabilityEvents::Step::BACKOFF (constant)">BACKOFF</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>backoff_seconds:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:backoff_seconds</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>backoff_type:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:backoff_type</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>exponential</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_step_completed-instance_method">
+  <h3 class="signature first" id="handle_step_completed-instance_method">
   
     #<strong>handle_step_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
   
@@ -1157,29 +397,25 @@
       <pre class="lines">
 
 
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116</pre>
+80
+81
+82
+83
+84
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 80</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_step_completed'>handle_step_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#COMPLETED-constant" title="Tasker::Constants::StepEvents::COMPLETED (constant)">COMPLETED</a></span></span>
-
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>execution_duration:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:execution_duration</span><span class='comma'>,</span> <span class='float'>0.0</span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#COMPLETED-constant" title="Tasker::Constants::StepEvents::COMPLETED (constant)">COMPLETED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1187,9 +423,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="handle_step_discovery-instance_method">
+  <h3 class="signature " id="handle_step_execution_requested-instance_method">
   
-    #<strong>handle_step_discovery</strong>(event)  &#x21d2; <tt>Object</tt> 
+    #<strong>handle_step_execution_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1198,7 +434,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Handle step discovery events (step.find_viable)</p>
+<p>Handle step execution requested events</p>
 
 
   </div>
@@ -1212,31 +448,23 @@
       <pre class="lines">
 
 
-225
-226
-227
-228
-229
-230
-231
-232
-233
-234
-235</pre>
+71
+72
+73
+74
+75
+76
+77</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 225</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 71</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_discovery'>handle_step_discovery</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html#FIND_VIABLE-constant" title="Tasker::Constants::ObservabilityEvents::Step::FIND_VIABLE (constant)">FIND_VIABLE</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>discovered_steps:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:count</span><span class='comma'>,</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:step_count</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>step_names:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:step_names</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_execution_requested'>handle_step_execution_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#EXECUTION_REQUESTED-constant" title="Tasker::Constants::StepEvents::EXECUTION_REQUESTED (constant)">EXECUTION_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1269,25 +497,21 @@
       <pre class="lines">
 
 
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130</pre>
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 119</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 90</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_step_failed'>handle_step_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#FAILED-constant" title="Tasker::Constants::StepEvents::FAILED (constant)">FAILED</a></span></span>
-
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>error:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='comma'>,</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span><span class='comma'>,</span>
@@ -1295,7 +519,7 @@
     <span class='label'>retry_limit:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:retry_limit</span><span class='comma'>,</span> <span class='int'>3</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#FAILED-constant" title="Tasker::Constants::StepEvents::FAILED (constant)">FAILED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1303,115 +527,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="handle_step_max_retries-instance_method">
+  <h3 class="signature " id="handle_step_retry_requested-instance_method">
   
-    #<strong>handle_step_max_retries</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle step max retries reached events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-259
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 259</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_max_retries'>handle_step_max_retries</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html#MAX_RETRIES_REACHED-constant" title="Tasker::Constants::ObservabilityEvents::Step::MAX_RETRIES_REACHED (constant)">MAX_RETRIES_REACHED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>retry_limit:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:retry_limit</span><span class='comma'>,</span> <span class='int'>3</span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_step_processing-instance_method">
-  
-    #<strong>handle_step_processing</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle step processing events (step.handle)</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-238
-239
-240
-241
-242
-243
-244</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 238</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_processing'>handle_step_processing</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html#HANDLE-constant" title="Tasker::Constants::ObservabilityEvents::Step::HANDLE (constant)">HANDLE</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_step_retry-instance_method">
-  
-    #<strong>handle_step_retry</strong>(event)  &#x21d2; <tt>Object</tt> 
+    #<strong>handle_step_retry_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1434,235 +552,25 @@
       <pre class="lines">
 
 
-133
-134
-135
-136
-137
-138
-139
-140
-141
-142
-143</pre>
+102
+103
+104
+105
+106
+107
+108
+109</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 133</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 102</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_retry'>handle_step_retry</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#RETRY_REQUESTED-constant" title="Tasker::Constants::StepEvents::RETRY_REQUESTED (constant)">RETRY_REQUESTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_retry_requested'>handle_step_retry_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>attempt_number:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:attempt_number</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>retry_limit:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:retry_limit</span><span class='comma'>,</span> <span class='int'>3</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_step_skipped-instance_method">
-  
-    #<strong>handle_step_skipped</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle step skip events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-247
-248
-249
-250
-251
-252
-253
-254
-255
-256</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 247</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_step_skipped'>handle_step_skipped</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Step.html#SKIP-constant" title="Tasker::Constants::ObservabilityEvents::Step::SKIP (constant)">SKIP</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>skip_reason:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:skip_reason</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_steps_execution_completed-instance_method">
-  
-    #<strong>handle_steps_execution_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-384
-385
-386
-387
-388
-389
-390
-391
-392
-393
-394</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 384</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_steps_execution_completed'>handle_steps_execution_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#STEPS_EXECUTION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED (constant)">STEPS_EXECUTION_COMPLETED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>processed_step_count:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:processed_step_count</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>processing_mode:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:processing_mode</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_steps_execution_started-instance_method">
-  
-    #<strong>handle_steps_execution_started</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-372
-373
-374
-375
-376
-377
-378
-379
-380
-381
-382</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 372</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_steps_execution_started'>handle_steps_execution_started</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#STEPS_EXECUTION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED (constant)">STEPS_EXECUTION_STARTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>step_count:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:step_count</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>processing_mode:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:processing_mode</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_cancelled-instance_method">
-  
-    #<strong>handle_task_cancelled</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle task cancellation events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-94
-95
-96
-97
-98
-99
-100
-101
-102
-103
-104</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 94</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_cancelled'>handle_task_cancelled</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='comment'># NOTE: We&#39;ll need to add this constant when task cancellation is implemented
-</span>  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.cancelled</span><span class='tstring_end'>&#39;</span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#RETRY_REQUESTED-constant" title="Tasker::Constants::StepEvents::RETRY_REQUESTED (constant)">RETRY_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1695,27 +603,23 @@
       <pre class="lines">
 
 
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77</pre>
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 64</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 45</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_completed'>handle_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#COMPLETED-constant" title="Tasker::Constants::TaskEvents::COMPLETED (constant)">COMPLETED</a></span></span>
-
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>duration:</span> <span class='id identifier rubyid_calculate_duration'>calculate_duration</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='comma'>,</span>
@@ -1725,64 +629,7 @@
     <span class='label'>completed_steps:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:completed_steps</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_enqueued-instance_method">
-  
-    #<strong>handle_task_enqueued</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle task enqueue events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-199
-200
-201
-202
-203
-204
-205
-206
-207
-208
-209</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 199</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_enqueued'>handle_task_enqueued</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html" title="Tasker::Constants::ObservabilityEvents::Task (module)">Task</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html#ENQUEUE-constant" title="Tasker::Constants::ObservabilityEvents::Task::ENQUEUE (constant)">ENQUEUE</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>queue_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:queue_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#COMPLETED-constant" title="Tasker::Constants::TaskEvents::COMPLETED (constant)">COMPLETED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1815,25 +662,21 @@
       <pre class="lines">
 
 
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91</pre>
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_failed'>handle_task_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#FAILED-constant" title="Tasker::Constants::TaskEvents::FAILED (constant)">FAILED</a></span></span>
-
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
     <span class='label'>error:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='comma'>,</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='rparen'>)</span><span class='comma'>,</span>
@@ -1841,7 +684,7 @@
     <span class='label'>failed_steps:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:failed_steps</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#FAILED-constant" title="Tasker::Constants::TaskEvents::FAILED (constant)">FAILED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1849,53 +692,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="handle_task_finalization_completed-instance_method">
+  <h3 class="signature " id="handle_task_initialize_requested-instance_method">
   
-    #<strong>handle_task_finalization_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-332
-333
-334
-335
-336
-337
-338
-339
-340
-341</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 332</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_finalization_completed'>handle_task_finalization_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_FINALIZATION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED (constant)">TASK_FINALIZATION_COMPLETED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>final_status:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:final_status</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_finalization_started-instance_method">
-  
-    #<strong>handle_task_finalization_started</strong>(event)  &#x21d2; <tt>Object</tt> 
+    #<strong>handle_task_initialize_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1904,7 +703,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Handle task finalization events (NEW)</p>
+<p>Handle task initialization events</p>
 
 
   </div>
@@ -1918,29 +717,23 @@
       <pre class="lines">
 
 
-321
-322
-323
-324
-325
-326
-327
-328
-329
-330</pre>
+27
+28
+29
+30
+31
+32
+33</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 321</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 27</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_finalization_started'>handle_task_finalization_started</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_FINALIZATION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED (constant)">TASK_FINALIZATION_STARTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_initialize_requested'>handle_task_initialize_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>total_processed_steps:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:total_processed_steps</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1948,9 +741,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="handle_task_finalized-instance_method">
+  <h3 class="signature " id="handle_task_start_requested-instance_method">
   
-    #<strong>handle_task_finalized</strong>(event)  &#x21d2; <tt>Object</tt> 
+    #<strong>handle_task_start_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -1959,7 +752,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Handle task finalization events</p>
+<p>Handle task start events</p>
 
 
   </div>
@@ -1973,86 +766,23 @@
       <pre class="lines">
 
 
-212
-213
-214
-215
-216
-217
-218
-219
-220
-221
-222</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 212</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_finalized'>handle_task_finalized</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html" title="Tasker::Constants::ObservabilityEvents::Task (module)">Task</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html#FINALIZE-constant" title="Tasker::Constants::ObservabilityEvents::Task::FINALIZE (constant)">FINALIZE</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>final_status:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:final_status</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_initialized-instance_method">
-  
-    #<strong>handle_task_initialized</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle task initialization events (task.initialize)</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
+36
+37
+38
+39
 40
 41
-42
-43
-44
-45
-46
-47
-48
-49</pre>
+42</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 40</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 36</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_initialized'>handle_task_initialized</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_start_requested'>handle_task_start_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_record_metric_for_event'>record_metric_for_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#START_REQUESTED-constant" title="Tasker::Constants::TaskEvents::START_REQUESTED (constant)">START_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2060,9 +790,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="handle_task_processing-instance_method">
+  <h3 class="signature " id="should_process_event?-instance_method">
   
-    #<strong>handle_task_processing</strong>(event)  &#x21d2; <tt>Object</tt> 
+    #<strong>should_process_event?</strong>(event_constant)  &#x21d2; <tt>Boolean</tt>  <span class="extras">(protected)</span>
   
 
   
@@ -2071,550 +801,44 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Handle task processing events (task.handle)</p>
+<p>Override BaseSubscriber to add telemetry-specific filtering</p>
 
 
   </div>
 </div>
 <div class="tags">
   
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-187
-188
-189
-190
-191
-192
-193
-194
-195
-196</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 187</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_processing'>handle_task_processing</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html" title="Tasker::Constants::ObservabilityEvents::Task (module)">Task</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/ObservabilityEvents/Task.html#HANDLE-constant" title="Tasker::Constants::ObservabilityEvents::Task::HANDLE (constant)">HANDLE</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_reenqueue_delayed-instance_method">
-  
-    #<strong>handle_task_reenqueue_delayed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-307
-308
-309
-310
-311
-312
-313
-314
-315
-316
-317
-318</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 307</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_reenqueue_delayed'>handle_task_reenqueue_delayed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_REENQUEUE_DELAYED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED (constant)">TASK_REENQUEUE_DELAYED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>reason:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:reason</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>delay_seconds:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:delay_seconds</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>scheduled_for:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:scheduled_for</span><span class='comma'>,</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_reenqueue_failed-instance_method">
-  
-    #<strong>handle_task_reenqueue_failed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-295
-296
-297
-298
-299
-300
-301
-302
-303
-304
-305</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 295</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_reenqueue_failed'>handle_task_reenqueue_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_REENQUEUE_FAILED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED (constant)">TASK_REENQUEUE_FAILED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>reason:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:reason</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>error:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_reenqueue_requested-instance_method">
-  
-    #<strong>handle_task_reenqueue_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 284</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_reenqueue_requested'>handle_task_reenqueue_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_REENQUEUE_REQUESTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED (constant)">TASK_REENQUEUE_REQUESTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>reason:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:reason</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_reenqueue_started-instance_method">
-  
-    #<strong>handle_task_reenqueue_started</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle task re-enqueue events (NEW)</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-272
-273
-274
-275
-276
-277
-278
-279
-280
-281
-282</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 272</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_reenqueue_started'>handle_task_reenqueue_started</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_REENQUEUE_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED (constant)">TASK_REENQUEUE_STARTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>reason:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:reason</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>current_status:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:current_status</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_task_started-instance_method">
-  
-    #<strong>handle_task_started</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle task start events (task.start)</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 52</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_task_started'>handle_task_started</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskEvents.html#START_REQUESTED-constant" title="Tasker::Constants::TaskEvents::START_REQUESTED (constant)">START_REQUESTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>task_name:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown_task</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_viable_steps_discovered-instance_method">
-  
-    #<strong>handle_viable_steps_discovered</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-360
-361
-362
-363
-364
-365
-366
-367
-368
-369
-370</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 360</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_viable_steps_discovered'>handle_viable_steps_discovered</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#VIABLE_STEPS_DISCOVERED-constant" title="Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED (constant)">VIABLE_STEPS_DISCOVERED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>viable_step_count:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:viable_step_count</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span><span class='comma'>,</span>
-    <span class='label'>step_names:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:step_names</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>,</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_workflow_iteration-instance_method">
-  
-    #<strong>handle_workflow_iteration</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle workflow iteration events</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-160
-161
-162
-163
-164
-165
-166
-167
-168
-169
-170</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 160</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_workflow_iteration'>handle_workflow_iteration</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='comment'># NOTE: We&#39;ll need to add this constant when workflow iteration events are implemented
-</span>  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>workflow.iteration</span><span class='tstring_end'>&#39;</span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>iteration:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:iteration</span><span class='comma'>,</span> <span class='int'>1</span><span class='rparen'>)</span>
-  <span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_workflow_step_completed-instance_method">
-  
-    #<strong>handle_workflow_step_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-352
-353
-354
-355
-356
-357
-358</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 352</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_workflow_step_completed'>handle_workflow_step_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#STEP_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::STEP_COMPLETED (constant)">STEP_COMPLETED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_step_attributes'>extract_step_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="handle_workflow_task_started-instance_method">
-  
-    #<strong>handle_workflow_task_started</strong>(event)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Handle workflow orchestration events (NEW)</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-344
-345
-346
-347
-348
-349
-350</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 344</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_handle_workflow_task_started'>handle_workflow_task_started</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_constant'>event_constant</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/WorkflowEvents.html#TASK_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_STARTED (constant)">TASK_STARTED</a></span></span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_attributes'>attributes</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_core_attributes'>extract_core_attributes</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_record_metric'>record_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="subscribe_to_all_events-instance_method">
-  
-    #<strong>subscribe_to_all_events</strong>(publisher)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Subscribe to all relevant events using a mapping approach</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
+<p class="tag_title">Returns:</p>
+<ul class="return">
   
     <li>
       
-        <span class='name'>publisher</span>
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
       
       
-        <span class='type'>(<tt><span class='object_link'><a href="../Publisher.html" title="Tasker::Events::Publisher (class)">Tasker::Events::Publisher</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The event publisher</p>
-</div>
       
     </li>
   
 </ul>
 
-
 </div><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-32
-33
-34
-35
-36
-37</pre>
+114
+115
+116
+117</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 32</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 114</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_subscribe_to_all_events'>subscribe_to_all_events</span><span class='lparen'>(</span><span class='id identifier rubyid_publisher'>publisher</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_event_subscriptions'>event_subscriptions</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='id identifier rubyid_handler_method'>handler_method</span><span class='op'>|</span>
-    <span class='comment'># Filter at subscription time instead of runtime for better performance
-</span>    <span class='id identifier rubyid_publisher'>publisher</span><span class='period'>.</span><span class='id identifier rubyid_subscribe'>subscribe</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_method'>method</span><span class='lparen'>(</span><span class='id identifier rubyid_handler_method'>handler_method</span><span class='rparen'>)</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_should_record_event?'>should_record_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_should_process_event?'>should_process_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
+  <span class='comment'># Only process if telemetry is enabled
+</span>  <span class='id identifier rubyid_telemetry_enabled?'>telemetry_enabled?</span> <span class='op'>&amp;&amp;</span> <span class='kw'>super</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2626,7 +850,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  1 21:57:55 2025 by
+  Generated on Mon Jun  2 17:33:00 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

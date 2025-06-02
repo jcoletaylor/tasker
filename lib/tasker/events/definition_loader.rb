@@ -46,7 +46,7 @@ module Tasker
             yaml_data = YAML.load_file(yaml_file)
             yaml_data['state_machine_mappings'] || {}
           else
-            Rails.logger.warn("Tasker: system_events.yml not found")
+            Rails.logger.warn('Tasker: system_events.yml not found')
             {}
           end
         end
@@ -122,16 +122,15 @@ module Tasker
         # @param file_path [String] Path to the YAML file
         # @return [Hash] Event metadata from the file
         def load_metadata_from_file(file_path)
-          Rails.logger.debug("Tasker: Loading event metadata from #{file_path}")
+          Rails.logger.debug { "Tasker: Loading event metadata from #{file_path}" }
 
           begin
             yaml_data = YAML.load_file(file_path)
-            return {} if yaml_data.nil? || yaml_data.empty?
+            return {} if yaml_data.blank?
 
             # Extract event metadata section
             event_metadata = yaml_data['event_metadata'] || {}
             transform_metadata_structure(event_metadata, file_path)
-
           rescue StandardError => e
             Rails.logger.error("Tasker: Failed to load event metadata from #{file_path}: #{e.message}")
             {}
@@ -180,7 +179,7 @@ module Tasker
         # @param metadata [Hash] Hash to merge metadata into
         # @return [void]
         def load_metadata_from_directory(directory_path, metadata)
-          Rails.logger.debug("Tasker: Scanning directory for metadata files: #{directory_path}")
+          Rails.logger.debug { "Tasker: Scanning directory for metadata files: #{directory_path}" }
 
           Dir.glob(File.join(directory_path, '*.{yml,yaml}')).each do |metadata_file|
             file_metadata = load_metadata_from_file(metadata_file)

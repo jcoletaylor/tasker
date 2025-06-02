@@ -122,6 +122,33 @@
       <li class="public ">
   <span class="summary_signature">
     
+      <a href="#custom_events_directories-instance_method" title="#custom_events_directories (instance method)">#<strong>custom_events_directories</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Directories to search for custom event YAML files.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#default_module_namespace-instance_method" title="#default_module_namespace (instance method)">#<strong>default_module_namespace</strong>  &#x21d2; String<sup>?</sup> </a>
     
 
@@ -489,6 +516,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#add_custom_events_directories-instance_method" title="#add_custom_events_directories (instance method)">#<strong>add_custom_events_directories</strong>(*directories)  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Add custom event directories to the existing configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#configure_telemetry-instance_method" title="#configure_telemetry (instance method)">#<strong>configure_telemetry</strong>(options = {})  &#x21d2; Hash </a>
     
 
@@ -505,6 +556,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Update telemetry configuration with custom options.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_custom_events_directories-instance_method" title="#default_custom_events_directories (instance method)">#<strong>default_custom_events_directories</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get default custom events directories.</p>
 </div></span>
   
 </li>
@@ -635,6 +710,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#set_custom_events_directories-instance_method" title="#set_custom_events_directories (instance method)">#<strong>set_custom_events_directories</strong>(directories)  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Set custom event directories (replaces the default list).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#telemetry_batching_enabled%3F-instance_method" title="#telemetry_batching_enabled? (instance method)">#<strong>telemetry_batching_enabled?</strong>  &#x21d2; Boolean </a>
     
 
@@ -688,9 +787,6 @@
       <pre class="lines">
 
 
-38
-39
-40
 41
 42
 43
@@ -700,14 +796,18 @@
 47
 48
 49
-50</pre>
+50
+51
+52
+53
+54</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 38</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 41</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='ivar'>@task_handler_directory</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasks</span><span class='tstring_end'>&#39;</span></span>
-  <span class='ivar'>@task_config_directory</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasks</span><span class='tstring_end'>&#39;</span></span>
+  <span class='ivar'>@task_config_directory</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker/tasks</span><span class='tstring_end'>&#39;</span></span>
   <span class='ivar'>@default_module_namespace</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='ivar'>@identity_strategy</span> <span class='op'>=</span> <span class='symbol'>:default</span>
   <span class='ivar'>@identity_strategy_class</span> <span class='op'>=</span> <span class='kw'>nil</span>
@@ -717,6 +817,7 @@
   <span class='ivar'>@otel_telemetry_service_version</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Tasker.html#VERSION-constant" title="Tasker::VERSION (constant)">VERSION</a></span></span>
   <span class='ivar'>@enable_telemetry</span> <span class='op'>=</span> <span class='kw'>true</span>
   <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='id identifier rubyid_default_telemetry_config'>default_telemetry_config</span>
+  <span class='ivar'>@custom_events_directories</span> <span class='op'>=</span> <span class='id identifier rubyid_default_custom_events_directories'>default_custom_events_directories</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -729,9 +830,72 @@
     <h2>Instance Attribute Details</h2>
     
       
-      <span id="default_module_namespace=-instance_method"></span>
+      <span id="custom_events_directories=-instance_method"></span>
       <div class="method_details first">
-  <h3 class="signature first" id="default_module_namespace-instance_method">
+  <h3 class="signature first" id="custom_events_directories-instance_method">
+  
+    #<strong>custom_events_directories</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Directories to search for custom event YAML files.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Directories to search for custom event YAML files</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+33
+34
+35
+36</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
+
+<span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
+<span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="default_module_namespace=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="default_module_namespace-instance_method">
   
     #<strong>default_module_namespace</strong>  &#x21d2; <tt>String</tt><sup>?</sup> 
   
@@ -774,16 +938,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -835,16 +1001,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -896,16 +1064,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -957,16 +1127,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1018,16 +1190,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1079,16 +1253,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1140,16 +1316,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1201,16 +1379,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1262,12 +1442,12 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_task_handler_directory'>task_handler_directory</span>
   <span class='ivar'>@task_handler_directory</span>
@@ -1323,16 +1503,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1384,16 +1566,18 @@
       <pre class="lines">
 
 
-31
-32
-33</pre>
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 31</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 33</span>
 
 <span class='id identifier rubyid_attr_accessor'>attr_accessor</span> <span class='symbol'>:task_handler_directory</span><span class='comma'>,</span> <span class='symbol'>:task_config_directory</span><span class='comma'>,</span> <span class='symbol'>:default_module_namespace</span><span class='comma'>,</span>
 <span class='symbol'>:identity_strategy</span><span class='comma'>,</span> <span class='symbol'>:identity_strategy_class</span><span class='comma'>,</span> <span class='symbol'>:filter_parameters</span><span class='comma'>,</span> <span class='symbol'>:telemetry_filter_mask</span><span class='comma'>,</span>
-<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span></pre>
+<span class='symbol'>:otel_telemetry_service_name</span><span class='comma'>,</span> <span class='symbol'>:otel_telemetry_service_version</span><span class='comma'>,</span> <span class='symbol'>:enable_telemetry</span><span class='comma'>,</span> <span class='symbol'>:telemetry_config</span><span class='comma'>,</span>
+<span class='symbol'>:custom_events_directories</span></pre>
     </td>
   </tr>
 </table>
@@ -1468,17 +1652,17 @@
       <pre class="lines">
 
 
-138
-139
-140
-141
-142
-143
-144
-145</pre>
+167
+168
+169
+170
+171
+172
+173
+174</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='ivar'>@configuration</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
@@ -1537,12 +1721,12 @@
       <pre class="lines">
 
 
-150
-151
-152</pre>
+179
+180
+181</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 150</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 179</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_reset_configuration!'>reset_configuration!</span>
   <span class='ivar'>@configuration</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
@@ -1559,7 +1743,86 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="configure_telemetry-instance_method">
+  <h3 class="signature first" id="add_custom_events_directories-instance_method">
+  
+    #<strong>add_custom_events_directories</strong>(*directories)  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Add custom event directories to the existing configuration</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>directories</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional directories to search for events</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The updated directories list</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+151
+152
+153</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 151</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_custom_events_directories'>add_custom_events_directories</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_directories'>directories</span><span class='rparen'>)</span>
+  <span class='ivar'>@custom_events_directories</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_custom_events_directories'>custom_events_directories</span> <span class='op'>+</span> <span class='id identifier rubyid_directories'>directories</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="configure_telemetry-instance_method">
   
     #<strong>configure_telemetry</strong>(options = {})  &#x21d2; <tt>Hash</tt> 
   
@@ -1624,15 +1887,78 @@
       <pre class="lines">
 
 
-123
-124
-125</pre>
+136
+137
+138</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 123</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 136</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_configure_telemetry'>configure_telemetry</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='id identifier rubyid_default_telemetry_config'>default_telemetry_config</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_custom_events_directories-instance_method">
+  
+    #<strong>default_custom_events_directories</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get default custom events directories</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Default directories to search for custom events</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+92
+93
+94
+95
+96</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 92</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_custom_events_directories'>default_custom_events_directories</span>
+  <span class='lbracket'>[</span>
+    <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>config/tasker/events</span><span class='tstring_end'>&#39;</span></span>
+  <span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1683,16 +2009,16 @@
       <pre class="lines">
 
 
-55
-56
-57
-58
 59
 60
-61</pre>
+61
+62
+63
+64
+65</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 55</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 59</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_filter_parameters'>default_filter_parameters</span>
   <span class='kw'>if</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_application'>application</span><span class='period'>.</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_filter_parameters'>filter_parameters</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span>
@@ -1750,10 +2076,6 @@
       <pre class="lines">
 
 
-66
-67
-68
-69
 70
 71
 72
@@ -1767,10 +2089,14 @@
 80
 81
 82
-83</pre>
+83
+84
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 66</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 70</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_telemetry_config'>default_telemetry_config</span>
   <span class='lbrace'>{</span>
@@ -1857,29 +2183,29 @@
       <pre class="lines">
 
 
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99
-100
-101
 102
 103
 104
 105
 106
 107
-108</pre>
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 102</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_identity_strategy_instance'>identity_strategy_instance</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_identity_strategy'>identity_strategy</span>
@@ -1950,19 +2276,98 @@
       <pre class="lines">
 
 
-113
-114
-115
-116
-117</pre>
+126
+127
+128
+129
+130</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 113</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_parameter_filter'>parameter_filter</span>
   <span class='ivar'>@parameter_filter</span> <span class='op'>||=</span> <span class='kw'>if</span> <span class='id identifier rubyid_filter_parameters'>filter_parameters</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span>
                           <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>ParameterFilter</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_filter_parameters'>filter_parameters</span><span class='comma'>,</span> <span class='label'>mask:</span> <span class='id identifier rubyid_telemetry_filter_mask'>telemetry_filter_mask</span><span class='rparen'>)</span>
                         <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="set_custom_events_directories-instance_method">
+  
+    #<strong>set_custom_events_directories</strong>(directories)  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Set custom event directories (replaces the default list)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>directories</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Directories to search for events</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The new directories list</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+159
+160
+161</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 159</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_set_custom_events_directories'>set_custom_events_directories</span><span class='lparen'>(</span><span class='id identifier rubyid_directories'>directories</span><span class='rparen'>)</span>
+  <span class='ivar'>@custom_events_directories</span> <span class='op'>=</span> <span class='id identifier rubyid_directories'>directories</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2013,12 +2418,12 @@
       <pre class="lines">
 
 
-130
-131
-132</pre>
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 130</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 143</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry_batching_enabled?'>telemetry_batching_enabled?</span>
   <span class='id identifier rubyid_telemetry_config'>telemetry_config</span><span class='lbracket'>[</span><span class='symbol'>:batch_events</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='kw'>false</span>
@@ -2033,7 +2438,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  1 21:57:53 2025 by
+  Generated on Mon Jun  2 17:32:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

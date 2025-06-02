@@ -108,7 +108,8 @@ RSpec.describe Tasker::Events::Subscribers::BaseSubscriber do
       it 'generates correct handler method names' do
         expect(subscriber.send(:generate_handler_method_name, 'task.completed')).to eq(:handle_task_completed)
         expect(subscriber.send(:generate_handler_method_name, 'custom.event')).to eq(:handle_custom_event)
-        expect(subscriber.send(:generate_handler_method_name, 'order.payment.failed')).to eq(:handle_order_payment_failed)
+        expect(subscriber.send(:generate_handler_method_name,
+                               'order.payment.failed')).to eq(:handle_order_payment_failed)
       end
     end
 

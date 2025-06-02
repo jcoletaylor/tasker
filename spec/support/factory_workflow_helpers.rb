@@ -406,20 +406,18 @@ module FactoryWorkflowHelpers
       parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
 
       # If parent isn't complete, complete it recursively
-      unless completion_states.include?(parent_status)
+      if completion_states.include?(parent_status)
+        Rails.logger.debug do
+          "Test Helper: Parent step #{parent.workflow_step_id} already complete (#{parent_status}) - skipping"
+        end
+      else
         Rails.logger.debug do
           "Test Helper: Completing parent step #{parent.workflow_step_id} (currently #{parent_status}) to satisfy dependency for step #{step.workflow_step_id}"
         end
         complete_step_via_state_machine(parent)
-      else
-        Rails.logger.debug do
-          "Test Helper: Parent step #{parent.workflow_step_id} already complete (#{parent_status}) - skipping"
-        end
       end
     end
   end
-
-  public
 end
 
 # Include in RSpec configuration

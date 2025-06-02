@@ -98,7 +98,13 @@
     
 <p>EventPublisher provides a clean interface for publishing events</p>
 
-<p>This concern eliminates the line noise of repeatedly calling Tasker::Events::Publisher.instance.publish throughout the codebase while maintaining proper error handling and standardized payload creation.</p>
+<p>This concern provides domain-specific event publishing methods that automatically build standardized payloads using EventPayloadBuilder. Each method corresponds to a specific event type with context-appropriate parameters.</p>
+
+<p>Usage: include Tasker::Concerns::EventPublisher</p>
+
+<p># Step events publish_step_completed(step, operation_count: 42) publish_step_failed(step, error: exception)</p>
+
+<p># Task events publish_task_started(task) publish_task_completed(task, total_duration: 120.5)</p>
 
 
   </div>
@@ -119,7 +125,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  1 21:57:52 2025 by
+  Generated on Mon Jun  2 17:32:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

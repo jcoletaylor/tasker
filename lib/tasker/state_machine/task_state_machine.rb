@@ -139,7 +139,7 @@ module Tasker
             transition_map.freeze
           else
             # Fallback to hardcoded mappings if YAML not available
-            Rails.logger.warn("Tasker: system_events.yml not found, using fallback mappings")
+            Rails.logger.warn('Tasker: system_events.yml not found, using fallback mappings')
             build_fallback_transition_map
           end
         end
@@ -163,12 +163,14 @@ module Tasker
 
             [Constants::TaskStatuses::IN_PROGRESS,
              Constants::TaskStatuses::PENDING] => Constants::TaskEvents::INITIALIZE_REQUESTED,
-            [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
+            [Constants::TaskStatuses::IN_PROGRESS,
+             Constants::TaskStatuses::COMPLETE] => Constants::TaskEvents::COMPLETED,
             [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::ERROR] => Constants::TaskEvents::FAILED,
             [Constants::TaskStatuses::IN_PROGRESS,
              Constants::TaskStatuses::CANCELLED] => Constants::TaskEvents::CANCELLED,
 
-            [Constants::TaskStatuses::ERROR, Constants::TaskStatuses::PENDING] => Constants::TaskEvents::RETRY_REQUESTED,
+            [Constants::TaskStatuses::ERROR,
+             Constants::TaskStatuses::PENDING] => Constants::TaskEvents::RETRY_REQUESTED,
             [Constants::TaskStatuses::ERROR,
              Constants::TaskStatuses::RESOLVED_MANUALLY] => Constants::TaskEvents::RESOLVED_MANUALLY,
 

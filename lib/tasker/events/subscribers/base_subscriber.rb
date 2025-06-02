@@ -45,7 +45,7 @@ module Tasker
           #   subscribe_to 'order.created', 'payment.processed'
           def subscribe_to(*events)
             # Accumulate events instead of replacing them
-            current_events = self.subscribed_events || []
+            current_events = subscribed_events || []
             self.subscribed_events = (current_events + events.map(&:to_s)).uniq
           end
 
@@ -94,7 +94,7 @@ module Tasker
         # @return [Boolean] Whether it's a custom event
         def custom_event?(event_constant)
           event_str = event_constant.to_s
-          !event_str.include?('Tasker::Constants::') && event_str.include?('.')
+          event_str.exclude?('Tasker::Constants::') && event_str.include?('.')
         end
 
         # Get event subscriptions mapping for this subscriber
@@ -167,8 +167,8 @@ module Tasker
           #   'task.completed' -> :handle_task_completed
           #   'step.failed' -> :handle_step_failed
           #   'custom.event' -> :handle_custom_event
-          clean_name = event_name.to_s.gsub('.', '_').underscore
-          "handle_#{clean_name}".to_sym
+          clean_name = event_name.to_s.tr('.', '_').underscore
+          :"handle_#{clean_name}"
         end
 
         # Check if this subscriber should handle the given event
@@ -187,7 +187,7 @@ module Tasker
         #
         # @param event_constant [String] The event constant
         # @return [Boolean] Whether to handle this event
-        def should_process_event?(event_constant)
+        def should_process_event?(_event_constant)
           true # Process all events by default
         end
 

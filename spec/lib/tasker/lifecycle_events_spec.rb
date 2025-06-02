@@ -101,8 +101,8 @@ RSpec.describe Tasker::Events::Publisher do
   describe 'core infrastructure responsibilities' do
     it 'provides the foundation for the EventPublisher concern' do
       # The Publisher should be the backend for the EventPublisher concern
-      expect(Tasker::Events::Publisher.instance).to respond_to(:publish)
-      expect(Tasker::Events::Publisher.instance).to be_a(Singleton)
+      expect(described_class.instance).to respond_to(:publish)
+      expect(described_class.instance).to be_a(Singleton)
     end
 
     it 'handles dry-events publishing' do

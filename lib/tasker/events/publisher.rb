@@ -55,7 +55,7 @@ module Tasker
       #
       # This uses the statically defined constants instead of runtime generation
       def register_static_events
-        Rails.logger.info("Tasker: Registering events from static constants")
+        Rails.logger.info('Tasker: Registering events from static constants')
 
         event_count = 0
 
