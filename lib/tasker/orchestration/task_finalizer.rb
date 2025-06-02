@@ -104,13 +104,8 @@ module Tasker
       def finalize_complete_task(task)
         return unless safe_transition_to(task, Tasker::Constants::TaskStatuses::COMPLETE)
 
-        publish_event(
-          Tasker::Constants::TaskEvents::COMPLETED,
-          {
-            task_id: task.task_id,
-            completed_at: Time.current
-          }
-        )
+        # Use clean API for task completion
+        publish_task_completed(task, completed_at: Time.current)
 
         Rails.logger.info("TaskFinalizer: Task #{task.task_id} completed successfully")
       end
@@ -122,13 +117,11 @@ module Tasker
       def finalize_error_task(task, step_group)
         return unless safe_transition_to(task, Tasker::Constants::TaskStatuses::ERROR)
 
-        publish_event(
-          Tasker::Constants::TaskEvents::FAILED,
-          {
-            task_id: task.task_id,
-            reason: 'steps_in_error_state',
-            error_details: step_group.debug_state
-          }
+        # Use clean API for task failure
+        publish_task_failed(
+          task,
+          error_message: 'steps_in_error_state',
+          error_steps: [step_group.debug_state]
         )
 
         Rails.logger.info("TaskFinalizer: Task #{task.task_id} failed due to step errors")

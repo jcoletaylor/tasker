@@ -52,14 +52,11 @@ module Tasker
             task.errors.add(:context, error)
           end
 
-          publish_event(
-            Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
-            {
-              task_id: task.task_id,
-              task_name: task.name,
-              error_message: context_errors.join(', '),
-              initialization_failed: true
-            }
+          # Use clean API for task initialization failure
+          publish_task_failed(
+            task,
+            error_message: context_errors.join(', '),
+            initialization_failed: true
           )
           return task
         end
@@ -70,6 +67,7 @@ module Tasker
           StepSequenceFactory.create_sequence_for_task!(task, task_handler)
         end
 
+        # Use clean API for task initialization success
         publish_event(
           Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
           {
@@ -103,27 +101,18 @@ module Tasker
                                     step_dependencies_established: task.workflow_steps.count
                                   })
 
-          publish_event(
-            Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
-            {
-              task_id: task.task_id,
-              task_name: task.name,
-              error_message: 'Failed to transition to in_progress',
-              initialization_failed: true
-            }
+          # Use clean API for task start failure
+          publish_task_failed(
+            task,
+            error_message: 'Failed to transition to in_progress',
+            initialization_failed: true
           )
 
           return false
         end
 
-        publish_event(
-          Tasker::Constants::TaskEvents::START_REQUESTED,
-          {
-            task_id: task.task_id,
-            task_name: task.name,
-            task_context: task.context
-          }
-        )
+        # Use clean API for task start success
+        publish_task_started(task, task_context: task.context)
 
         true
       end

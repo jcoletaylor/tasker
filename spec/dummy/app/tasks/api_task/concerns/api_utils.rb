@@ -27,10 +27,10 @@ module ApiTask
         { key => nil, error: 'Unknown response structure' }
       end
     rescue JSON::ParserError => e
-      logger.error("Error parsing JSON in get_from_results: #{e.message}")
+      Rails.logger.error("Error parsing JSON in get_from_results: #{e.message}")
       { key => nil, error: e.message }
     rescue StandardError => e
-      logger.error("Error getting key #{key} from results: #{e.message}")
+      Rails.logger.error("Error getting key #{key} from results: #{e.message}")
       { key => nil, error: e.message }
     end
   end

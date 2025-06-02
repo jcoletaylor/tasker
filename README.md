@@ -31,7 +31,7 @@ This guide will walk you through the fundamentals of using Tasker to build compl
     - [How Dependencies Work](#how-dependencies-work)
   - [Customizing Behavior](#customizing-behavior)
     - [Override the `handle` Method](#override-the-handle-method)
-    - [Separating API Calls with `call`](#separating-api-calls-with-call)
+    - [Separating API Calls with `process`](#separating-api-calls-with-process)
     - [Processing Results](#processing-results)
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
   - [Best Practices](#best-practices)
@@ -175,13 +175,13 @@ task = handler.initialize_task!(task_request)
 
 ## Step Handlers
 
-Step handlers implement the actual logic for each step in a task. They must define a `handle` method that performs the work:
+Step handlers implement the actual logic for each step in a task. They must define a `process` method that performs the work:
 
 ```ruby
 module OrderProcess
   module StepHandler
     class FetchOrderHandler
-      def handle(task, sequence, step)
+      def process(task, sequence, step)
         # Get data from the task context
         order_id = task.context['order_id']
 
@@ -198,10 +198,19 @@ end
 
 ### Key Methods
 
-- `handle(task, sequence, step)`: Required method that executes the step
+- `process(task, sequence, step)`: Required method that executes the step's business logic
   - `task`: The Tasker::Task instance being processed
   - `sequence`: The Tasker::Types::StepSequence containing all steps
   - `step`: The current Tasker::WorkflowStep being executed
+
+**Important**: Step lifecycle events are **automatically published** around your `process` method:
+- `step_started` event fired before your method executes
+- `step_completed` event fired after successful completion
+- `step_failed` event fired if an exception occurs
+
+Simply implement your business logic in `process()` - event publishing happens automatically!
+
+⚠️  **Never override the `handle()` method** - it's framework-only code that coordinates event publishing and calls your `process()` method.
 
 ## API Step Handlers
 
@@ -212,18 +221,23 @@ Tasker includes a special base class for API-based steps that provides:
 - Support for rate limiting and server-requested backoff
 - Response processing helpers
 
-To create an API step handler, inherit from `Tasker::StepHandler::Api` and implement the `call` method:
+To create an API step handler, inherit from `Tasker::StepHandler::Api` and implement the `process` method:
 
 ```ruby
 class FetchOrderStatusHandler < Tasker::StepHandler::Api
-  def call(task, _sequence, _step)
+  def process(task, _sequence, _step)
     order_id = task.context['order_id']
     # Make the API call using the provided connection
     connection.get("/orders/#{order_id}/status")
   end
+end
+```
 
-  # Optionally, override handle to process results
-  def handle(task, sequence, step)
+For custom response processing, you can optionally override the `process` method:
+
+```ruby
+class FetchOrderStatusHandler < Tasker::StepHandler::Api
+  def process(task, sequence, step)
     # Let the parent class handle the API call and set results
     super
 
@@ -233,6 +247,11 @@ class FetchOrderStatusHandler < Tasker::StepHandler::Api
   end
 end
 ```
+
+**Key Points:**
+- ✅ **Always implement `process()`** - This makes your HTTP request
+- ✅ **Optionally override `process()`** - For custom response processing
+- ⚠️ **Never override `handle()`** - Framework-only method for event publishing and coordination
 
 ### API Step Handler Configuration
 
@@ -290,7 +309,7 @@ The `handle` method is the primary entry point for step execution. Override it t
 class CartFetchStepHandler < Tasker::StepHandler::Api
   include ApiTask::ApiUtils
 
-  def call(task, _sequence, _step)
+  def process(task, _sequence, _step)
     cart_id = task.context['cart_id']
     connection.get("/carts/#{cart_id}")
   end
@@ -305,12 +324,12 @@ class CartFetchStepHandler < Tasker::StepHandler::Api
 end
 ```
 
-### Separating API Calls with `call`
+### Separating API Calls with `process`
 
-For API step handlers, the `call` method simplifies making requests:
+For API step handlers, the `process` method simplifies making requests:
 
 ```ruby
-def call(task, _sequence, _step)
+def process(task, _sequence, _step)
   # Focus only on building and making the request
   # The parent class's handle method will call this method
   # and handle retries and exponential backoff

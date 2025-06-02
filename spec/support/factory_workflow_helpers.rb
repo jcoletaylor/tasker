@@ -242,7 +242,12 @@ module FactoryWorkflowHelpers
     original_get_step_handler = handler.method(:get_step_handler)
     handler.define_singleton_method(:get_step_handler) do |step|
       step_handler = original_get_step_handler.call(step)
-      step_handler.instance_variable_set(:@connection, connection)
+
+      # For API step handlers, override the connection that was built during initialization
+      if step_handler.is_a?(Tasker::StepHandler::Api)
+        step_handler.instance_variable_set(:@connection, connection)
+      end
+
       step_handler
     end
 

@@ -12,10 +12,11 @@ class DummyApiTask
 
   # this is for convenience to read, it could be any class that has a handle method with this signature
   class Handler < Tasker::StepHandler::Api
-    # the call method is expected to raise around recoverable errors
-    # the handle method still sets results automatically, but call returns the results
+    # the process method is the developer extension point for API step handlers
+    # the handle method coordinates API-specific logic (error handling, backoff) around this method
+    # and sets results automatically, but process returns the response
     # and is responsible for using the connection object to make the API call
-    def call(_task, _sequence, step)
+    def process(_task, _sequence, step)
       connection.get('/', { step_name: step.name })
     end
   end

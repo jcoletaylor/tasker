@@ -22,39 +22,27 @@ RSpec.describe ApiTask::IntegrationExample do
       cart = ApiTask::Actions::Cart.find(cart_id)
       raise Faraday::ResourceNotFound.new('Cart not found', nil) unless cart
 
-      Faraday::Response.new(
-        Faraday::Env.from(
-          status: 200,
-          response_headers: { 'Content-Type' => 'application/json' },
-          body: { cart: cart.to_h }.to_json,
-          url: env.url
-        )
-      )
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        { cart: cart.to_h }.to_json
+      ]
     end
 
     stubs.get('/carts/999999') do |env|
-      response = Faraday::Response.new(
-        Faraday::Env.from(
-          status: 404,
-          response_headers: { 'Content-Type' => 'application/json' },
-          body: { error: 'Cart not found' }.to_json,
-          url: env.url
-        )
-      )
-      raise Faraday::ResourceNotFound.new('Cart not found', response)
+      # Create the error response and raise exception
+      response_body = { error: 'Cart not found' }.to_json
+      raise Faraday::ResourceNotFound.new('Cart not found', nil)
     end
 
     # Stub products endpoint
     stubs.get('/products') do |env|
       products = ApiTask::Actions::Product.all
-      Faraday::Response.new(
-        Faraday::Env.from(
-          status: 200,
-          response_headers: { 'Content-Type' => 'application/json' },
-          body: { products: products.map(&:to_h) }.to_json,
-          url: env.url
-        )
-      )
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        { products: products.map(&:to_h) }.to_json
+      ]
     end
   end
 

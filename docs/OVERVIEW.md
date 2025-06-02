@@ -28,24 +28,15 @@ class MyStepHandler
   include Tasker::Concerns::EventPublisher
 
   def handle(task, sequence, step)
-    # Publish step started event with automatic payload building
-    publish_step_event(
-      Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
-      step,
-      event_type: :started
-    )
+    # Clean step started event
+    publish_step_started(step)
 
     # Your business logic here
     result = perform_operation(task.context)
     step.results = { data: result }
 
-    # Publish completion with additional context
-    publish_step_event(
-      Tasker::Constants::StepEvents::COMPLETED,
-      step,
-      event_type: :completed,
-      additional_context: { operation_count: result.size }
-    )
+    # Clean completion event with additional context
+    publish_step_completed(step, operation_count: result.size)
   end
 end
 ```

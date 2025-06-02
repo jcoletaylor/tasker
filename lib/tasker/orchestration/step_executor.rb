@@ -181,14 +181,8 @@ module Tasker
 
       # Publish event for step execution start
       def publish_execution_started_event(task, step)
-        publish_event(
-          Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
-          {
-            task_id: task.task_id,
-            step_id: step.workflow_step_id,
-            step_name: step.name
-          }
-        )
+        # Use clean API for step execution start
+        publish_step_started(step)
       end
 
       # Transition step to in_progress state (bang version that raises on failure)

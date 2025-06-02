@@ -256,66 +256,89 @@ The `EventPayloadBuilder` ensures all events have consistent, comprehensive payl
 
 ### Using EventPublisher Concern
 
-When implementing custom task handlers, use the `EventPublisher` concern for clean event publishing:
+When implementing custom task handlers, events are **automatically published** around your business logic:
 
 ```ruby
-class MyCustomStepHandler
-  include Tasker::Concerns::EventPublisher
+class MyCustomStepHandler < Tasker::StepHandler::Base
+  def process(task, sequence, step)
+    # Events are published automatically around this method:
+    # 1. publish_step_started(step) - fired before this method
+    # 2. publish_step_completed(step) - fired after successful completion
+    # 3. publish_step_failed(step, error: exception) - fired if exception occurs
 
-  def handle(task, sequence, step)
-    # Publish step started event
-    publish_step_event(
-      Tasker::Constants::StepEvents::EXECUTION_REQUESTED,
-      step,
-      event_type: :started
-    )
+    # Just implement your business logic:
+    result = perform_complex_operation(task.context)
+    step.results = { success: true, data: result }
 
-    begin
-      # Your step logic here
-      result = perform_complex_operation(task.context)
-      step.results = { success: true, data: result }
-
-      # Publish step completed event with automatic payload building
-      publish_step_event(
-        Tasker::Constants::StepEvents::COMPLETED,
-        step,
-        event_type: :completed,
-        additional_context: { operation_count: result.size }
-      )
-
-    rescue StandardError => e
-      # Error information automatically captured in payload
-      publish_step_event(
-        Tasker::Constants::StepEvents::FAILED,
-        step,
-        event_type: :failed,
-        additional_context: { error_class: e.class.name }
-      )
-      raise
-    end
+    # No need to manually publish events - they happen automatically!
   end
 end
 ```
 
-### Custom Event Publishing
+#### For API Step Handlers
 
-For domain-specific events, use the generic `publish_event` method:
+API step handlers follow the same automatic event publishing pattern:
 
 ```ruby
-class OrderProcessingHandler
+class MyApiStepHandler < Tasker::StepHandler::Api
+  def process(task, sequence, step)
+    # Events published automatically around the entire process() flow
+    # Just focus on making your API call:
+
+    user_id = task.context['user_id']
+    connection.get("/users/#{user_id}/profile")
+
+    # Automatic events:
+    # - step_started before process
+    # - step_completed after successful process
+    # - step_failed if exception occurs
+  end
+
+  # Optional: custom response processing
+  def process(task, sequence, step)
+    # Let parent handle API call and basic response processing
+    super
+
+    # Add custom processing
+    user_data = step.results.body['user']
+    step.results = { user: user_data, processed_at: Time.current }
+  end
+end
+```
+
+**Key Architecture Points:**
+- ✅ **Implement `process()`** for regular step handlers (your business logic)
+- ✅ **Implement `process()`** for API step handlers (your HTTP request)
+- ✅ **Optionally override `process()`** in API handlers for custom response handling
+- ⚠️ **Never override `handle()`** - it's framework-only code that publishes events and coordinates execution
+
+#### Alternative: Manual Event Publishing (Advanced Use Cases)
+
+### Manual Event Publishing (Advanced Use Cases)
+
+For special cases where you need additional custom events, you can still manually publish them:
+
+```ruby
+class MyStepHandlerWithCustomEvents < Tasker::StepHandler::Base
   include Tasker::Concerns::EventPublisher
 
   def handle(task, sequence, step)
-    # Publish custom business event
-    publish_event(
-      'order.payment_processed',
-      {
-        order_id: task.context['order_id'],
-        payment_amount: calculate_total(task.context),
-        payment_method: 'credit_card',
-        processing_time: Time.current
-      }
-    )
+    # Automatic events still fire around this method
+
+    # Custom domain-specific event (in addition to automatic ones)
+    publish_event('order.validation_started', {
+      order_id: task.context['order_id'],
+      validation_rules: get_validation_rules
+    })
+
+    # Your business logic
+    validate_order(task.context)
+
+    # Another custom event
+    publish_event('order.validation_completed', {
+      order_id: task.context['order_id'],
+      validation_passed: true
+    })
   end
 end
 ```
@@ -364,23 +387,73 @@ The system includes safety mechanisms for production use:
 
 ## Best Practices
 
-1. **Use EventPublisher Concern** - Include in your step handlers for clean event publishing
-2. **Leverage EventPayloadBuilder** - Use `publish_step_event()` for standardized payloads
-3. **Include Business Context** - Add domain-specific data via `additional_context` parameter
-4. **Use Event Constants** - Reference `Tasker::Constants::*Events` for type safety
-5. **Monitor Error Patterns** - Use comprehensive error payloads for debugging
+1. **Use Domain-Specific Event Methods** - Use `publish_step_completed(step)` instead of verbose `publish_step_event()` patterns
+2. **Leverage Automatic Error Capture** - Use `publish_step_failed(step, error: exception)` for automatic error information
+3. **Include Business Context** - Add domain-specific data via keyword arguments: `publish_step_completed(step, operation_count: 42)`
+4. **Use Event Constants for Custom Events** - Reference `Tasker::Constants::*Events` for type safety when using `publish_event()`
+5. **Monitor Error Patterns** - Use comprehensive error payloads for debugging with automatic error context
 6. **Configure Filter Parameters** - Protect sensitive data in telemetry
 7. **Test with Real Data** - Validate telemetry in staging environments
+8. **Prefer Context-Aware Publishing** - Use `publish_step_event_for_context(step)` when event type can be inferred
+
+### Migration from Legacy API
+
+When migrating from the verbose legacy API, follow these patterns:
+
+```ruby
+# BEFORE (Legacy - still works but deprecated)
+publish_step_event(
+  Tasker::Constants::StepEvents::COMPLETED,
+  step,
+  event_type: :completed,
+  additional_context: { operation_count: result.size }
+)
+
+# AFTER (Clean - recommended)
+publish_step_completed(step, operation_count: result.size)
+```
+
+```ruby
+# BEFORE (Legacy - manual error handling)
+publish_step_event(
+  Tasker::Constants::StepEvents::FAILED,
+  step,
+  event_type: :failed,
+  additional_context: {
+    error_message: exception.message,
+    error_class: exception.class.name
+  }
+)
+
+# AFTER (Clean - automatic error capture)
+publish_step_failed(step, error: exception)
+```
+
+### Deprecation Timeline
+
+- **Legacy methods remain functional** for backward compatibility
+- **New domain-specific methods are preferred** for all new code
+- **Legacy methods will show deprecation warnings** in future versions
+- **Migration is optional but recommended** for cleaner, more maintainable code
 
 ## Troubleshooting
 
 ### Common Issues
 
 - **Missing Events**: Check that `EventPublisher` concern is included in step handlers
-- **Payload Issues**: Verify `EventPayloadBuilder` is being used via `publish_step_event()`
+- **Payload Issues**: Use domain-specific methods like `publish_step_completed(step)` for standardized payloads
+- **Parameter Confusion**: Use clean API methods instead of legacy `publish_step_event()` with redundant `event_type:` parameters
+- **Error Information Missing**: Use `publish_step_failed(step, error: exception)` for automatic error capture
 - **OpenTelemetry Errors**: Ensure Faraday instrumentation is disabled (known bug)
 - **Memory Issues**: Verify database connection pooling is configured
 - **Performance Impact**: Monitor for excessive event publishing in high-throughput scenarios
+
+### API Migration Issues
+
+- **Legacy Method Deprecation**: Update to domain-specific methods (e.g., `publish_step_completed(step)` instead of `publish_step_event(..., event_type: :completed)`)
+- **Parameter Mismatch**: New methods use keyword arguments (`publish_step_completed(step, count: 42)`) instead of hash parameters
+- **Context-Aware Publishing**: Use `publish_step_event_for_context(step)` when the event type should be inferred from step state
+- **Error Handling**: New methods automatically capture error information when `error:` parameter is provided
 
 ### Debug Commands
 
@@ -393,6 +466,13 @@ bundle exec rails runner "puts Tasker::Events::Publisher.instance.inspect"
 
 # Validate telemetry subscriber
 bundle exec rails runner "puts Tasker::Events::Subscribers::TelemetrySubscriber.new.inspect"
+
+# Test new domain-specific event methods
+bundle exec rails runner "
+  include Tasker::Concerns::EventPublisher
+  puts respond_to?(:publish_step_completed)  # Should be true
+  puts respond_to?(:publish_task_failed)     # Should be true
+"
 ```
 
 ### Log Monitoring
