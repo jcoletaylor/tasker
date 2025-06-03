@@ -15,6 +15,7 @@ require 'graphql'
 require 'json-schema'
 require 'pg'
 require 'faraday'
+require 'scenic'
 
 module Tasker
   class Engine < ::Rails::Engine

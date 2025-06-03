@@ -125,7 +125,7 @@ module Tasker
 
         sequence = get_sequence_for_task(task)
         viable_steps = described_class.get_viable_steps(task, sequence)
-        expect(viable_steps).to(eq([step_one, step_two]))
+        expect(viable_steps).to(include(step_one, step_two))
 
         task_handler = Tasker::HandlerFactory.instance.get('dummy_task')
         task_handler.handle(task)

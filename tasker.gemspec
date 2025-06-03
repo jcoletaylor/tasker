@@ -44,6 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'
   spec.add_dependency 'opentelemetry-sdk', '~> 1.8.0'
 
+  spec.add_dependency 'scenic', '~> 1.8'
   spec.add_dependency 'statesman', '~> 12.0.0'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
