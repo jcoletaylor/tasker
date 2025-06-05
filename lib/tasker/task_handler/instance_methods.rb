@@ -5,25 +5,34 @@ require 'json-schema'
 require 'tasker/constants'
 require 'tasker/types/step_sequence'
 require 'tasker/events/event_payload_builder'
+require_relative '../concerns/event_publisher'
 
 module Tasker
   module TaskHandler
     # Instance methods for task handlers
     #
-    # This module provides the core task handling functionality including
-    # task initialization, step processing, error handling, and workflow
-    # execution logic.
+    # Provides the core task processing logic including the main execution loop,
+    # step handling, and finalization. Delegates to orchestration components
+    # for implementation details while maintaining proven loop-based approach.
     #
-    # This implementation uses the proven loop-based approach while delegating
-    # actual implementation to orchestration classes for better observability.
+    # @author TaskHandler Authors
     module InstanceMethods
-      # Initialize a new task from a task request
+      include Tasker::Concerns::EventPublisher
+
+      # List of attributes to pass from the task request to the task
       #
-      # Creates a task record, validates the context against the schema,
-      # and enqueues the task for processing.
+      # These are the attributes that will be copied from the task request
+      # to the task when initializing a new task.
       #
-      # @param task_request [Tasker::Types::TaskRequest] The task request
-      # @return [Tasker::Task] The created task
+      # @return [Array<Symbol>] List of attribute names
+      TASK_REQUEST_ATTRIBUTES = %i[name context initiator reason source_system].freeze
+
+      # Initialize a task
+      #
+      # Validates input and creates initial workflow steps via orchestration.
+      #
+      # @param task_request [TaskRequest] The task request to initialize
+      # @return [Tasker::Task] The initialized task
       def initialize_task!(task_request)
         # Delegate to orchestration system
         Tasker::Orchestration::TaskInitializer.initialize_task!(task_request, self)
@@ -55,8 +64,8 @@ module Tasker
 
       # Handle a task's execution
       #
-      # This is the main entry point for processing a task. Uses the proven
-      # loop-based approach while delegating implementation to orchestration classes.
+      # This is the main entry point for processing a task. Uses proven
+      # orchestration delegation patterns for reliable workflow execution.
       #
       # @param task [Tasker::Task] The task to handle
       # @return [void]
@@ -68,19 +77,12 @@ module Tasker
 
         loop do
           task.reload
-
-          # DELEGATE: Get sequence via StepSequenceFactory (fires events internally)
           sequence = get_sequence(task)
-
-          # DELEGATE: Find viable steps via ViableStepDiscovery (fires events internally)
           viable_steps = find_viable_steps(task, sequence)
-
           break if viable_steps.empty?
 
-          # DELEGATE: Process steps via StepExecutor (preserves concurrency + fires events)
           processed_steps = handle_viable_steps(task, sequence, viable_steps)
           all_processed_steps.concat(processed_steps)
-
           break if blocked_by_errors?(task, sequence, processed_steps)
         end
 
@@ -156,22 +158,69 @@ module Tasker
         @task_finalizer ||= Tasker::Orchestration::TaskFinalizer.new
       end
 
-      # Find viable steps for execution
+      # ================================================================
+      # ASPIRATIONAL/FUTURE ENHANCEMENT METHODS
       #
-      # Delegates to ViableStepDiscovery but uses direct method call (not events)
-      # for the proven loop approach.
+      # These methods implement TaskWorkflowSummary-based intelligent
+      # workflow processing. They are kept for future enhancement but
+      # not currently used in core processing flows due to complexity
+      # vs. value considerations.
+      # ================================================================
+
+      # FUTURE: Handle steps based on TaskWorkflowSummary recommendations
       #
-      # @param task [Tasker::Task] The task to find steps for
+      # This method uses the TaskWorkflowSummary view to intelligently process steps
+      # with optimal processing strategies, eliminating the need for viable step discovery.
+      #
+      # @param summary [Tasker::TaskWorkflowSummary] The workflow summary with processing recommendations
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def handle_steps_via_summary(summary)
+        # Get the recommended step IDs for processing
+        step_ids = summary.next_steps_for_processing
+        return [] if step_ids.empty?
+
+        # Load steps with associations for processing
+        steps = Tasker::WorkflowStep.where(workflow_step_id: step_ids)
+        return [] if steps.empty?
+
+        # Log processing strategy for observability
+        Rails.logger.debug("TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy")
+
+        # Execute steps using the recommended strategy
+        task = summary.task
+        sequence = get_sequence(task)
+        execute_steps_with_strategy(task, sequence, steps, summary.processing_strategy)
+      end
+
+      # FUTURE: Execute steps using the processing strategy recommended by TaskWorkflowSummary
+      #
+      # @param task [Tasker::Task] The task being processed
       # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @return [Array<Tasker::WorkflowStep>] Array of viable steps
+      # @param steps [Array<Tasker::WorkflowStep>] Steps to execute
+      # @param strategy [String] Processing strategy ('batch_parallel', 'small_parallel', 'sequential')
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def execute_steps_with_strategy(task, sequence, steps, strategy)
+        # DELEGATE: Use the StepExecutor to handle all step execution logic
+        # The strategy is informational - StepExecutor will use task handler settings for actual execution mode
+        step_executor.execute_steps(task, sequence, steps)
+      end
+
+      # Find steps that are ready for execution
+      #
+      # This method finds workflow steps that are ready to be executed by checking
+      # their state and dependencies. It's a proven pattern that works reliably.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @return [Array<Tasker::WorkflowStep>] Steps ready for execution
       def find_viable_steps(task, sequence)
-        # Direct delegation - no event indirection needed for core loop
-        Tasker::Orchestration::ViableStepDiscovery.new.find_viable_steps(task, sequence)
+        Orchestration::ViableStepDiscovery.new.find_viable_steps(task, sequence)
       end
 
       # Handle execution of viable steps
       #
-      # Delegates to StepExecutor which preserves concurrent processing and fires events.
+      # This method executes a collection of viable steps, delegating to the
+      # StepExecutor for implementation details.
       #
       # @param task [Tasker::Task] The task being processed
       # @param sequence [Tasker::Types::StepSequence] The step sequence

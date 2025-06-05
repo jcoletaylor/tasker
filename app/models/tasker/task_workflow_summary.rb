@@ -11,7 +11,7 @@ module Tasker
     end
 
     # Associations to actual models for additional data
-    belongs_to :task, inverse_of: :workflow_summary
+    belongs_to :task, inverse_of: :task_workflow_summary
 
     # Scopes for common workflow analysis queries
     scope :with_ready_steps, -> { where('ready_steps > 0') }
