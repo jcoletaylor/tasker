@@ -135,7 +135,7 @@ module Tasker
       end
     end
 
-    # Finds a WorkflowStep with the given name by traversing the DAG
+    # Finds a WorkflowStep with the given name by traversing the DAG efficiently
     # @param steps [Array<WorkflowStep>] Array of WorkflowStep instances to search through
     # @param name [String] Name of the step to find
     # @return [WorkflowStep, nil] The first matching step found or nil if none exists
@@ -146,14 +146,22 @@ module Tasker
       matching_step = steps.find { |step| step.name == name }
       return matching_step if matching_step
 
-      # If not found in the provided steps, recursively search through children
-      steps.each do |step|
-        # Get all children of the current step
-        children = step.children.to_a
+      # If not found in provided steps, use efficient DAG traversal with scenic view
+      # Get all task IDs from the provided steps
+      task_ids = steps.map(&:task_id).uniq
 
-        # Recursively search through children
-        result = find_step_by_name(children, name)
-        return result if result
+      # For each task, get all steps and their DAG relationships
+      task_ids.each do |task_id|
+        # Get all workflow steps for this task with their DAG relationships
+        all_task_steps = WorkflowStep.joins(:named_step)
+                                    .includes(:step_dag_relationship)
+                                    .where(task_id: task_id)
+
+        # Find step by name using simple lookup instead of recursive traversal
+        found_step = all_task_steps.joins(:named_step)
+                                   .find_by(named_steps: { name: name })
+
+        return found_step if found_step
       end
 
       # No matching step found
@@ -209,7 +217,7 @@ module Tasker
       step
     end
 
-    def self.get_viable_steps(task, sequence)
+    def self.get_viable_steps(_task, sequence)
       # Get step IDs from sequence
       step_ids = sequence.steps.map(&:workflow_step_id)
 
@@ -228,9 +236,9 @@ module Tasker
     def complete?
       # Use scenic view for consistent state checking
       step_readiness_status&.current_state&.in?([
-        Constants::WorkflowStepStatuses::COMPLETE,
-        Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-      ]) || false
+                                                  Constants::WorkflowStepStatuses::COMPLETE,
+                                                  Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+                                                ]) || false
     end
 
     def in_progress?
@@ -278,7 +286,7 @@ module Tasker
 
     def has_retry_attempts?
       # Check if step has made retry attempts
-      (step_readiness_status&.attempts || 0) > 0
+      (step_readiness_status&.attempts || 0).positive?
     end
 
     def retry_exhausted?
@@ -308,12 +316,12 @@ module Tasker
 
     def root_step?
       # Check if this is a root step (no dependencies)
-      (step_readiness_status&.total_parents || 0) == 0
+      (step_readiness_status&.total_parents || 0).zero?
     end
 
     def leaf_step?
       # Check if this is a leaf step using DAG relationship view
-      step_dag_relationship&.child_count == 0
+      step_dag_relationship&.child_count&.zero?
     end
 
     private

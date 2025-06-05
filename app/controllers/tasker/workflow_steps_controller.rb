@@ -45,7 +45,7 @@ module Tasker
     private
 
     def query_base
-      @task.workflow_steps.includes(:named_step)
+      @task.workflow_steps.includes(:named_step, :step_dag_relationship)
     end
 
     # Use callbacks to share common setup or constraints between actions.
