@@ -136,9 +136,11 @@ module Tasker
           catalog = {}
 
           Tasker::Constants::EventDefinitions.all_events.each_value do |events|
-            events.each do |key, event_definition|
-              event_constant = event_definition[:constant]
-              catalog[event_constant] = format_event_info(event_definition.merge(key: key))
+            events.each_value do |event_definition|
+              event_constant = event_definition['constant'] || event_definition[:constant]
+              next unless event_constant
+
+              catalog[event_constant] = format_event_info(event_definition)
             end
           end
 
@@ -150,13 +152,20 @@ module Tasker
         # @param definition [Hash] Event definition from EventDefinitions
         # @return [Hash] Formatted event info
         def format_event_info(definition)
+          # Handle both symbol and string keys for flexibility
+          constant = definition[:constant] || definition['constant']
+          category = definition[:category] || definition['category']
+          description = definition[:description] || definition['description']
+          payload_schema = definition[:payload_schema] || definition['payload_schema']
+          fired_by = definition[:fired_by] || definition['fired_by'] || []
+
           {
-            name: definition[:constant],
-            category: definition[:category],
-            description: definition[:description],
-            payload_schema: definition[:payload_schema],
-            example_payload: generate_example_payload(definition[:payload_schema]),
-            fired_by: definition[:fired_by]
+            name: constant,
+            category: category,
+            description: description,
+            payload_schema: payload_schema,
+            example_payload: generate_example_payload(payload_schema),
+            fired_by: fired_by
           }
         end
 
@@ -165,6 +174,8 @@ module Tasker
         # @param schema [Hash] Payload schema
         # @return [Hash] Example payload
         def generate_example_payload(schema)
+          return {} if schema.blank?
+
           example = {}
           schema.each do |key, type|
             example[key] = case type
@@ -186,17 +197,7 @@ module Tasker
         end
       end
     end
-
-    # Convenience methods for the module
-    class << self
-      delegate :catalog, :event_info, :task_events, :step_events, :workflow_events,
-               :observability_events, :custom_events, :print_catalog, to: :catalog_instance
-
-      private
-
-      def catalog_instance
-        @catalog_instance ||= Catalog
-      end
-    end
   end
 end
+
+# Delegation is handled in lib/tasker/events.rb

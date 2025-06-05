@@ -1,0 +1,80 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Subscriber, type: :subscriber do
+  let(:subscriber) { described_class.new }
+  let(:publisher) { instance_double(Tasker::Events::Publisher) }
+
+<% if subscribed_events.any? -%>
+  describe 'event subscriptions' do
+    it 'subscribes to the correct events' do
+      expect(described_class.subscribed_events).to include(
+<% subscribed_events.each_with_index do |event, index| -%>
+        '<%= event %>'<%= index < subscribed_events.length - 1 ? ',' : '' %>
+<% end -%>
+      )
+    end
+  end
+
+<% handler_methods.each do |method| -%>
+  describe '#<%= method[:method_name] %>' do
+    let(:event_payload) do
+      {
+        # TODO: Add realistic event payload data for <%= method[:event] %>
+        # Examples based on event type:
+        # task_id: 'task_123',
+        # step_id: 'step_456',
+        # timestamp: Time.current,
+        # status: 'completed'
+      }
+    end
+
+    it 'handles <%= method[:event] %> events successfully' do
+      # TODO: Add expectations for your event handling logic
+      expect { subscriber.<%= method[:method_name] %>(event_payload) }.not_to raise_error
+    end
+
+    it 'logs the event processing' do
+      expect(Rails.logger).to receive(:info).with(/Handling <%= method[:event] %> event/)
+      subscriber.<%= method[:method_name] %>(event_payload)
+    end
+
+    # TODO: Add specific tests for your business logic
+    # Examples:
+    # it 'sends notification email' do
+    #   expect(SomeMailer).to receive(:deliver_later)
+    #   subscriber.<%= method[:method_name] %>(event_payload)
+    # end
+    #
+    # it 'updates external system' do
+    #   expect(ExternalApiClient).to receive(:update)
+    #   subscriber.<%= method[:method_name] %>(event_payload)
+    # end
+  end
+
+<% end -%>
+<% else -%>
+  describe 'event subscriptions' do
+    it 'can be configured with events' do
+      # TODO: Update this test once you add event subscriptions
+      expect(described_class.subscribed_events).to be_nil
+    end
+  end
+
+  # TODO: Add tests for your event handler methods
+  # Example:
+  # describe '#handle_task_completed' do
+  #   let(:event_payload) { { task_id: 'task_123', status: 'completed' } }
+  #
+  #   it 'processes the event correctly' do
+  #     expect { subscriber.handle_task_completed(event_payload) }.not_to raise_error
+  #   end
+  # end
+<% end -%>
+  describe 'integration with event system' do
+    it 'can be registered with the publisher' do
+      expect { described_class.subscribe(publisher) }.not_to raise_error
+    end
+  end
+end

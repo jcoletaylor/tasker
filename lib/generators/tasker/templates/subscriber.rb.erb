@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+# <%= class_name %>Subscriber handles specific Tasker workflow events
+#
+# This subscriber was generated with the following events:
+<% if subscribed_events.any? -%>
+<% subscribed_events.each do |event| -%>
+#   - <%= event %>
+<% end -%>
+<% else -%>
+#   (No events specified - add them manually)
+<% end -%>
+#
+# Usage:
+#   <%= class_name %>Subscriber.subscribe(Tasker::Events::Publisher.instance)
+#
+class <%= class_name %>Subscriber < Tasker::Events::Subscribers::BaseSubscriber
+<% if subscribed_events.any? -%>
+  # Subscribe to specific events
+  subscribe_to <%= subscribed_events.map { |e| "'#{e}'" }.join(', ') %>
+
+<% handler_methods.each do |method| -%>
+  # Handle <%= method[:event] %> events
+  #
+  # @param event [Hash] Event payload containing event data
+  # @return [void]
+  def <%= method[:method_signature] %>
+    # Extract event data safely
+    # event_data = safe_get(event, :key_name, 'default_value')
+
+    # TODO: Implement your <%= method[:event] %> handling logic here
+    Rails.logger.info "Handling <%= method[:event] %> event: #{event}"
+
+    # Example integrations:
+    # - Send notifications (email, Slack, PagerDuty)
+    # - Update external systems
+    # - Trigger analytics events
+    # - Log custom metrics
+  end
+
+<% end -%>
+<% else -%>
+  # TODO: Add event subscriptions
+  # subscribe_to 'task.completed', 'step.failed'
+
+  # TODO: Add event handler methods
+  # Example:
+  # def handle_task_completed(event)
+  #   task_id = safe_get(event, :task_id)
+  #   # Your custom logic here
+  # end
+<% end -%>
+  private
+
+  # Add any private helper methods here
+  #
+  # Example:
+  # def extract_notification_data(event)
+  #   {
+  #     task_id: safe_get(event, :task_id),
+  #     timestamp: safe_get(event, :timestamp, Time.current)
+  #   }
+  # end
+end

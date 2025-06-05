@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative 'events/definition_loader'
+require_relative 'constants/event_definitions'
 
 module Tasker
   # Constants used throughout the Tasker gem

@@ -40,7 +40,10 @@ module Tasker
       require 'tasker/task_builder'
       require 'tasker/state_machine'
       require 'tasker/orchestration'
+      require 'tasker/events'
       require 'tasker/events/publisher'
+      require 'tasker/events/catalog'
+      require 'tasker/events/subscribers/base_subscriber'
       require 'tasker/events/subscribers/telemetry_subscriber'
 
       # Configure Statesman for state machine support

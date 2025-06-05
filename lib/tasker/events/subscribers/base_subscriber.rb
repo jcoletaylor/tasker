@@ -30,8 +30,15 @@ module Tasker
         class_attribute :subscribed_events, instance_writer: false, default: []
         class_attribute :event_filter, instance_writer: false
 
-        def initialize
-          # Removed unused @memoized_attributes = {}
+        def initialize(name: nil, events: nil, config: {})
+          @subscription_name = name
+          @subscription_config = config
+
+          # If events are provided via constructor (from YAML), add them to subscribed events
+          return if events.blank?
+
+          current_events = self.class.subscribed_events || []
+          self.class.subscribed_events = (current_events + Array(events)).uniq
         end
 
         class << self

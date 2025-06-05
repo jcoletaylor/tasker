@@ -1,0 +1,67 @@
+# Example Event Subscription Configuration
+# This file demonstrates how to configure event subscriptions for various integrations
+# Place your subscription files in config/tasker/subscriptions/
+
+subscriptions:
+  # Sentry Integration - Error tracking for failed tasks and steps
+  sentry_integration:
+    class: 'SentrySubscriber'
+    enabled: true
+    events:
+      - 'task.failed'
+      - 'step.failed'
+      - 'workflow.error'
+    config:
+      dsn: 'https://your-sentry-dsn@sentry.io/project-id'
+      environment: 'production'
+      tags:
+        component: 'tasker'
+
+  # PagerDuty Integration - Critical alerts for system issues
+  pagerduty_alerts:
+    class: 'PagerDutySubscriber'
+    enabled: false  # Disabled by default
+    events:
+      - 'task.failed'
+      - 'workflow.blocked'
+      - 'system.error'
+    config:
+      integration_key: 'your-pagerduty-integration-key'
+      severity: 'critical'
+
+  # Slack Integration - Team notifications for task completion
+  slack_notifications:
+    class: 'SlackSubscriber'
+    enabled: true
+    events:
+      - 'task.completed'
+      - 'task.failed'
+      - 'workflow.completed'
+    config:
+      webhook_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+      channel: '#engineering'
+      username: 'Tasker Bot'
+
+  # Custom Analytics Integration - Track task metrics
+  analytics_tracker:
+    class: 'AnalyticsSubscriber'
+    enabled: true
+    events:
+      - 'task.started'
+      - 'task.completed'
+      - 'task.failed'
+      - 'step.completed'
+      - 'step.failed'
+    config:
+      api_key: 'your-analytics-api-key'
+      endpoint: 'https://api.analytics.com/events'
+
+  # Development Debug Subscriber - Detailed logging for development
+  debug_logger:
+    class: 'DebugSubscriber'
+    enabled: false  # Only enable in development
+    events:
+      - '*'  # Subscribe to all events
+    config:
+      log_level: 'debug'
+      include_payload: true
