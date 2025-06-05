@@ -26,9 +26,9 @@ RSpec.describe 'EventPublisher Integration - Clean API Demonstration', type: :in
   end
 
   let(:handler_instance) { test_handler.new }
-  let(:task) { FactoryBot.create(:task) }
-  let(:step) { FactoryBot.create(:workflow_step, task: task) }
-  let(:exception) { StandardError.new("Test failure message") }
+  let(:task) { create(:task) }
+  let(:step) { create(:workflow_step, task: task) }
+  let(:exception) { StandardError.new('Test failure message') }
 
   describe 'Clean API Demonstration' do
     it 'demonstrates the BEFORE vs AFTER API improvement' do
@@ -39,9 +39,9 @@ RSpec.describe 'EventPublisher Integration - Clean API Demonstration', type: :in
       # publish_event(Tasker::Constants::StepEvents::COMPLETED, payload)
 
       # AFTER (NEW CLEAN PATTERN):
-      expect {
+      expect do
         handler_instance.process_step_completion(step, operation_count: 42)
-      }.not_to raise_error
+      end.not_to raise_error
 
       # ✅ Single method call
       # ✅ Method name = event type
@@ -61,9 +61,9 @@ RSpec.describe 'EventPublisher Integration - Clean API Demonstration', type: :in
       # publish_event(Tasker::Constants::StepEvents::FAILED, payload)
 
       # AFTER (NEW CLEAN PATTERN):
-      expect {
+      expect do
         handler_instance.process_step_failure(step, exception)
-      }.not_to raise_error
+      end.not_to raise_error
 
       # ✅ Automatic error information extraction
       # ✅ No manual error attribute building
@@ -78,9 +78,9 @@ RSpec.describe 'EventPublisher Integration - Clean API Demonstration', type: :in
       # publish_event(Tasker::Constants::TaskEvents::COMPLETED, payload)
 
       # AFTER (NEW CLEAN PATTERN):
-      expect {
+      expect do
         handler_instance.process_task_completion(task, total_duration: 120.5)
-      }.not_to raise_error
+      end.not_to raise_error
 
       # ✅ Business context as keyword arguments
       # ✅ Method name clearly indicates event type
@@ -185,9 +185,9 @@ RSpec.describe 'EventPublisher Integration - Clean API Demonstration', type: :in
 
       # ✅ Context-Aware Publishing: Event types inferred from method names
       method_to_event_mapping = {
-        :publish_step_completed => 'step completed event',
-        :publish_step_failed => 'step failed event',
-        :publish_task_started => 'task started event'
+        publish_step_completed: 'step completed event',
+        publish_step_failed: 'step failed event',
+        publish_task_started: 'task started event'
       }
 
       method_to_event_mapping.each do |method, description|

@@ -540,14 +540,14 @@
       <pre class="lines">
 
 
-138
-139
-140
 141
-142</pre>
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 141</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_with_defaults!'>create_with_defaults!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
@@ -623,9 +623,6 @@
       <pre class="lines">
 
 
-148
-149
-150
 151
 152
 153
@@ -633,10 +630,13 @@
 155
 156
 157
-158</pre>
+158
+159
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 148</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 151</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -718,9 +718,6 @@
       <pre class="lines">
 
 
-180
-181
-182
 183
 184
 185
@@ -729,10 +726,13 @@
 188
 189
 190
-191</pre>
+191
+192
+193
+194</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 180</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -815,9 +815,6 @@
       <pre class="lines">
 
 
-164
-165
-166
 167
 168
 169
@@ -825,10 +822,13 @@
 171
 172
 173
-174</pre>
+174
+175
+176
+177</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 164</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -948,16 +948,16 @@
       <pre class="lines">
 
 
-95
-96
-97
 98
 99
 100
-101</pre>
+101
+102
+103
+104</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 95</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 98</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_annotation</span><span class='comma'>,</span>
 <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='op'>|</span>
@@ -1035,9 +1035,6 @@
       <pre class="lines">
 
 
-107
-108
-109
 110
 111
 112
@@ -1050,10 +1047,13 @@
 119
 120
 121
-122</pre>
+122
+123
+124
+125</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 110</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_current_state</span><span class='comma'>,</span>
 <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='op'>|</span>
@@ -1142,12 +1142,12 @@
       <pre class="lines">
 
 
-205
-206
-207</pre>
+208
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 205</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagram'>diagram</span><span class='lparen'>(</span><span class='id identifier rubyid_base_url'>base_url</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@diagram</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskDiagram.html" title="Tasker::TaskDiagram (class)">TaskDiagram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskDiagram.html#initialize-instance_method" title="Tasker::TaskDiagram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_base_url'>base_url</span><span class='rparen'>)</span>
@@ -1221,12 +1221,12 @@
       <pre class="lines">
 
 
-197
-198
-199</pre>
+200
+201
+202</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 197</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 200</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_step_by_name'>get_step_by_name</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>named_step:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
@@ -1262,16 +1262,16 @@
       <pre class="lines">
 
 
-70
-71
-72
 73
 74
 75
-76</pre>
+76
+77
+78
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_state_machine'>state_machine</span>
   <span class='ivar'>@state_machine</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine.html" title="Tasker::StateMachine (module)">StateMachine</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine/TaskStateMachine.html" title="Tasker::StateMachine::TaskStateMachine (class)">TaskStateMachine</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
@@ -1311,18 +1311,18 @@
       <pre class="lines">
 
 
-79
-80
-81
 82
 83
 84
 85
 86
-87</pre>
+87
+88
+89
+90</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 82</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_new_record?'>new_record?</span>
@@ -1382,14 +1382,14 @@
       <pre class="lines">
 
 
-127
-128
-129
 130
-131</pre>
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 127</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 130</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_all_associated</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span>
   <span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
@@ -1406,7 +1406,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun  2 17:32:58 2025 by
+  Generated on Wed Jun  4 21:27:36 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

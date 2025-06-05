@@ -32,8 +32,8 @@ module Tasker
 
     delegate :name, to: :named_step
 
-    has_one :step_dag_relationship, class_name: 'Tasker::StepDagRelationship', primary_key: :workflow_step_id, foreign_key: :workflow_step_id
-    has_one :step_readiness_status, class_name: 'Tasker::StepReadinessStatus', primary_key: :workflow_step_id, foreign_key: :workflow_step_id
+    has_one :step_dag_relationship, class_name: 'Tasker::StepDagRelationship', primary_key: :workflow_step_id
+    has_one :step_readiness_status, class_name: 'Tasker::StepReadinessStatus', primary_key: :workflow_step_id
 
     # Optimized scopes for efficient querying using state machine transitions
     scope :completed, lambda {

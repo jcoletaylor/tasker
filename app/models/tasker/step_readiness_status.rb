@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Tasker
   class StepReadinessStatus < ApplicationRecord
     self.table_name = 'tasker_step_readiness_statuses'
@@ -9,8 +11,8 @@ module Tasker
     end
 
     # Associations to actual models for additional data
-    belongs_to :workflow_step, foreign_key: 'workflow_step_id'
-    belongs_to :task, foreign_key: 'task_id'
+    belongs_to :workflow_step
+    belongs_to :task
 
     # Scopes for common queries
     scope :ready, -> { where(ready_for_execution: true) }
@@ -32,17 +34,19 @@ module Tasker
       return 'dependencies_not_satisfied' unless dependencies_satisfied
       return 'retry_not_eligible' unless retry_eligible
       return 'invalid_state' unless %w[pending failed].include?(current_state)
+
       'unknown'
     end
 
     def time_until_ready
       return 0 if ready_for_execution
       return nil unless next_retry_at
+
       [(next_retry_at - Time.current).to_i, 0].max
     end
 
     def dependency_status
-      if total_parents == 0
+      if total_parents.zero?
         'no_dependencies'
       elsif dependencies_satisfied
         'all_satisfied'
@@ -74,9 +78,9 @@ module Tasker
     def effective_backoff_seconds
       if backoff_request_seconds.present?
         backoff_request_seconds
-      elsif attempts.present? && attempts > 0
+      elsif attempts.present? && attempts.positive?
         # Calculate default exponential backoff (base_delay * 2^attempts, capped at 30)
-        [2 ** attempts, 30].min
+        [2**attempts, 30].min
       else
         0
       end

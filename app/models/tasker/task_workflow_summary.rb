@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Tasker
   class TaskWorkflowSummary < ApplicationRecord
     self.table_name = 'tasker_task_workflow_summaries'
@@ -9,15 +11,15 @@ module Tasker
     end
 
     # Associations to actual models for additional data
-    belongs_to :task, foreign_key: 'task_id', inverse_of: :workflow_summary
+    belongs_to :task, inverse_of: :workflow_summary
 
     # Scopes for common workflow analysis queries
     scope :with_ready_steps, -> { where('ready_steps > 0') }
     scope :blocked, -> { where(execution_status: 'blocked_by_failures') }
     scope :complete, -> { where(execution_status: 'all_complete') }
-    scope :in_progress, -> { where(execution_status: ['has_ready_steps', 'processing']) }
+    scope :in_progress, -> { where(execution_status: %w[has_ready_steps processing]) }
     scope :requiring_batch_processing, -> { where(processing_strategy: 'batch_parallel') }
-    scope :requiring_parallel_processing, -> { where(processing_strategy: ['batch_parallel', 'small_parallel']) }
+    scope :requiring_parallel_processing, -> { where(processing_strategy: %w[batch_parallel small_parallel]) }
 
     # Helper methods for workflow analysis
     def has_work_to_do?
@@ -42,22 +44,26 @@ module Tasker
 
     # Parse JSONB arrays for step IDs
     def root_step_ids_array
-      return [] unless root_step_ids.present?
+      return [] if root_step_ids.blank?
+
       root_step_ids.is_a?(Array) ? root_step_ids : JSON.parse(root_step_ids)
     end
 
     def next_executable_step_ids_array
-      return [] unless next_executable_step_ids.present?
+      return [] if next_executable_step_ids.blank?
+
       next_executable_step_ids.is_a?(Array) ? next_executable_step_ids : JSON.parse(next_executable_step_ids)
     end
 
     def blocked_step_ids_array
-      return [] unless blocked_step_ids.present?
+      return [] if blocked_step_ids.blank?
+
       blocked_step_ids.is_a?(Array) ? blocked_step_ids : JSON.parse(blocked_step_ids)
     end
 
     def blocking_reasons_array
-      return [] unless blocking_reasons.present?
+      return [] if blocking_reasons.blank?
+
       blocking_reasons.is_a?(Array) ? blocking_reasons : JSON.parse(blocking_reasons)
     end
 

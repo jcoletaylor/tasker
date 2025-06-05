@@ -66,8 +66,8 @@ module Tasker
     delegate :name, to: :named_task
     delegate :to_mermaid, to: :diagram
 
-    has_one :task_execution_context, class_name: 'Tasker::TaskExecutionContext', primary_key: :task_id, foreign_key: :task_id
-    has_one :task_workflow_summary, class_name: 'Tasker::TaskWorkflowSummary', primary_key: :task_id, foreign_key: :task_id
+    has_one :task_execution_context, class_name: 'Tasker::TaskExecutionContext', primary_key: :task_id
+    has_one :task_workflow_summary, class_name: 'Tasker::TaskWorkflowSummary', primary_key: :task_id
 
     # State machine integration
     def state_machine

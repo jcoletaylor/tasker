@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Tasker
   class TaskExecutionContext < ApplicationRecord
     self.table_name = 'tasker_task_execution_contexts'
@@ -9,7 +11,7 @@ module Tasker
     end
 
     # Associations to actual models for additional data
-    belongs_to :task, foreign_key: 'task_id', inverse_of: :execution_context
+    belongs_to :task, inverse_of: :execution_context
 
     # Scopes for common queries
     scope :with_ready_steps, -> { where('ready_steps > 0') }
@@ -41,7 +43,7 @@ module Tasker
     end
 
     def can_make_progress?
-      ready_steps > 0
+      ready_steps.positive?
     end
 
     # Status summary methods
