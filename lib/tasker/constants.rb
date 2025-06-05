@@ -44,6 +44,49 @@ module Tasker
       CANCELLED = 'cancelled'
     end
 
+    # Task execution context status values from TaskExecutionContext view
+    module TaskExecution
+      # Execution status values - indicate current workflow execution state
+      module ExecutionStatus
+        # Task has steps ready for immediate execution
+        HAS_READY_STEPS = 'has_ready_steps'
+        # Task has steps currently being processed
+        PROCESSING = 'processing'
+        # Task is blocked by failed steps with no ready steps
+        BLOCKED_BY_FAILURES = 'blocked_by_failures'
+        # All task steps have completed successfully
+        ALL_COMPLETE = 'all_complete'
+        # Task is waiting for step dependencies to be satisfied
+        WAITING_FOR_DEPENDENCIES = 'waiting_for_dependencies'
+      end
+
+      # Recommended action values - indicate what should happen next
+      module RecommendedAction
+        # Execute the steps that are ready for processing
+        EXECUTE_READY_STEPS = 'execute_ready_steps'
+        # Wait for currently processing steps to complete
+        WAIT_FOR_COMPLETION = 'wait_for_completion'
+        # Handle failed steps that are blocking progress
+        HANDLE_FAILURES = 'handle_failures'
+        # Finalize the task as all steps are complete
+        FINALIZE_TASK = 'finalize_task'
+        # Wait for dependencies to be satisfied
+        WAIT_FOR_DEPENDENCIES = 'wait_for_dependencies'
+      end
+
+      # Health status values - indicate overall workflow health
+      module HealthStatus
+        # No failed steps, workflow is healthy
+        HEALTHY = 'healthy'
+        # Has failed steps but also has ready steps (can make progress)
+        RECOVERING = 'recovering'
+        # Has failed steps and no ready steps (intervention needed)
+        BLOCKED = 'blocked'
+        # Health status cannot be determined
+        UNKNOWN = 'unknown'
+      end
+    end
+
     # All valid status values for workflow steps
     VALID_WORKFLOW_STEP_STATUSES = [
       WorkflowStepStatuses::PENDING,
@@ -81,6 +124,48 @@ module Tasker
 
     # Step status values that indicate the step is still in a working state
     VALID_STEP_STILL_WORKING_STATES = [WorkflowStepStatuses::PENDING, WorkflowStepStatuses::IN_PROGRESS].freeze
+
+    # All valid execution status values from TaskExecutionContext view
+    VALID_TASK_EXECUTION_STATUSES = [
+      TaskExecution::ExecutionStatus::HAS_READY_STEPS,
+      TaskExecution::ExecutionStatus::PROCESSING,
+      TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES,
+      TaskExecution::ExecutionStatus::ALL_COMPLETE,
+      TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
+    ].freeze
+
+    # All valid recommended action values from TaskExecutionContext view
+    VALID_TASK_RECOMMENDED_ACTIONS = [
+      TaskExecution::RecommendedAction::EXECUTE_READY_STEPS,
+      TaskExecution::RecommendedAction::WAIT_FOR_COMPLETION,
+      TaskExecution::RecommendedAction::HANDLE_FAILURES,
+      TaskExecution::RecommendedAction::FINALIZE_TASK,
+      TaskExecution::RecommendedAction::WAIT_FOR_DEPENDENCIES
+    ].freeze
+
+    # All valid health status values from TaskExecutionContext view
+    VALID_TASK_HEALTH_STATUSES = [
+      TaskExecution::HealthStatus::HEALTHY,
+      TaskExecution::HealthStatus::RECOVERING,
+      TaskExecution::HealthStatus::BLOCKED,
+      TaskExecution::HealthStatus::UNKNOWN
+    ].freeze
+
+    # Execution statuses that indicate the task can make immediate progress
+    ACTIONABLE_TASK_EXECUTION_STATUSES = [
+      TaskExecution::ExecutionStatus::HAS_READY_STEPS
+    ].freeze
+
+    # Execution statuses that indicate the task should be re-enqueued for later
+    REENQUEUE_TASK_EXECUTION_STATUSES = [
+      TaskExecution::ExecutionStatus::PROCESSING,
+      TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
+    ].freeze
+
+    # Execution statuses that indicate the task needs intervention
+    INTERVENTION_TASK_EXECUTION_STATUSES = [
+      TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
+    ].freeze
 
     # Default value for unknown identifiers
     UNKNOWN = 'unknown'
@@ -221,5 +306,65 @@ module Tasker
       # Alternative casing event for testing
       TEST_DOT_EVENT = 'Test.Event'
     end
+
+    # Task finalization reason constants
+    module TaskFinalization
+      # Error messages for task failure scenarios
+      module ErrorMessages
+        STEPS_IN_ERROR_STATE = 'steps_in_error_state'
+      end
+
+      # Reasons for re-enqueueing tasks (asynchronous processing)
+      module ReenqueueReasons
+        # Unable to determine context
+        CONTEXT_UNAVAILABLE = 'context_unavailable'
+        # Steps are currently in progress
+        STEPS_IN_PROGRESS = 'steps_in_progress'
+        # Waiting for dependency completion
+        AWAITING_DEPENDENCIES = 'awaiting_dependencies'
+        # Ready steps are available for processing
+        READY_STEPS_AVAILABLE = 'ready_steps_available'
+        # General workflow continuation
+        CONTINUING_WORKFLOW = 'continuing_workflow'
+        # Default reason for pending steps (from TaskReenqueuer)
+        PENDING_STEPS_REMAINING = 'pending_steps_remaining'
+        # Default reason for retry backoff (from TaskReenqueuer)
+        RETRY_BACKOFF = 'retry_backoff'
+      end
+
+      # Reasons for setting tasks to pending (synchronous processing)
+      module PendingReasons
+        # Unable to determine context
+        CONTEXT_UNAVAILABLE = 'context_unavailable'
+        # Waiting for current steps to complete
+        WAITING_FOR_STEP_COMPLETION = 'waiting_for_step_completion'
+        # Waiting for dependencies to be satisfied
+        WAITING_FOR_DEPENDENCIES = 'waiting_for_dependencies'
+        # Ready for immediate processing
+        READY_FOR_PROCESSING = 'ready_for_processing'
+        # Workflow temporarily paused
+        WORKFLOW_PAUSED = 'workflow_paused'
+      end
+    end
+
+    # All valid re-enqueue reason values for task finalization
+    VALID_TASK_REENQUEUE_REASONS = [
+      TaskFinalization::ReenqueueReasons::CONTEXT_UNAVAILABLE,
+      TaskFinalization::ReenqueueReasons::STEPS_IN_PROGRESS,
+      TaskFinalization::ReenqueueReasons::AWAITING_DEPENDENCIES,
+      TaskFinalization::ReenqueueReasons::READY_STEPS_AVAILABLE,
+      TaskFinalization::ReenqueueReasons::CONTINUING_WORKFLOW,
+      TaskFinalization::ReenqueueReasons::PENDING_STEPS_REMAINING,
+      TaskFinalization::ReenqueueReasons::RETRY_BACKOFF
+    ].freeze
+
+    # All valid pending reason values for task finalization
+    VALID_TASK_PENDING_REASONS = [
+      TaskFinalization::PendingReasons::CONTEXT_UNAVAILABLE,
+      TaskFinalization::PendingReasons::WAITING_FOR_STEP_COMPLETION,
+      TaskFinalization::PendingReasons::WAITING_FOR_DEPENDENCIES,
+      TaskFinalization::PendingReasons::READY_FOR_PROCESSING,
+      TaskFinalization::PendingReasons::WORKFLOW_PAUSED
+    ].freeze
   end
 end

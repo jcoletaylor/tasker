@@ -26,37 +26,37 @@ module Tasker
 
       # Optimized parent/child fields using scenic view to eliminate N+1 queries
       field :children, [GraphQLTypes::WorkflowStepType], null: true do
-        description "Child steps in the workflow DAG"
+        description 'Child steps in the workflow DAG'
       end
 
       field :parents, [GraphQLTypes::WorkflowStepType], null: true do
-        description "Parent steps in the workflow DAG"
+        description 'Parent steps in the workflow DAG'
       end
 
       # New efficient fields for IDs only (when full objects aren't needed)
       field :parent_step_ids, [ID], null: false do
-        description "IDs of parent steps (efficient lookup via scenic view)"
+        description 'IDs of parent steps (efficient lookup via scenic view)'
       end
 
       field :child_step_ids, [ID], null: false do
-        description "IDs of child steps (efficient lookup via scenic view)"
+        description 'IDs of child steps (efficient lookup via scenic view)'
       end
 
       # DAG position information from scenic view
       field :is_root_step, Boolean, null: false do
-        description "Whether this step has no dependencies"
+        description 'Whether this step has no dependencies'
       end
 
       field :is_leaf_step, Boolean, null: false do
-        description "Whether this step has no downstream dependencies"
+        description 'Whether this step has no downstream dependencies'
       end
 
       field :parent_count, Integer, null: false do
-        description "Number of parent dependencies"
+        description 'Number of parent dependencies'
       end
 
       field :child_count, Integer, null: false do
-        description "Number of child dependencies"
+        description 'Number of child dependencies'
       end
 
       # Resolver methods using scenic view optimization

@@ -13,37 +13,56 @@ module Tasker
     # Associations to actual models for additional data
     belongs_to :task, inverse_of: :execution_context
 
-    # Scopes for common queries
+    # Scopes for common queries using constants
     scope :with_ready_steps, -> { where('ready_steps > 0') }
-    scope :blocked, -> { where(execution_status: 'blocked_by_failures') }
-    scope :complete, -> { where(execution_status: 'all_complete') }
-    scope :healthy, -> { where(health_status: 'healthy') }
-    scope :in_progress, -> { where(execution_status: %w[has_ready_steps processing]) }
-    scope :needs_attention, -> { where(health_status: %w[blocked recovering]) }
+    scope :blocked, -> { where(execution_status: Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES) }
+    scope :complete, -> { where(execution_status: Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE) }
+    scope :healthy, -> { where(health_status: Constants::TaskExecution::HealthStatus::HEALTHY) }
+    scope :in_progress, lambda {
+      where(execution_status: [
+              Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS,
+              Constants::TaskExecution::ExecutionStatus::PROCESSING
+            ])
+    }
+    scope :needs_attention, lambda {
+      where(health_status: [
+              Constants::TaskExecution::HealthStatus::BLOCKED,
+              Constants::TaskExecution::HealthStatus::RECOVERING
+            ])
+    }
 
-    # Helper methods for workflow decision making
+    # Helper methods for workflow decision making using constants
     def has_work_to_do?
-      %w[has_ready_steps processing].include?(execution_status)
+      Constants::ACTIONABLE_TASK_EXECUTION_STATUSES.include?(execution_status) ||
+        execution_status == Constants::TaskExecution::ExecutionStatus::PROCESSING
     end
 
     def is_blocked?
-      execution_status == 'blocked_by_failures'
+      execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
     end
 
     def is_complete?
-      execution_status == 'all_complete'
+      execution_status == Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE
     end
 
     def is_healthy?
-      health_status == 'healthy'
+      health_status == Constants::TaskExecution::HealthStatus::HEALTHY
     end
 
     def needs_intervention?
-      health_status == 'blocked'
+      health_status == Constants::TaskExecution::HealthStatus::BLOCKED
     end
 
     def can_make_progress?
       ready_steps.positive?
+    end
+
+    def should_reenqueue?
+      Constants::REENQUEUE_TASK_EXECUTION_STATUSES.include?(execution_status)
+    end
+
+    def needs_immediate_action?
+      Constants::ACTIONABLE_TASK_EXECUTION_STATUSES.include?(execution_status)
     end
 
     # Status summary methods
@@ -74,37 +93,37 @@ module Tasker
 
     def next_action_details
       case recommended_action
-      when 'execute_ready_steps'
+      when Constants::TaskExecution::RecommendedAction::EXECUTE_READY_STEPS
         {
-          action: 'execute_ready_steps',
+          action: Constants::TaskExecution::RecommendedAction::EXECUTE_READY_STEPS,
           description: "#{ready_steps} steps ready for execution",
           urgency: 'high',
           can_proceed: true
         }
-      when 'wait_for_completion'
+      when Constants::TaskExecution::RecommendedAction::WAIT_FOR_COMPLETION
         {
-          action: 'wait_for_completion',
+          action: Constants::TaskExecution::RecommendedAction::WAIT_FOR_COMPLETION,
           description: "#{in_progress_steps} steps currently processing",
           urgency: 'low',
           can_proceed: false
         }
-      when 'handle_failures'
+      when Constants::TaskExecution::RecommendedAction::HANDLE_FAILURES
         {
-          action: 'handle_failures',
+          action: Constants::TaskExecution::RecommendedAction::HANDLE_FAILURES,
           description: "#{failed_steps} failed steps blocking progress",
           urgency: 'critical',
           can_proceed: false
         }
-      when 'finalize_task'
+      when Constants::TaskExecution::RecommendedAction::FINALIZE_TASK
         {
-          action: 'finalize_task',
+          action: Constants::TaskExecution::RecommendedAction::FINALIZE_TASK,
           description: 'All steps completed successfully',
           urgency: 'medium',
           can_proceed: true
         }
       else
         {
-          action: 'wait_for_dependencies',
+          action: Constants::TaskExecution::RecommendedAction::WAIT_FOR_DEPENDENCIES,
           description: 'Waiting for dependencies to be satisfied',
           urgency: 'low',
           can_proceed: false
@@ -112,17 +131,20 @@ module Tasker
       end
     end
 
-    # Class methods for batch operations
+    # Class methods for batch operations using constants
     def self.ready_for_processing
-      with_ready_steps.where.not(execution_status: 'blocked_by_failures')
+      with_ready_steps.where.not(execution_status: Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES)
     end
 
     def self.requiring_intervention
-      where(health_status: 'blocked')
+      where(health_status: Constants::TaskExecution::HealthStatus::BLOCKED)
     end
 
     def self.making_progress
-      where(execution_status: %w[has_ready_steps processing])
+      where(execution_status: [
+              Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS,
+              Constants::TaskExecution::ExecutionStatus::PROCESSING
+            ])
     end
   end
 end

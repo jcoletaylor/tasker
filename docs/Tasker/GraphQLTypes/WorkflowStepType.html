@@ -110,6 +110,195 @@
 
 
 
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#child_count-instance_method" title="#child_count (instance method)">#<strong>child_count</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#child_step_ids-instance_method" title="#child_step_ids (instance method)">#<strong>child_step_ids</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#children-instance_method" title="#children (instance method)">#<strong>children</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#is_leaf_step-instance_method" title="#is_leaf_step (instance method)">#<strong>is_leaf_step</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#is_root_step-instance_method" title="#is_root_step (instance method)">#<strong>is_root_step</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parent_count-instance_method" title="#parent_count (instance method)">#<strong>parent_count</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parent_step_ids-instance_method" title="#parent_step_ids (instance method)">#<strong>parent_step_ids</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Resolver methods using scenic view optimization.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#parents-instance_method" title="#parents (instance method)">#<strong>parents</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
 
   
   
@@ -118,11 +307,384 @@
   
   
   
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="child_count-instance_method">
+  
+    #<strong>child_count</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+108
+109
+110
+111
+112
+113
+114
+115</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 108</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_child_count'>child_count</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_child_step_ids'>child_step_ids</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_child_count'>child_count</span> <span class='op'>||</span> <span class='int'>0</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="child_step_ids-instance_method">
+  
+    #<strong>child_step_ids</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+72
+73
+74
+75
+76
+77
+78
+79</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 72</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_child_step_ids'>child_step_ids</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_object'>object</span><span class='lbracket'>[</span><span class='symbol'>:children_ids</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_child_step_ids_array'>child_step_ids_array</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="children-instance_method">
+  
+    #<strong>children</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 135</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_children'>children</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='id identifier rubyid_child_ids'>child_ids</span> <span class='op'>=</span> <span class='id identifier rubyid_child_step_ids'>child_step_ids</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_child_ids'>child_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='comment'># For Hash objects from mutations, we need to fetch the actual WorkflowStep objects
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='comment'># Use task_id from the hash to scope the query
+</span>    <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_object'>object</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span>
+    <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_task_id'>task_id</span>
+
+    <span class='const'><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_child_ids'>child_ids</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='comment'># Batch load all child steps at once
+</span>    <span class='const'><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_child_ids'>child_ids</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="is_leaf_step-instance_method">
+  
+    #<strong>is_leaf_step</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+90
+91
+92
+93
+94
+95
+96
+97</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 90</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_is_leaf_step'>is_leaf_step</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_child_step_ids'>child_step_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_is_leaf_step'>is_leaf_step</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="is_root_step-instance_method">
+  
+    #<strong>is_root_step</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+81
+82
+83
+84
+85
+86
+87
+88</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 81</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_is_root_step'>is_root_step</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_parent_step_ids'>parent_step_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_is_root_step'>is_root_step</span> <span class='op'>||</span> <span class='kw'>false</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parent_count-instance_method">
+  
+    #<strong>parent_count</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+99
+100
+101
+102
+103
+104
+105
+106</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 99</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parent_count'>parent_count</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_parent_step_ids'>parent_step_ids</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_parent_count'>parent_count</span> <span class='op'>||</span> <span class='int'>0</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parent_step_ids-instance_method">
+  
+    #<strong>parent_step_ids</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Resolver methods using scenic view optimization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+63
+64
+65
+66
+67
+68
+69
+70</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 63</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parent_step_ids'>parent_step_ids</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_object'>object</span><span class='lbracket'>[</span><span class='symbol'>:parents_ids</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_parent_step_ids_array'>parent_step_ids_array</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="parents-instance_method">
+  
+    #<strong>parents</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/graphql/tasker/graph_ql_types/workflow_step_type.rb', line 117</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_parents'>parents</span>
+  <span class='comment'># Handle both WorkflowStep objects and Hash objects from mutations
+</span>  <span class='id identifier rubyid_parent_ids'>parent_ids</span> <span class='op'>=</span> <span class='id identifier rubyid_parent_step_ids'>parent_step_ids</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_parent_ids'>parent_ids</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+
+  <span class='comment'># For Hash objects from mutations, we need to fetch the actual WorkflowStep objects
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='comment'># Use task_id from the hash to scope the query
+</span>    <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_object'>object</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span>
+    <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_task_id'>task_id</span>
+
+    <span class='const'><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_parent_ids'>parent_ids</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='comment'># Batch load all parent steps at once
+</span>    <span class='const'><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_parent_ids'>parent_ids</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 </div>
 
       <div id="footer">
-  Generated on Wed Jun  4 21:27:38 2025 by
+  Generated on Thu Jun  5 09:50:17 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

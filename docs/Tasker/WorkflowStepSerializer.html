@@ -209,13 +209,15 @@
 
 11
 12
-13</pre>
+13
+14</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 11</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_children_ids'>children_ids</span>
-  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_children'>children</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
+  <span class='comment'># Use scenic view for efficient parent/child lookups - eliminates N+1 queries
+</span>  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_child_step_ids_array'>child_step_ids_array</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -237,15 +239,17 @@
       <pre class="lines">
 
 
-15
 16
-17</pre>
+17
+18
+19</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 15</span>
+      <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 16</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_parents_ids'>parents_ids</span>
-  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_parents'>parents</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
+  <span class='comment'># Use scenic view for efficient parent/child lookups - eliminates N+1 queries
+</span>  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_step_dag_relationship'>step_dag_relationship</span><span class='op'>&amp;.</span><span class='id identifier rubyid_parent_step_ids_array'>parent_step_ids_array</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -267,16 +271,22 @@
       <pre class="lines">
 
 
-19
-20
-21</pre>
+21
+22
+23
+24
+25
+26</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 19</span>
+      <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_siblings_ids'>siblings_ids</span>
-  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_siblings'>siblings</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
+  <span class='comment'># Siblings are more complex - get all children of this step&#39;s parents, excluding self
+</span>  <span class='comment'># For now, fall back to original pattern but add comment for future optimization
+</span>  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_siblings'>siblings</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
+  <span class='comment'># TODO: Optimize siblings using DAG view - need to aggregate sibling relationships
+</span><span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -287,7 +297,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun  4 21:27:38 2025 by
+  Generated on Thu Jun  5 09:50:17 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

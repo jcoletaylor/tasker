@@ -183,33 +183,35 @@ module Tasker
 
       # Add edges from task to root steps (those without parents)
       workflow_steps.each do |step|
-        if step.step_dag_relationship&.is_root_step
-          edges << build_edge(
-            "task_#{@task.task_id}",
-            "step_#{step.workflow_step_id}"
-          )
-        end
+        next unless step.step_dag_relationship&.is_root_step
+
+        edges << build_edge(
+          "task_#{@task.task_id}",
+          "step_#{step.workflow_step_id}"
+        )
       end
 
       # Collect all edge relationships for efficient batch lookup
       all_edge_data = []
       workflow_steps.each do |step|
-        if step.step_dag_relationship
-          child_ids = step.step_dag_relationship.child_step_ids_array
-          child_ids.each do |child_id|
-            all_edge_data << {
-              from_step_id: step.workflow_step_id,
-              to_step_id: child_id
-            }
-          end
+        next unless step.step_dag_relationship
+
+        child_ids = step.step_dag_relationship.child_step_ids_array
+        child_ids.each do |child_id|
+          all_edge_data << {
+            from_step_id: step.workflow_step_id,
+            to_step_id: child_id
+          }
         end
       end
 
       # Batch load all WorkflowStepEdge records for edge labels
       edge_records = {}
       if all_edge_data.any?
-        conditions = all_edge_data.map { |data| "(from_step_id = #{data[:from_step_id]} AND to_step_id = #{data[:to_step_id]})" }
-        Tasker::WorkflowStepEdge.where(conditions.join(' OR ')).each do |edge_record|
+        conditions = all_edge_data.map do |data|
+          "(from_step_id = #{data[:from_step_id]} AND to_step_id = #{data[:to_step_id]})"
+        end
+        Tasker::WorkflowStepEdge.where(conditions.join(' OR ')).find_each do |edge_record|
           key = "#{edge_record.from_step_id}_#{edge_record.to_step_id}"
           edge_records[key] = edge_record
         end

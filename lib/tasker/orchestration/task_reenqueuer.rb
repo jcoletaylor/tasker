@@ -19,7 +19,7 @@ module Tasker
       # @param task [Tasker::Task] The task to re-enqueue
       # @param reason [String] The reason for re-enqueueing (for observability)
       # @return [Boolean] True if re-enqueueing was successful
-      def reenqueue_task(task, reason: 'pending_steps_remaining')
+      def reenqueue_task(task, reason: Constants::TaskFinalization::ReenqueueReasons::PENDING_STEPS_REMAINING)
         # Fire re-enqueue started event
         publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED,
@@ -73,7 +73,8 @@ module Tasker
       # @param delay_seconds [Integer] Number of seconds to delay
       # @param reason [String] The reason for delayed re-enqueueing
       # @return [Boolean] True if scheduling was successful
-      def reenqueue_task_delayed(task, delay_seconds:, reason: 'retry_backoff')
+      def reenqueue_task_delayed(task, delay_seconds:,
+                                 reason: Constants::TaskFinalization::ReenqueueReasons::RETRY_BACKOFF)
         # Fire delayed re-enqueue started event
         publish_event(
           Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED,

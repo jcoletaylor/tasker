@@ -336,7 +336,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
                   END) AS completed_steps,
               count(
                   CASE
-                      WHEN ((srs.current_state)::text = 'failed'::text) THEN 1
+                      WHEN ((srs.current_state)::text = 'error'::text) THEN 1
                       ELSE NULL::integer
                   END) AS failed_steps,
               count(

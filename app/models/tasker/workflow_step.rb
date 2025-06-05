@@ -154,8 +154,8 @@ module Tasker
       task_ids.each do |task_id|
         # Get all workflow steps for this task with their DAG relationships
         all_task_steps = WorkflowStep.joins(:named_step)
-                                    .includes(:step_dag_relationship)
-                                    .where(task_id: task_id)
+                                     .includes(:step_dag_relationship)
+                                     .where(task_id: task_id)
 
         # Find step by name using simple lookup instead of recursive traversal
         found_step = all_task_steps.joins(:named_step)

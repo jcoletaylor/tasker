@@ -109,7 +109,7 @@
     
 <p>TaskFinalizer handles task completion and finalization logic</p>
 
-<p>This class provides implementation for task finalization while firing lifecycle events for observability. No complex event subscriptions needed.</p>
+<p>This class provides implementation for task finalization while firing lifecycle events for observability. Enhanced with TaskExecutionContext integration for intelligent decision making.</p>
 
 
   </div>
@@ -159,7 +159,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#finalize_task-instance_method" title="#finalize_task (instance method)">#<strong>finalize_task</strong>(task_id)  &#x21d2; Object </a>
+      <a href="#finalize_task-instance_method" title="#finalize_task (instance method)">#<strong>finalize_task</strong>(task_id, synchronous: false)  &#x21d2; Object </a>
     
 
     
@@ -174,7 +174,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Finalize a task based on its current state.</p>
+<p>Finalize a task based on its current state using TaskExecutionContext.</p>
 </div></span>
   
 </li>
@@ -357,7 +357,6 @@
       <pre class="lines">
 
 
-24
 25
 26
 27
@@ -371,21 +370,52 @@
 35
 36
 37
-38</pre>
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 24</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 25</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_blocked_by_errors?'>blocked_by_errors?</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid__processed_steps'>_processed_steps</span><span class='rparen'>)</span>
-  <span class='comment'># Get steps that are in error state using the state machine scope
-</span>  <span class='id identifier rubyid_error_steps'>error_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_failed'>failed</span>
+  <span class='comment'># Use TaskExecutionContext for efficient decision making
+</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../TaskExecutionContext.html" title="Tasker::TaskExecutionContext (class)">TaskExecutionContext</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_is_blocked'>is_blocked</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#BLOCKED_BY_FAILURES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES (constant)">BLOCKED_BY_FAILURES</a></span></span>
+
+  <span class='kw'>if</span> <span class='id identifier rubyid_is_blocked'>is_blocked</span>
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> is blocked - </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_failed_steps'>failed_steps</span><span class='embexpr_end'>}</span><span class='tstring_content'> failed steps, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_ready_steps'>ready_steps</span><span class='embexpr_end'>}</span><span class='tstring_content'> ready steps</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> blocked by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_failed_steps'>failed_steps</span><span class='embexpr_end'>}</span><span class='tstring_content'> failed steps (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_health_status'>health_status</span><span class='embexpr_end'>}</span><span class='tstring_content'> health)</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_is_blocked'>is_blocked</span>
+<span class='kw'>rescue</span> <span class='const'>ActiveRecord</span><span class='op'>::</span><span class='const'>RecordNotFound</span>
+  <span class='comment'># Fallback to original logic if context not available
+</span>  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: TaskExecutionContext not found for task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>, using fallback logic</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_error_steps'>error_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_failed'>failed</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span>
-    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> is blocked by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> error steps</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
-
-    <span class='comment'># Log instead of firing unregistered event
-</span>    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> blocked by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> error steps: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_named_steps.name</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> is blocked by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> error steps (fallback)</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TaskFinalizer: Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> blocked by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> error steps: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_steps'>error_steps</span><span class='period'>.</span><span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_named_steps.name</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='kw'>true</span>
   <span class='kw'>else</span>
     <span class='kw'>false</span>
@@ -399,7 +429,7 @@
       <div class="method_details ">
   <h3 class="signature " id="finalize_task-instance_method">
   
-    #<strong>finalize_task</strong>(task_id)  &#x21d2; <tt>Object</tt> 
+    #<strong>finalize_task</strong>(task_id, synchronous: false)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -408,7 +438,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Finalize a task based on its current state</p>
+<p>Finalize a task based on its current state using TaskExecutionContext</p>
 
 
   </div>
@@ -433,6 +463,24 @@
       
     </li>
   
+    <li>
+      
+        <span class='name'>synchronous</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether this is synchronous processing (default: false)</p>
+</div>
+      
+    </li>
+  
 </ul>
 
 
@@ -442,40 +490,74 @@
       <pre class="lines">
 
 
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86</pre>
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 71</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 87</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>synchronous:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_sequence'>sequence</span> <span class='op'>=</span> <span class='id identifier rubyid_get_sequence_for_task'>get_sequence_for_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_step_group'>step_group</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../TaskHandler.html" title="Tasker::TaskHandler (module)">TaskHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../TaskHandler/StepGroup.html" title="Tasker::TaskHandler::StepGroup (class)">StepGroup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_build'><span class='object_link'><a href="../TaskHandler/StepGroup.html#build-class_method" title="Tasker::TaskHandler::StepGroup.build (method)">build</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_get_task_execution_context'>get_task_execution_context</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
 
-  <span class='comment'># Express framework-level decisions through focused method calls
-</span>  <span class='kw'>if</span> <span class='id identifier rubyid_step_group'>step_group</span><span class='period'>.</span><span class='id identifier rubyid_complete?'>complete?</span>
-    <span class='id identifier rubyid_finalize_complete_task'>finalize_complete_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_step_group'>step_group</span><span class='period'>.</span><span class='id identifier rubyid_error?'>error?</span>
-    <span class='id identifier rubyid_finalize_error_task'>finalize_error_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_step_group'>step_group</span><span class='rparen'>)</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_step_group'>step_group</span><span class='period'>.</span><span class='id identifier rubyid_pending?'>pending?</span>
-    <span class='id identifier rubyid_reenqueue_task'>reenqueue_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
+  <span class='comment'># Use TaskExecutionContext for intelligent decision making
+</span>  <span class='kw'>case</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span>
+  <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#ALL_COMPLETE-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE (constant)">ALL_COMPLETE</a></span></span>
+    <span class='id identifier rubyid_finalize_complete_task'>finalize_complete_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#BLOCKED_BY_FAILURES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES (constant)">BLOCKED_BY_FAILURES</a></span></span>
+    <span class='id identifier rubyid_finalize_error_task'>finalize_error_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#HAS_READY_STEPS-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS (constant)">HAS_READY_STEPS</a></span></span><span class='comma'>,</span>
+       <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_synchronous'>synchronous</span>
+      <span class='comment'># For synchronous processing, set to pending for later resumption
+</span>      <span class='id identifier rubyid_finalize_pending_task'>finalize_pending_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='comment'># For asynchronous processing, re-enqueue for continued processing
+</span>      <span class='id identifier rubyid_reenqueue_task_with_context'>reenqueue_task_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskExecution/ExecutionStatus.html#PROCESSING-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::PROCESSING (constant)">PROCESSING</a></span></span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_synchronous'>synchronous</span>
+      <span class='comment'># For synchronous processing, set to pending and wait for steps to complete
+</span>      <span class='id identifier rubyid_finalize_pending_task'>finalize_pending_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
+                            <span class='label'>reason:</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization.html" title="Tasker::Constants::TaskFinalization (module)">TaskFinalization</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization/PendingReasons.html" title="Tasker::Constants::TaskFinalization::PendingReasons (module)">PendingReasons</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization/PendingReasons.html#WAITING_FOR_STEP_COMPLETION-constant" title="Tasker::Constants::TaskFinalization::PendingReasons::WAITING_FOR_STEP_COMPLETION (constant)">WAITING_FOR_STEP_COMPLETION</a></span></span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='comment'># For asynchronous processing, re-enqueue to check later
+</span>      <span class='id identifier rubyid_reenqueue_task_with_context'>reenqueue_task_with_context</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
+                                  <span class='label'>reason:</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization.html" title="Tasker::Constants::TaskFinalization (module)">TaskFinalization</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization/ReenqueueReasons.html" title="Tasker::Constants::TaskFinalization::ReenqueueReasons (module)">ReenqueueReasons</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskFinalization/ReenqueueReasons.html#STEPS_IN_PROGRESS-constant" title="Tasker::Constants::TaskFinalization::ReenqueueReasons::STEPS_IN_PROGRESS (constant)">STEPS_IN_PROGRESS</a></span></span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
   <span class='kw'>else</span>
-    <span class='id identifier rubyid_handle_unclear_task_state'>handle_unclear_task_state</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_step_group'>step_group</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_handle_unclear_task_state'>handle_unclear_task_state</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -561,52 +643,50 @@
       <pre class="lines">
 
 
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
 61
 62
 63
 64
 65
-66</pre>
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 45</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 61</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_finalize_task_with_steps'>finalize_task_with_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='rparen'>)</span>
-  <span class='comment'># Fire finalization started event through orchestrator
+  <span class='comment'># Get execution context for richer event payload
+</span>  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_get_task_execution_context'>get_task_execution_context</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+
+  <span class='comment'># Fire finalization started event with context data
 </span>  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED (constant)">TASK_FINALIZATION_STARTED</a></span></span><span class='comma'>,</span>
-    <span class='lbrace'>{</span>
-      <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
-      <span class='label'>total_processed_steps:</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
-    <span class='rbrace'>}</span>
+    <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED (constant)">TASK_FINALIZATION_STARTED</a></span></span><span class='comma'>,</span>
+    <span class='id identifier rubyid_build_finalization_event_payload'>build_finalization_event_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='comma'>,</span> <span class='symbol'>:started</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 
-  <span class='comment'># Use existing finalization logic
-</span>  <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+  <span class='comment'># Use context-enhanced finalization logic with synchronous flag
+</span>  <span class='comment'># Since this is called from task_handler.handle, we&#39;re in synchronous context
+</span>  <span class='id identifier rubyid_finalize_task'>finalize_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>synchronous:</span> <span class='kw'>true</span><span class='rparen'>)</span>
 
-  <span class='comment'># Fire finalization completed event through orchestrator
-</span>  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
-    <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED (constant)">TASK_FINALIZATION_COMPLETED</a></span></span><span class='comma'>,</span>
-    <span class='lbrace'>{</span>
-      <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
-      <span class='label'>final_status:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_reload'>reload</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span>
-    <span class='rbrace'>}</span>
+  <span class='comment'># Fire finalization completed event with final context
+</span>  <span class='id identifier rubyid_final_context'>final_context</span> <span class='op'>=</span> <span class='id identifier rubyid_get_task_execution_context'>get_task_execution_context</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span>
+    <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED (constant)">TASK_FINALIZATION_COMPLETED</a></span></span><span class='comma'>,</span>
+    <span class='id identifier rubyid_build_finalization_event_payload'>build_finalization_event_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_final_context'>final_context</span><span class='comma'>,</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='comma'>,</span> <span class='symbol'>:completed</span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -662,13 +742,13 @@
       <pre class="lines">
 
 
-94
-95
-96
-97</pre>
+127
+128
+129
+130</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 94</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 127</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_no_viable_steps'>handle_no_viable_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_event'>event</span>
@@ -684,7 +764,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun  4 21:27:37 2025 by
+  Generated on Thu Jun  5 09:50:16 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

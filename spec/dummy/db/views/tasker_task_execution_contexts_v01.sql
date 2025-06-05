@@ -60,7 +60,7 @@ JOIN (
     COUNT(CASE WHEN srs.current_state = 'pending' THEN 1 END) as pending_steps,
     COUNT(CASE WHEN srs.current_state = 'in_progress' THEN 1 END) as in_progress_steps,
     COUNT(CASE WHEN srs.current_state = 'complete' THEN 1 END) as completed_steps,
-    COUNT(CASE WHEN srs.current_state = 'failed' THEN 1 END) as failed_steps,
+    COUNT(CASE WHEN srs.current_state = 'error' THEN 1 END) as failed_steps,
     COUNT(CASE WHEN srs.ready_for_execution = true THEN 1 END) as ready_steps
   FROM tasker_workflow_steps ws
   JOIN tasker_step_readiness_statuses srs ON srs.workflow_step_id = ws.workflow_step_id
