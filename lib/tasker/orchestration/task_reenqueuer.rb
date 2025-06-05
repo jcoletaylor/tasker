@@ -21,15 +21,7 @@ module Tasker
       # @return [Boolean] True if re-enqueueing was successful
       def reenqueue_task(task, reason: Constants::TaskFinalization::ReenqueueReasons::PENDING_STEPS_REMAINING)
         # Fire re-enqueue started event
-        publish_event(
-          Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED,
-          {
-            task_id: task.task_id,
-            reason: reason,
-            current_status: task.status,
-            timestamp: Time.current
-          }
-        )
+        publish_task_reenqueue_started(task, reason: reason)
 
         # Transition task back to pending state for clarity
         if safe_transition_to(task, Tasker::Constants::TaskStatuses::PENDING)
@@ -40,28 +32,13 @@ module Tasker
         Tasker::TaskRunnerJob.perform_later(task.task_id)
 
         # Fire re-enqueue completed event
-        publish_event(
-          Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED,
-          {
-            task_id: task.task_id,
-            reason: reason,
-            timestamp: Time.current
-          }
-        )
+        publish_task_reenqueue_requested(task, reason: reason)
 
         Rails.logger.debug { "TaskReenqueuer: Task #{task.task_id} re-enqueued due to #{reason}" }
         true
       rescue StandardError => e
         # Fire re-enqueue failed event
-        publish_event(
-          Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED,
-          {
-            task_id: task.task_id,
-            reason: reason,
-            error: e.message,
-            timestamp: Time.current
-          }
-        )
+        publish_task_reenqueue_failed(task, reason: reason, error: e.message)
 
         Rails.logger.error("TaskReenqueuer: Failed to re-enqueue task #{task.task_id}: #{e.message}")
         false
@@ -76,16 +53,7 @@ module Tasker
       def reenqueue_task_delayed(task, delay_seconds:,
                                  reason: Constants::TaskFinalization::ReenqueueReasons::RETRY_BACKOFF)
         # Fire delayed re-enqueue started event
-        publish_event(
-          Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED,
-          {
-            task_id: task.task_id,
-            reason: reason,
-            delay_seconds: delay_seconds,
-            scheduled_for: Time.current + delay_seconds.seconds,
-            timestamp: Time.current
-          }
-        )
+        publish_task_reenqueue_delayed(task, delay_seconds: delay_seconds, reason: reason)
 
         # Schedule the delayed job
         Tasker::TaskRunnerJob.set(wait: delay_seconds.seconds).perform_later(task.task_id)

@@ -36,13 +36,10 @@ module Tasker
         processing_mode = determine_processing_mode(task_handler)
 
         # Fire observability event through orchestrator
-        publish_event(
-          Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED,
-          {
-            task_id: task.task_id,
-            step_count: viable_steps.size,
-            processing_mode: processing_mode
-          }
+        publish_steps_execution_started(
+          task,
+          step_count: viable_steps.size,
+          processing_mode: processing_mode
         )
 
         # PRESERVE: Original concurrent processing logic
@@ -53,15 +50,12 @@ module Tasker
                           end
 
         # Fire completion event through orchestrator
-        publish_event(
-          Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED,
-          {
-            task_id: task.task_id,
-            processed_count: processed_steps.size,
-            successful_count: processed_steps.count do |s|
-              s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
-            end
-          }
+        publish_steps_execution_completed(
+          task,
+          processed_count: processed_steps.size,
+          successful_count: processed_steps.count do |s|
+            s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
+          end
         )
 
         processed_steps.compact
@@ -211,7 +205,7 @@ module Tasker
       # and state transition in a database transaction. This is critical for
       # idempotency: if either operation fails, the step remains in "in_progress"
       # and can be safely retried without repeating the actual work.
-      def complete_step_execution(task, step)
+      def complete_step_execution(_task, step)
         completed_step = nil
 
         # Update attempt tracking like legacy code (for consistency with error path)
@@ -243,15 +237,10 @@ module Tasker
         end
 
         # Publish completion event outside transaction (for performance)
-        publish_event(
-          Tasker::Constants::StepEvents::COMPLETED,
-          {
-            task_id: task.task_id,
-            step_id: step.workflow_step_id,
-            step_name: step.name,
-            attempt_number: step.attempts,
-            execution_duration: step.processed_at&.-(step.updated_at)
-          }
+        publish_step_completed(
+          step,
+          attempt_number: step.attempts,
+          execution_duration: step.processed_at&.-(step.updated_at)
         )
 
         Rails.logger.debug { "StepExecutor: Successfully completed step #{step.workflow_step_id}" }
@@ -283,7 +272,7 @@ module Tasker
       #
       # This mirrors complete_step_execution but handles error state persistence.
       # Critical: We MUST save error steps to preserve error data and attempt tracking.
-      def complete_error_step_execution(task, step)
+      def complete_error_step_execution(_task, step)
         completed_error_step = nil
 
         # Use database transaction to ensure atomic error completion
@@ -310,17 +299,12 @@ module Tasker
         end
 
         # Publish error event outside transaction (for performance)
-        publish_event(
-          Tasker::Constants::StepEvents::FAILED,
-          {
-            task_id: task.task_id,
-            step_id: step.workflow_step_id,
-            step_name: step.name,
-            error_message: step.results['error'],
-            error_class: step.results['error_class'],
-            attempt_number: step.attempts,
-            backtrace: step.results['backtrace']&.split("\n")&.first(10)
-          }
+        publish_step_failed(
+          step,
+          error_message: step.results['error'],
+          error_class: step.results['error_class'],
+          attempt_number: step.attempts,
+          backtrace: step.results['backtrace']&.split("\n")&.first(10)
         )
 
         Rails.logger.debug { "StepExecutor: Successfully saved error step #{step.workflow_step_id}" }

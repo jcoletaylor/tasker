@@ -28,22 +28,18 @@ module Tasker
 
         # Fire appropriate discovery event based on results through orchestrator
         if viable_steps.any?
-          publish_event(
-            Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED,
-            {
-              task_id: task.task_id,
-              viable_count: viable_steps.size,
-              step_ids: viable_steps.map(&:workflow_step_id),
-              step_names: viable_steps.map(&:name)
-            }
+          publish_viable_steps_discovered(
+            task.task_id,
+            viable_steps.map(&:workflow_step_id),
+            processing_mode: 'concurrent',
+            viable_count: viable_steps.size,
+            step_names: viable_steps.map(&:name)
           )
         else
-          publish_event(
-            Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS,
-            {
-              task_id: task.task_id,
-              total_steps_checked: sequence.steps.size
-            }
+          publish_no_viable_steps(
+            task.task_id,
+            reason: 'No steps ready for execution',
+            total_steps_checked: sequence.steps.size
           )
         end
 

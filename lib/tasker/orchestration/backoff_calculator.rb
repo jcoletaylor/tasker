@@ -70,15 +70,11 @@ module Tasker
         step.backoff_request_seconds = backoff_seconds
 
         # Publish backoff event for observability
-        publish_event(
-          Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
-          {
-            backoff_seconds: backoff_seconds,
-            backoff_type: 'server_requested',
-            retry_after: retry_after,
-            step_id: step.workflow_step_id,
-            step_name: step.name
-          }
+        publish_step_backoff(
+          step,
+          backoff_seconds: backoff_seconds,
+          backoff_type: 'server_requested',
+          retry_after: retry_after
         )
 
         Rails.logger.info(
@@ -139,18 +135,14 @@ module Tasker
         min_exponent = 2
         exponent = [step.attempts + 1, min_exponent].max
 
-        publish_event(
-          Tasker::Constants::ObservabilityEvents::Step::BACKOFF,
-          {
-            backoff_seconds: backoff_seconds,
-            backoff_type: 'exponential',
-            attempt: step.attempts,
-            exponent: exponent,
-            base_delay: retry_delay || 1.0,
-            jitter_factor: jitter_factor_value,
-            step_id: step.workflow_step_id,
-            step_name: step.name
-          }
+        publish_step_backoff(
+          step,
+          backoff_seconds: backoff_seconds,
+          backoff_type: 'exponential',
+          attempt: step.attempts,
+          exponent: exponent,
+          base_delay: retry_delay || 1.0,
+          jitter_factor: jitter_factor_value
         )
       end
 

@@ -63,9 +63,16 @@ module Tasker
         context = get_task_execution_context(task.task_id)
 
         # Fire finalization started event with context data
-        publish_event(
-          Constants::WorkflowEvents::TASK_FINALIZATION_STARTED,
-          build_finalization_event_payload(task, context, processed_steps, :started)
+        publish_task_finalization_started(
+          task,
+          processed_steps_count: processed_steps.size,
+          execution_status: context&.execution_status,
+          health_status: context&.health_status,
+          completion_percentage: context&.completion_percentage,
+          total_steps: context&.total_steps,
+          ready_steps: context&.ready_steps,
+          failed_steps: context&.failed_steps,
+          recommended_action: context&.recommended_action
         )
 
         # Use context-enhanced finalization logic with synchronous flag
@@ -74,9 +81,16 @@ module Tasker
 
         # Fire finalization completed event with final context
         final_context = get_task_execution_context(task.task_id)
-        publish_event(
-          Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED,
-          build_finalization_event_payload(task, final_context, processed_steps, :completed)
+        publish_task_finalization_completed(
+          task,
+          processed_steps_count: processed_steps.size,
+          execution_status: final_context&.execution_status,
+          health_status: final_context&.health_status,
+          completion_percentage: final_context&.completion_percentage,
+          total_steps: final_context&.total_steps,
+          ready_steps: final_context&.ready_steps,
+          failed_steps: final_context&.failed_steps,
+          recommended_action: final_context&.recommended_action
         )
       end
 
@@ -195,17 +209,13 @@ module Tasker
         reason ||= determine_pending_reason(context)
 
         # Use clean API for task pending transition with context data
-        publish_event(
-          Constants::TaskEvents::INITIALIZE_REQUESTED,
-          {
-            task_id: task.task_id,
-            task_name: task.name,
-            reason: reason,
-            ready_steps: context&.ready_steps,
-            in_progress_steps: context&.in_progress_steps,
-            completion_percentage: context&.completion_percentage,
-            health_status: context&.health_status
-          }
+        publish_task_pending_transition(
+          task,
+          reason: reason,
+          ready_steps: context&.ready_steps,
+          in_progress_steps: context&.in_progress_steps,
+          completion_percentage: context&.completion_percentage,
+          health_status: context&.health_status
         )
 
         Rails.logger.info("TaskFinalizer: Task #{task.task_id} set to pending - #{reason} (ready_steps: #{context&.ready_steps}, in_progress: #{context&.in_progress_steps})")
@@ -313,15 +323,13 @@ module Tasker
           )
 
           # For unclear states with context, fire enhanced event for monitoring/alerting
-          publish_event(
-            Constants::WorkflowEvents::TASK_STATE_UNCLEAR,
-            {
-              task_id: task.task_id,
-              execution_status: context.execution_status,
-              health_status: context.health_status,
-              recommended_action: context.recommended_action,
-              workflow_summary: context.workflow_summary
-            }
+          publish_workflow_state_unclear(
+            task,
+            reason: "Task in unclear state - execution_status: #{context.execution_status}",
+            execution_status: context.execution_status,
+            health_status: context.health_status,
+            recommended_action: context.recommended_action,
+            workflow_summary: context.workflow_summary
           )
         else
           # Fallback to original StepGroup logic if no context available
@@ -337,13 +345,11 @@ module Tasker
             "has_errors: #{debug_info[:has_errors]}"
           )
 
-          publish_event(
-            Constants::WorkflowEvents::TASK_STATE_UNCLEAR,
-            {
-              task_id: task.task_id,
-              debug_state: debug_info,
-              fallback_mode: true
-            }
+          publish_workflow_state_unclear(
+            task,
+            reason: 'Task in unclear state - using fallback mode',
+            debug_state: debug_info,
+            fallback_mode: true
           )
         end
       end

@@ -230,6 +230,259 @@ module Tasker
       end
 
       # ========================================================================
+      # TASK FINALIZATION ORCHESTRATION EVENTS - NEW CLEAN HELPERS
+      # ========================================================================
+
+      # Publish task finalization started event
+      # Automatically resolves to WorkflowEvents::TASK_FINALIZATION_STARTED
+      #
+      # @param task [Task] The task being finalized
+      # @param processed_steps_count [Integer] Number of processed steps
+      # @param context [Hash] Additional finalization context
+      # @return [void]
+      def publish_task_finalization_started(task, processed_steps_count: 0, **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          processed_steps_count: processed_steps_count,
+          event_phase: :started
+        )
+
+        payload = build_orchestration_payload(:task_finalization_started, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED, payload)
+      end
+
+      # Publish task finalization completed event
+      # Automatically resolves to WorkflowEvents::TASK_FINALIZATION_COMPLETED
+      #
+      # @param task [Task] The task that completed finalization
+      # @param processed_steps_count [Integer] Number of processed steps
+      # @param context [Hash] Additional finalization context
+      # @return [void]
+      def publish_task_finalization_completed(task, processed_steps_count: 0, **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          processed_steps_count: processed_steps_count,
+          event_phase: :completed
+        )
+
+        payload = build_orchestration_payload(:task_finalization_completed, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED, payload)
+      end
+
+      # Publish task pending transition event (for synchronous processing)
+      # Automatically resolves to TaskEvents::INITIALIZE_REQUESTED with pending context
+      #
+      # @param task [Task] The task being set to pending
+      # @param reason [String] The reason for setting to pending
+      # @param context [Hash] Additional pending context
+      # @return [void]
+      def publish_task_pending_transition(task, reason: 'Task set to pending', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason
+        )
+
+        payload = build_task_payload(task, :pending_transition, context)
+        publish_event(Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED, payload)
+      end
+
+      # Publish workflow unclear state event (for monitoring/alerting)
+      # Automatically resolves to WorkflowEvents::TASK_STATE_UNCLEAR
+      #
+      # @param task [Task] The task in unclear state
+      # @param reason [String] The reason the state is unclear
+      # @param context [Hash] Additional unclear state context
+      # @return [void]
+      def publish_workflow_state_unclear(task, reason: 'Task in unclear state', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason
+        )
+
+        payload = build_orchestration_payload(:task_state_unclear, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_STATE_UNCLEAR, payload)
+      end
+
+      # ========================================================================
+      # TASK REENQUEUE ORCHESTRATION EVENTS - NEW CLEAN HELPERS
+      # ========================================================================
+
+      # Publish task reenqueue started event
+      # Automatically resolves to WorkflowEvents::TASK_REENQUEUE_STARTED
+      #
+      # @param task [Task] The task being reenqueued
+      # @param reason [String] The reason for reenqueue
+      # @param context [Hash] Additional reenqueue context
+      # @return [void]
+      def publish_task_reenqueue_started(task, reason: 'Task reenqueue started', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason,
+          current_status: task.status,
+          timestamp: Time.current
+        )
+
+        payload = build_orchestration_payload(:task_reenqueue_started, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED, payload)
+      end
+
+      # Publish task reenqueue requested event
+      # Automatically resolves to WorkflowEvents::TASK_REENQUEUE_REQUESTED
+      #
+      # @param task [Task] The task reenqueue was requested for
+      # @param reason [String] The reason for reenqueue
+      # @param context [Hash] Additional reenqueue context
+      # @return [void]
+      def publish_task_reenqueue_requested(task, reason: 'Task reenqueue requested', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason,
+          timestamp: Time.current
+        )
+
+        payload = build_orchestration_payload(:task_reenqueue_requested, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED, payload)
+      end
+
+      # Publish task reenqueue failed event
+      # Automatically resolves to WorkflowEvents::TASK_REENQUEUE_FAILED
+      #
+      # @param task [Task] The task that failed to reenqueue
+      # @param reason [String] The reason for reenqueue attempt
+      # @param error [String] The error message
+      # @param context [Hash] Additional reenqueue context
+      # @return [void]
+      def publish_task_reenqueue_failed(task, reason: 'Task reenqueue failed', error: 'Unknown error', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason,
+          error: error,
+          timestamp: Time.current
+        )
+
+        payload = build_orchestration_payload(:task_reenqueue_failed, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED, payload)
+      end
+
+      # Publish task reenqueue delayed event
+      # Automatically resolves to WorkflowEvents::TASK_REENQUEUE_DELAYED
+      #
+      # @param task [Task] The task being delayed for reenqueue
+      # @param delay_seconds [Integer] Number of seconds to delay
+      # @param reason [String] The reason for delayed reenqueue
+      # @param context [Hash] Additional reenqueue context
+      # @return [void]
+      def publish_task_reenqueue_delayed(task, delay_seconds:, reason: 'Task reenqueue delayed', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          reason: reason,
+          delay_seconds: delay_seconds,
+          scheduled_for: Time.current + delay_seconds.seconds,
+          timestamp: Time.current
+        )
+
+        payload = build_orchestration_payload(:task_reenqueue_delayed, context)
+        publish_event(Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED, payload)
+      end
+
+      # ========================================================================
+      # STEPS EXECUTION ORCHESTRATION EVENTS - NEW CLEAN HELPERS
+      # ========================================================================
+
+      # Publish steps execution started event (batch processing)
+      # Automatically resolves to WorkflowEvents::STEPS_EXECUTION_STARTED
+      #
+      # @param task [Task] The task whose steps are being executed
+      # @param step_count [Integer] Number of steps being executed
+      # @param processing_mode [String] The processing mode (concurrent/sequential)
+      # @param context [Hash] Additional execution context
+      # @return [void]
+      def publish_steps_execution_started(task, step_count:, processing_mode: 'concurrent', **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          step_count: step_count,
+          processing_mode: processing_mode
+        )
+
+        payload = build_orchestration_payload(:steps_execution_started, context)
+        publish_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED, payload)
+      end
+
+      # Publish steps execution completed event (batch processing)
+      # Automatically resolves to WorkflowEvents::STEPS_EXECUTION_COMPLETED
+      #
+      # @param task [Task] The task whose steps were executed
+      # @param processed_count [Integer] Number of steps processed
+      # @param successful_count [Integer] Number of steps that succeeded
+      # @param context [Hash] Additional execution context
+      # @return [void]
+      def publish_steps_execution_completed(task, processed_count:, successful_count:, **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          processed_count: processed_count,
+          successful_count: successful_count
+        )
+
+        payload = build_orchestration_payload(:steps_execution_completed, context)
+        publish_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED, payload)
+      end
+
+      # ========================================================================
+      # STEP OBSERVABILITY EVENTS - NEW CLEAN HELPERS
+      # ========================================================================
+
+      # Publish step backoff event (for retry/rate limiting scenarios)
+      # Automatically resolves to ObservabilityEvents::Step::BACKOFF
+      #
+      # @param step [WorkflowStep] The step being backed off
+      # @param backoff_seconds [Float] Number of seconds to wait
+      # @param backoff_type [String] Type of backoff (server_requested/exponential)
+      # @param context [Hash] Additional backoff context
+      # @return [void]
+      def publish_step_backoff(step, backoff_seconds:, backoff_type: 'exponential', **context)
+        context = context.merge(
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          backoff_seconds: backoff_seconds,
+          backoff_type: backoff_type
+        )
+
+        payload = build_step_payload(step, :backoff, context)
+        publish_event(Tasker::Constants::ObservabilityEvents::Step::BACKOFF, payload)
+      end
+
+      # ========================================================================
+      # TASK OBSERVABILITY EVENTS - NEW CLEAN HELPERS
+      # ========================================================================
+
+      # Publish task enqueue event (for job scheduling observability)
+      # Automatically resolves to ObservabilityEvents::Task::ENQUEUE
+      #
+      # @param task [Task] The task being enqueued
+      # @param context [Hash] Additional enqueue context
+      # @return [void]
+      def publish_task_enqueue(task, **context)
+        context = context.merge(
+          task_id: task.task_id,
+          task_name: task.name,
+          task_context: task.context
+        )
+
+        payload = build_task_payload(task, :enqueue, context)
+        publish_event(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE, payload)
+      end
+
+      # ========================================================================
       # CONTEXT-AWARE EVENT PUBLISHING (Advanced - for special cases)
       # ========================================================================
 

@@ -68,13 +68,9 @@ module Tasker
         end
 
         # Use clean API for task initialization success
-        publish_event(
-          Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
-          {
-            task_id: task.task_id,
-            task_name: task.name,
-            step_count: task.workflow_steps.count
-          }
+        publish_task_started(
+          task,
+          step_count: task.workflow_steps.count
         )
 
         enqueue_task(task)
@@ -135,18 +131,7 @@ module Tasker
       #
       # @param task [Tasker::Task] The task to enqueue
       def enqueue_task(task)
-        payload = Tasker::Events::EventPayloadBuilder.build_task_payload(
-          task,
-          event_type: :enqueue,
-          additional_context: {
-            task_context: task.context
-          }
-        )
-
-        publish_event(
-          Tasker::Constants::ObservabilityEvents::Task::ENQUEUE,
-          payload
-        )
+        publish_task_enqueue(task)
 
         Tasker::TaskRunnerJob.perform_later(task.task_id)
       end

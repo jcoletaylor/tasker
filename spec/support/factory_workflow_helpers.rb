@@ -255,6 +255,10 @@ module FactoryWorkflowHelpers
 
   # Set step to error state with custom error message (for API integration testing)
   def set_step_to_error(step, error_message = 'Test error')
+    # Complete dependencies first to ensure state machine guards pass
+    complete_step_dependencies(step)
+
+    # Now transition to in_progress if still in pending state
     step.state_machine.transition_to!(:in_progress) if step.state_machine.current_state == 'pending'
     step.state_machine.transition_to!(:error)
     step.update_columns(

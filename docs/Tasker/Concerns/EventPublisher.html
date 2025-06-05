@@ -178,6 +178,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#publish_step_backoff-instance_method" title="#publish_step_backoff (instance method)">#<strong>publish_step_backoff</strong>(step, backoff_seconds:, backoff_type: &#39;exponential&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish step backoff event (for retry/rate limiting scenarios) Automatically resolves to ObservabilityEvents::Step::BACKOFF.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#publish_step_before_handle-instance_method" title="#publish_step_before_handle (instance method)">#<strong>publish_step_before_handle</strong>(step, **context)  &#x21d2; void </a>
     
 
@@ -346,6 +370,54 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#publish_steps_execution_completed-instance_method" title="#publish_steps_execution_completed (instance method)">#<strong>publish_steps_execution_completed</strong>(task, processed_count:, successful_count:, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish steps execution completed event (batch processing) Automatically resolves to WorkflowEvents::STEPS_EXECUTION_COMPLETED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_steps_execution_started-instance_method" title="#publish_steps_execution_started (instance method)">#<strong>publish_steps_execution_started</strong>(task, step_count:, processing_mode: &#39;concurrent&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish steps execution started event (batch processing) Automatically resolves to WorkflowEvents::STEPS_EXECUTION_STARTED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#publish_task_completed-instance_method" title="#publish_task_completed (instance method)">#<strong>publish_task_completed</strong>(task, **context)  &#x21d2; void </a>
     
 
@@ -370,6 +442,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#publish_task_enqueue-instance_method" title="#publish_task_enqueue (instance method)">#<strong>publish_task_enqueue</strong>(task, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task enqueue event (for job scheduling observability) Automatically resolves to ObservabilityEvents::Task::ENQUEUE.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#publish_task_failed-instance_method" title="#publish_task_failed (instance method)">#<strong>publish_task_failed</strong>(task, error_message: &#39;Task execution failed&#39;, error_steps: [], **context)  &#x21d2; void </a>
     
 
@@ -386,6 +482,174 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Publish task failed event Automatically resolves to TaskEvents::FAILED with :failed event type.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_finalization_completed-instance_method" title="#publish_task_finalization_completed (instance method)">#<strong>publish_task_finalization_completed</strong>(task, processed_steps_count: 0, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task finalization completed event Automatically resolves to WorkflowEvents::TASK_FINALIZATION_COMPLETED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_finalization_started-instance_method" title="#publish_task_finalization_started (instance method)">#<strong>publish_task_finalization_started</strong>(task, processed_steps_count: 0, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task finalization started event Automatically resolves to WorkflowEvents::TASK_FINALIZATION_STARTED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_pending_transition-instance_method" title="#publish_task_pending_transition (instance method)">#<strong>publish_task_pending_transition</strong>(task, reason: &#39;Task set to pending&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task pending transition event (for synchronous processing) Automatically resolves to TaskEvents::INITIALIZE_REQUESTED with pending context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_reenqueue_delayed-instance_method" title="#publish_task_reenqueue_delayed (instance method)">#<strong>publish_task_reenqueue_delayed</strong>(task, delay_seconds:, reason: &#39;Task reenqueue delayed&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task reenqueue delayed event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_DELAYED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_reenqueue_failed-instance_method" title="#publish_task_reenqueue_failed (instance method)">#<strong>publish_task_reenqueue_failed</strong>(task, reason: &#39;Task reenqueue failed&#39;, error: &#39;Unknown error&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task reenqueue failed event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_FAILED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_reenqueue_requested-instance_method" title="#publish_task_reenqueue_requested (instance method)">#<strong>publish_task_reenqueue_requested</strong>(task, reason: &#39;Task reenqueue requested&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task reenqueue requested event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_REQUESTED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_task_reenqueue_started-instance_method" title="#publish_task_reenqueue_started (instance method)">#<strong>publish_task_reenqueue_started</strong>(task, reason: &#39;Task reenqueue started&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish task reenqueue started event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_STARTED.</p>
 </div></span>
   
 </li>
@@ -458,6 +722,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Publish viable steps discovered event Automatically resolves to WorkflowEvents::VIABLE_STEPS_DISCOVERED.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_workflow_state_unclear-instance_method" title="#publish_workflow_state_unclear (instance method)">#<strong>publish_workflow_state_unclear</strong>(task, reason: &#39;Task in unclear state&#39;, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish workflow unclear state event (for monitoring/alerting) Automatically resolves to WorkflowEvents::TASK_STATE_UNCLEAR.</p>
 </div></span>
   
 </li>
@@ -585,23 +873,23 @@
       <pre class="lines">
 
 
-266
-267
-268
-269
-270
-271
-272
-273
-274
-275
-276
-277
-278
-279</pre>
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 266</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 519</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_infer_step_event_type_from_state'>infer_step_event_type_from_state</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span>
@@ -715,6 +1003,133 @@
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:no_viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#NO_VIABLE_STEPS-constant" title="Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS (constant)">NO_VIABLE_STEPS</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_step_backoff-instance_method">
+  
+    #<strong>publish_step_backoff</strong>(step, backoff_seconds:, backoff_type: &#39;exponential&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish step backoff event (for retry/rate limiting scenarios) Automatically resolves to ObservabilityEvents::Step::BACKOFF</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>step</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">WorkflowStep</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The step being backed off</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>backoff_seconds</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of seconds to wait</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>backoff_type</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;exponential&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type of backoff (server_requested/exponential)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional backoff context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 452</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_step_backoff'>publish_step_backoff</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='label'>backoff_seconds:</span><span class='comma'>,</span> <span class='label'>backoff_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>exponential</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+    <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>backoff_seconds:</span> <span class='id identifier rubyid_backoff_seconds'>backoff_seconds</span><span class='comma'>,</span>
+    <span class='label'>backoff_type:</span> <span class='id identifier rubyid_backoff_type'>backoff_type</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_step_payload'>build_step_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='symbol'>:backoff</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents/Step.html" title="Tasker::Constants::ObservabilityEvents::Step (module)">Step</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents/Step.html#BACKOFF-constant" title="Tasker::Constants::ObservabilityEvents::Step::BACKOFF (constant)">BACKOFF</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1058,27 +1473,27 @@
       <pre class="lines">
 
 
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
-253
-254
-255
-256
-257
-258
-259
-260</pre>
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 243</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 496</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_publish_step_event_for_context'>publish_step_event_for_context</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='label'>context_hint:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_event_type'>event_type</span> <span class='op'>=</span> <span class='id identifier rubyid_context_hint'>context_hint</span> <span class='op'>||</span> <span class='id identifier rubyid_infer_step_event_type_from_state'>infer_step_event_type_from_state</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
@@ -1397,6 +1812,258 @@
 </div>
     
       <div class="method_details ">
+  <h3 class="signature " id="publish_steps_execution_completed-instance_method">
+  
+    #<strong>publish_steps_execution_completed</strong>(task, processed_count:, successful_count:, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish steps execution completed event (batch processing) Automatically resolves to WorkflowEvents::STEPS_EXECUTION_COMPLETED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task whose steps were executed</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>processed_count</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of steps processed</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>successful_count</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of steps that succeeded</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional execution context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 428</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_steps_execution_completed'>publish_steps_execution_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>processed_count:</span><span class='comma'>,</span> <span class='label'>successful_count:</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>processed_count:</span> <span class='id identifier rubyid_processed_count'>processed_count</span><span class='comma'>,</span>
+    <span class='label'>successful_count:</span> <span class='id identifier rubyid_successful_count'>successful_count</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:steps_execution_completed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#STEPS_EXECUTION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED (constant)">STEPS_EXECUTION_COMPLETED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_steps_execution_started-instance_method">
+  
+    #<strong>publish_steps_execution_started</strong>(task, step_count:, processing_mode: &#39;concurrent&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish steps execution started event (batch processing) Automatically resolves to WorkflowEvents::STEPS_EXECUTION_STARTED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task whose steps are being executed</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>step_count</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of steps being executed</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>processing_mode</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;concurrent&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The processing mode (concurrent/sequential)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional execution context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 408</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_steps_execution_started'>publish_steps_execution_started</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>step_count:</span><span class='comma'>,</span> <span class='label'>processing_mode:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>concurrent</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>step_count:</span> <span class='id identifier rubyid_step_count'>step_count</span><span class='comma'>,</span>
+    <span class='label'>processing_mode:</span> <span class='id identifier rubyid_processing_mode'>processing_mode</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:steps_execution_started</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#STEPS_EXECUTION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_STARTED (constant)">STEPS_EXECUTION_STARTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
   <h3 class="signature " id="publish_task_completed-instance_method">
   
     #<strong>publish_task_completed</strong>(task, **context)  &#x21d2; <tt>void</tt> 
@@ -1469,6 +2136,97 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_publish_task_completed'>publish_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_task_payload'>build_task_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:completed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html#COMPLETED-constant" title="Tasker::Constants::TaskEvents::COMPLETED (constant)">COMPLETED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_enqueue-instance_method">
+  
+    #<strong>publish_task_enqueue</strong>(task, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task enqueue event (for job scheduling observability) Automatically resolves to ObservabilityEvents::Task::ENQUEUE</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being enqueued</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional enqueue context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 474</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_enqueue'>publish_task_enqueue</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>task_context:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_task_payload'>build_task_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:enqueue</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents.html" title="Tasker::Constants::ObservabilityEvents (module)">ObservabilityEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents/Task.html" title="Tasker::Constants::ObservabilityEvents::Task (module)">Task</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/ObservabilityEvents/Task.html#ENQUEUE-constant" title="Tasker::Constants::ObservabilityEvents::Task::ENQUEUE (constant)">ENQUEUE</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1594,6 +2352,823 @@
 
   <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_task_payload'>build_task_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:failed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html#FAILED-constant" title="Tasker::Constants::TaskEvents::FAILED (constant)">FAILED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_finalization_completed-instance_method">
+  
+    #<strong>publish_task_finalization_completed</strong>(task, processed_steps_count: 0, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task finalization completed event Automatically resolves to WorkflowEvents::TASK_FINALIZATION_COMPLETED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task that completed finalization</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>processed_steps_count</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>0</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of processed steps</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional finalization context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 262</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_finalization_completed'>publish_task_finalization_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>processed_steps_count:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>processed_steps_count:</span> <span class='id identifier rubyid_processed_steps_count'>processed_steps_count</span><span class='comma'>,</span>
+    <span class='label'>event_phase:</span> <span class='symbol'>:completed</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_finalization_completed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_COMPLETED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED (constant)">TASK_FINALIZATION_COMPLETED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_finalization_started-instance_method">
+  
+    #<strong>publish_task_finalization_started</strong>(task, processed_steps_count: 0, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task finalization started event Automatically resolves to WorkflowEvents::TASK_FINALIZATION_STARTED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being finalized</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>processed_steps_count</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>0</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of processed steps</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional finalization context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 243</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_finalization_started'>publish_task_finalization_started</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>processed_steps_count:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>processed_steps_count:</span> <span class='id identifier rubyid_processed_steps_count'>processed_steps_count</span><span class='comma'>,</span>
+    <span class='label'>event_phase:</span> <span class='symbol'>:started</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_finalization_started</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_FINALIZATION_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED (constant)">TASK_FINALIZATION_STARTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_pending_transition-instance_method">
+  
+    #<strong>publish_task_pending_transition</strong>(task, reason: &#39;Task set to pending&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task pending transition event (for synchronous processing) Automatically resolves to TaskEvents::INITIALIZE_REQUESTED with pending context</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being set to pending</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task set to pending&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason for setting to pending</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional pending context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 281</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_pending_transition'>publish_task_pending_transition</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task set to pending</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_task_payload'>build_task_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:pending_transition</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html" title="Tasker::Constants::TaskEvents (module)">TaskEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_reenqueue_delayed-instance_method">
+  
+    #<strong>publish_task_reenqueue_delayed</strong>(task, delay_seconds:, reason: &#39;Task reenqueue delayed&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task reenqueue delayed event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_DELAYED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being delayed for reenqueue</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>delay_seconds</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of seconds to delay</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task reenqueue delayed&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason for delayed reenqueue</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional reenqueue context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 382</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_reenqueue_delayed'>publish_task_reenqueue_delayed</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>delay_seconds:</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task reenqueue delayed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
+    <span class='label'>delay_seconds:</span> <span class='id identifier rubyid_delay_seconds'>delay_seconds</span><span class='comma'>,</span>
+    <span class='label'>scheduled_for:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>+</span> <span class='id identifier rubyid_delay_seconds'>delay_seconds</span><span class='period'>.</span><span class='id identifier rubyid_seconds'>seconds</span><span class='comma'>,</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_reenqueue_delayed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_REENQUEUE_DELAYED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_DELAYED (constant)">TASK_REENQUEUE_DELAYED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_reenqueue_failed-instance_method">
+  
+    #<strong>publish_task_reenqueue_failed</strong>(task, reason: &#39;Task reenqueue failed&#39;, error: &#39;Unknown error&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task reenqueue failed event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_FAILED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task that failed to reenqueue</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task reenqueue failed&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason for reenqueue attempt</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>error</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Unknown error&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The error message</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional reenqueue context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 361</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_reenqueue_failed'>publish_task_reenqueue_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task reenqueue failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
+    <span class='label'>error:</span> <span class='id identifier rubyid_error'>error</span><span class='comma'>,</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_reenqueue_failed</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_REENQUEUE_FAILED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_FAILED (constant)">TASK_REENQUEUE_FAILED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_reenqueue_requested-instance_method">
+  
+    #<strong>publish_task_reenqueue_requested</strong>(task, reason: &#39;Task reenqueue requested&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task reenqueue requested event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_REQUESTED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task reenqueue was requested for</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task reenqueue requested&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason for reenqueue</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional reenqueue context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 341</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_reenqueue_requested'>publish_task_reenqueue_requested</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task reenqueue requested</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_reenqueue_requested</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_REENQUEUE_REQUESTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_REQUESTED (constant)">TASK_REENQUEUE_REQUESTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_task_reenqueue_started-instance_method">
+  
+    #<strong>publish_task_reenqueue_started</strong>(task, reason: &#39;Task reenqueue started&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish task reenqueue started event Automatically resolves to WorkflowEvents::TASK_REENQUEUE_STARTED</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being reenqueued</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task reenqueue started&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason for reenqueue</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional reenqueue context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 321</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_task_reenqueue_started'>publish_task_reenqueue_started</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task reenqueue started</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
+    <span class='label'>current_status:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_reenqueue_started</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_REENQUEUE_STARTED-constant" title="Tasker::Constants::WorkflowEvents::TASK_REENQUEUE_STARTED (constant)">TASK_REENQUEUE_STARTED</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1906,6 +3481,115 @@
 </div>
     
       <div class="method_details ">
+  <h3 class="signature " id="publish_workflow_state_unclear-instance_method">
+  
+    #<strong>publish_workflow_state_unclear</strong>(task, reason: &#39;Task in unclear state&#39;, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Publish workflow unclear state event (for monitoring/alerting) Automatically resolves to WorkflowEvents::TASK_STATE_UNCLEAR</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task in unclear state</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>reason</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Task in unclear state&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reason the state is unclear</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional unclear state context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/event_publisher.rb', line 299</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_workflow_state_unclear'>publish_workflow_state_unclear</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task in unclear state</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_reason'>reason</span>
+  <span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='symbol'>:task_state_unclear</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html" title="Tasker::Constants::WorkflowEvents (module)">WorkflowEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowEvents.html#TASK_STATE_UNCLEAR-constant" title="Tasker::Constants::WorkflowEvents::TASK_STATE_UNCLEAR (constant)">TASK_STATE_UNCLEAR</a></span></span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
   <h3 class="signature " id="publish_workflow_step_completed-instance_method">
   
     #<strong>publish_workflow_step_completed</strong>(task_id, step_id, **context)  &#x21d2; <tt>void</tt> 
@@ -2088,7 +3772,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 12:47:44 2025 by
+  Generated on Thu Jun  5 17:38:07 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
