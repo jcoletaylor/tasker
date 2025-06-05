@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::StepDagRelationship, type: :model do
+RSpec.describe Tasker::StepDagRelationship do
   include FactoryWorkflowHelpers
 
   describe 'view functionality' do
@@ -74,8 +74,8 @@ RSpec.describe Tasker::StepDagRelationship, type: :model do
       root_steps = dag_relationships.select { |r| r.parent_step_ids.empty? }
       dependent_steps = dag_relationships.select { |r| r.parent_step_ids.any? }
 
-      expect(root_steps.count).to eq(2), "Should have 2 root steps"
-      expect(dependent_steps.count).to eq(2), "Should have 2 dependent steps"
+      expect(root_steps.count).to eq(2), 'Should have 2 root steps'
+      expect(dependent_steps.count).to eq(2), 'Should have 2 dependent steps'
 
       # All root steps should have depth 0
       root_steps.each do |root_step|

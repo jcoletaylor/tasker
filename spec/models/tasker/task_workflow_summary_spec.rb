@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::TaskWorkflowSummary, type: :model do
+RSpec.describe Tasker::TaskWorkflowSummary do
   include FactoryWorkflowHelpers
 
   describe 'view functionality' do
@@ -44,7 +44,7 @@ RSpec.describe Tasker::TaskWorkflowSummary, type: :model do
 
       # Should identify root steps correctly (step-one and step-two are independent)
       expect(summary.root_step_ids).not_to be_empty
-      expect(summary.root_step_count).to eq(2)  # Two root steps in the dummy workflow
+      expect(summary.root_step_count).to eq(2) # Two root steps in the dummy workflow
     end
 
     it 'recommends appropriate processing strategies' do
@@ -56,7 +56,7 @@ RSpec.describe Tasker::TaskWorkflowSummary, type: :model do
 
       # Verify processing strategies are assigned
       # With 2 ready steps, should recommend 'small_parallel'
-      expect(summary.processing_strategy).to be_in(['small_parallel', 'sequential', 'waiting'])
+      expect(summary.processing_strategy).to be_in(%w[small_parallel sequential waiting])
 
       # Verify helper methods work
       expect([true, false]).to include(summary.has_work_to_do?)

@@ -184,7 +184,9 @@ module Tasker
         return [] if steps.empty?
 
         # Log processing strategy for observability
-        Rails.logger.debug("TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy")
+        Rails.logger.debug do
+          "TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy"
+        end
 
         # Execute steps using the recommended strategy
         task = summary.task
@@ -199,7 +201,7 @@ module Tasker
       # @param steps [Array<Tasker::WorkflowStep>] Steps to execute
       # @param strategy [String] Processing strategy ('batch_parallel', 'small_parallel', 'sequential')
       # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_with_strategy(task, sequence, steps, strategy)
+      def execute_steps_with_strategy(task, sequence, steps, _strategy)
         # DELEGATE: Use the StepExecutor to handle all step execution logic
         # The strategy is informational - StepExecutor will use task handler settings for actual execution mode
         step_executor.execute_steps(task, sequence, steps)

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Tasker::TaskExecutionContext, type: :model do
+RSpec.describe Tasker::TaskExecutionContext do
   include FactoryWorkflowHelpers
 
   describe 'view functionality' do
