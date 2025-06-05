@@ -210,105 +210,15 @@ module Tasker
     end
 
     def self.get_viable_steps(task, sequence)
-      # Ensure we have the latest data from the database
-      task.reload if task.persisted?
+      # Get step IDs from sequence
+      step_ids = sequence.steps.map(&:workflow_step_id)
 
-      # Get all steps with fresh data from the database
-      fresh_steps = {}
-      sequence.steps.each do |step|
-        fresh_step = step.persisted? ? Tasker::WorkflowStep.find(step.workflow_step_id) : step
-        fresh_steps[fresh_step.workflow_step_id] = fresh_step
-      end
+      # Single query to get all readiness information via scenic view
+      ready_statuses = StepReadinessStatus.ready.where(workflow_step_id: step_ids)
 
-      # Get all steps that aren't processed or in_process
-      unfinished_steps = fresh_steps.values.reject { |step| step.processed || step.in_process }
-
-      # First, build a dependency map and identify root steps (those with no parents)
-      dependency_map = {}
-      root_steps = []
-
-      unfinished_steps.each do |step|
-        # Get fresh parent information
-        parent_ids = step.parents.map(&:workflow_step_id)
-        dependency_map[step.workflow_step_id] = parent_ids
-
-        # If no parents, this is a root step
-        root_steps << step if parent_ids.empty?
-      end
-
-      # Handle special case for in_progress steps
-      if unfinished_steps.any?(&:in_progress?)
-        # If any step is in_progress, only include viable root steps
-        viable_steps = root_steps.select { |step| is_step_viable?(step, task) }
-        return viable_steps
-      end
-
-      # Find all viable steps using the dependency map
-      viable_steps = []
-
-      # First add any root steps that are viable
-      root_steps.each do |step|
-        viable_steps << step if is_step_viable?(step, task)
-      end
-
-      # Then find all steps with completed parents
-      unfinished_steps.each do |step|
-        # Skip root steps (already processed) and steps already in viable_steps
-        next if dependency_map[step.workflow_step_id].empty? || viable_steps.include?(step)
-
-        # Check if all parents are complete
-        all_parents_complete = dependency_map[step.workflow_step_id].all? do |parent_id|
-          parent_step = fresh_steps[parent_id]
-          parent_step.complete?
-        end
-
-        # If all parents are complete and the step is viable, add it
-        viable_steps << step if all_parents_complete && is_step_viable?(step, task)
-      end
-
-      viable_steps
-    end
-
-    def self.is_step_viable?(step, task)
-      # First check if step is ready
-      return false unless step.ready?
-
-      # Check if all parents are complete
-      return false unless all_parents_complete?([step])
-
-      # Check backoff timing
-      return false if in_backoff?(step)
-
-      # Check if step is bypassed and skippable
-      return false if task&.bypass_steps&.include?(step.name) && step.skippable
-
-      # Step is viable
-      true
-    end
-
-    def self.all_parents_complete?(steps)
-      steps.all? do |step|
-        # If no parents, always return true (no dependencies to satisfy)
-        if step.parents.empty?
-          true # Return true for this step's evaluation in the 'all?' block
-        else
-          # Check if all parents are complete
-          step.parents.all? do |parent|
-            # Ensure we get the latest status from the database
-            fresh_parent = Tasker::WorkflowStep.find(parent.workflow_step_id)
-            fresh_parent.complete?
-          end
-        end
-      end
-    end
-
-    def self.in_backoff?(step)
-      if step.backoff_request_seconds && step.last_attempted_at
-        backoff_end = step.last_attempted_at + step.backoff_request_seconds
-        return true if Time.zone.now < backoff_end
-      end
-
-      false
+      # Return WorkflowStep objects for ready steps
+      WorkflowStep.where(workflow_step_id: ready_statuses.pluck(:workflow_step_id))
+                  .includes(:named_step)
     end
 
     def add_provides_edge!(to_step)
@@ -316,40 +226,94 @@ module Tasker
     end
 
     def complete?
-      [
+      # Use scenic view for consistent state checking
+      step_readiness_status&.current_state&.in?([
         Constants::WorkflowStepStatuses::COMPLETE,
         Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-      ].include?(status)
+      ]) || false
     end
 
     def in_progress?
-      status == Constants::WorkflowStepStatuses::IN_PROGRESS
+      # Use scenic view for consistent state checking
+      step_readiness_status&.current_state == Constants::WorkflowStepStatuses::IN_PROGRESS
     end
 
     def pending?
-      status == Constants::WorkflowStepStatuses::PENDING
+      # Use scenic view for consistent state checking
+      step_readiness_status&.current_state == Constants::WorkflowStepStatuses::PENDING
     end
 
     def in_error?
-      status == Constants::WorkflowStepStatuses::ERROR
+      # Use scenic view for consistent state checking
+      step_readiness_status&.current_state == Constants::WorkflowStepStatuses::ERROR
     end
 
     def cancelled?
-      status == Constants::WorkflowStepStatuses::CANCELLED
+      # Use scenic view for consistent state checking
+      step_readiness_status&.current_state == Constants::WorkflowStepStatuses::CANCELLED
     end
 
     def ready_status?
-      Constants::UNREADY_WORKFLOW_STEP_STATUSES.exclude?(status)
+      # Use scenic view for efficient ready status checking
+      Constants::UNREADY_WORKFLOW_STEP_STATUSES.exclude?(
+        step_readiness_status&.current_state || Constants::WorkflowStepStatuses::PENDING
+      )
     end
 
     def ready?
-      ready = true
-      ready = false if in_process
-      ready = false if processed
-      ready = false unless ready_status?
-      ready = false if attempts.positive? && !retryable
-      ready = false if attempts >= retry_limit
-      ready
+      # Use scenic view's comprehensive readiness calculation
+      step_readiness_status&.ready_for_execution || false
+    end
+
+    # New scenic view-powered predicate methods
+    def dependencies_satisfied?
+      # Use scenic view's pre-calculated dependency analysis
+      step_readiness_status&.dependencies_satisfied || false
+    end
+
+    def retry_eligible?
+      # Use scenic view's retry/backoff calculation
+      step_readiness_status&.retry_eligible || false
+    end
+
+    def has_retry_attempts?
+      # Check if step has made retry attempts
+      (step_readiness_status&.attempts || 0) > 0
+    end
+
+    def retry_exhausted?
+      # Check if step has exhausted retry attempts
+      return false unless step_readiness_status
+
+      attempts = step_readiness_status.attempts || 0
+      retry_limit = step_readiness_status.retry_limit || 3
+      attempts >= retry_limit
+    end
+
+    def waiting_for_backoff?
+      # Check if step is waiting for backoff period to expire
+      return false unless step_readiness_status&.next_retry_at
+
+      step_readiness_status.next_retry_at > Time.current
+    end
+
+    def can_retry_now?
+      # Comprehensive check if step can be retried right now
+      return false unless in_error?
+      return false unless retry_eligible?
+      return false if waiting_for_backoff?
+
+      true
+    end
+
+    def root_step?
+      # Check if this is a root step (no dependencies)
+      (step_readiness_status&.total_parents || 0) == 0
+    end
+
+    def leaf_step?
+      # Check if this is a leaf step using DAG relationship view
+      step_dag_relationship&.child_count == 0
     end
 
     private

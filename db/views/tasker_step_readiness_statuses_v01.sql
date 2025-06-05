@@ -9,7 +9,8 @@ SELECT
 
   -- Dependency Analysis
   CASE
-    WHEN dep_check.total_parents = 0 THEN true
+    WHEN dep_check.total_parents IS NULL THEN true  -- Root steps (no parents)
+    WHEN dep_check.total_parents = 0 THEN true      -- Steps with zero dependencies
     WHEN dep_check.completed_parents = dep_check.total_parents THEN true
     ELSE false
   END as dependencies_satisfied,
@@ -17,6 +18,7 @@ SELECT
   -- Retry & Backoff Analysis
   CASE
     WHEN ws.attempts >= COALESCE(ws.retry_limit, 3) THEN false
+    WHEN ws.attempts > 0 AND ws.retryable = false THEN false  -- Non-retryable steps with attempts
     WHEN last_failure.created_at IS NULL THEN true
     WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
       -- Use explicit backoff_request_seconds if available
@@ -35,13 +37,17 @@ SELECT
   -- Final Readiness Calculation
   CASE
     WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'failed')
-    AND (dep_check.total_parents = 0 OR dep_check.completed_parents = dep_check.total_parents)
+    AND (dep_check.total_parents IS NULL OR dep_check.total_parents = 0 OR dep_check.completed_parents = dep_check.total_parents)
     AND (ws.attempts < COALESCE(ws.retry_limit, 3))
+    AND (ws.in_process = false)  -- Step must not be in process
+    AND (ws.processed = false)   -- Step must not be processed
     AND (
-      last_failure.created_at IS NULL OR
+      -- Check explicit backoff first (regardless of failure state)
       (ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL AND
        ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()) OR
-      (ws.backoff_request_seconds IS NULL AND
+      -- If no explicit backoff, check failure-based backoff
+      (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NULL) OR
+      (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NOT NULL AND
        last_failure.created_at + (LEAST(power(2, COALESCE(ws.attempts, 1)) * interval '1 second', interval '30 seconds')) <= NOW())
     )
     THEN true

@@ -214,12 +214,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
       ns.name,
       COALESCE(current_state.to_state, 'pending'::character varying) AS current_state,
           CASE
+              WHEN (dep_check.total_parents IS NULL) THEN true
               WHEN (dep_check.total_parents = 0) THEN true
               WHEN (dep_check.completed_parents = dep_check.total_parents) THEN true
               ELSE false
           END AS dependencies_satisfied,
           CASE
               WHEN (ws.attempts >= COALESCE(ws.retry_limit, 3)) THEN false
+              WHEN ((ws.attempts > 0) AND (ws.retryable = false)) THEN false
               WHEN (last_failure.created_at IS NULL) THEN true
               WHEN ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL)) THEN
               CASE
@@ -234,7 +236,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
               ELSE true
           END AS retry_eligible,
           CASE
-              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'failed'::character varying])::text[])) AND ((dep_check.total_parents = 0) OR (dep_check.completed_parents = dep_check.total_parents)) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND ((last_failure.created_at IS NULL) OR ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
+              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'failed'::character varying])::text[])) AND ((dep_check.total_parents IS NULL) OR (dep_check.total_parents = 0) OR (dep_check.completed_parents = dep_check.total_parents)) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND (ws.in_process = false) AND (ws.processed = false) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
               ELSE false
           END AS ready_for_execution,
       last_failure.created_at AS last_failure_at,
