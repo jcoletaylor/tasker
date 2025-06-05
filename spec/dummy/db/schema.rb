@@ -245,8 +245,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
               WHEN (last_failure.created_at IS NOT NULL) THEN (last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval))
               ELSE NULL::timestamp without time zone
           END AS next_retry_at,
-      dep_check.total_parents,
-      dep_check.completed_parents,
+      COALESCE(dep_check.total_parents, (0)::bigint) AS total_parents,
+      COALESCE(dep_check.completed_parents, (0)::bigint) AS completed_parents,
       ws.attempts,
       COALESCE(ws.retry_limit, 3) AS retry_limit,
       ws.backoff_request_seconds,

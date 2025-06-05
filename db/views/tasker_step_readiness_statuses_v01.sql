@@ -65,8 +65,8 @@ SELECT
   END as next_retry_at,
 
   -- Dependency Context
-  dep_check.total_parents,
-  dep_check.completed_parents,
+  COALESCE(dep_check.total_parents, 0) as total_parents,
+  COALESCE(dep_check.completed_parents, 0) as completed_parents,
 
   -- Retry Context
   ws.attempts,
