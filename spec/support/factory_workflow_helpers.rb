@@ -255,11 +255,29 @@ module FactoryWorkflowHelpers
 
   # Set step to error state with custom error message (for API integration testing)
   def set_step_to_error(step, error_message = 'Test error')
+    # Reload step to ensure we have the current state (prevents stale state issues)
+    step.reload
+
     # Complete dependencies first to ensure state machine guards pass
     complete_step_dependencies(step)
 
+    # Reload again after dependency completion to ensure we have current state
+    step.reload
+    current_state = step.state_machine.current_state
+
+    # Only proceed if the step hasn't been completed by dependency resolution
+    completion_states = [
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+    ]
+
+    if completion_states.include?(current_state)
+      Rails.logger.warn "Test Helper: Step #{step.workflow_step_id} was completed during dependency resolution - cannot set to error"
+      return step
+    end
+
     # Now transition to in_progress if still in pending state
-    step.state_machine.transition_to!(:in_progress) if step.state_machine.current_state == 'pending'
+    step.state_machine.transition_to!(:in_progress) if current_state == 'pending'
     step.state_machine.transition_to!(:error)
     step.update_columns(
       processed: false,

@@ -119,7 +119,21 @@
 </li><li>
 <p><a href="#best-practices">Best Practices</a></p>
 </li><li>
+<p><a href="#event-system--custom-integrations">Event System &amp; Custom Integrations</a></p>
+<ul><li>
+<p><a href="#quick-start-with-event-subscribers">Quick Start with Event Subscribers</a></p>
+</li><li>
+<p><a href="#example-custom-subscriber">Example Custom Subscriber</a></p>
+</li></ul>
+</li><li>
 <p><a href="#telemetry-and-observability">Telemetry and Observability</a></p>
+</li><li>
+<p><a href="#documentation">Documentation</a></p>
+<ul><li>
+<p><a href="#developer-resources">Developer Resources</a></p>
+</li><li>
+<p><a href="#additional-resources">Additional Resources</a></p>
+</li></ul>
 </li><li>
 <p><a href="#scheduling-tasks">Scheduling Tasks</a></p>
 </li><li>
@@ -544,6 +558,53 @@ step_templates:
 <span class='kw'>end</span>
 </code></pre>
 
+<h2 id="label-Event+System+-26+Custom+Integrations">Event System &amp; Custom Integrations</h2>
+
+<p>Tasker features a comprehensive event-driven architecture that provides deep insights into task execution and enables powerful integrations. The event system includes:</p>
+<ul><li>
+<p><strong>Complete Event Catalog</strong> - Discover all available events with <code>Tasker::Events.catalog</code></p>
+</li><li>
+<p><strong>Custom Event Subscribers</strong> - Create integrations with external services (Sentry, PagerDuty, Slack)</p>
+</li><li>
+<p><strong>Subscriber Generator</strong> - <code>rails generate tasker:subscriber</code> creates subscribers with automatic method routing</p>
+</li><li>
+<p><strong>Production-Ready Observability</strong> - OpenTelemetry integration with comprehensive telemetry</p>
+</li><li>
+<p><strong>Living Documentation</strong> - Real-world integration examples with comprehensive test coverage</p>
+</li></ul>
+
+<h3 id="label-Quick+Start+with+Event+Subscribers">Quick Start with Event Subscribers</h3>
+
+<pre class="code ruby"><code class="ruby"># Generate a subscriber for critical alerts
+rails generate tasker:subscriber pager_duty --events task.failed step.failed
+
+# Generate a notification subscriber
+rails generate tasker:subscriber notification --events task.completed task.failed
+</code></pre>
+
+<h3 id="label-Example+Custom+Subscriber">Example Custom Subscriber</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>NotificationSubscriber</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers/BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
+  <span class='comment'># Subscribe to specific events
+</span>  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step.failed</span><span class='tstring_end'>&#39;</span></span>
+
+  <span class='comment'># Handle task completion events
+</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_completed'>handle_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_id</span><span class='rparen'>)</span>
+    <span class='const'>NotificationService</span><span class='period'>.</span><span class='id identifier rubyid_send_success_email'>send_success_email</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Handle failure events
+</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_failed'>handle_task_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_id</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+    <span class='const'>AlertService</span><span class='period'>.</span><span class='id identifier rubyid_send_failure_alert'>send_failure_alert</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_error_message'>error_message</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>For complete documentation on the event system, subscriber creation, and integration examples, see <a href="docs/EVENT_SYSTEM_md.html">docs/EVENT_SYSTEM.md</a>.</p>
+
 <h2 id="label-Telemetry+and+Observability">Telemetry and Observability</h2>
 
 <p>Tasker includes comprehensive telemetry capabilities to provide insights into task execution flow and performance:</p>
@@ -561,11 +622,29 @@ step_templates:
 <p><strong>Detailed event lifecycle tracking</strong> with standard events for all task and step operations</p>
 </li></ul>
 
-<p>For complete documentation on telemetry features, configuration options, and best practices, see <a href="docs/TELEMETRY_md.html">TELEMETRY.md</a>.</p>
+<p>For complete documentation on telemetry features, configuration options, and best practices, see <a href="docs/TELEMETRY_md.html">docs/TELEMETRY.md</a>.</p>
 
-<p>For more information on why I built this, see the <a href="./docs/WHY_md.html">WHY.md</a> file.</p>
+<h2 id="label-Documentation">Documentation</h2>
 
-<p>For a system overview, see the <a href="./docs/OVERVIEW_md.html">OVERVIEW.md</a> file, and the full <a href="./docs/TODO_md.html">TODO</a>.</p>
+<h3 id="label-Developer+Resources">Developer Resources</h3>
+<ul><li>
+<p><strong>Guide[docs/DEVELOPER_GUIDE.md]</strong> - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration</p>
+</li><li>
+<p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Complete event system documentation with integration examples</p>
+</li><li>
+<p><strong>&amp; Observability[docs/TELEMETRY.md]</strong> - OpenTelemetry integration and custom monitoring setup</p>
+</li><li>
+<p><strong>Overview[docs/OVERVIEW.md]</strong> - Architecture overview and configuration examples</p>
+</li><li>
+<p><strong>Execution[docs/FLOW_CHART.md]</strong> - Visual guide to workflow execution and retry logic</p>
+</li></ul>
+
+<h3 id="label-Additional+Resources">Additional Resources</h3>
+<ul><li>
+<p><strong>Tasker[docs/WHY.md]</strong> - Background and motivation for building Tasker</p>
+</li><li>
+<p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual representation of task workflows</p>
+</li></ul>
 
 <h2 id="label-Scheduling+Tasks">Scheduling Tasks</h2>
 
@@ -597,7 +676,7 @@ step_templates:
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jun  5 17:38:07 2025 by
+  Generated on Thu Jun  5 19:26:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

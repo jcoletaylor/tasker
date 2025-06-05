@@ -12,7 +12,7 @@ Tasker has evolved into a production-ready workflow engine with comprehensive ob
 
 ## Event System Architecture
 
-The current event system provides comprehensive observability and workflow orchestration:
+Tasker features a comprehensive event-driven architecture that provides both deep observability and powerful developer integration capabilities:
 
 ### Event Categories
 
@@ -20,6 +20,55 @@ The current event system provides comprehensive observability and workflow orche
 - **Step Events** (`Tasker::Constants::StepEvents`) - Step execution events with error context
 - **Workflow Events** (`Tasker::Constants::WorkflowEvents`) - Orchestration and dependency management
 - **Observability Events** (`Tasker::Constants::ObservabilityEvents`) - Performance monitoring and metrics
+
+### Developer-Friendly Event Discovery
+
+The event system includes a comprehensive catalog for discovering and understanding events:
+
+```ruby
+# Discover all available events
+Tasker::Events.catalog.keys
+# => ["task.started", "task.completed", "task.failed", "step.started", ...]
+
+# Get detailed event information
+Tasker::Events.event_info('task.completed')
+# => {
+#   name: "task.completed",
+#   category: "task",
+#   description: "Fired when a task completes successfully",
+#   payload_schema: { task_id: String, execution_duration: Float },
+#   example_payload: { task_id: "task_123", execution_duration: 45.2 },
+#   fired_by: ["TaskFinalizer", "TaskHandler"]
+# }
+```
+
+### Custom Event Subscribers
+
+Create custom integrations with external services using the subscriber generator:
+
+```bash
+# Generate a subscriber with specific events
+rails generate tasker:subscriber notification --events task.completed task.failed step.failed
+```
+
+This creates a complete subscriber class with automatic method routing:
+
+```ruby
+class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  subscribe_to 'task.completed', 'task.failed', 'step.failed'
+
+  def handle_task_completed(event)
+    task_id = safe_get(event, :task_id)
+    NotificationService.send_success_email(task_id: task_id)
+  end
+
+  def handle_task_failed(event)
+    task_id = safe_get(event, :task_id)
+    error_message = safe_get(event, :error_message, 'Unknown error')
+    AlertService.send_failure_alert(task_id: task_id, error: error_message)
+  end
+end
+```
 
 ### Publishing Events
 
@@ -40,6 +89,18 @@ class MyStepHandler
   end
 end
 ```
+
+### Integration Examples
+
+The system includes comprehensive integration examples in `spec/lib/tasker/events/subscribers/examples/`:
+
+- **SentrySubscriber** - Error tracking with intelligent fingerprinting
+- **PagerDutySubscriber** - Critical alerting with business logic filtering
+- **SlackSubscriber** - Rich team notifications with environment routing
+- **MetricsSubscriber** - Analytics and performance tracking
+- **ComprehensiveSubscriber** - Multi-service integration patterns
+
+For complete documentation, see [EVENT_SYSTEM.md](EVENT_SYSTEM.md).
 
 ### OpenTelemetry Integration
 

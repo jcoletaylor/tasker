@@ -35,7 +35,13 @@ This guide will walk you through the fundamentals of using Tasker to build compl
     - [Customizing Result Processing](#customizing-result-processing)
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
   - [Best Practices](#best-practices)
+  - [Event System \& Custom Integrations](#event-system--custom-integrations)
+    - [Quick Start with Event Subscribers](#quick-start-with-event-subscribers)
+    - [Example Custom Subscriber](#example-custom-subscriber)
   - [Telemetry and Observability](#telemetry-and-observability)
+  - [Documentation](#documentation)
+    - [Developer Resources](#developer-resources)
+    - [Additional Resources](#additional-resources)
   - [Scheduling Tasks](#scheduling-tasks)
   - [Dependencies](#dependencies)
   - [Development](#development)
@@ -438,6 +444,50 @@ def process(task, sequence, step)
 end
 ```
 
+## Event System & Custom Integrations
+
+Tasker features a comprehensive event-driven architecture that provides deep insights into task execution and enables powerful integrations. The event system includes:
+
+- **Complete Event Catalog** - Discover all available events with `Tasker::Events.catalog`
+- **Custom Event Subscribers** - Create integrations with external services (Sentry, PagerDuty, Slack)
+- **Subscriber Generator** - `rails generate tasker:subscriber` creates subscribers with automatic method routing
+- **Production-Ready Observability** - OpenTelemetry integration with comprehensive telemetry
+- **Living Documentation** - Real-world integration examples with comprehensive test coverage
+
+### Quick Start with Event Subscribers
+
+```bash
+# Generate a subscriber for critical alerts
+rails generate tasker:subscriber pager_duty --events task.failed step.failed
+
+# Generate a notification subscriber
+rails generate tasker:subscriber notification --events task.completed task.failed
+```
+
+### Example Custom Subscriber
+
+```ruby
+class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  # Subscribe to specific events
+  subscribe_to 'task.completed', 'task.failed', 'step.failed'
+
+  # Handle task completion events
+  def handle_task_completed(event)
+    task_id = safe_get(event, :task_id)
+    NotificationService.send_success_email(task_id: task_id)
+  end
+
+  # Handle failure events
+  def handle_task_failed(event)
+    task_id = safe_get(event, :task_id)
+    error_message = safe_get(event, :error_message, 'Unknown error')
+    AlertService.send_failure_alert(task_id: task_id, error: error_message)
+  end
+end
+```
+
+For complete documentation on the event system, subscriber creation, and integration examples, see [docs/EVENT_SYSTEM.md](docs/EVENT_SYSTEM.md).
+
 ## Telemetry and Observability
 
 Tasker includes comprehensive telemetry capabilities to provide insights into task execution flow and performance:
@@ -449,11 +499,22 @@ Tasker includes comprehensive telemetry capabilities to provide insights into ta
 - **Configurable service naming** to customize how traces appear in your observability tools
 - **Detailed event lifecycle tracking** with standard events for all task and step operations
 
-For complete documentation on telemetry features, configuration options, and best practices, see [TELEMETRY.md](docs/TELEMETRY.md).
+For complete documentation on telemetry features, configuration options, and best practices, see [docs/TELEMETRY.md](docs/TELEMETRY.md).
 
-For more information on why I built this, see the [WHY.md](./docs/WHY.md) file.
+## Documentation
 
-For a system overview, see the [OVERVIEW.md](./docs/OVERVIEW.md) file, and the full [TODO](./docs/TODO.md).
+### Developer Resources
+
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration
+- **[Event System](docs/EVENT_SYSTEM.md)** - Complete event system documentation with integration examples
+- **[Telemetry & Observability](docs/TELEMETRY.md)** - OpenTelemetry integration and custom monitoring setup
+- **[System Overview](docs/OVERVIEW.md)** - Architecture overview and configuration examples
+- **[Workflow Execution](docs/FLOW_CHART.md)** - Visual guide to workflow execution and retry logic
+
+### Additional Resources
+
+- **[Why Tasker](docs/WHY.md)** - Background and motivation for building Tasker
+- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual representation of task workflows
 
 ## Scheduling Tasks
 

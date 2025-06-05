@@ -14,6 +14,8 @@ Tasker includes comprehensive telemetry capabilities to provide insights into ta
 - **Comprehensive Event Lifecycle Tracking** - Task, step, workflow, and orchestration events
 - **Sensitive Data Filtering** - Automatic security and privacy protection
 - **Developer-Friendly API** - Clean `EventPublisher` concern for easy event publishing
+- **Custom Event Subscribers** - Generator and BaseSubscriber for creating integrations
+- **Event Discovery System** - Complete event catalog with documentation and examples
 
 ## Architecture
 
@@ -23,7 +25,10 @@ Tasker's telemetry is built on a unified event system with these main components
 2. **EventPublisher Concern** - Clean interface providing `publish_event()`, `publish_step_event()`, etc.
 3. **EventPayloadBuilder** - Standardized payload creation for consistent telemetry data
 4. **TelemetrySubscriber** - Converts events to OpenTelemetry spans and metrics
-5. **Configuration** - OpenTelemetry setup with production-ready safety mechanisms
+5. **Event Catalog** - Complete event discovery and documentation system
+6. **BaseSubscriber** - Foundation for creating custom event subscribers
+7. **Subscriber Generator** - Tool for creating custom integrations with external services
+8. **Configuration** - OpenTelemetry setup with production-ready safety mechanisms
 
 ### Event Flow
 
@@ -176,6 +181,64 @@ OpenTelemetry::SDK.configure do |c|
   c.use_all({ 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } })
 end
 ```
+
+## Custom Telemetry Integrations
+
+Beyond OpenTelemetry, Tasker's event system enables easy integration with any observability or monitoring service:
+
+### Creating Custom Subscribers
+
+Use the subscriber generator to create integrations:
+
+```bash
+# Generate a metrics subscriber for DataDog/StatsD
+rails generate tasker:subscriber metrics --events task.completed task.failed step.completed step.failed
+
+# Generate an alerting subscriber for PagerDuty
+rails generate tasker:subscriber pager_duty --events task.failed step.failed
+```
+
+### Example Custom Integrations
+
+**Metrics Collection (DataDog/StatsD)**:
+```ruby
+class MetricsSubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  subscribe_to 'task.completed', 'step.completed'
+
+  def handle_task_completed(event)
+    execution_duration = safe_get(event, :execution_duration, 0)
+    task_name = safe_get(event, :task_name, 'unknown')
+
+    # Record task completion time
+    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
+    StatsD.increment('tasker.task.completed', tags: ["task:#{task_name}"])
+  end
+
+  def handle_step_completed(event)
+    step_name = safe_get(event, :step_name, 'unknown')
+    execution_duration = safe_get(event, :execution_duration, 0)
+
+    # Record step-level metrics
+    StatsD.histogram('tasker.step.duration', execution_duration, tags: ["step:#{step_name}"])
+  end
+end
+```
+
+**Error Tracking (Sentry)**:
+```ruby
+class SentrySubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  subscribe_to 'task.failed', 'step.failed'
+
+  def handle_task_failed(event)
+    task_id = safe_get(event, :task_id)
+    error_message = safe_get(event, :error_message, 'Unknown error')
+
+    Sentry.capture_message(error_message, level: 'error', fingerprint: ['tasker', 'task_failed', task_id])
+  end
+end
+```
+
+For complete documentation on creating custom subscribers and integration examples, see [EVENT_SYSTEM.md](EVENT_SYSTEM.md).
 
 ## Integration with OpenTelemetry
 
