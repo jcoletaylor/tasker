@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../events/event_payload_builder'
+require_relative '../events/custom_registry'
 
 module Tasker
   module Concerns
@@ -480,6 +481,26 @@ module Tasker
 
         payload = build_task_payload(task, :enqueue, context)
         publish_event(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE, payload)
+      end
+
+      # ========================================================================
+      # CUSTOM EVENT PUBLISHING - DEVELOPER-FACING API
+      # ========================================================================
+
+      # Publish a custom event with standard metadata
+      # Assumes the event is already registered
+      #
+      # @param event_name [String] Event name
+      # @param payload [Hash] Event payload
+      # @return [void]
+      def publish_custom_event(event_name, payload = {})
+        # Add standard metadata
+        enhanced_payload = payload.merge(
+          event_type: 'custom',
+          timestamp: Time.current
+        )
+
+        publish_event(event_name, enhanced_payload)
       end
 
       # ========================================================================

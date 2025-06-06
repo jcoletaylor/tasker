@@ -35,6 +35,11 @@ step_templates:
     depends_on_steps:
       - fetch_data
     handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::ProcessDataStepHandler
+    custom_events:
+      - name: data.processed
+        description: Published when data processing completes successfully
+      - name: data.validation_failed
+        description: Published when data validation fails during processing
 
   - name: complete_task
     description: Complete the task with processed data

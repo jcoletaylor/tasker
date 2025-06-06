@@ -204,7 +204,18 @@ module Tasker
                 type: 'array',
                 items: { type: 'string' }
               },
-              handler_config: { type: 'object' }
+              handler_config: { type: 'object' },
+              custom_events: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: %w[name],
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' }
+                  }
+                }
+              }
             }
           }
         },

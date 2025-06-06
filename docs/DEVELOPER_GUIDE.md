@@ -115,27 +115,70 @@ Step handlers implement the specific business logic for individual workflow step
 
 ### Step Handler Types
 
-**Base Step Handler** - For general business logic:
+**Base Step Handler** - For general business logic with custom events:
 ```ruby
 module OrderProcess
   module StepHandler
     class ProcessPaymentHandler < Tasker::StepHandler::Base
+      # Define custom events that this handler can publish
+      # These are automatically registered when the task handler is loaded
+      def self.custom_event_configuration
+        [
+          {
+            name: 'payment.processed',
+            description: 'Published when payment processing completes successfully'
+          },
+          {
+            name: 'payment.risk_flagged',
+            description: 'Published when payment is flagged for manual review'
+          }
+        ]
+      end
+
       def process(task, sequence, step)
-        order_id = task.context['order_id']
-        payment_method = task.context['payment_method']
+        order_id = task.context[:order_id]
+        payment_amount = task.context[:payment_amount]
 
-        # Perform payment processing
-        payment_result = PaymentService.charge(
-          order_id: order_id,
-          payment_method: payment_method
-        )
+        # Perform risk assessment
+        risk_score = assess_payment_risk(order_id, payment_amount)
 
-        # Return results for dependent steps
-        {
-          payment_id: payment_result.id,
-          amount_charged: payment_result.amount,
-          transaction_id: payment_result.transaction_id
-        }
+        if risk_score > 0.8
+          # Publish custom event for high-risk payments
+          publish_custom_event('payment.risk_flagged', {
+            order_id: order_id,
+            risk_score: risk_score,
+            requires_manual_review: true,
+            flagged_at: Time.current
+          })
+
+          { status: 'risk_review', risk_score: risk_score }
+        else
+          # Process payment normally
+          payment_result = process_payment_transaction(order_id, payment_amount)
+
+          # Publish custom event for successful payments
+          publish_custom_event('payment.processed', {
+            order_id: order_id,
+            payment_amount: payment_amount,
+            transaction_id: payment_result[:transaction_id],
+            processed_at: Time.current
+          })
+
+          { status: 'completed', transaction_id: payment_result[:transaction_id] }
+        end
+      end
+
+      private
+
+      def assess_payment_risk(order_id, amount)
+        # Risk assessment logic here
+        # Returns a score between 0.0 and 1.0
+        rand(0.0..1.0)
+      end
+
+      def process_payment_transaction(order_id, amount)
+        # Payment processing logic here
+        { transaction_id: "txn_#{SecureRandom.hex(8)}" }
       end
     end
   end
@@ -486,41 +529,66 @@ environments:
 ## Development Workflow
 
 ### 1. Plan Your Workflow
-- Identify the business process and break it into discrete steps
-- Determine step dependencies and potential parallel execution
-- Consider error scenarios and retry requirements
-
-### 2. Generate and Configure
 ```bash
-# Generate the task handler structure
-rails generate task_handler YourWorkflow
-
-# Generate step handlers as needed
-rails generate step_handler YourWorkflow::ProcessData
-
-# Generate event subscribers for integrations
-rails generate tasker:subscriber monitoring --events task.completed task.failed
+# Define your business process steps and dependencies
+# Example: Order Processing
+# 1. Validate Order → 2. Process Payment → 3. Ship Order
 ```
 
-### 3. Implement Step Logic
-- Implement business logic in step handler `process` methods
-- Use previous step data and task context appropriately
-- Handle errors gracefully with meaningful error information
+### 2. Generate Task Handler
+```bash
+rails generate task_handler OrderProcess --steps="validate_order,process_payment,ship_order"
+```
+
+### 3. Implement Step Handlers
+```ruby
+# app/tasks/order_process/validate_order_handler.rb
+class ValidateOrderHandler < Tasker::StepHandler::Base
+  def self.custom_event_configuration
+    [
+      { name: 'order.validation_failed', description: 'Order validation failed' },
+      { name: 'order.validated', description: 'Order validation successful' }
+    ]
+  end
+
+  def process(task, sequence, step)
+    # Implementation here
+    # Publish custom events as needed
+  end
+end
+```
 
 ### 4. Configure Dependencies
-- Update YAML file with proper step dependencies
-- Configure retry settings based on operation characteristics
-- Add environment-specific configurations as needed
+```yaml
+# config/tasker/tasks/order_process.yaml
+step_templates:
+  - name: validate_order
+    handler_class: OrderProcess::ValidateOrderHandler
+  - name: process_payment
+    depends_on_step: validate_order
+    handler_class: OrderProcess::ProcessPaymentHandler
+    custom_events:
+      - name: payment.gateway_error
+        description: Payment gateway returned an error
+  - name: ship_order
+    depends_on_step: process_payment
+    handler_class: OrderProcess::ShipOrderHandler
+```
 
-### 5. Create Integrations
-- Implement event subscribers for monitoring and alerting
-- Test subscriber behavior with realistic event data
-- Configure external service integrations (Sentry, DataDog, etc.)
+### 5. Test Your Workflow
+```ruby
+# spec/tasks/order_process_spec.rb
+RSpec.describe OrderProcess do
+  it 'processes orders successfully' do
+    # Test implementation
+  end
+end
+```
 
-### 6. Test and Monitor
-- Write comprehensive tests for both success and failure scenarios
-- Monitor task execution through events and telemetry
-- Use event catalog to understand available observability data
+### 6. Deploy and Monitor
+- Custom events are automatically registered and discoverable
+- External systems can subscribe to your custom events
+- Monitor workflow execution through event subscriptions
 
 ## Testing Strategies
 
@@ -609,7 +677,13 @@ rails generate api_step_handler WorkflowName::FetchData
 ### Event Discovery
 ```ruby
 # Discover all events
-Tasker::Events.catalog.keys
+Tasker::Events.catalog.keys              # System events only
+Tasker::Events.complete_catalog.keys     # System + custom events
+Tasker::Events.custom_events.keys        # Custom events only
+
+# Search and filter events
+Tasker::Events.search_events('payment')  # Search by name/description
+Tasker::Events.events_by_namespace('order')  # Events by namespace
 
 # Get event details
 Tasker::Events.event_info('task.completed')
@@ -627,7 +701,17 @@ previous_data = get_previous_step_data(sequence, 'step_name', 'data_key')
 # Safe event data access
 value = safe_get(event, :key, 'default_value')
 
-# Publish custom events
+# Class-based custom events (automatic registration)
+class MyStepHandler < Tasker::StepHandler::Base
+  def self.custom_event_configuration
+    [{ name: 'order.processed', description: 'Order completed' }]
+  end
+end
+
+# Publish custom events in step handlers
+publish_custom_event('order.processed', order_id: 123, status: 'completed')
+
+# Publish system events with custom data
 publish_step_completed(step, custom_data: 'value')
 ```
 

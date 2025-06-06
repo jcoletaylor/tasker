@@ -123,6 +123,8 @@
 <ul><li>
 <p><a href="#quick-start-with-event-subscribers">Quick Start with Event Subscribers</a></p>
 </li><li>
+<p><a href="#example-custom-events-in-step-handlers">Example: Custom Events in Step Handlers</a></p>
+</li><li>
 <p><a href="#example-custom-subscriber">Example Custom Subscriber</a></p>
 </li></ul>
 </li><li>
@@ -562,11 +564,15 @@ step_templates:
 
 <p>Tasker features a comprehensive event-driven architecture that provides deep insights into task execution and enables powerful integrations. The event system includes:</p>
 <ul><li>
-<p><strong>Complete Event Catalog</strong> - Discover all available events with <code>Tasker::Events.catalog</code></p>
+<p><strong>Complete Event Catalog</strong> - Discover all available events with <code>Tasker::Events.catalog</code> and <code>Tasker::Events.complete_catalog</code></p>
+</li><li>
+<p><strong>Custom Business Events</strong> - Define and publish custom events from step handlers for business logic observability</p>
 </li><li>
 <p><strong>Custom Event Subscribers</strong> - Create integrations with external services (Sentry, PagerDuty, Slack)</p>
 </li><li>
 <p><strong>Subscriber Generator</strong> - <code>rails generate tasker:subscriber</code> creates subscribers with automatic method routing</p>
+</li><li>
+<p><strong>Event Discovery</strong> - Search and filter events by namespace, name, or description</p>
 </li><li>
 <p><strong>Production-Ready Observability</strong> - OpenTelemetry integration with comprehensive telemetry</p>
 </li><li>
@@ -582,11 +588,32 @@ rails generate tasker:subscriber pager_duty --events task.failed step.failed
 rails generate tasker:subscriber notification --events task.completed task.failed
 </code></pre>
 
+<h3 id="label-Example-3A+Custom+Events+in+Step+Handlers">Example: Custom Events in Step Handlers</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Register custom business events
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='period'>.</span><span class='id identifier rubyid_register_custom_event'><span class='object_link'><a href="Tasker/Events.html#register_custom_event-class_method" title="Tasker::Events.register_custom_event (method)">register_custom_event</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Order has been fulfilled and shipped</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+
+<span class='comment'># Publish from step handlers
+</span><span class='kw'>class</span> <span class='const'>OrderFulfillmentStep</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_order'>order</span> <span class='op'>=</span> <span class='id identifier rubyid_fulfill_order'>fulfill_order</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_inputs'>inputs</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+
+    <span class='comment'># Publish custom business event
+</span>    <span class='id identifier rubyid_publish_custom_event'>publish_custom_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span>
+      <span class='label'>order_id:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='comma'>,</span>
+      <span class='label'>customer_id:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_customer_id'>customer_id</span><span class='comma'>,</span>
+      <span class='label'>total_amount:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_total'>total</span>
+    <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
 <h3 id="label-Example+Custom+Subscriber">Example Custom Subscriber</h3>
 
 <pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>NotificationSubscriber</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers/BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
-  <span class='comment'># Subscribe to specific events
-</span>  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step.failed</span><span class='tstring_end'>&#39;</span></span>
+  <span class='comment'># Subscribe to system and custom events
+</span>  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span>
 
   <span class='comment'># Handle task completion events
 </span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_completed'>handle_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
@@ -599,6 +626,16 @@ rails generate tasker:subscriber notification --events task.completed task.faile
     <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_id</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
     <span class='const'>AlertService</span><span class='period'>.</span><span class='id identifier rubyid_send_failure_alert'>send_failure_alert</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_error_message'>error_message</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Handle custom business events
+</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_order_fulfilled'>handle_order_fulfilled</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:order_id</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_customer_id'>customer_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:customer_id</span><span class='rparen'>)</span>
+    <span class='const'>NotificationService</span><span class='period'>.</span><span class='id identifier rubyid_send_fulfillment_notification'>send_fulfillment_notification</span><span class='lparen'>(</span>
+      <span class='label'>order_id:</span> <span class='id identifier rubyid_order_id'>order_id</span><span class='comma'>,</span>
+      <span class='label'>customer_id:</span> <span class='id identifier rubyid_customer_id'>customer_id</span>
+    <span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span>
 </code></pre>
@@ -676,7 +713,7 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jun  5 19:26:52 2025 by
+  Generated on Thu Jun  5 20:40:07 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

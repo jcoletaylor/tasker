@@ -271,12 +271,12 @@
       <pre class="lines">
 
 
-19
-20
-21</pre>
+21
+22
+23</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 19</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_handler_classes'>handler_classes</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -337,12 +337,12 @@
       <pre class="lines">
 
 
-14
-15
-16</pre>
+16
+17
+18</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 14</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 16</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handler_classes'>handler_classes</span>
   <span class='ivar'>@handler_classes</span>
@@ -441,8 +441,6 @@
       <pre class="lines">
 
 
-28
-29
 30
 31
 32
@@ -455,10 +453,12 @@
 39
 40
 41
-42</pre>
+42
+43
+44</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 30</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_handler_class'>handler_class</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span>
@@ -542,18 +542,21 @@
       <pre class="lines">
 
 
-49
-50
 51
 52
 53
 54
 55
 56
-57</pre>
+57
+58
+59
+60
+61
+62</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 51</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_register'>register</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='rparen'>)</span>
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span>
@@ -563,6 +566,9 @@
                                         <span class='comment'># Store as string for named classes (original behavior)
 </span>                                        <span class='id identifier rubyid_class_name'>class_name</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
                                       <span class='kw'>end</span>
+
+  <span class='comment'># Automatically discover and register custom events from step handlers
+</span>  <span class='id identifier rubyid_discover_and_register_custom_events'>discover_and_register_custom_events</span><span class='lparen'>(</span><span class='id identifier rubyid_class_name'>class_name</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -574,7 +580,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 19:26:53 2025 by
+  Generated on Thu Jun  5 20:40:08 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

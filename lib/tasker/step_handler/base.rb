@@ -145,6 +145,33 @@ module Tasker
         step.results = process_output
       end
 
+      # Class method that step handlers can override to declare custom events
+      #
+      # ✅ OVERRIDE THIS METHOD: To declare custom events your step handler publishes
+      #
+      # Return an array of hashes where each hash defines a custom event:
+      # - name: The event name (without namespace)
+      # - description: Human-readable description of when this event is published
+      #
+      # Example:
+      #   def self.custom_event_configuration
+      #     [
+      #       {
+      #         name: 'payment.processed',
+      #         description: 'Published when payment processing completes successfully'
+      #       },
+      #       {
+      #         name: 'payment.risk_flagged',
+      #         description: 'Published when payment is flagged for manual review'
+      #       }
+      #     ]
+      #   end
+      #
+      # @return [Array<Hash>] Array of custom event definitions
+      def self.custom_event_configuration
+        []
+      end
+
       protected
 
       # Access to configuration passed during initialization

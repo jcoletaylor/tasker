@@ -37,6 +37,7 @@ This guide will walk you through the fundamentals of using Tasker to build compl
   - [Best Practices](#best-practices)
   - [Event System \& Custom Integrations](#event-system--custom-integrations)
     - [Quick Start with Event Subscribers](#quick-start-with-event-subscribers)
+    - [Example: Custom Events in Step Handlers](#example-custom-events-in-step-handlers)
     - [Example Custom Subscriber](#example-custom-subscriber)
   - [Telemetry and Observability](#telemetry-and-observability)
   - [Documentation](#documentation)
@@ -448,9 +449,11 @@ end
 
 Tasker features a comprehensive event-driven architecture that provides deep insights into task execution and enables powerful integrations. The event system includes:
 
-- **Complete Event Catalog** - Discover all available events with `Tasker::Events.catalog`
+- **Complete Event Catalog** - Discover all available events with `Tasker::Events.catalog` and `Tasker::Events.complete_catalog`
+- **Custom Business Events** - Define and publish custom events from step handlers for business logic observability
 - **Custom Event Subscribers** - Create integrations with external services (Sentry, PagerDuty, Slack)
 - **Subscriber Generator** - `rails generate tasker:subscriber` creates subscribers with automatic method routing
+- **Event Discovery** - Search and filter events by namespace, name, or description
 - **Production-Ready Observability** - OpenTelemetry integration with comprehensive telemetry
 - **Living Documentation** - Real-world integration examples with comprehensive test coverage
 
@@ -464,12 +467,34 @@ rails generate tasker:subscriber pager_duty --events task.failed step.failed
 rails generate tasker:subscriber notification --events task.completed task.failed
 ```
 
+### Example: Custom Events in Step Handlers
+
+```ruby
+# Register custom business events
+Tasker::Events.register_custom_event('order.fulfilled',
+  description: 'Order has been fulfilled and shipped')
+
+# Publish from step handlers
+class OrderFulfillmentStep < Tasker::StepHandler::Base
+  def handle(step)
+    order = fulfill_order(step.inputs['order_id'])
+
+    # Publish custom business event
+    publish_custom_event('order.fulfilled', {
+      order_id: order.id,
+      customer_id: order.customer_id,
+      total_amount: order.total
+    })
+  end
+end
+```
+
 ### Example Custom Subscriber
 
 ```ruby
 class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  # Subscribe to specific events
-  subscribe_to 'task.completed', 'task.failed', 'step.failed'
+  # Subscribe to system and custom events
+  subscribe_to 'task.completed', 'task.failed', 'order.fulfilled'
 
   # Handle task completion events
   def handle_task_completed(event)
@@ -482,6 +507,16 @@ class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
     task_id = safe_get(event, :task_id)
     error_message = safe_get(event, :error_message, 'Unknown error')
     AlertService.send_failure_alert(task_id: task_id, error: error_message)
+  end
+
+  # Handle custom business events
+  def handle_order_fulfilled(event)
+    order_id = safe_get(event, :order_id)
+    customer_id = safe_get(event, :customer_id)
+    NotificationService.send_fulfillment_notification(
+      order_id: order_id,
+      customer_id: customer_id
+    )
   end
 end
 ```

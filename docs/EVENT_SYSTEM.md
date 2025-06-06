@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tasker features a comprehensive event-driven architecture that provides deep insights into task execution, workflow orchestration, and system behavior. The event system is designed to be both production-ready for observability and developer-friendly for building custom integrations.
+Tasker features a comprehensive event-driven architecture that provides deep insights into task execution, workflow orchestration, and system behavior. The event system supports both **system events** (built-in workflow events) and **custom events** (business logic events), designed to be production-ready for observability and developer-friendly for building custom integrations.
 
 ## Architecture
 
@@ -11,11 +11,12 @@ The Tasker event system consists of several key components working together:
 ### Core Components
 
 1. **Events::Publisher** - Centralized event publishing using dry-events
-2. **EventPublisher Concern** - Clean interface for business logic (`publish_step_completed`, etc.)
+2. **EventPublisher Concern** - Clean interface for business logic (`publish_step_completed`, `publish_custom_event`)
 3. **EventPayloadBuilder** - Standardized payload creation for consistent data structures
-4. **Event Catalog** - Complete event discovery and documentation system
+4. **Event Catalog** - Complete event discovery and documentation system (system + custom events)
 5. **BaseSubscriber** - Foundation for creating custom event subscribers
 6. **TelemetrySubscriber** - Production OpenTelemetry integration
+7. **CustomRegistry** - Registration and management of custom business events
 
 ### Event Flow Architecture
 
@@ -32,6 +33,7 @@ flowchart LR
         Publisher["Events::Publisher"]
         PayloadBuilder["EventPayloadBuilder"]
         Catalog["Event Catalog"]
+        CustomRegistry["CustomRegistry"]
     end
 
     subgraph Subscribers["Event Subscribers"]
@@ -47,12 +49,14 @@ flowchart LR
     end
 
     TaskHandler -->|publish_step_completed| Publisher
+    TaskHandler -->|publish_custom_event| Publisher
     StepLogic -->|publish_step_failed| Publisher
     Orchestration -->|publish_workflow_event| Publisher
     StateMachine -->|publish_task_event| Publisher
 
     Publisher --> PayloadBuilder
     Publisher --> Catalog
+    Publisher --> CustomRegistry
     Publisher --> Telemetry
     Publisher --> Custom
     Publisher --> Generated
@@ -62,7 +66,11 @@ flowchart LR
     Discovery --> Catalog
 ```
 
-## Event Categories
+---
+
+## System Events
+
+System events are built-in events that track the core workflow execution lifecycle. These events are automatically published by Tasker as tasks and steps execute.
 
 ### Task Events (`Tasker::Constants::TaskEvents`)
 
@@ -113,16 +121,154 @@ System-level monitoring events:
 | `Task::START` | Task processing started by worker | `task_id`, `worker_id`, `started_at` |
 | `Step::PROCESSING` | Step processing metrics | `task_id`, `step_id`, `processing_time`, `memory_usage` |
 
+---
+
+## Custom Events
+
+Custom events allow you to define and publish business logic events from your step handlers that can be consumed by subscribers for monitoring, alerting, and notifications. Unlike system events, custom events are declaratively defined by developers and automatically registered.
+
+### Creating Custom Events
+
+Tasker provides multiple ways to define custom events with **automatic registration**:
+
+#### 1. Class-Based Event Configuration (Recommended)
+
+```ruby
+class OrderFulfillmentStep < Tasker::StepHandler::Base
+  # Define custom events - these are automatically registered when the handler loads
+  def self.custom_event_configuration
+    [
+      {
+        name: 'order.fulfilled',
+        description: 'Order has been fulfilled and shipped'
+      },
+      {
+        name: 'order.shipment_delayed',
+        description: 'Order shipment has been delayed'
+      }
+    ]
+  end
+
+  def process(task, sequence, step)
+    order = find_order(step.inputs['order_id'])
+
+    # ... fulfillment logic ...
+
+    # Publish custom event for subscribers (PagerDuty, Sentry, Slack, etc.)
+    publish_custom_event('order.fulfilled', {
+      order_id: order.id,
+      customer_id: order.customer_id,
+      total_amount: order.total,
+      priority: order.priority_level,
+      fulfillment_center: order.fulfillment_center,
+      shipping_method: order.shipping_method
+    })
+  end
+end
+```
+
+#### 2. YAML-Based Event Configuration
+
+You can also define custom events in your step template YAML files:
+
+```yaml
+# config/step_templates/order_fulfillment.yml
+name: "Order Fulfillment Step"
+description: "Processes and fulfills customer orders"
+handler_class: "OrderFulfillmentStep"
+custom_events:
+  - name: "order.fulfilled"
+    description: "Order has been fulfilled and shipped"
+  - name: "order.shipment_delayed"
+    description: "Order shipment has been delayed"
+```
+
+#### Key Features
+
+- **Automatic Registration**: Events are registered when step handlers load - no manual registration required
+- **Namespace Validation**: Events must be namespaced (e.g., `order.fulfilled`)
+- **Conflict Prevention**: Cannot conflict with system events
+- **Reserved Namespaces**: `task.*`, `step.*`, `workflow.*`, `observability.*`, `test.*` are reserved
+- **Complete Integration**: Custom events appear in all discovery methods
+- **Subscriber Compatibility**: Work seamlessly with existing subscriber patterns
+
+### Publishing Custom Events
+
+From within your step handlers, use the `publish_custom_event` method:
+
+```ruby
+class PaymentRiskAssessmentStep < Tasker::StepHandler::Base
+  def self.custom_event_configuration
+    [
+      {
+        name: 'payment.risk_flagged',
+        description: 'Payment flagged for manual review due to risk factors'
+      }
+    ]
+  end
+
+  def process(task, sequence, step)
+    risk_assessment = assess_payment_risk(step.inputs)
+
+    if risk_assessment.flagged?
+      # Publish the pre-declared custom event
+      publish_custom_event('payment.risk_flagged', {
+        payment_id: risk_assessment.payment_id,
+        risk_score: risk_assessment.score,
+        flagged_reasons: risk_assessment.reasons,
+        requires_manual_review: true,
+        customer_tier: risk_assessment.customer_tier
+      })
+    end
+  end
+end
+```
+
+### Custom Event Best Practices
+
+#### Event Naming
+- Use namespace.action format: `order.fulfilled`, `payment.processed`
+- Choose descriptive, business-focused names
+- Avoid technical implementation details in names
+
+#### Event Payloads
+Include relevant business context:
+
+```ruby
+# Good: Business context
+publish_custom_event('order.cancelled', {
+  order_id: order.id,
+  customer_id: order.customer_id,
+  cancellation_reason: 'customer_request',
+  refund_amount: order.refundable_amount,
+  cancelled_at: Time.current,
+  order_status_before_cancellation: order.previous_status
+})
+
+# Avoid: Too technical or sparse
+publish_custom_event('order.cancelled', {
+  id: 123,
+  status: 'cancelled'
+})
+```
+
+---
+
 ## Event Discovery
+
+The event catalog provides comprehensive discovery for both system and custom events:
 
 ### Using the Event Catalog
 
-The event catalog provides comprehensive event discovery and documentation:
-
 ```ruby
 # Discover all available events
-puts Tasker::Events.catalog.keys
-# => ["task.started", "task.completed", "task.failed", "step.started", ...]
+puts Tasker::Events.catalog.keys                    # System events only
+puts Tasker::Events.complete_catalog.keys           # System + custom events
+puts Tasker::Events.custom_events.keys              # Custom events only
+
+# Search and filter events
+puts Tasker::Events.search_events('payment')        # Search by name/description
+puts Tasker::Events.events_by_namespace('order')    # Get events by namespace
 
 # Get detailed event information
 event_info = Tasker::Events.event_info('task.completed')
@@ -137,9 +283,10 @@ puts event_info
 # }
 
 # Browse events by category
-puts Tasker::Events.task_events.keys
-puts Tasker::Events.step_events.keys
-puts Tasker::Events.workflow_events.keys
+puts Tasker::Events.task_events.keys                # System task events
+puts Tasker::Events.step_events.keys                # System step events
+puts Tasker::Events.workflow_events.keys            # System workflow events
+puts Tasker::Events.custom_events.keys              # Custom business events
 ```
 
 ### Event Documentation Structure
@@ -147,11 +294,23 @@ puts Tasker::Events.workflow_events.keys
 Each event in the catalog includes:
 
 - **Name**: Standard event identifier
-- **Category**: Event classification (task, step, workflow, observability)
+- **Category**: Event classification (task, step, workflow, observability, custom)
 - **Description**: Human-readable explanation of when the event fires
 - **Payload Schema**: Expected data structure with types
 - **Example Payload**: Real example of event data
 - **Fired By**: Components that publish this event
+
+### Print Complete Catalog
+
+```ruby
+# Print complete catalog (includes custom events)
+Tasker::Events::Catalog.print_catalog
+
+# Or in Rails console:
+pp Tasker::Events.custom_events
+```
+
+---
 
 ## Creating Custom Subscribers
 
@@ -160,8 +319,8 @@ Each event in the catalog includes:
 The easiest way to create custom event subscribers is using the built-in generator:
 
 ```bash
-# Generate a subscriber with specific events
-rails generate tasker:subscriber notification --events task.completed task.failed step.failed
+# Generate a subscriber with specific events (works for both system and custom events)
+rails generate tasker:subscriber notification --events task.completed task.failed order.fulfilled
 
 # Generate a basic subscriber (add events manually)
 rails generate tasker:subscriber sentry
@@ -175,44 +334,54 @@ This creates:
 
 ### Manual Subscriber Creation
 
-You can also create subscribers manually:
+You can also create subscribers manually to handle both system and custom events:
 
 ```ruby
-class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  # Subscribe to specific events
-  subscribe_to 'task.completed', 'task.failed', 'step.failed'
+class BusinessSubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  # Subscribe to both system events and custom events
+  subscribe_to 'task.completed', 'task.failed', 'order.fulfilled', 'payment.risk_flagged'
 
-  # Handle task.completed events
+  # Handle system events
   def handle_task_completed(event)
     task_id = safe_get(event, :task_id)
     execution_duration = safe_get(event, :execution_duration, 0)
 
-    # Send success notification
     NotificationService.send_success_email(
       task_id: task_id,
       duration: execution_duration
     )
   end
 
-  # Handle task.failed events
   def handle_task_failed(event)
     task_id = safe_get(event, :task_id)
     error_message = safe_get(event, :error_message, 'Unknown error')
 
-    # Send failure alert
     AlertService.send_failure_alert(
       task_id: task_id,
       error: error_message
     )
   end
 
-  # Handle step.failed events
-  def handle_step_failed(event)
-    step_id = safe_get(event, :step_id)
-    step_name = safe_get(event, :step_name)
+  # Handle custom business events
+  def handle_order_fulfilled(event)
+    order_id = safe_get(event, :order_id)
+    customer_id = safe_get(event, :customer_id)
 
-    # Log step failure for debugging
-    Rails.logger.error "Step failed: #{step_name} (#{step_id})"
+    # Send fulfillment notification
+    NotificationService.send_fulfillment_email(customer_id, order_id)
+
+    # Update analytics
+    AnalyticsService.track_order_fulfillment(order_id)
+  end
+
+  def handle_payment_risk_flagged(event)
+    if safe_get(event, :risk_score, 0) > 80
+      PagerDutyService.trigger_alert(
+        summary: "High-risk payment requires review",
+        severity: 'error',
+        details: event
+      )
+    end
   end
 end
 ```
@@ -221,28 +390,140 @@ end
 
 The `BaseSubscriber` class provides:
 
-- **Automatic Method Routing**: `task.completed` → `handle_task_completed`
+- **Automatic Method Routing**: `task.completed` → `handle_task_completed`, `order.fulfilled` → `handle_order_fulfilled`
 - **Safe Data Access**: `safe_get(event, :key, default)` with type checking
 - **Error Handling**: Graceful handling of malformed events
 - **Logging**: Automatic debug logging for event processing
 - **Flexible Subscription**: Subscribe to specific events or event patterns
 
+### Subscriber Integration Examples
+
+Your subscribers can handle both system and custom events seamlessly:
+
+```ruby
+class PagerDutySubscriber < Tasker::Events::BaseSubscriber
+  # Listen to both system failures and custom high-priority events
+  subscribe_to 'task.failed', 'step.failed', 'payment.risk_flagged', 'inventory.restock_needed'
+
+  def handle_task_failed(event)
+    # Handle system event
+    trigger_pagerduty_alert(
+      summary: "Tasker task failed: #{safe_get(event, :task_id)}",
+      severity: 'error',
+      details: event
+    )
+  end
+
+  def handle_payment_risk_flagged(event)
+    # Handle custom business logic event
+    if safe_get(event, :risk_score, 0) > 80
+      trigger_pagerduty_alert(
+        summary: "High-risk payment requires review",
+        severity: 'error',
+        details: event
+      )
+    end
+  end
+end
+```
+
+```ruby
+class SlackSubscriber < Tasker::Events::BaseSubscriber
+  subscribe_to 'task.completed', 'order.fulfilled'
+
+  def handle_task_completed(event)
+    # Handle system event
+    send_slack_message(
+      channel: '#ops',
+      text: "✅ Task #{safe_get(event, :task_id)} completed in #{safe_get(event, :execution_duration)}s"
+    )
+  end
+
+  def handle_order_fulfilled(event)
+    # Handle custom business event
+    send_slack_message(
+      channel: '#fulfillment',
+      text: "🎉 Order #{safe_get(event, :order_id)} fulfilled!",
+      attachments: [{
+        color: 'good',
+        fields: [
+          { title: 'Customer', value: safe_get(event, :customer_id), short: true },
+          { title: 'Amount', value: "$#{safe_get(event, :total_amount)}", short: true },
+          { title: 'Priority', value: safe_get(event, :priority), short: true }
+        ]
+      }]
+    )
+  end
+end
+```
+
+---
+
+## Development & Testing
+
+### Viewing Events
+
+```ruby
+# Print complete catalog (includes custom events)
+Tasker::Events::Catalog.print_catalog
+
+# Or in Rails console:
+pp Tasker::Events.custom_events
+pp Tasker::Events.complete_catalog
+```
+
+### Testing Both System and Custom Events
+
+```ruby
+RSpec.describe OrderFulfillmentStep do
+  it 'publishes custom order fulfilled event' do
+    step = create_step_with_inputs(order_id: 'ORDER123')
+
+    expect(subject).to receive(:publish_custom_event).with(
+      'order.fulfilled',
+      hash_including(
+        order_id: 'ORDER123',
+        customer_id: be_present
+      )
+    )
+
+    subject.process(task, sequence, step)
+  end
+end
+
+RSpec.describe BusinessSubscriber do
+  it 'handles both system and custom events' do
+    # Test system event handling
+    system_event = { task_id: 'TASK123', execution_duration: 45.2 }
+    expect(NotificationService).to receive(:send_success_email)
+    subject.handle_task_completed(system_event)
+
+    # Test custom event handling
+    custom_event = { order_id: 'ORDER123', customer_id: 'CUSTOMER456' }
+    expect(NotificationService).to receive(:send_fulfillment_email)
+    subject.handle_order_fulfilled(custom_event)
+  end
+end
+```
+
+---
+
 ## Integration Examples
 
-Tasker includes comprehensive integration examples demonstrating real-world usage patterns. These examples are located in `spec/lib/tasker/events/subscribers/examples/` and serve as both documentation and implementation templates.
+Tasker includes comprehensive integration examples demonstrating real-world usage patterns for both system and custom events. These examples are located in `spec/lib/tasker/events/subscribers/examples/` and serve as both documentation and implementation templates.
 
 ### Available Examples
 
 #### SentrySubscriber - Error Tracking Integration
 ```ruby
 class SentrySubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  subscribe_to 'task.failed', 'step.failed', 'workflow.error'
+  subscribe_to 'task.failed', 'step.failed', 'payment.risk_flagged'
 
   def handle_task_failed(event)
+    # Handle system event
     task_id = safe_get(event, :task_id)
     error_message = safe_get(event, :error_message, 'Unknown error')
 
-    # Intelligent error fingerprinting for Sentry
     sentry_data = {
       level: 'error',
       fingerprint: ['tasker', 'task_failed', task_id],
@@ -257,341 +538,37 @@ class SentrySubscriber < Tasker::Events::Subscribers::BaseSubscriber
       }
     }
 
-    # In real implementation: Sentry.capture_message(error_message, **sentry_data)
     Rails.logger.info "Would report to Sentry: #{sentry_data}"
   end
-end
-```
 
-#### PagerDutySubscriber - Critical Alerting
-```ruby
-class PagerDutySubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  subscribe_to 'task.failed', 'step.failed'
+  def handle_payment_risk_flagged(event)
+    # Handle custom business event
+    payment_id = safe_get(event, :payment_id)
+    risk_score = safe_get(event, :risk_score, 0)
 
-  def handle_task_failed(event)
-    task_id = safe_get(event, :task_id)
-
-    # Only alert on critical tasks (business logic filtering)
-    return unless critical_task?(task_id)
-
-    pagerduty_event = {
-      routing_key: ENV['PAGERDUTY_INTEGRATION_KEY'],
-      event_action: 'trigger',
-      dedup_key: "tasker_task_failed_#{task_id}",
-      payload: {
-        summary: "Critical Tasker task failed: #{task_id}",
-        severity: 'critical',
-        source: 'tasker'
+    sentry_data = {
+      level: 'warning',
+      fingerprint: ['payment', 'risk_flagged', payment_id],
+      tags: {
+        payment_id: payment_id,
+        risk_score: risk_score,
+        component: 'payment_system'
       }
     }
 
-    # In real implementation: PagerDuty.trigger(pagerduty_event)
-    Rails.logger.warn "Would trigger PagerDuty alert: #{pagerduty_event}"
-  end
-
-  private
-
-  def critical_task?(task_id)
-    # Example business logic for determining criticality
-    task_id.include?('critical') ||
-    task_id.include?('production') ||
-    task_id.include?('order_processing')
+    Rails.logger.info "Would report payment risk to Sentry: #{sentry_data}"
   end
 end
 ```
 
-#### SlackSubscriber - Team Notifications
-```ruby
-class SlackSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  subscribe_to 'task.completed', 'task.failed'
+### Summary
 
-  def handle_task_completed(event)
-    task_id = safe_get(event, :task_id)
-    execution_duration = safe_get(event, :execution_duration, 0)
+The Tasker Event System provides a unified approach to handling both system workflow events and custom business logic events:
 
-    message = {
-      channel: channel_for_environment,
-      username: 'Tasker Bot',
-      icon_emoji: ':white_check_mark:',
-      text: "Task completed successfully!",
-      attachments: [
-        {
-          color: 'good',
-          fields: [
-            { title: 'Task ID', value: task_id, short: true },
-            { title: 'Duration', value: format_duration(execution_duration), short: true },
-            { title: 'Environment', value: Rails.env, short: true }
-          ],
-          footer: 'Tasker Workflow Engine',
-          ts: Time.current.to_i
-        }
-      ]
-    }
+- **System Events**: Automatically published by Tasker for observability and monitoring
+- **Custom Events**: Declaratively defined by developers for business logic integration
+- **Unified Discovery**: Single catalog and search interface for all events
+- **Seamless Subscribers**: Same subscriber patterns work for both event types
+- **Production Ready**: Built for real-world monitoring, alerting, and notification scenarios
 
-    # In real implementation: SlackNotifier.ping(message)
-    Rails.logger.info "Would send Slack notification: #{message}"
-  end
-
-  private
-
-  def channel_for_environment
-    case Rails.env
-    when 'production' then '#alerts-production'
-    when 'staging' then '#alerts-staging'
-    else '#tasker-dev'
-    end
-  end
-
-  def format_duration(seconds)
-    return "#{seconds}s" if seconds < 60
-    minutes = seconds / 60
-    "#{minutes.round(1)}m"
-  end
-end
-```
-
-### Multi-Service Integration Pattern
-```ruby
-class ComprehensiveSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  subscribe_to 'task.completed', 'task.failed', 'step.failed'
-
-  def handle_task_completed(event)
-    task_id = safe_get(event, :task_id)
-
-    # Multi-service integration on success
-    update_external_system(task_id, 'completed')
-    send_completion_email(task_id)
-    record_success_metric(task_id)
-    cleanup_temporary_resources(task_id)
-  end
-
-  def handle_task_failed(event)
-    task_id = safe_get(event, :task_id)
-    error_message = safe_get(event, :error_message)
-
-    # Comprehensive failure handling
-    notify_operations_team(task_id, error_message)
-    create_support_ticket(task_id, error_message)
-    record_failure_metric(task_id)
-    preserve_debug_data(task_id)
-  end
-
-  private
-
-  def update_external_system(task_id, status)
-    # External API integration
-    Rails.logger.info "Updating external system for task #{task_id}: #{status}"
-  end
-
-  def record_success_metric(task_id)
-    # Metrics collection (StatsD, DataDog, etc.)
-    Rails.logger.info "Recording success metric for task #{task_id}"
-  end
-
-  # Additional integration methods...
-end
-```
-
-## Publishing Events
-
-### Using EventPublisher Concern
-
-The `EventPublisher` concern provides clean methods for publishing events from your business logic:
-
-```ruby
-class MyStepHandler
-  include Tasker::Concerns::EventPublisher
-
-  def handle(task, sequence, step)
-    # Clean step started event
-    publish_step_started(step)
-
-    begin
-      # Your business logic here
-      result = perform_operation(task.context)
-      step.results = { data: result }
-
-      # Clean completion event with additional context
-      publish_step_completed(step, operation_count: result.size)
-    rescue StandardError => e
-      # Clean failure event with error context
-      publish_step_failed(step, error: e)
-      raise
-    end
-  end
-end
-```
-
-### Available Publishing Methods
-
-**Task Events**:
-- `publish_task_event(event_name, task, **additional_context)`
-- `publish_task_started(task, **context)`
-- `publish_task_completed(task, **context)`
-- `publish_task_failed(task, **context)`
-
-**Step Events**:
-- `publish_step_event(event_name, step, **additional_context)`
-- `publish_step_started(step, **context)`
-- `publish_step_completed(step, **context)`
-- `publish_step_failed(step, **context)`
-
-**Workflow Events**:
-- `publish_workflow_event(event_name, **context)`
-
-**Generic Events**:
-- `publish_event(event_name, **payload)`
-
-### Event Payload Structure
-
-All events follow a standardized payload structure:
-
-```ruby
-{
-  # Core identifiers (always present)
-  task_id: "task_123",
-  step_id: "step_456",           # When applicable
-
-  # Timing information (when available)
-  started_at: "2024-01-15T10:30:00Z",
-  completed_at: "2024-01-15T10:32:15Z",
-  execution_duration: 135.2,    # seconds
-
-  # Error information (for error events)
-  error_message: "Connection timeout",
-  exception_class: "Net::TimeoutError",
-  backtrace: ["line1", "line2"],
-  attempt_number: 3,
-
-  # Context (when relevant)
-  step_name: "fetch_data",
-  task_name: "order_processing",
-  environment: "production",
-
-  # Custom context (event-specific)
-  # ... additional fields
-}
-```
-
-## Testing Event Subscribers
-
-### Generated Test Patterns
-
-The subscriber generator creates comprehensive test files:
-
-```ruby
-require 'rails_helper'
-
-RSpec.describe NotificationSubscriber do
-  let(:subscriber) { described_class.new }
-  let(:sample_event) { { task_id: 'task_123', execution_duration: 45.2 } }
-
-  describe '#handle_task_completed' do
-    it 'processes task completion events successfully' do
-      expect { subscriber.handle_task_completed(sample_event) }.not_to raise_error
-    end
-
-    it 'handles missing task_id gracefully' do
-      event_without_task_id = { execution_duration: 45.2 }
-      expect { subscriber.handle_task_completed(event_without_task_id) }.not_to raise_error
-    end
-  end
-
-  describe '#handle_task_failed' do
-    let(:failure_event) { { task_id: 'task_123', error_message: 'Something went wrong' } }
-
-    it 'processes task failure events successfully' do
-      expect { subscriber.handle_task_failed(failure_event) }.not_to raise_error
-    end
-  end
-end
-```
-
-### Integration Testing
-
-The event system includes comprehensive integration tests demonstrating real-world patterns:
-
-```ruby
-# spec/lib/tasker/events/subscribers/example_integrations_spec.rb
-RSpec.describe 'Event Subscriber Integration Examples' do
-  describe 'SentrySubscriber' do
-    it 'handles task failures with intelligent error fingerprinting' do
-      subscriber = SentrySubscriber.new
-      event = { task_id: 'critical_task_123', error_message: 'Database connection failed' }
-
-      expect { subscriber.handle_task_failed(event) }.not_to raise_error
-      # Additional verification of Sentry integration behavior
-    end
-  end
-end
-```
-
-## Production Deployment
-
-### OpenTelemetry Integration
-
-The event system automatically integrates with OpenTelemetry for production observability. See [TELEMETRY.md](TELEMETRY.md) for detailed configuration.
-
-### Performance Considerations
-
-- **Async Event Publishing**: Events are published asynchronously to avoid blocking business logic
-- **Efficient Payload Building**: `EventPayloadBuilder` optimizes payload creation
-- **Selective Subscription**: Subscribers only receive events they're registered for
-- **Error Isolation**: Subscriber errors don't affect task execution
-
-### Configuration
-
-Configure event publishing in `config/initializers/tasker.rb`:
-
-```ruby
-Tasker.configuration do |config|
-  # Filter sensitive data from event payloads
-  config.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
-
-  # Custom filter mask for sensitive data
-  config.telemetry_filter_mask = '***REDACTED***'
-
-  # OpenTelemetry service identification
-  config.otel_telemetry_service_name = 'my_app_tasker'
-  config.otel_telemetry_service_version = '1.2.3'
-end
-```
-
-## Best Practices
-
-### Subscriber Development
-
-1. **Extend BaseSubscriber**: Always use `Tasker::Events::Subscribers::BaseSubscriber`
-2. **Use safe_get**: Access event data with `safe_get(event, :key, default)`
-3. **Handle Errors Gracefully**: Don't let subscriber errors break task execution
-4. **Focus on Single Responsibility**: Each subscriber should handle one concern
-5. **Test Thoroughly**: Use generated test patterns for comprehensive coverage
-
-### Event Publishing
-
-1. **Use EventPublisher Concern**: Leverage provided publishing methods
-2. **Include Relevant Context**: Add meaningful additional context to events
-3. **Follow Naming Conventions**: Use consistent event naming patterns
-4. **Avoid Sensitive Data**: Use configuration filters for sensitive information
-
-### Performance
-
-1. **Async Operations**: Keep subscriber logic fast or move to background jobs
-2. **Batch Operations**: Group related actions when possible
-3. **Circuit Breakers**: Implement failure handling for external service calls
-4. **Monitoring**: Monitor subscriber performance and error rates
-
-## Related Documentation
-
-- [TELEMETRY.md](TELEMETRY.md) - OpenTelemetry integration and observability
-- [OVERVIEW.md](OVERVIEW.md) - System architecture and task handler configuration
-- [Phase 2 Developer Event System](PHASE_2_DEVELOPER_EVENT_SYSTEM.md) - Implementation details
-
-## Example Files
-
-Live examples are available in the codebase:
-
-- **Integration Examples**: `spec/lib/tasker/events/subscribers/examples/`
-- **Generated Subscribers**: Use `rails generate tasker:subscriber` to see templates
-- **Test Patterns**: Generated test files show comprehensive testing approaches
-- **Event Catalog**: Explore `Tasker::Events.catalog` in Rails console
+This comprehensive event system enables you to build robust, observable, and well-integrated workflows that provide visibility into both technical execution and business processes.

@@ -79,7 +79,7 @@
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/tasker.rb<span class="defines">,<br />
-  lib/tasker/events.rb,<br /> lib/tasker/events/catalog.rb,<br /> lib/tasker/events/publisher.rb,<br /> lib/tasker/events/definition_loader.rb,<br /> lib/tasker/events/subscription_loader.rb,<br /> lib/tasker/events/event_payload_builder.rb,<br /> lib/tasker/events/subscribers/base_subscriber.rb,<br /> lib/tasker/events/subscribers/telemetry_subscriber.rb</span>
+  lib/tasker/events.rb,<br /> lib/tasker/events/catalog.rb,<br /> lib/tasker/events/publisher.rb,<br /> lib/tasker/events/custom_registry.rb,<br /> lib/tasker/events/definition_loader.rb,<br /> lib/tasker/events/subscription_loader.rb,<br /> lib/tasker/events/event_payload_builder.rb,<br /> lib/tasker/events/subscribers/base_subscriber.rb,<br /> lib/tasker/events/subscribers/telemetry_subscriber.rb</span>
 </dd>
   </dl>
   
@@ -104,7 +104,7 @@
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Events/Catalog.html" title="Tasker::Events::Catalog (class)">Catalog</a></span>, <span class='object_link'><a href="Events/DefinitionLoader.html" title="Tasker::Events::DefinitionLoader (class)">DefinitionLoader</a></span>, <span class='object_link'><a href="Events/EventPayloadBuilder.html" title="Tasker::Events::EventPayloadBuilder (class)">EventPayloadBuilder</a></span>, <span class='object_link'><a href="Events/Publisher.html" title="Tasker::Events::Publisher (class)">Publisher</a></span>, <span class='object_link'><a href="Events/SubscriptionLoader.html" title="Tasker::Events::SubscriptionLoader (class)">SubscriptionLoader</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Events/Catalog.html" title="Tasker::Events::Catalog (class)">Catalog</a></span>, <span class='object_link'><a href="Events/CustomRegistry.html" title="Tasker::Events::CustomRegistry (class)">CustomRegistry</a></span>, <span class='object_link'><a href="Events/DefinitionLoader.html" title="Tasker::Events::DefinitionLoader (class)">DefinitionLoader</a></span>, <span class='object_link'><a href="Events/EventPayloadBuilder.html" title="Tasker::Events::EventPayloadBuilder (class)">EventPayloadBuilder</a></span>, <span class='object_link'><a href="Events/Publisher.html" title="Tasker::Events::Publisher (class)">Publisher</a></span>, <span class='object_link'><a href="Events/SubscriptionLoader.html" title="Tasker::Events::SubscriptionLoader (class)">SubscriptionLoader</a></span>
     
   
 </p>
@@ -115,12 +115,176 @@
 
 
 
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
 
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#register_custom_event-class_method" title="register_custom_event (class method)">.<strong>register_custom_event</strong>(name, description: &#39;Custom event&#39;, fired_by: [])  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Register a custom event.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="register_custom_event-class_method">
+  
+    .<strong>register_custom_event</strong>(name, description: &#39;Custom event&#39;, fired_by: [])  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Register a custom event</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Event name (must contain namespace, e.g., ‘order.fulfilled’)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>description</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&#39;Custom event&#39;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Human-readable description</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>fired_by</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Components that fire this event</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If event name is invalid or conflicts with system events</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+22
+23
+24
+25
+26
+27
+28</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events.rb', line 22</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_register_custom_event'>register_custom_event</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Custom event</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>fired_by:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Events/CustomRegistry.html" title="Tasker::Events::CustomRegistry (class)">CustomRegistry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_register_event'>register_event</span><span class='lparen'>(</span>
+    <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='id identifier rubyid_description'>description</span><span class='comma'>,</span>
+    <span class='label'>fired_by:</span> <span class='id identifier rubyid_fired_by'>fired_by</span>
+  <span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
 
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 19:26:52 2025 by
+  Generated on Thu Jun  5 20:40:07 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

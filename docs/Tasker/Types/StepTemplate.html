@@ -124,6 +124,35 @@
       <li class="public ">
   <span class="summary_signature">
     
+      <a href="#custom_events-instance_method" title="#custom_events (instance method)">#<strong>custom_events</strong>  &#x21d2; Array&lt;Hash&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Custom events that this step handler can publish.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#default_retry_limit-instance_method" title="#default_retry_limit (instance method)">#<strong>default_retry_limit</strong>  &#x21d2; Integer </a>
     
 
@@ -459,7 +488,64 @@
       
       <span id=""></span>
       <div class="method_details first">
-  <h3 class="signature first" id="default_retry_limit-instance_method">
+  <h3 class="signature first" id="custom_events-instance_method">
+  
+    #<strong>custom_events</strong>  &#x21d2; <tt>Array&lt;Hash&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Custom events that this step handler can publish.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Hash&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Custom events that this step handler can publish</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 53</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:custom_events</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='period'>.</span><span class='const'>Array</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_optional'>optional</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="default_retry_limit-instance_method">
   
     #<strong>default_retry_limit</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
   
@@ -1077,12 +1163,12 @@
       <pre class="lines">
 
 
-54
-55
-56</pre>
+58
+59
+60</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 54</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/step_template.rb', line 58</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_dependencies'>all_dependencies</span>
   <span class='lbracket'>[</span><span class='id identifier rubyid_depends_on_step'>depends_on_step</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_depends_on_steps'>depends_on_steps</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span>
@@ -1097,7 +1183,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 19:26:54 2025 by
+  Generated on Thu Jun  5 20:40:08 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

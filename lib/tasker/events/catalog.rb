@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'custom_registry'
+
 module Tasker
   module Events
     # Event Catalog provides discovery and documentation for all Tasker events
@@ -69,12 +71,52 @@ module Tasker
           catalog.select { |_, event| event[:category] == 'observability' }
         end
 
-        # List all registered custom events
+        # Get complete catalog including custom events
         #
-        # @return [Array<String>] Custom event names
+        # @return [Hash] All events (system + custom)
+        def complete_catalog
+          system_catalog = catalog
+          custom_events_data = Tasker::Events::CustomRegistry.instance.custom_events
+
+          # Format custom events to match system catalog structure
+          formatted_custom = custom_events_data.transform_values do |event|
+            {
+              name: event[:name],
+              category: event[:category],
+              description: event[:description],
+              fired_by: event[:fired_by],
+              payload_schema: {}, # MVP: no schema validation yet
+              example_payload: {} # MVP: no examples yet
+            }
+          end
+
+          system_catalog.merge(formatted_custom)
+        end
+
+        # Get only custom events
+        #
+        # @return [Hash] Custom events with metadata
         def custom_events
-          # This would be populated by BaseSubscriber registrations
-          @custom_events ||= []
+          complete_catalog.select { |_, event| event[:category] == 'custom' }
+        end
+
+        # Search events by name or description
+        #
+        # @param query [String] Search query
+        # @return [Hash] Matching events
+        def search_events(query)
+          complete_catalog.select do |name, event|
+            name.downcase.include?(query.downcase) ||
+              event[:description].downcase.include?(query.downcase)
+          end
+        end
+
+        # Get events by namespace (e.g., 'order', 'payment')
+        #
+        # @param namespace [String] Event namespace
+        # @return [Hash] Events in namespace
+        def events_by_namespace(namespace)
+          complete_catalog.select { |name, _| name.start_with?("#{namespace}.") }
         end
 
         # Register a custom event (called by BaseSubscriber)
@@ -102,26 +144,35 @@ module Tasker
 
         # Pretty print the catalog for console exploration
         #
+        # @param output [IO] Output destination (defaults to $stdout in development/test, Rails.logger in production)
         # @return [void]
-        def print_catalog
-          Rails.logger.debug "\n📊 Tasker Event Catalog"
-          Rails.logger.debug '=' * 50
+        def print_catalog(output: nil)
+          # Default to stdout in development/test for interactive exploration, logger in production
+          output ||= (Rails.env.production? ? Rails.logger : $stdout)
+
+          log_line = lambda do |message|
+            if output == Rails.logger
+              Rails.logger.debug message
+            else
+              output.puts message
+            end
+          end
+
+          log_line.call "\n📊 Tasker Event Catalog"
+          log_line.call '=' * 50
 
           %w[task step workflow observability custom].each do |category|
-            events = catalog.select { |_, event| event[:category] == category }
+            # Use complete_catalog to include custom events
+            events = complete_catalog.select { |_, event| event[:category] == category }
             next if events.empty?
 
-            Rails.logger.debug { "\n🔹 #{category.capitalize} Events:" }
+            log_line.call "\n🔹 #{category.capitalize} Events:"
             events.each_value do |event|
-              Rails.logger.debug { "  #{event[:name]}" }
-              Rails.logger.debug { "    Description: #{event[:description]}" }
-              Rails.logger.debug { "    Fired by: #{event[:fired_by].join(', ')}" }
-              if event[:payload_schema].any?
-                Rails.logger.debug do
-                  "    Payload: #{event[:payload_schema].keys.join(', ')}"
-                end
-              end
-              Rails.logger.debug
+              log_line.call "  #{event[:name]}"
+              log_line.call "    Description: #{event[:description]}"
+              log_line.call "    Fired by: #{event[:fired_by].join(', ')}"
+              log_line.call "    Payload: #{event[:payload_schema].keys.join(', ')}" if event[:payload_schema].any?
+              log_line.call ''
             end
           end
         end
