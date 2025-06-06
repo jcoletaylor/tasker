@@ -10,6 +10,7 @@ module Tasker
       # - Automatic method routing from event names to handler methods
       # - Defensive payload handling with safe accessors
       # - Easy integration with the Tasker event system
+      # - Metrics collection helper methods for common patterns
       #
       # Usage:
       #   class OrderNotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
@@ -240,6 +241,170 @@ module Tasker
             step_id: safe_get(event, :step_id),
             step_name: safe_get(event, :step_name, 'unknown_step')
           ).compact
+        end
+
+        # ===============================
+        # METRICS COLLECTION HELPERS
+        # ===============================
+        # These methods make it easy to extract common metrics data from events
+
+        # Extract timing metrics from completion events
+        #
+        # @param event [Hash, Dry::Events::Event] The event payload
+        # @return [Hash] Timing metrics with default values
+        #
+        # Example:
+        #   timing = extract_timing_metrics(event)
+        #   StatsD.histogram('tasker.task.duration', timing[:execution_duration])
+        #   StatsD.gauge('tasker.task.step_count', timing[:step_count])
+        def extract_timing_metrics(event)
+          {
+            execution_duration: safe_get(event, :execution_duration, 0.0).to_f,
+            started_at: safe_get(event, :started_at),
+            completed_at: safe_get(event, :completed_at),
+            step_count: safe_get(event, :total_steps, 0).to_i,
+            completed_steps: safe_get(event, :completed_steps, 0).to_i,
+            failed_steps: safe_get(event, :failed_steps, 0).to_i
+          }
+        end
+
+        # Extract error metrics from failure events
+        #
+        # @param event [Hash, Dry::Events::Event] The event payload
+        # @return [Hash] Error metrics with categorization
+        #
+        # Example:
+        #   error = extract_error_metrics(event)
+        #   StatsD.increment('tasker.errors', tags: ["error_type:#{error[:error_type]}"])
+        def extract_error_metrics(event)
+          {
+            error_message: safe_get(event, :error_message, 'unknown_error'),
+            error_class: safe_get(event, :exception_class, 'UnknownError'),
+            error_type: categorize_error(safe_get(event, :exception_class)),
+            attempt_number: safe_get(event, :attempt_number, 1).to_i,
+            is_retryable: safe_get(event, :retryable, false),
+            final_failure: safe_get(event, :attempt_number, 1).to_i >= safe_get(event, :retry_limit, 1).to_i
+          }
+        end
+
+        # Extract performance metrics for operational monitoring
+        #
+        # @param event [Hash, Dry::Events::Event] The event payload
+        # @return [Hash] Performance metrics
+        #
+        # Example:
+        #   perf = extract_performance_metrics(event)
+        #   StatsD.histogram('tasker.memory_usage', perf[:memory_usage])
+        def extract_performance_metrics(event)
+          {
+            memory_usage: safe_get(event, :memory_usage, 0).to_i,
+            cpu_time: safe_get(event, :cpu_time, 0.0).to_f,
+            queue_time: safe_get(event, :queue_time, 0.0).to_f,
+            processing_time: safe_get(event, :processing_time, 0.0).to_f,
+            retry_delay: safe_get(event, :retry_delay, 0.0).to_f
+          }
+        end
+
+        # Extract business metrics tags for categorization
+        #
+        # @param event [Hash, Dry::Events::Event] The event payload
+        # @return [Array<String>] Array of tag strings for metrics systems
+        #
+        # Example:
+        #   tags = extract_metric_tags(event)
+        #   StatsD.increment('tasker.task.completed', tags: tags)
+        def extract_metric_tags(event)
+          tags = []
+
+          # Core entity tags
+          task_name = safe_get(event, :task_name)
+          tags << "task:#{task_name}" if task_name && task_name != 'unknown'
+
+          step_name = safe_get(event, :step_name)
+          tags << "step:#{step_name}" if step_name && step_name != 'unknown_step'
+
+          # Environment and source tags
+          tags << "environment:#{Rails.env}" if defined?(Rails)
+          tags << "source:#{safe_get(event, :source_system)}" if safe_get(event, :source_system)
+
+          # Status and retry tags
+          tags << "retryable:#{safe_get(event, :retryable)}" if safe_get(event, :retryable)
+          tags << "attempt:#{safe_get(event, :attempt_number)}" if safe_get(event, :attempt_number)
+
+          # Priority and business context
+          tags << "priority:#{safe_get(event, :priority)}" if safe_get(event, :priority)
+
+          tags.compact
+        end
+
+        # Create metric name with consistent naming convention
+        #
+        # @param base_name [String] The base metric name
+        # @param event_type [String] The event type (completed, failed, etc.)
+        # @return [String] Standardized metric name
+        #
+        # Example:
+        #   metric_name = build_metric_name('tasker.task', 'completed')
+        #   # => 'tasker.task.completed'
+        def build_metric_name(base_name, event_type)
+          "#{base_name}.#{event_type}".squeeze('.')
+        end
+
+        # Extract numeric value safely for metrics
+        #
+        # @param event [Hash, Dry::Events::Event] The event payload
+        # @param key [Symbol, String] The key to extract
+        # @param default [Numeric] The default value
+        # @return [Numeric] The numeric value
+        #
+        # Example:
+        #   duration = extract_numeric_metric(event, :execution_duration, 0.0)
+        #   StatsD.histogram('task.duration', duration)
+        def extract_numeric_metric(event, key, default = 0)
+          value = safe_get(event, key, default)
+
+          # Handle nil values and non-numeric types
+          return default if value.nil? || !value.respond_to?(:to_f)
+
+          # Try to convert to float
+          converted = value.to_f
+
+          # Check if this was a valid numeric conversion
+          # For strings that can't convert, to_f returns 0.0
+          return default if converted == 0.0 && value.is_a?(String) && value !~ /\A\s*0*(\.0*)?\s*\z/
+
+          converted
+        end
+
+        private
+
+        # Categorize error types for metrics tagging
+        #
+        # @param error_class [String] The exception class name
+        # @return [String] Categorized error type
+        def categorize_error(error_class)
+          return 'unknown' if error_class.blank?
+
+          case error_class.to_s
+          when /Timeout/i, /TimeoutError/i
+            'timeout'
+          when /Connection/i, /Network/i
+            'network'
+          when /NotFound/i, /Missing/i, /404/
+            'not_found'
+          when /Unauthorized/i, /Forbidden/i, /401/, /403/
+            'auth'
+          when /RateLimit/i, /TooManyRequests/i, /429/
+            'rate_limit'
+          when /BadRequest/i, /Invalid/i, /400/
+            'client_error'
+          when /ServerError/i, /InternalError/i, /500/
+            'server_error'
+          when /StandardError/i, /RuntimeError/i
+            'runtime'
+          else
+            'other'
+          end
         end
       end
     end

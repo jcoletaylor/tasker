@@ -465,6 +465,9 @@ rails generate tasker:subscriber pager_duty --events task.failed step.failed
 
 # Generate a notification subscriber
 rails generate tasker:subscriber notification --events task.completed task.failed
+
+# Generate a specialized metrics subscriber with helper methods
+rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
 ```
 
 ### Example: Custom Events in Step Handlers

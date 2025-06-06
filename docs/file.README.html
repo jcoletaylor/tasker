@@ -586,6 +586,9 @@ rails generate tasker:subscriber pager_duty --events task.failed step.failed
 
 # Generate a notification subscriber
 rails generate tasker:subscriber notification --events task.completed task.failed
+
+# Generate a specialized metrics subscriber with helper methods
+rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
 </code></pre>
 
 <h3 id="label-Example-3A+Custom+Events+in+Step+Handlers">Example: Custom Events in Step Handlers</h3>
@@ -713,7 +716,7 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jun  5 20:40:07 2025 by
+  Generated on Thu Jun  5 21:24:04 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

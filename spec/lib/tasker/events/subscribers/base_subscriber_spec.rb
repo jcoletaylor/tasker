@@ -296,5 +296,255 @@ RSpec.describe Tasker::Events::Subscribers::BaseSubscriber do
       expect(subscriber.processed_events.length).to eq(1)
       expect(subscriber.processed_events.first[:custom]).to be true
     end
+
+    it 'allows customization of subscription mapping' do
+      # Create a custom subscriber with overridden event_subscriptions
+      custom_subscriber_class = Class.new(described_class) do
+        def event_subscriptions
+          { 'CustomEvent' => :handle_custom }
+        end
+
+        def handle_custom(event); end
+      end
+
+      subscriber = custom_subscriber_class.new
+      expect(subscriber.event_subscriptions).to eq({ 'CustomEvent' => :handle_custom })
+    end
+  end
+
+  # ===============================
+  # METRICS COLLECTION HELPERS TESTS
+  # ===============================
+
+  describe 'metrics collection helpers' do
+    let(:subscriber) { described_class.new }
+
+    describe '#extract_timing_metrics' do
+      let(:timing_event) do
+        {
+          execution_duration: 45.7,
+          started_at: 2.minutes.ago,
+          completed_at: Time.current,
+          total_steps: 5,
+          completed_steps: 4,
+          failed_steps: 1
+        }
+      end
+
+      it 'extracts timing metrics with proper types' do
+        metrics = subscriber.send(:extract_timing_metrics, timing_event)
+
+        expect(metrics[:execution_duration]).to eq(45.7)
+        expect(metrics[:step_count]).to eq(5)
+        expect(metrics[:completed_steps]).to eq(4)
+        expect(metrics[:failed_steps]).to eq(1)
+        expect(metrics[:started_at]).to be_present
+        expect(metrics[:completed_at]).to be_present
+      end
+
+      it 'provides defaults for missing values' do
+        minimal_event = { execution_duration: '30.5' }
+        metrics = subscriber.send(:extract_timing_metrics, minimal_event)
+
+        expect(metrics[:execution_duration]).to eq(30.5)
+        expect(metrics[:step_count]).to eq(0)
+        expect(metrics[:completed_steps]).to eq(0)
+        expect(metrics[:failed_steps]).to eq(0)
+      end
+    end
+
+    describe '#extract_error_metrics' do
+      let(:error_event) do
+        {
+          error_message: 'Connection timeout',
+          exception_class: 'Net::TimeoutError',
+          attempt_number: 2,
+          retry_limit: 3,
+          retryable: true
+        }
+      end
+
+      it 'extracts error metrics with categorization' do
+        metrics = subscriber.send(:extract_error_metrics, error_event)
+
+        expect(metrics[:error_message]).to eq('Connection timeout')
+        expect(metrics[:error_class]).to eq('Net::TimeoutError')
+        expect(metrics[:error_type]).to eq('timeout')
+        expect(metrics[:attempt_number]).to eq(2)
+        expect(metrics[:is_retryable]).to be(true)
+        expect(metrics[:final_failure]).to be(false)
+      end
+
+      it 'detects final failures' do
+        final_error_event = error_event.merge(attempt_number: 3, retry_limit: 3)
+        metrics = subscriber.send(:extract_error_metrics, final_error_event)
+
+        expect(metrics[:final_failure]).to be(true)
+      end
+
+      it 'categorizes different error types' do
+        test_cases = [
+          { exception_class: 'Net::TimeoutError', expected: 'timeout' },
+          { exception_class: 'ConnectionError', expected: 'network' },
+          { exception_class: 'NotFoundError', expected: 'not_found' },
+          { exception_class: 'UnauthorizedError', expected: 'auth' },
+          { exception_class: 'RateLimitError', expected: 'rate_limit' },
+          { exception_class: 'BadRequestError', expected: 'client_error' },
+          { exception_class: 'InternalServerError', expected: 'server_error' },
+          { exception_class: 'StandardError', expected: 'runtime' },
+          { exception_class: 'WeirdCustomError', expected: 'other' }
+        ]
+
+        test_cases.each do |test_case|
+          event = { exception_class: test_case[:exception_class] }
+          metrics = subscriber.send(:extract_error_metrics, event)
+          expect(metrics[:error_type]).to eq(test_case[:expected])
+        end
+      end
+    end
+
+    describe '#extract_performance_metrics' do
+      let(:performance_event) do
+        {
+          memory_usage: 1024,
+          cpu_time: 2.5,
+          queue_time: 0.1,
+          processing_time: 1.8,
+          retry_delay: 5.0
+        }
+      end
+
+      it 'extracts performance metrics with type conversion' do
+        metrics = subscriber.send(:extract_performance_metrics, performance_event)
+
+        expect(metrics[:memory_usage]).to eq(1024)
+        expect(metrics[:cpu_time]).to eq(2.5)
+        expect(metrics[:queue_time]).to eq(0.1)
+        expect(metrics[:processing_time]).to eq(1.8)
+        expect(metrics[:retry_delay]).to eq(5.0)
+      end
+
+      it 'provides defaults for missing values' do
+        empty_event = {}
+        metrics = subscriber.send(:extract_performance_metrics, empty_event)
+
+        expect(metrics[:memory_usage]).to eq(0)
+        expect(metrics[:cpu_time]).to eq(0.0)
+        expect(metrics[:queue_time]).to eq(0.0)
+        expect(metrics[:processing_time]).to eq(0.0)
+        expect(metrics[:retry_delay]).to eq(0.0)
+      end
+    end
+
+    describe '#extract_metric_tags' do
+      let(:tagged_event) do
+        {
+          task_name: 'order_process',
+          step_name: 'process_payment',
+          source_system: 'ecommerce',
+          retryable: true,
+          attempt_number: 2,
+          priority: 'high'
+        }
+      end
+
+      it 'generates appropriate tags' do
+        tags = subscriber.send(:extract_metric_tags, tagged_event)
+
+        expect(tags).to include('task:order_process')
+        expect(tags).to include('step:process_payment')
+        expect(tags).to include('source:ecommerce')
+        expect(tags).to include('retryable:true')
+        expect(tags).to include('attempt:2')
+        expect(tags).to include('priority:high')
+        expect(tags).to include("environment:#{Rails.env}")
+      end
+
+      it 'filters out unknown/empty values' do
+        sparse_event = { task_name: 'unknown', step_name: nil, source_system: 'valid' }
+        tags = subscriber.send(:extract_metric_tags, sparse_event)
+
+        expect(tags).not_to include('task:unknown')
+        expect(tags).not_to include('step:unknown_step')
+        expect(tags).to include('source:valid')
+      end
+    end
+
+    describe '#build_metric_name' do
+      it 'builds consistent metric names' do
+        expect(subscriber.send(:build_metric_name, 'tasker.task', 'completed'))
+          .to eq('tasker.task.completed')
+
+        expect(subscriber.send(:build_metric_name, 'custom', 'failed'))
+          .to eq('custom.failed')
+      end
+
+      it 'handles multiple dots correctly' do
+        expect(subscriber.send(:build_metric_name, 'app.tasker.task', 'retry'))
+          .to eq('app.tasker.task.retry')
+      end
+    end
+
+    describe '#extract_numeric_metric' do
+      let(:numeric_event) do
+        {
+          duration: 45.5,
+          count: '10',
+          invalid: 'not_a_number',
+          nil_value: nil
+        }
+      end
+
+      it 'extracts numeric values safely' do
+        expect(subscriber.send(:extract_numeric_metric, numeric_event, :duration, 0.0))
+          .to eq(45.5)
+
+        expect(subscriber.send(:extract_numeric_metric, numeric_event, :count, 0))
+          .to eq(10.0)
+      end
+
+      it 'returns defaults for invalid values' do
+        expect(subscriber.send(:extract_numeric_metric, numeric_event, :invalid, 99.9))
+          .to eq(99.9)
+
+        expect(subscriber.send(:extract_numeric_metric, numeric_event, :nil_value, 42.0))
+          .to eq(42.0)
+
+        expect(subscriber.send(:extract_numeric_metric, numeric_event, :missing, 123.0))
+          .to eq(123.0)
+      end
+    end
+
+    describe '#categorize_error (private method)' do
+      it 'categorizes various error types correctly' do
+        categorization_tests = [
+          ['Net::TimeoutError', 'timeout'],
+          ['TimeoutError', 'timeout'],
+          ['ConnectionError', 'network'],
+          ['NetworkError', 'network'],
+          ['ActiveRecord::RecordNotFound', 'not_found'],
+          ['NotFoundError', 'not_found'],
+          ['UnauthorizedError', 'auth'],
+          ['ForbiddenError', 'auth'],
+          ['RateLimitError', 'rate_limit'],
+          ['TooManyRequestsError', 'rate_limit'],
+          ['BadRequestError', 'client_error'],
+          ['InvalidError', 'client_error'],
+          ['InternalServerError', 'server_error'],
+          ['ServerError', 'server_error'],
+          ['StandardError', 'runtime'],
+          ['RuntimeError', 'runtime'],
+          ['CustomWeirdError', 'other'],
+          [nil, 'unknown'],
+          ['', 'unknown']
+        ]
+
+        categorization_tests.each do |error_class, expected_category|
+          result = subscriber.send(:categorize_error, error_class)
+          expect(result).to eq(expected_category),
+                            "Expected #{error_class.inspect} to be categorized as '#{expected_category}', got '#{result}'"
+        end
+      end
+    end
   end
 end

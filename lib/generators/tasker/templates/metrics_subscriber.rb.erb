@@ -1,0 +1,258 @@
+# frozen_string_literal: true
+
+# <%= class_name %>Subscriber - Specialized Metrics Collection
+#
+# This subscriber collects metrics from Tasker workflow events for operational monitoring.
+# It follows OpenTelemetry best practices by focusing on aggregated metrics for dashboards
+# and alerting, while leaving detailed tracing to TelemetrySubscriber.
+#
+<% if subscribed_events.any? -%>
+# Monitoring these events:
+<% subscribed_events.each do |event| -%>
+#   - <%= event %>
+<% end -%>
+<% end -%>
+#
+# Architecture:
+#   - TelemetrySubscriber: Creates OpenTelemetry spans for debugging
+#   - <%= class_name %>Subscriber: Records metrics for operational monitoring
+#   - Custom Subscribers: Handle business logic integrations
+#
+# Usage:
+#   <%= class_name %>Subscriber.subscribe(Tasker::Events::Publisher.instance)
+#
+class <%= class_name %>Subscriber < Tasker::Events::Subscribers::BaseSubscriber
+<% if subscribed_events.any? -%>
+  # Subscribe to metrics-relevant events
+  subscribe_to <%= subscribed_events.map { |e| "'#{e}'" }.join(', ') %>
+
+<% handler_methods.each do |method| -%>
+  # Collect metrics from <%= method[:event] %> events
+  #
+  # @param event [Hash] Event payload containing event data
+  # @return [void]
+  def <%= method[:method_signature] %>
+    # Extract standardized metrics using BaseSubscriber helpers
+<% if method[:event].include?('completed') -%>
+    timing = extract_timing_metrics(event)
+    tags = extract_metric_tags(event)
+
+    # Record completion metrics
+    record_completion_metrics(timing, tags)
+<% elsif method[:event].include?('failed') -%>
+    error = extract_error_metrics(event)
+    tags = extract_metric_tags(event)
+
+    # Record error metrics
+    record_error_metrics(error, tags)
+<% else -%>
+    # Extract relevant data for this event type
+    tags = extract_metric_tags(event)
+
+    # TODO: Implement specific metrics for <%= method[:event] %>
+    # record_custom_metrics(event, tags)
+<% end -%>
+
+    # Log for debugging (remove in production)
+    Rails.logger.debug "Recorded metrics for <%= method[:event] %>: #{safe_get(event, :task_id)}"
+  end
+
+<% end -%>
+<% else -%>
+  # TODO: Add event subscriptions for metrics collection
+  # subscribe_to 'task.completed', 'task.failed', 'step.completed', 'step.failed'
+
+  # Example metrics handler:
+  # def handle_task_completed(event)
+  #   timing = extract_timing_metrics(event)
+  #   tags = extract_metric_tags(event)
+  #   record_completion_metrics(timing, tags)
+  # end
+<% end -%>
+  private
+
+  # Record completion metrics for tasks/steps
+  #
+  # @param timing [Hash] Timing metrics from extract_timing_metrics
+  # @param tags [Array<String>] Metric tags for categorization
+  # @return [void]
+  def record_completion_metrics(timing, tags)
+    # Duration histogram for percentile analysis
+    record_histogram('tasker.execution.duration', timing[:execution_duration], tags)
+
+    # Completion counter for rate calculations
+    record_counter('tasker.completed', 1, tags)
+
+    # Step count gauge for workflow complexity tracking
+    if timing[:step_count] > 0
+      record_gauge('tasker.workflow.step_count', timing[:step_count], tags)
+    end
+
+    # Success rate calculation data
+    if timing[:failed_steps] > 0
+      record_gauge('tasker.workflow.failed_steps', timing[:failed_steps], tags)
+      record_gauge('tasker.workflow.success_rate',
+        calculate_success_rate(timing[:completed_steps], timing[:failed_steps]), tags)
+    end
+  end
+
+  # Record error metrics for failed tasks/steps
+  #
+  # @param error [Hash] Error metrics from extract_error_metrics
+  # @param tags [Array<String>] Metric tags for categorization
+  # @return [void]
+  def record_error_metrics(error, tags)
+    # Error counter with type categorization
+    error_tags = tags + ["error_type:#{error[:error_type]}"]
+    record_counter('tasker.errors', 1, error_tags)
+
+    # Retry tracking
+    if error[:attempt_number] > 1
+      record_counter('tasker.retries', 1, tags + ["attempt:#{error[:attempt_number]}"])
+    end
+
+    # Final failure tracking (when retries exhausted)
+    if error[:final_failure]
+      record_counter('tasker.final_failures', 1, error_tags)
+    end
+
+    # Retryable vs non-retryable error breakdown
+    retryable_tag = error[:is_retryable] ? 'retryable' : 'non_retryable'
+    record_counter('tasker.error_types', 1, tags + ["retryable:#{retryable_tag}"])
+  end
+
+  # Calculate success rate percentage
+  #
+  # @param completed [Integer] Number of completed steps
+  # @param failed [Integer] Number of failed steps
+  # @return [Float] Success rate as percentage (0.0-100.0)
+  def calculate_success_rate(completed, failed)
+    total = completed + failed
+    return 100.0 if total == 0
+
+    (completed.to_f / total.to_f) * 100.0
+  end
+
+  # ===============================
+  # METRICS BACKEND INTEGRATION
+  # ===============================
+  # Customize these methods for your metrics system
+
+  # Record a histogram/timing metric
+  #
+  # @param name [String] Metric name
+  # @param value [Numeric] Metric value
+  # @param tags [Array<String>] Metric tags
+  # @return [void]
+  def record_histogram(name, value, tags = [])
+    # TODO: Replace with your metrics system
+    # Examples:
+
+    # StatsD/DataDog:
+    # StatsD.histogram(name, value, tags: tags)
+
+    # Prometheus (via prometheus-client gem):
+    # histogram = Prometheus::Client.registry.get(name.tr('.', '_').to_sym)
+    # histogram.observe(value, labels: tags_to_labels(tags))
+
+    # Custom HTTP metrics endpoint:
+    # MetricsClient.post('/metrics', { name: name, value: value, tags: tags, type: 'histogram' })
+
+    # For now, log the metric (replace this in production)
+    Rails.logger.info "METRIC[histogram] #{name}: #{value} #{tags.join(',')}"
+  end
+
+  # Record a counter metric
+  #
+  # @param name [String] Metric name
+  # @param value [Numeric] Increment value (usually 1)
+  # @param tags [Array<String>] Metric tags
+  # @return [void]
+  def record_counter(name, value, tags = [])
+    # TODO: Replace with your metrics system
+    # Examples:
+
+    # StatsD/DataDog:
+    # StatsD.increment(name, value, tags: tags)
+
+    # Prometheus:
+    # counter = Prometheus::Client.registry.get(name.tr('.', '_').to_sym)
+    # counter.increment(by: value, labels: tags_to_labels(tags))
+
+    # For now, log the metric (replace this in production)
+    Rails.logger.info "METRIC[counter] #{name}: +#{value} #{tags.join(',')}"
+  end
+
+  # Record a gauge metric
+  #
+  # @param name [String] Metric name
+  # @param value [Numeric] Current value
+  # @param tags [Array<String>] Metric tags
+  # @return [void]
+  def record_gauge(name, value, tags = [])
+    # TODO: Replace with your metrics system
+    # Examples:
+
+    # StatsD/DataDog:
+    # StatsD.gauge(name, value, tags: tags)
+
+    # Prometheus:
+    # gauge = Prometheus::Client.registry.get(name.tr('.', '_').to_sym)
+    # gauge.set(value, labels: tags_to_labels(tags))
+
+    # For now, log the metric (replace this in production)
+    Rails.logger.info "METRIC[gauge] #{name}: #{value} #{tags.join(',')}"
+  end
+
+  # Convert tags array to labels hash for Prometheus
+  #
+  # @param tags [Array<String>] Tags in "key:value" format
+  # @return [Hash] Labels hash for Prometheus
+  def tags_to_labels(tags)
+    labels = {}
+    tags.each do |tag|
+      key, value = tag.split(':', 2)
+      labels[key.to_sym] = value if key && value
+    end
+    labels
+  end
+end
+
+# Example integration patterns:
+#
+# 1. StatsD/DataDog Integration:
+#    ```ruby
+#    def record_histogram(name, value, tags = [])
+#      StatsD.histogram(name, value, tags: tags)
+#    end
+#    ```
+#
+# 2. Prometheus Integration:
+#    ```ruby
+#    def record_counter(name, value, tags = [])
+#      counter = Prometheus::Client.registry.get(name.tr('.', '_').to_sym)
+#      counter.increment(by: value, labels: tags_to_labels(tags))
+#    end
+#    ```
+#
+# 3. Custom HTTP Metrics:
+#    ```ruby
+#    def record_metric(type, name, value, tags)
+#      MetricsAPI.post('/metrics', {
+#        type: type,
+#        name: name,
+#        value: value,
+#        tags: tags,
+#        timestamp: Time.current.to_i
+#      })
+#    end
+#    ```
+#
+# 4. Multiple Backends:
+#    ```ruby
+#    def record_histogram(name, value, tags = [])
+#      StatsD.histogram(name, value, tags: tags) if defined?(StatsD)
+#      Prometheus.histogram(name, value, tags) if prometheus_enabled?
+#      CustomMetrics.track(name, value, tags) if custom_metrics_enabled?
+#    end
+#    ```

@@ -32,7 +32,7 @@ module Tasker
       # Load core components that need explicit initialization
       require 'tasker/constants'
       require 'tasker/configuration'
-      require 'tasker/instrumentation'
+      # Legacy instrumentation removed - using TelemetrySubscriber instead
       require 'tasker/types'
       require 'tasker/handler_factory'
       require 'tasker/identity_strategy'

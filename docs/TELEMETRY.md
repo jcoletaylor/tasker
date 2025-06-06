@@ -4,11 +4,59 @@
 
 Tasker includes comprehensive telemetry capabilities to provide insights into task execution, workflow steps, and overall system performance. The telemetry system leverages OpenTelemetry standards and a unified event architecture to ensure compatibility with a wide range of observability tools and platforms.
 
+## OpenTelemetry Architecture: Metrics vs Spans
+
+Tasker follows OpenTelemetry best practices by using **both** metrics and spans for different purposes:
+
+### **Spans** 🔍 (Primary Focus)
+- **Purpose**: Individual trace records with detailed context for debugging and analysis
+- **Use Cases**:
+  - "Why did task #12345 take 30 seconds?"
+  - "What was the exact execution path for this failed workflow?"
+  - "Which step in the order process is the bottleneck?"
+- **Benefits**:
+  - Complete request context and timing
+  - Parent-child relationships show workflow hierarchy
+  - Error propagation with full stack traces
+  - Rich attributes for detailed analysis
+- **Implementation**: `TelemetrySubscriber` creates hierarchical spans for tasks and steps
+
+### **Metrics** 📊 (Derived or Separate)
+- **Purpose**: Aggregated numerical data for dashboards, alerts, and SLIs/SLOs
+- **Use Cases**:
+  - "How many tasks completed in the last hour?"
+  - "What's the 95th percentile task duration?"
+  - "Alert if error rate exceeds 5%"
+- **Benefits**:
+  - Very efficient storage and querying
+  - Perfect for real-time dashboards
+  - Lightweight for high-volume scenarios
+- **Implementation**: Can be derived from span data or collected separately
+
+### **Recommended Strategy**
+
+```mermaid
+flowchart LR
+    subgraph Production["Production Architecture"]
+        Events["Tasker Events"] --> TelemetrySubscriber["TelemetrySubscriber<br/>(Spans Only)"]
+        TelemetrySubscriber --> Jaeger["Jaeger/Zipkin<br/>(Detailed Traces)"]
+        TelemetrySubscriber --> |"Derive Metrics"| MetricsBackend["Metrics Backend<br/>(DataDog/Prometheus)"]
+
+        Events --> CustomSubscribers["Custom Subscribers"]
+        CustomSubscribers --> |"Direct Metrics"| MetricsBackend
+        CustomSubscribers --> Alerts["Alerting Systems"]
+    end
+
+    style TelemetrySubscriber fill:#e1f5fe,stroke:#01579b
+    style CustomSubscribers fill:#f3e5f5,stroke:#4a148c
+```
+
 ## Key Features
 
 - **Unified Event System** - Single `Events::Publisher` with consistent event publishing patterns
 - **Standardized Event Payloads** - `EventPayloadBuilder` ensures consistent telemetry data structure
 - **Production-Ready OpenTelemetry Integration** - Full instrumentation stack with safety mechanisms
+- **Hierarchical Span Creation** - Proper parent-child relationships for complex workflows
 - **Automatic Step Error Persistence** - Complete error data capture with atomic transactions
 - **Memory-Safe Operation** - Database connection pooling and leak prevention
 - **Comprehensive Event Lifecycle Tracking** - Task, step, workflow, and orchestration events
@@ -24,7 +72,7 @@ Tasker's telemetry is built on a unified event system with these main components
 1. **Events::Publisher** - Centralized event publishing using dry-events with OpenTelemetry integration
 2. **EventPublisher Concern** - Clean interface providing `publish_event()`, `publish_step_event()`, etc.
 3. **EventPayloadBuilder** - Standardized payload creation for consistent telemetry data
-4. **TelemetrySubscriber** - Converts events to OpenTelemetry spans and metrics
+4. **TelemetrySubscriber** - Converts events to OpenTelemetry spans (spans only, no metrics)
 5. **Event Catalog** - Complete event discovery and documentation system
 6. **BaseSubscriber** - Foundation for creating custom event subscribers
 7. **Subscriber Generator** - Tool for creating custom integrations with external services
@@ -44,7 +92,7 @@ flowchart LR
     subgraph EventSystem["Unified Event System"]
         Publisher["Events::Publisher"]
         PayloadBuilder["EventPayloadBuilder"]
-        TelemetrySubscriber["TelemetrySubscriber"]
+        TelemetrySubscriber["TelemetrySubscriber<br/>(Spans)"]
     end
 
     subgraph Observability["Observability Stack"]
@@ -52,7 +100,12 @@ flowchart LR
         Jaeger["Jaeger"]
         Zipkin["Zipkin"]
         Honeycomb["Honeycomb"]
-        Metrics["Metrics"]
+    end
+
+    subgraph CustomMetrics["Custom Metrics"]
+        MetricsSubscriber["MetricsSubscriber"]
+        DataDog["DataDog"]
+        Prometheus["Prometheus"]
     end
 
     TaskHandler -->|publish_step_completed| Publisher
@@ -62,63 +115,74 @@ flowchart LR
 
     Publisher --> PayloadBuilder
     PayloadBuilder --> TelemetrySubscriber
+    PayloadBuilder --> MetricsSubscriber
+
     TelemetrySubscriber --> OpenTelemetry
     OpenTelemetry --> Jaeger
     OpenTelemetry --> Zipkin
     OpenTelemetry --> Honeycomb
-    TelemetrySubscriber --> Metrics
+
+    MetricsSubscriber --> DataDog
+    MetricsSubscriber --> Prometheus
 
     classDef business fill:#d4f1f9,stroke:#0b79a8
     classDef events fill:#fff2cc,stroke:#d6b656
     classDef observability fill:#e1d5e7,stroke:#9673a6
+    classDef metrics fill:#dae8fc,stroke:#6c8ebf
 
     class Business business
     class EventSystem events
     class Observability observability
+    class CustomMetrics metrics
 ```
 
-## Standard Events
+## Avoiding Duplication: Single Responsibility
 
-### Task Events (Tasker::Constants::TaskEvents)
+To avoid the telemetry duplication you noticed, follow this pattern:
 
-| Event Constant | Description |
-|----------------|-------------|
-| `INITIALIZE_REQUESTED` | Task is being created and initialized |
-| `START_REQUESTED` | Task processing has started |
-| `COMPLETED` | Task has completed successfully |
-| `FAILED` | Task has encountered an error |
-| `RETRY_REQUESTED` | Task is being retried |
-| `CANCELLED` | Task has been cancelled |
+### ✅ **TelemetrySubscriber** - Spans Only
+```ruby
+class TelemetrySubscriber < BaseSubscriber
+  # ONLY creates OpenTelemetry spans with hierarchical context
+  # Does NOT record metrics - focuses on detailed tracing
 
-### Step Events (Tasker::Constants::StepEvents)
+  def handle_task_completed(event)
+    # Create comprehensive span with all context
+    finish_task_span(event, :ok, extract_attributes(event))
+  end
+end
+```
 
-| Event Constant | Description |
-|----------------|-------------|
-| `EXECUTION_REQUESTED` | Step is being queued for execution |
-| `BEFORE_HANDLE` | Step is about to be processed |
-| `HANDLE` | Step is being processed |
-| `COMPLETED` | Step has completed successfully |
-| `FAILED` | Step has encountered an error |
-| `RETRY_REQUESTED` | Step is being retried |
-| `MAX_RETRIES_REACHED` | Step has reached retry limit |
+### ✅ **Custom MetricsSubscriber** - Metrics Only
+```ruby
+class MetricsSubscriber < BaseSubscriber
+  # ONLY records aggregated metrics for dashboards/alerts
+  # Does NOT create spans - focuses on operational data
 
-### Workflow Events (Tasker::Constants::WorkflowEvents)
+  def handle_task_completed(event)
+    execution_duration = safe_get(event, :execution_duration, 0)
+    task_name = safe_get(event, :task_name, 'unknown')
 
-| Event Constant | Description |
-|----------------|-------------|
-| `TASK_STARTED` | Workflow processing has begun |
-| `STEP_COMPLETED` | Individual workflow step completed |
-| `VIABLE_STEPS_DISCOVERED` | Steps ready for execution identified |
-| `NO_VIABLE_STEPS` | No executable steps found |
-| `TASK_COMPLETED` | Entire workflow completed |
+    # Record metrics for dashboards and alerting
+    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
+    StatsD.increment('tasker.task.completed', tags: ["task:#{task_name}"])
+  end
+end
+```
 
-### Observability Events (Tasker::Constants::ObservabilityEvents)
+### ✅ **Clean Architecture** - Single Telemetry System
+```ruby
+# Tasker now uses a single, clean telemetry approach:
+# - TelemetrySubscriber creates OpenTelemetry spans
+# - Custom subscribers handle metrics and integrations
+# - No legacy systems to configure or disable
 
-| Event Constant | Description |
-|----------------|-------------|
-| `Task::ENQUEUE` | Task enqueued for background processing |
-| `Task::START` | Task processing started |
-| `Step::PROCESSING` | Step processing in progress |
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  # Simple telemetry configuration
+  config.enable_telemetry = true  # Enable TelemetrySubscriber
+end
+```
 
 ## Configuration
 
@@ -142,6 +206,9 @@ Tasker.configuration do |config|
 
   # The mask to use when filtering sensitive data (default: '[FILTERED]')
   config.telemetry_filter_mask = '***REDACTED***'
+
+  # Enable telemetry (TelemetrySubscriber for OpenTelemetry spans)
+  config.enable_telemetry = true
 end
 ```
 
@@ -186,40 +253,71 @@ end
 
 Beyond OpenTelemetry, Tasker's event system enables easy integration with any observability or monitoring service:
 
-### Creating Custom Subscribers
+### Creating Custom Metrics Subscribers
 
-Use the subscriber generator to create integrations:
+Tasker now provides specialized tooling for metrics collection:
 
 ```bash
-# Generate a metrics subscriber for DataDog/StatsD
-rails generate tasker:subscriber metrics --events task.completed task.failed step.completed step.failed
+# Generate a specialized metrics subscriber with helper methods
+rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
 
-# Generate an alerting subscriber for PagerDuty
+# Generate a regular subscriber for other integrations
 rails generate tasker:subscriber pager_duty --events task.failed step.failed
 ```
 
+The `--metrics` flag creates a specialized subscriber with:
+- Built-in helper methods for extracting timing, error, and performance metrics
+- Automatic tag generation for categorization
+- Examples for StatsD, DataDog, Prometheus, and other metrics systems
+- Safe numeric value extraction with defaults
+- Production-ready patterns for operational monitoring
+
+### Creating Custom Subscribers
+
+For non-metrics integrations, use the regular subscriber generator:
+
 ### Example Custom Integrations
 
-**Metrics Collection (DataDog/StatsD)**:
+**Metrics Collection (Using Helper Methods)**:
 ```ruby
 class MetricsSubscriber < Tasker::Events::Subscribers::BaseSubscriber
   subscribe_to 'task.completed', 'step.completed'
 
   def handle_task_completed(event)
-    execution_duration = safe_get(event, :execution_duration, 0)
-    task_name = safe_get(event, :task_name, 'unknown')
+    # Use built-in helper methods for standardized data extraction
+    timing = extract_timing_metrics(event)
+    tags = extract_metric_tags(event)
 
-    # Record task completion time
-    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
-    StatsD.increment('tasker.task.completed', tags: ["task:#{task_name}"])
+    # Record task completion metrics using helpers
+    record_histogram('tasker.task.duration', timing[:execution_duration], tags)
+    record_counter('tasker.task.completed', 1, tags)
+
+    if timing[:step_count] > 0
+      record_gauge('tasker.workflow.step_count', timing[:step_count], tags)
+    end
   end
 
   def handle_step_completed(event)
-    step_name = safe_get(event, :step_name, 'unknown')
-    execution_duration = safe_get(event, :execution_duration, 0)
+    timing = extract_timing_metrics(event)
+    tags = extract_metric_tags(event)
 
     # Record step-level metrics
-    StatsD.histogram('tasker.step.duration', execution_duration, tags: ["step:#{step_name}"])
+    record_histogram('tasker.step.duration', timing[:execution_duration], tags)
+  end
+
+  private
+
+  # Customize for your metrics backend (StatsD example)
+  def record_histogram(name, value, tags = [])
+    StatsD.histogram(name, value, tags: tags)
+  end
+
+  def record_counter(name, value, tags = [])
+    StatsD.increment(name, value, tags: tags)
+  end
+
+  def record_gauge(name, value, tags = [])
+    StatsD.gauge(name, value, tags: tags)
   end
 end
 ```
@@ -238,30 +336,153 @@ class SentrySubscriber < Tasker::Events::Subscribers::BaseSubscriber
 end
 ```
 
+### Metrics Helper Methods
+
+BaseSubscriber now includes specialized helper methods for extracting common metrics data:
+
+```ruby
+# Extract timing metrics (duration, step counts, etc.)
+timing = extract_timing_metrics(event)
+# => { execution_duration: 45.2, step_count: 5, completed_steps: 5, failed_steps: 0 }
+
+# Extract error metrics with categorization
+error = extract_error_metrics(event)
+# => { error_type: 'timeout', attempt_number: 2, is_retryable: true, final_failure: false }
+
+# Extract performance metrics
+perf = extract_performance_metrics(event)
+# => { memory_usage: 1024, cpu_time: 2.5, queue_time: 0.1, processing_time: 1.8 }
+
+# Generate standardized tags for categorization
+tags = extract_metric_tags(event)
+# => ['task:order_process', 'environment:production', 'retryable:true']
+
+# Build consistent metric names
+metric_name = build_metric_name('tasker.task', 'completed')
+# => 'tasker.task.completed'
+
+# Extract numeric values safely
+duration = extract_numeric_metric(event, :execution_duration, 0.0)
+# => 45.2 (with proper type conversion and defaults)
+```
+
+These helpers standardize metrics extraction and ensure consistency across different subscriber implementations.
+
 For complete documentation on creating custom subscribers and integration examples, see [EVENT_SYSTEM.md](EVENT_SYSTEM.md).
 
 ## Integration with OpenTelemetry
 
-Tasker's unified event system automatically integrates with OpenTelemetry through the `TelemetrySubscriber`. For each task:
+Tasker's unified event system automatically integrates with OpenTelemetry through the enhanced `TelemetrySubscriber`. For each task:
 
-1. A root span is created for the task lifecycle
-2. Child spans are created for each step with proper parent-child relationships
-3. Events are automatically converted to spans with standardized attributes
-4. Error information is captured with full context and backtraces
-5. Performance metrics include execution duration and attempt tracking
+1. **Root Task Span**: A root span (`tasker.task.execution`) is created when the task starts and stored for the entire task lifecycle
+2. **Child Step Spans**: Child spans (`tasker.step.execution`) are created for each step with proper parent-child relationships to the root task span
+3. **Hierarchical Context**: All spans maintain proper parent-child relationships, ensuring full traceability in Jaeger/Zipkin
+4. **Event Annotations**: Each span includes relevant events (task.started, step.completed, etc.) with comprehensive attributes
+5. **Error Propagation**: Error status and messages are properly propagated through the span hierarchy
+6. **Performance Metrics**: Execution duration and attempt tracking are captured at both task and step levels
 
 ### Span Hierarchy Example
 
 ```
-tasker.task.started (task_id: 123)
-├── tasker.step.processing (step: fetch_cart)
-│   ├── attributes: { task_id: 123, step_id: 456, attempt_number: 1 }
-│   └── events: [step.started, step.completed]
-├── tasker.step.processing (step: validate_products)
-│   ├── attributes: { task_id: 123, step_id: 457, execution_duration: 2.34 }
-│   └── events: [step.started, step.completed]
-└── tasker.task.completed
-    └── attributes: { task_id: 123, total_steps: 5, completion_time: "2025-06-01T12:00:00Z" }
+tasker.task.execution (task_id: 123, task_name: order_process)
+├── events: [task.started, task.completed]
+├── attributes: { tasker.task_id: "123", tasker.task_name: "order_process", tasker.total_steps: 5 }
+├── status: OK
+└── child spans:
+    ├── tasker.step.execution (step: fetch_cart)
+    │   ├── events: [step.completed]
+    │   ├── attributes: { tasker.task_id: "123", tasker.step_id: "456", tasker.step_name: "fetch_cart", tasker.execution_duration: "1.23" }
+    │   └── status: OK
+    ├── tasker.step.execution (step: validate_products)
+    │   ├── events: [step.completed]
+    │   ├── attributes: { tasker.task_id: "123", tasker.step_id: "457", tasker.step_name: "validate_products", tasker.execution_duration: "2.34" }
+    │   └── status: OK
+    └── tasker.step.execution (step: process_payment)
+        ├── events: [step.failed]
+        ├── attributes: { tasker.task_id: "123", tasker.step_id: "458", tasker.step_name: "process_payment", tasker.error: "Payment gateway timeout" }
+        └── status: ERROR
+```
+
+### Key Improvements
+
+- **Proper Hierarchical Context**: All step spans are now properly parented to their task span
+- **Consistent Span Names**: Standardized span names (`tasker.task.execution`, `tasker.step.execution`) make filtering and querying easier
+- **Rich Event Annotations**: Spans include relevant lifecycle events as annotations for detailed timeline visibility
+- **Error Context Preservation**: Failed steps maintain full error context while still being linked to their parent task
+- **Task ID Propagation**: All spans include the task_id for easy correlation across the entire workflow
+
+## Best Practices
+
+### 1. Single Responsibility for Telemetry Components
+
+```ruby
+# ✅ GOOD: TelemetrySubscriber focuses only on spans
+class TelemetrySubscriber < BaseSubscriber
+  def handle_task_completed(event)
+    # Only create detailed spans for debugging
+    finish_task_span(event, :ok, extract_attributes(event))
+  end
+end
+
+# ✅ GOOD: MetricsSubscriber focuses only on metrics
+class MetricsSubscriber < BaseSubscriber
+  def handle_task_completed(event)
+    # Only record metrics for dashboards/alerts
+    StatsD.histogram('task.duration', safe_get(event, :execution_duration, 0))
+  end
+end
+
+# ❌ BAD: Don't mix both in one subscriber
+class MixedSubscriber < BaseSubscriber
+  def handle_task_completed(event)
+    finish_task_span(event, :ok, extract_attributes(event))  # Spans
+    StatsD.histogram('task.duration', event[:duration])       # Metrics - causes confusion
+  end
+end
+```
+
+### 2. Avoid Duplication Between Systems
+
+```ruby
+# ✅ GOOD: Simple, clean telemetry configuration
+config.enable_telemetry = true  # TelemetrySubscriber creates OpenTelemetry spans
+
+# ✅ GOOD: Create separate subscribers for different purposes
+# - TelemetrySubscriber: OpenTelemetry spans for debugging
+# - MetricsSubscriber: Operational metrics for dashboards
+# - AlertingSubscriber: Critical alerts for incidents
+```
+
+### 3. Use Spans for Debugging, Metrics for Operations
+
+```ruby
+# ✅ Spans: "Why did task #12345 fail?"
+# Use when you need detailed context for specific instances
+
+# ✅ Metrics: "How many tasks are failing per hour?"
+# Use when you need aggregated data for dashboards/alerts
+```
+
+### 4. Production Sampling Strategy
+
+```ruby
+# Consider span sampling for high-volume production environments
+OpenTelemetry::SDK.configure do |c|
+  # Sample 10% of traces to reduce storage costs while maintaining observability
+  c.add_span_processor(
+    OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
+      otlp_exporter,
+      schedule_delay: 5_000,     # 5 seconds
+      max_queue_size: 2_048,     # Queue size
+      max_export_batch_size: 512 # Batch size
+    )
+  )
+
+  # Use probabilistic sampler for production
+  c.use('OpenTelemetry::SDK::Trace::Samplers::ProbabilitySampler', 0.1) # 10% sampling
+end
+
+# Keep 100% of metrics - they're much cheaper to store
 ```
 
 ## Event Payload Standardization
@@ -372,7 +593,7 @@ end
 **Key Architecture Points:**
 - ✅ **Implement `process()`** for regular step handlers (your business logic)
 - ✅ **Implement `process()`** for API step handlers (your HTTP request)
-- ✅ **Optionally override `process()`** in API handlers for custom response handling
+- ✅ **Optionally override `process()`** in API handlers for custom response processing
 - ✅ **Optionally override `process_results()`** to customize how return values are stored in `step.results`
 - ⚠️ **Never override `handle()`** - it's framework-only code that publishes events and coordinates execution
 
@@ -450,57 +671,6 @@ The system includes safety mechanisms for production use:
 - Immediate event emission (no custom batching overhead)
 - Lightweight event publishing with standardized payloads
 
-## Best Practices
-
-1. **Use Domain-Specific Event Methods** - Use `publish_step_completed(step)` instead of verbose `publish_step_event()` patterns
-2. **Leverage Automatic Error Capture** - Use `publish_step_failed(step, error: exception)` for automatic error information
-3. **Include Business Context** - Add domain-specific data via keyword arguments: `publish_step_completed(step, operation_count: 42)`
-4. **Use Event Constants for Custom Events** - Reference `Tasker::Constants::*Events` for type safety when using `publish_event()`
-5. **Monitor Error Patterns** - Use comprehensive error payloads for debugging with automatic error context
-6. **Configure Filter Parameters** - Protect sensitive data in telemetry
-7. **Test with Real Data** - Validate telemetry in staging environments
-8. **Prefer Context-Aware Publishing** - Use `publish_step_event_for_context(step)` when event type can be inferred
-
-### Migration from Legacy API
-
-When migrating from the verbose legacy API, follow these patterns:
-
-```ruby
-# BEFORE (Legacy - still works but deprecated)
-publish_step_event(
-  Tasker::Constants::StepEvents::COMPLETED,
-  step,
-  event_type: :completed,
-  additional_context: { operation_count: result.size }
-)
-
-# AFTER (Clean - recommended)
-publish_step_completed(step, operation_count: result.size)
-```
-
-```ruby
-# BEFORE (Legacy - manual error handling)
-publish_step_event(
-  Tasker::Constants::StepEvents::FAILED,
-  step,
-  event_type: :failed,
-  additional_context: {
-    error_message: exception.message,
-    error_class: exception.class.name
-  }
-)
-
-# AFTER (Clean - automatic error capture)
-publish_step_failed(step, error: exception)
-```
-
-### Deprecation Timeline
-
-- **Legacy methods remain functional** for backward compatibility
-- **New domain-specific methods are preferred** for all new code
-- **Legacy methods will show deprecation warnings** in future versions
-- **Migration is optional but recommended** for cleaner, more maintainable code
-
 ## Troubleshooting
 
 ### Common Issues
@@ -513,12 +683,22 @@ publish_step_failed(step, error: exception)
 - **Memory Issues**: Verify database connection pooling is configured
 - **Performance Impact**: Monitor for excessive event publishing in high-throughput scenarios
 
-### API Migration Issues
+### Span Duplication Issues
 
-- **Legacy Method Deprecation**: Update to domain-specific methods (e.g., `publish_step_completed(step)` instead of `publish_step_event(..., event_type: :completed)`)
-- **Parameter Mismatch**: New methods use keyword arguments (`publish_step_completed(step, count: 42)`) instead of hash parameters
-- **Context-Aware Publishing**: Use `publish_step_event_for_context(step)` when the event type should be inferred from step state
-- **Error Handling**: New methods automatically capture error information when `error:` parameter is provided
+- **Multiple Telemetry Subscribers**: If you see unexpected behavior, ensure you're not creating multiple subscribers that handle the same events. Use single-responsibility subscribers:
+  ```ruby
+  # ✅ GOOD: Single responsibility per subscriber
+  config.enable_telemetry = true  # TelemetrySubscriber for spans only
+  # Create separate MetricsSubscriber for operational data
+  ```
+
+- **Metrics and Spans Mixed**: If you're seeing both metrics and spans for the same events, separate them into different subscribers with single responsibilities
+
+### Hierarchical Context Issues
+
+- **Standalone Spans in Jaeger**: If you see individual spans without parent-child relationships, ensure the `TelemetrySubscriber` is properly registered and OpenTelemetry is configured
+- **Missing Task Context**: Step spans should appear as children of task spans. If steps appear as standalone spans, check that `task.start_requested` events are being published before step events
+- **Broken Span Hierarchy**: Verify that the task ID is consistently included in all event payloads - this is critical for maintaining span relationships
 
 ### Debug Commands
 
@@ -532,11 +712,31 @@ bundle exec rails runner "puts Tasker::Events::Publisher.instance.inspect"
 # Validate telemetry subscriber
 bundle exec rails runner "puts Tasker::Events::Subscribers::TelemetrySubscriber.new.inspect"
 
-# Test new domain-specific event methods
+# Test TelemetrySubscriber span management
 bundle exec rails runner "
-  include Tasker::Concerns::EventPublisher
-  puts respond_to?(:publish_step_completed)  # Should be true
-  puts respond_to?(:publish_task_failed)     # Should be true
+  subscriber = Tasker::Events::Subscribers::TelemetrySubscriber.new
+  puts 'OpenTelemetry available: ' + subscriber.send(:opentelemetry_available?).to_s
+  puts 'Telemetry enabled: ' + subscriber.send(:telemetry_enabled?).to_s
+"
+
+# Test span creation with sample events
+bundle exec rails runner "
+  subscriber = Tasker::Events::Subscribers::TelemetrySubscriber.new
+
+  # Simulate task start event
+  task_event = { task_id: 'test-123', task_name: 'test_task' }
+  subscriber.handle_task_start_requested(task_event)
+
+  # Check if span was stored
+  span = subscriber.send(:get_task_span, 'test-123')
+  puts 'Task span created: ' + (!span.nil?).to_s
+
+  # Simulate step event
+  step_event = { task_id: 'test-123', step_id: 'step-456', step_name: 'test_step' }
+  subscriber.handle_step_completed(step_event)
+
+  # Clean up
+  subscriber.send(:remove_task_span, 'test-123')
 "
 ```
 
@@ -547,43 +747,19 @@ Look for these log patterns:
 - `Instrumentation: OpenTelemetry::Instrumentation::Faraday failed to install` (expected)
 - Event publishing errors: `Error publishing event * :`
 
-### Customizing Result Processing
+## Summary
 
-Both regular and API step handlers support the `process_results()` method for customizing how results are stored:
+The key insight you had is correct - **spans can provide much of the same information as metrics**, but they serve different purposes:
 
-```ruby
-class MyApiStepHandlerWithCustomResults < Tasker::StepHandler::Api
-  def process(task, _sequence, _step)
-    # Make your API call
-    connection.get("/users/#{task.context['user_id']}")
-  end
+- **Spans**: Rich individual trace records for debugging specific issues
+- **Metrics**: Aggregated operational data for dashboards and alerting
 
-  # Customize how the API response gets stored
-  def process_results(step, process_output, initial_results)
-    # Automatic events still fire around the entire handle() flow
-    # This method just customizes result storage
+**Recommended approach**:
 
-    if process_output.status == 200
-      user_data = JSON.parse(process_output.body)
-      step.results = {
-        user: user_data,
-        fetched_at: Time.current,
-        success: true
-      }
-    else
-      step.results = {
-        success: false,
-        error_status: process_output.status,
-        error_message: "Failed to fetch user data"
-      }
-    end
-  end
-end
-```
+1. **Use `TelemetrySubscriber` for comprehensive spans** (captures everything for debugging)
+2. **Create separate `MetricsSubscriber` for operational metrics** (lightweight data for dashboards)
+3. **Use single-responsibility subscribers** for clean separation of concerns
+4. **Consider deriving metrics from spans** in high-maturity setups instead of separate collection
 
-**Benefits of `process_results()` Pattern:**
-- **Separation of Concerns**: Business logic in `process()`, result formatting in `process_results()`
-- **Automatic Event Publishing**: Events fire regardless of how you customize result storage
-- **Flexible Result Processing**: Transform raw API responses or computation results before storage
-- **Consistent Interface**: Same pattern works for both regular and API step handlers
+This gives you the best of both worlds: detailed debugging capability through spans and efficient operational monitoring through metrics.
 
