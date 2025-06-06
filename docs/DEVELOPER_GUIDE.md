@@ -65,7 +65,7 @@ Task handlers define the overall workflow structure and coordinate step executio
 Use the generator to create a complete task handler structure:
 
 ```bash
-rails generate task_handler OrderProcess
+rails generate tasker:task_handler OrderProcess
 ```
 
 This creates:
@@ -537,7 +537,7 @@ environments:
 
 ### 2. Generate Task Handler
 ```bash
-rails generate task_handler OrderProcess --steps="validate_order,process_payment,ship_order"
+rails generate tasker:task_handler OrderProcess --steps="validate_order,process_payment,ship_order"
 ```
 
 ### 3. Implement Step Handlers
@@ -662,16 +662,13 @@ end
 ### Generators
 ```bash
 # Task handler with YAML and tests
-rails generate task_handler WorkflowName
-
-# Step handler for specific workflow
-rails generate step_handler WorkflowName::ProcessData
+rails generate tasker:task_handler WorkflowName
 
 # Event subscriber with automatic method routing
 rails generate tasker:subscriber name --events event1 event2
 
-# API step handler for external integrations
-rails generate api_step_handler WorkflowName::FetchData
+# Specialized metrics subscriber with helper methods
+rails generate tasker:subscriber metrics --metrics --events task.completed task.failed
 ```
 
 ### Event Discovery

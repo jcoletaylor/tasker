@@ -6,8 +6,6 @@
 
 Designed to make developing queuable multi-step tasks easier to reason about
 
-![Flowchart](flowchart.png "Tasker")
-
 ## Getting Started with Tasker
 
 This guide will walk you through the fundamentals of using Tasker to build complex task workflows with retries, error handling, and concurrency.
@@ -107,7 +105,7 @@ Tasker is built around a few key concepts:
 Task handlers define the workflow for a specific type of task. The easiest way to create a task handler is using the built-in generator:
 
 ```bash
-rails generate task_handler OrderProcess
+rails generate tasker:task_handler OrderProcess
 ```
 
 This creates:
