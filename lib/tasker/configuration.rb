@@ -30,10 +30,30 @@ module Tasker
     #   @return [Hash] Advanced telemetry configuration options
     # @!attribute [rw] custom_events_directories
     #   @return [Array<String>] Directories to search for custom event YAML files
+    # @!attribute [rw] authentication_strategy
+    #   @return [Symbol] The authentication strategy to use (:none, :devise, :custom)
+    # @!attribute [rw] authentication_options
+    #   @return [Hash] Options for the authentication strategy
+    # @!attribute [rw] current_user_method
+    #   @return [Symbol] Method name to get the current user
+    # @!attribute [rw] authenticate_user_method
+    #   @return [Symbol] Method name to authenticate the user
+    # @!attribute [rw] authorization_coordinator_class
+    #   @return [String] Class name for the authorization coordinator
+    # @!attribute [rw] authorizable_user_class
+    #   @return [String, nil] Class name for the authorizable user class
+    # @!attribute [rw] enable_authorization
+    #   @return [Boolean] Whether authorization is enabled
+    # @!attribute [rw] database_name
+    #   @return [String, Symbol, nil] Named database configuration from database.yml
+    # @!attribute [rw] enable_secondary_database
+    #   @return [Boolean] Whether to use a secondary database for Tasker models
     attr_accessor :task_handler_directory, :task_config_directory, :default_module_namespace,
                   :identity_strategy, :identity_strategy_class, :filter_parameters, :telemetry_filter_mask,
                   :otel_telemetry_service_name, :otel_telemetry_service_version, :enable_telemetry, :telemetry_config,
-                  :custom_events_directories
+                  :custom_events_directories, :authentication_strategy, :authentication_options,
+                  :current_user_method, :authenticate_user_method, :authorization_coordinator_class,
+                  :authorizable_user_class, :enable_authorization, :database_name, :enable_secondary_database
 
     # Initialize a new configuration with default values
     #
@@ -51,6 +71,21 @@ module Tasker
       @enable_telemetry = true
       @telemetry_config = default_telemetry_config
       @custom_events_directories = default_custom_events_directories
+
+      # Authentication defaults (assume no auth)
+      @authentication_strategy = :none
+      @authentication_options = {}
+      @current_user_method = :current_user
+      @authenticate_user_method = :authenticate_user!
+
+      # Authorization defaults
+      @authorization_coordinator_class = 'Tasker::Authorization::BaseCoordinator'
+      @authorizable_user_class = nil
+      @enable_authorization = false
+
+      # Database defaults
+      @database_name = nil
+      @enable_secondary_database = false
     end
 
     # Get the default filter parameters from Rails or use a default set
