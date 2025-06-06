@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'digest'
+require_relative '../../../lib/tasker/state_machine/task_state_machine'
 
 # == Schema Information
 #
@@ -15,7 +16,6 @@ require 'digest'
 #  reason        :string(128)
 #  requested_at  :datetime         not null
 #  source_system :string(128)
-#  status        :string(64)       not null
 #  tags          :jsonb
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
@@ -31,7 +31,6 @@ require 'digest'
 #  tasks_named_task_id_index     (named_task_id)
 #  tasks_requested_at_index      (requested_at)
 #  tasks_source_system_index     (source_system)
-#  tasks_status_index            (status)
 #  tasks_tags_idx                (tags) USING gin
 #  tasks_tags_idx1               (tags) USING gin
 #
@@ -42,7 +41,7 @@ require 'digest'
 module Tasker
   # Task represents a workflow process that contains multiple workflow steps.
   # Each Task is identified by a name and has a context which defines the parameters for the task.
-  # Tasks track their status, initiator, source system, and other metadata.
+  # Tasks track their status via state machine transitions, initiator, source system, and other metadata.
   #
   # @example Creating a task from a task request
   #   task_request = Tasker::Types::TaskRequest.new(name: 'process_order', context: { order_id: 123 })
@@ -58,14 +57,37 @@ module Tasker
     has_many :workflow_steps, dependent: :destroy
     has_many :task_annotations, dependent: :destroy
     has_many :annotation_types, through: :task_annotations
+    has_many :task_transitions, inverse_of: :task, dependent: :destroy
 
     validates :context, presence: true
     validates :requested_at, presence: true
-    validates :status, presence: true, inclusion: { in: Tasker::Constants::VALID_TASK_STATUSES }
     validate :unique_identity_hash, on: :create
 
     delegate :name, to: :named_task
     delegate :to_mermaid, to: :diagram
+
+    has_one :task_execution_context, class_name: 'Tasker::TaskExecutionContext', primary_key: :task_id
+    has_one :task_workflow_summary, class_name: 'Tasker::TaskWorkflowSummary', primary_key: :task_id
+
+    # State machine integration
+    def state_machine
+      @state_machine ||= Tasker::StateMachine::TaskStateMachine.new(
+        self,
+        transition_class: Tasker::TaskTransition,
+        association_name: :task_transitions
+      )
+    end
+
+    # Status is now entirely managed by the state machine
+    def status
+      if new_record?
+        # For new records, return the initial state
+        Tasker::Constants::TaskStatuses::PENDING
+      else
+        # For persisted records, use state machine
+        state_machine.current_state
+      end
+    end
 
     # Scopes a query to find tasks with a specific annotation value
     #
@@ -79,6 +101,27 @@ module Tasker
             joins(:task_annotations, :annotation_types)
               .where({ annotation_types: { name: name.to_s.strip } })
               .where("tasker_task_annotations.annotation->>'#{clean_key}' = :value", value: value)
+          }
+
+    # Scopes a query to find tasks by their current state using state machine transitions
+    #
+    # @param state [String, nil] The state to filter by. If nil, returns all tasks with current state information
+    # @return [ActiveRecord::Relation] Tasks with current state, optionally filtered by specific state
+    scope :by_current_state,
+          lambda { |state = nil|
+            relation = joins(<<-SQL.squish)
+              INNER JOIN (
+                SELECT DISTINCT ON (task_id) task_id, to_state
+                FROM tasker_task_transitions
+                ORDER BY task_id, sort_key DESC
+              ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
+            SQL
+
+            if state.present?
+              relation.where(current_transitions: { to_state: state })
+            else
+              relation
+            end
           }
 
     # Includes all associated models for efficient querying
@@ -123,7 +166,6 @@ module Tasker
     # @return [Hash] Hash of non-nil task options from the request
     def self.get_request_options(task_request)
       {
-        status: task_request.status,
         initiator: task_request.initiator,
         source_system: task_request.source_system,
         reason: task_request.reason,
@@ -140,7 +182,6 @@ module Tasker
     # @return [Hash] Hash of default task options
     def self.get_default_task_request_options(named_task)
       {
-        status: Tasker::Constants::TaskStatuses::PENDING,
         initiator: Tasker::Constants::UNKNOWN,
         source_system: Constants::UNKNOWN,
         reason: Tasker::Constants::UNKNOWN,
@@ -223,7 +264,6 @@ module Tasker
     # @return [Hash] Hash of default values
     def task_defaults
       @task_defaults ||= {
-        status: Tasker::Constants::TaskStatuses::PENDING,
         requested_at: Time.zone.now,
         initiator: Tasker::Constants::UNKNOWN,
         source_system: Tasker::Constants::UNKNOWN,

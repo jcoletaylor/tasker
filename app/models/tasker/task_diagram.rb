@@ -66,8 +66,8 @@ module Tasker
     def flowchart
       return @flowchart if @flowchart
 
-      # Preload workflow steps with relationships
-      workflow_steps = @task.workflow_steps.includes(:named_step, :parents, :children)
+      # Preload workflow steps with scenic view relationships for efficiency
+      workflow_steps = @task.workflow_steps.includes(:named_step, :step_dag_relationship)
 
       # Create a new flowchart
       @flowchart = Tasker::Diagram::Flowchart.new(
@@ -78,24 +78,14 @@ module Tasker
       # Add task info node
       @flowchart.add_node(build_task_node)
 
-      # Build nodes and edges for all workflow steps
+      # Build nodes for all workflow steps
       workflow_steps.each do |step|
         @flowchart.add_node(build_step_node(step))
+      end
 
-        # Add edge from task to step if it's a root step (no parents)
-        if step.parents.empty?
-          @flowchart.add_edge(
-            build_edge(
-              "task_#{@task.task_id}",
-              "step_#{step.workflow_step_id}"
-            )
-          )
-        end
-
-        # Add edges to all children
-        build_step_edges(step).each do |edge|
-          @flowchart.add_edge(edge)
-        end
+      # Build all edges efficiently using scenic view data
+      build_all_step_edges(workflow_steps).each do |edge|
+        @flowchart.add_edge(edge)
       end
 
       @flowchart
@@ -184,23 +174,57 @@ module Tasker
       )
     end
 
-    # Build all edges from a step to its children
+    # Build all edges efficiently using scenic view data - eliminates N+1 queries
     #
-    # @param step [Tasker::WorkflowStep] The workflow step
-    # @return [Array<Tasker::Diagram::Edge>] The edges to children
-    def build_step_edges(step)
+    # @param workflow_steps [Array<Tasker::WorkflowStep>] All workflow steps for the task
+    # @return [Array<Tasker::Diagram::Edge>] All edges for the diagram
+    def build_all_step_edges(workflow_steps)
       edges = []
-      source_id = "step_#{step.workflow_step_id}"
 
-      step.children.each do |child|
-        target_id = "step_#{child.workflow_step_id}"
+      # Add edges from task to root steps (those without parents)
+      workflow_steps.each do |step|
+        next unless step.step_dag_relationship&.is_root_step
 
-        # Find the edge type from the WorkflowStepEdge
-        edge = Tasker::WorkflowStepEdge.find_by(
-          from_step_id: step.workflow_step_id,
-          to_step_id: child.workflow_step_id
+        edges << build_edge(
+          "task_#{@task.task_id}",
+          "step_#{step.workflow_step_id}"
         )
-        edge_label = edge ? edge.name : ''
+      end
+
+      # Collect all edge relationships for efficient batch lookup
+      all_edge_data = []
+      workflow_steps.each do |step|
+        next unless step.step_dag_relationship
+
+        child_ids = step.step_dag_relationship.child_step_ids_array
+        child_ids.each do |child_id|
+          all_edge_data << {
+            from_step_id: step.workflow_step_id,
+            to_step_id: child_id
+          }
+        end
+      end
+
+      # Batch load all WorkflowStepEdge records for edge labels
+      edge_records = {}
+      if all_edge_data.any?
+        conditions = all_edge_data.map do |data|
+          "(from_step_id = #{data[:from_step_id]} AND to_step_id = #{data[:to_step_id]})"
+        end
+        Tasker::WorkflowStepEdge.where(conditions.join(' OR ')).find_each do |edge_record|
+          key = "#{edge_record.from_step_id}_#{edge_record.to_step_id}"
+          edge_records[key] = edge_record
+        end
+      end
+
+      # Build edges using pre-calculated data
+      all_edge_data.each do |data|
+        source_id = "step_#{data[:from_step_id]}"
+        target_id = "step_#{data[:to_step_id]}"
+
+        # Find edge label from batch-loaded records
+        key = "#{data[:from_step_id]}_#{data[:to_step_id]}"
+        edge_label = edge_records[key]&.name || ''
 
         edges << build_edge(source_id, target_id, edge_label)
       end

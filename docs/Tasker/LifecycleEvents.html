@@ -86,9 +86,7 @@
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
     
-<p>Handles lifecycle events for Tasker components using ActiveSupport::Notifications</p>
-
-<p>This module provides a clean event firing interface while keeping telemetry logic separate from business logic. Events are used for logging, monitoring, and tracing task and step execution.</p>
+<p>LifecycleEvents provides a unified interface for firing and subscribing to task and step lifecycle events using dry-events publisher.</p>
 
 
   </div>
@@ -103,6 +101,8 @@
       <strong class="modules">Modules:</strong> <span class='object_link'><a href="LifecycleEvents/Events.html" title="Tasker::LifecycleEvents::Events (module)">Events</a></span>
     
   
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span>
     
   
 </p>
@@ -119,7 +119,7 @@
           <div class="docstring">
   <div class="discussion">
     
-<p>Standard namespace for all Tasker events</p>
+<p>Event namespace for ActiveSupport::Notifications compatibility</p>
 
 
   </div>
@@ -151,10 +151,36 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#bus-class_method" title="bus (class method)">.<strong>bus</strong>  &#x21d2; Publisher </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Legacy method name for backward compatibility.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#fire-class_method" title="fire (class method)">.<strong>fire</strong>(event, context = {}) {|void| ... } &#x21d2; Object<sup>?</sup> </a>
     
 
     
+      (also: fire_with_span)
+    
   </span>
   
   
@@ -166,7 +192,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Fire a lifecycle event with associated context.</p>
+<p>Fire a lifecycle event using dry-events.</p>
 </div></span>
   
 </li>
@@ -175,7 +201,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#fire_error-class_method" title="fire_error (class method)">.<strong>fire_error</strong>(event, exception, context = {})  &#x21d2; void </a>
+      <a href="#fire_error-class_method" title="fire_error (class method)">.<strong>fire_error</strong>(event, exception, context = {})  &#x21d2; Object </a>
     
 
     
@@ -190,7 +216,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Helper to fire an event with an exception.</p>
+<p>Fire an error event with exception details.</p>
 </div></span>
   
 </li>
@@ -199,7 +225,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#fire_with_span-class_method" title="fire_with_span (class method)">.<strong>fire_with_span</strong>(event, context = {}) {|void| ... } &#x21d2; Object<sup>?</sup> </a>
+      <a href="#publisher-class_method" title="publisher (class method)">.<strong>publisher</strong>  &#x21d2; Publisher </a>
     
 
     
@@ -214,7 +240,31 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Fire an event with span-based tracing.</p>
+<p>Get the dry-events publisher instance.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#subscribe-class_method" title="subscribe (class method)">.<strong>subscribe</strong>(event_name, callable = nil) {|event| ... } &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Subscribe to lifecycle events.</p>
 </div></span>
   
 </li>
@@ -230,9 +280,9 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="fire-class_method">
+  <h3 class="signature first" id="bus-class_method">
   
-    .<strong>fire</strong>(event, context = {}) {|void| ... } &#x21d2; <tt>Object</tt><sup>?</sup> 
+    .<strong>bus</strong>  &#x21d2; <tt><span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span></tt> 
   
 
   
@@ -241,7 +291,70 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Fire a lifecycle event with associated context</p>
+<p>Legacy method name for backward compatibility</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The publisher instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 36</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_bus'>bus</span>
+  <span class='id identifier rubyid_publisher'>publisher</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="fire-class_method">
+  
+    .<strong>fire</strong>(event, context = {}) {|void| ... } &#x21d2; <tt>Object</tt><sup>?</sup> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='fire_with_span-class_method'>fire_with_span</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Fire a lifecycle event using dry-events</p>
 
 
   </div>
@@ -298,7 +411,7 @@
       
         &mdash;
         <div class='inline'>
-<p>Optional block to instrument</p>
+<p>Optional block to execute within the event context</p>
 </div>
       
     </li>
@@ -329,6 +442,21 @@
       <pre class="lines">
 
 
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
 61
 62
 63
@@ -339,26 +467,35 @@
 68
 69
 70
-71
-72
-73
-74</pre>
+71</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 61</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 46</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_fire'>fire</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='rparen'>)</span>
-  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>LifecycleEvent fired: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event'>event</span><span class='embexpr_end'>}</span><span class='tstring_content'> with context: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
-
-  <span class='comment'># Create full event name with namespace
-</span>  <span class='id identifier rubyid_namespaced_event'>namespaced_event</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='const'><span class='object_link'><a href="#EVENT_NAMESPACE-constant" title="Tasker::LifecycleEvents::EVENT_NAMESPACE (constant)">EVENT_NAMESPACE</a></span></span><span class='embexpr_end'>}</span><span class='tstring_content'>.</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event'>event</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>def</span> <span class='id identifier rubyid_fire'>fire</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='comment'># Add timing information to context
+</span>  <span class='id identifier rubyid_started_at'>started_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>fired_at:</span> <span class='id identifier rubyid_started_at'>started_at</span><span class='rparen'>)</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
-    <span class='comment'># Use ActiveSupport::Notifications to instrument the block
-</span>    <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>Notifications</span><span class='period'>.</span><span class='id identifier rubyid_instrument'>instrument</span><span class='lparen'>(</span><span class='id identifier rubyid_namespaced_event'>namespaced_event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='rparen'>)</span>
+    <span class='comment'># For block-based events, measure execution time
+</span>    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>nil</span>
+    <span class='id identifier rubyid_execution_time'>execution_time</span> <span class='op'>=</span> <span class='const'>Benchmark</span><span class='period'>.</span><span class='id identifier rubyid_realtime'>realtime</span> <span class='kw'>do</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='kw'>yield</span>
+    <span class='kw'>end</span>
+
+    <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+      <span class='label'>execution_duration:</span> <span class='id identifier rubyid_execution_time'>execution_time</span><span class='comma'>,</span>
+      <span class='label'>completed_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+    <span class='rparen'>)</span>
+
+    <span class='comment'># Publish the event with timing
+</span>    <span class='id identifier rubyid_publisher'>publisher</span><span class='period'>.</span><span class='id identifier rubyid_publish'>publish</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_result'>result</span>
   <span class='kw'>else</span>
-    <span class='comment'># Fire event without a block
-</span>    <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>Notifications</span><span class='period'>.</span><span class='id identifier rubyid_instrument'>instrument</span><span class='lparen'>(</span><span class='id identifier rubyid_namespaced_event'>namespaced_event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='comment'># For non-block events, just publish
+</span>    <span class='id identifier rubyid_publisher'>publisher</span><span class='period'>.</span><span class='id identifier rubyid_publish'>publish</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='kw'>nil</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -369,7 +506,7 @@
       <div class="method_details ">
   <h3 class="signature " id="fire_error-class_method">
   
-    .<strong>fire_error</strong>(event, exception, context = {})  &#x21d2; <tt>void</tt> 
+    .<strong>fire_error</strong>(event, exception, context = {})  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -377,8 +514,8 @@
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p class="note returns_void">This method returns an undefined value.</p>
-<p>Helper to fire an event with an exception</p>
+    
+<p>Fire an error event with exception details</p>
 
 
   </div>
@@ -414,7 +551,7 @@
       
         &mdash;
         <div class='inline'>
-<p>The exception to include</p>
+<p>The exception object</p>
 </div>
       
     </li>
@@ -432,7 +569,7 @@
       
         &mdash;
         <div class='inline'>
-<p>Additional context data</p>
+<p>Additional context</p>
 </div>
       
     </li>
@@ -446,22 +583,24 @@
       <pre class="lines">
 
 
-95
-96
-97
-98
-99
-100
-101
-102
-103</pre>
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 95</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_fire_error'>fire_error</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_error_context'>error_context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
-    <span class='label'>exception:</span> <span class='lbracket'>[</span><span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>error:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+    <span class='label'>exception_class:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
     <span class='label'>exception_object:</span> <span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span>
     <span class='label'>backtrace:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_backtrace'>backtrace</span><span class='op'>&amp;.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='rparen'>)</span>
@@ -474,9 +613,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="fire_with_span-class_method">
+  <h3 class="signature " id="publisher-class_method">
   
-    .<strong>fire_with_span</strong>(event, context = {}) {|void| ... } &#x21d2; <tt>Object</tt><sup>?</sup> 
+    .<strong>publisher</strong>  &#x21d2; <tt><span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span></tt> 
   
 
   
@@ -485,84 +624,26 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Fire an event with span-based tracing</p>
-
-<p>This is an alias for backward compatibility that behaves the same as the regular fire method.</p>
+<p>Get the dry-events publisher instance</p>
 
 
   </div>
 </div>
 <div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
   
-    <li>
-      
-        <span class='name'>event</span>
-      
-      
-        <span class='type'>(<tt>String</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The event name</p>
-</div>
-      
-    </li>
-  
-    <li>
-      
-        <span class='name'>context</span>
-      
-      
-        <span class='type'>(<tt>Hash</tt>)</span>
-      
-      
-        <em class="default">(defaults to: <tt>{}</tt>)</em>
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The context data associated with the event</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Yields:</p>
-<ul class="yield">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>void</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>Optional block to instrument</p>
-</div>
-      
-    </li>
-  
-</ul>
 <p class="tag_title">Returns:</p>
 <ul class="return">
   
     <li>
       
       
-        <span class='type'>(<tt>Object</tt>, <tt>nil</tt>)</span>
+        <span class='type'>(<tt><span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span></tt>)</span>
       
       
       
         &mdash;
         <div class='inline'>
-<p>The result of the block if given, otherwise nil</p>
+<p>The publisher instance</p>
 </div>
       
     </li>
@@ -575,15 +656,128 @@
       <pre class="lines">
 
 
-85
-86
-87</pre>
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 22</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_fire_with_span'>fire_with_span</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_fire'>fire</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_publisher'>publisher</span>
+  <span class='ivar'>@publisher</span> <span class='op'>||=</span> <span class='kw'>begin</span>
+    <span class='id identifier rubyid_instance'>instance</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="LifecycleEvents/Publisher.html" title="Tasker::LifecycleEvents::Publisher (class)">Publisher</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+    <span class='comment'># Register all valid events
+</span>    <span class='const'><span class='object_link'><a href="LifecycleEvents/Events.html" title="Tasker::LifecycleEvents::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="LifecycleEvents/Events.html#VALID_EVENTS-constant" title="Tasker::LifecycleEvents::Events::VALID_EVENTS (constant)">VALID_EVENTS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_event_name'>event_name</span><span class='op'>|</span>
+      <span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_register_event'>register_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_instance'>instance</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="subscribe-class_method">
+  
+    .<strong>subscribe</strong>(event_name, callable = nil) {|event| ... } &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Subscribe to lifecycle events</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The event name to subscribe to</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>callable</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>#call</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional callable object</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yields:</p>
+<ul class="yield">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>event</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Block to execute when event is fired</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+94
+95
+96
+97</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/lifecycle_events.rb', line 94</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_subscribe'>subscribe</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_callable'>callable</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='id identifier rubyid_callable'>callable</span> <span class='op'>||</span> <span class='id identifier rubyid_block'>block</span>
+  <span class='id identifier rubyid_publisher'>publisher</span><span class='period'>.</span><span class='id identifier rubyid_subscribe'>subscribe</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_handler'>handler</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -595,7 +789,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:22 2025 by
+  Generated on Sat May 31 00:05:07 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

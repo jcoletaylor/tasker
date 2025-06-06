@@ -2,59 +2,52 @@
 # frozen_string_literal: true
 
 require 'json-schema'
-require 'tasker/lifecycle_events'
+require 'tasker/constants'
+require 'tasker/types/step_sequence'
+require 'tasker/events/event_payload_builder'
+require_relative '../concerns/event_publisher'
 
 module Tasker
   module TaskHandler
     # Instance methods for task handlers
     #
-    # This module provides the core task handling functionality including
-    # task initialization, step processing, error handling, and workflow
-    # execution logic.
+    # Provides the core task processing logic including the main execution loop,
+    # step handling, and finalization. Delegates to orchestration components
+    # for implementation details while maintaining proven loop-based approach.
+    #
+    # @author TaskHandler Authors
     module InstanceMethods
-      # Initialize a new task from a task request
+      include Tasker::Concerns::EventPublisher
+
+      # List of attributes to pass from the task request to the task
       #
-      # Creates a task record, validates the context against the schema,
-      # and enqueues the task for processing.
+      # These are the attributes that will be copied from the task request
+      # to the task when initializing a new task.
       #
-      # @param task_request [Tasker::Types::TaskRequest] The task request
-      # @return [Tasker::Task] The created task
+      # @return [Array<Symbol>] List of attribute names
+      TASK_REQUEST_ATTRIBUTES = %i[name context initiator reason source_system].freeze
+
+      # Initialize a task
+      #
+      # Validates input and creates initial workflow steps via orchestration.
+      #
+      # @param task_request [TaskRequest] The task request to initialize
+      # @return [Tasker::Task] The initialized task
       def initialize_task!(task_request)
-        task = nil
-        context_errors = validate_context(task_request.context)
-        if context_errors.length.positive?
-          task = Tasker::Task.from_task_request(task_request)
-          context_errors.each do |error|
-            task.errors.add(:context, error)
-          end
-          Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-            { task_name: task_request.name, status: 'error', errors: context_errors }
-          )
-          return task
-        end
-        Tasker::Task.transaction do
-          task = Tasker::Task.create_with_defaults!(task_request)
-          get_sequence(task)
-        end
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::INITIALIZE,
-          { task_id: task.task_id, task_name: task.name, status: 'success' }
-        )
-        enqueue_task(task)
-        task
+        # Delegate to orchestration system
+        Tasker::Orchestration::TaskInitializer.initialize_task!(task_request, self)
       end
 
       # Get the step sequence for a task
       #
       # Retrieves all workflow steps for the task and establishes their dependencies.
+      # Delegates to StepSequenceFactory for implementation + observability events.
       #
       # @param task [Tasker::Task] The task to get the sequence for
       # @return [Tasker::Types::StepSequence] The sequence of workflow steps
       def get_sequence(task)
-        steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
-        establish_step_dependencies_and_defaults(task, steps)
-        Tasker::Types::StepSequence.new(steps: steps)
+        # Delegate to orchestration system for implementation + events
+        Tasker::Orchestration::StepSequenceFactory.get_sequence(task, self)
       end
 
       # Start a task's execution
@@ -65,395 +58,62 @@ module Tasker
       # @return [Boolean] True if the task was started successfully
       # @raise [Tasker::ProceduralError] If the task is already complete or not pending
       def start_task(task)
-        raise(Tasker::ProceduralError, "task already complete for task #{task.task_id}") if task.complete
-
-        unless task.status == Tasker::Constants::TaskStatuses::PENDING
-          raise(Tasker::ProceduralError,
-                "task is not pending for task #{task.task_id}, status is #{task.status}")
-        end
-
-        task.context = ActiveSupport::HashWithIndifferentAccess.new(task.context)
-
-        task.update!({ status: Tasker::Constants::TaskStatuses::IN_PROGRESS })
-
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::START,
-          { task_id: task.task_id, task_name: task.name, task_context: task.context }
-        )
-
-        true
+        # Delegate to orchestration system
+        Tasker::Orchestration::TaskInitializer.start_task!(task)
       end
 
       # Handle a task's execution
       #
-      # This is the main entry point for processing a task. It starts the task,
-      # processes viable steps iteratively until completion or error, and then finalizes.
+      # This is the main entry point for processing a task. Uses proven
+      # orchestration delegation patterns for reliable workflow execution.
       #
       # @param task [Tasker::Task] The task to handle
       # @return [void]
       def handle(task)
         start_task(task)
 
-        # Process steps recursively until no more viable steps are found
+        # PROVEN APPROACH: Process steps iteratively until completion or error
         all_processed_steps = []
 
         loop do
-          # Get the latest sequence with up-to-date step statuses
           task.reload
           sequence = get_sequence(task)
-
-          # Find viable steps according to DAG traversal
-          # Force a fresh load of all steps, including children of completed steps
           viable_steps = find_viable_steps(task, sequence)
-
-          # Log the viable steps found
-          if viable_steps.any?
-            step_names = viable_steps.map(&:name)
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Step::FIND_VIABLE,
-              {
-                task_id: task.task_id,
-                step_names: step_names.join(', '),
-                count: viable_steps.size
-              }
-            )
-          end
-
-          # If no viable steps found, we're done
           break if viable_steps.empty?
 
-          # Process the viable steps
-          processed_in_this_round = handle_viable_steps(task, sequence, viable_steps)
-          all_processed_steps.concat(processed_in_this_round)
-
-          # Check if any errors occurred that would block further progress
-          break if blocked_by_errors?(task, sequence, processed_in_this_round)
+          processed_steps = handle_viable_steps(task, sequence, viable_steps)
+          all_processed_steps.concat(processed_steps)
+          break if blocked_by_errors?(task, sequence, processed_steps)
         end
 
-        # Get final sequence after all processing
-        final_sequence = get_sequence(task)
-
-        # Finalize the task
-        finalize(task, final_sequence, all_processed_steps)
+        # DELEGATE: Finalize via TaskFinalizer (fires events internally)
+        finalize(task, get_sequence(task), all_processed_steps)
       end
 
-      # Find viable steps that can be executed
+      # Establish step dependencies and defaults
       #
-      # Checks all unfinished steps to find those that are ready for processing
-      # based on their dependencies and current state.
+      # This is a hook method that can be overridden by implementing classes.
+      # This method is public so that orchestration components can call it.
       #
       # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @return [Array<Tasker::WorkflowStep>] The viable steps
-      def find_viable_steps(task, sequence)
-        unfinished_steps = sequence.steps.reject { |step| step.processed || step.in_process }
-
-        viable_steps = []
-        unfinished_steps.each do |step|
-          # Reload to get latest status
-          fresh_step = Tasker::WorkflowStep.find(step.workflow_step_id)
-
-          # Skip if step is now processed or in process
-          next if fresh_step.processed || fresh_step.in_process
-
-          # Check if step is viable with latest DB state
-          viable_steps << fresh_step if Tasker::WorkflowStep.is_step_viable?(fresh_step, task)
-        end
-
-        viable_steps
-      end
-
-      # Handle a single workflow step
-      #
-      # Processes a step with proper span management, error handling,
-      # and retry logic.
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param step [Tasker::WorkflowStep] The step to handle
-      # @return [Tasker::WorkflowStep] The processed step
-      def handle_one_step(task, sequence, step)
-        # Use the lifecycle events to handle a step with proper span management
-        span_context = build_step_span_context(task, step)
-
-        # This will create a span that's properly connected to the parent task span
-        Tasker::LifecycleEvents.fire_with_span(
-          Tasker::LifecycleEvents::Events::Step::HANDLE,
-          span_context.merge(attempt: step.attempts.to_i + 1)
-        ) do
-          handler = get_step_handler(step)
-          step.attempts ||= 0
-
-          begin
-            handler.handle(task, sequence, step)
-            handle_step_success(step, span_context)
-          rescue StandardError => e
-            handle_step_error(step, e, span_context)
-          end
-
-          # Common post-handling logic
-          step.attempts += 1
-          step.last_attempted_at = Time.zone.now
-
-          # Check for retry or max retries reached
-          handle_retry_events(step, span_context) if step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
-
-          step.save!
-          step
-        end
-      end
-
-      private
-
-      # Build context data for step spans
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param step [Tasker::WorkflowStep] The step being handled
-      # @return [Hash] The span context data
-      def build_step_span_context(task, step)
-        {
-          span_name: "step.#{step.name}",
-          task_id: task.task_id,
-          step_id: step.workflow_step_id,
-          step_name: step.name,
-          step_inputs: step.inputs
-        }
-      end
-
-      # Handle successful completion of a step
-      #
-      # @param step [Tasker::WorkflowStep] The step that succeeded
-      # @param span_context [Hash] The span context data
+      # @param steps [Array<Tasker::WorkflowStep>] The steps to establish dependencies for
       # @return [void]
-      def handle_step_success(step, span_context)
-        step.processed = true
-        step.processed_at = Time.zone.now
-        step.status = Tasker::Constants::WorkflowStepStatuses::COMPLETE
+      def establish_step_dependencies_and_defaults(task, steps); end
 
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::COMPLETE,
-          span_context.merge(step_results: step.results)
-        )
-      end
-
-      # Handle error during step processing
+      # Update annotations based on processed steps
       #
-      # @param step [Tasker::WorkflowStep] The step that encountered an error
-      # @param error [StandardError] The error that occurred
-      # @param span_context [Hash] The span context data
+      # This is a hook method that can be overridden by implementing classes.
+      # This method is public so that orchestration components can call it.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
+      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
       # @return [void]
-      def handle_step_error(step, error, span_context)
-        step.processed = false
-        step.processed_at = nil
-        step.status = Tasker::Constants::WorkflowStepStatuses::ERROR
-        step.results ||= {}
-        step.results = step.results.merge(error: error.to_s, backtrace: error.backtrace.join("\n"))
-
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::ERROR,
-          span_context.merge(error: error.to_s, step_results: step.results)
-        )
-      end
-
-      # Handle retry-related events for a step
-      #
-      # @param step [Tasker::WorkflowStep] The step being retried
-      # @param span_context [Hash] The span context data
-      # @return [void]
-      def handle_retry_events(step, span_context)
-        # Record if max retries reached
-        if step.attempts >= step.retry_limit
-          Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Step::MAX_RETRIES_REACHED,
-            span_context.merge(attempts: step.attempts, retry_limit: step.retry_limit)
-          )
-          return
-        end
-        # Record a retry event if this is a retry attempt (attempts > 0)
-        # Note: attempts is incremented before this method is called
-        return unless step.attempts > 1
-
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Step::RETRY,
-          span_context.merge(attempt: step.attempts)
-        )
-      end
-
-      # Handle a set of viable steps either concurrently or sequentially
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
-      # @return [Array<Tasker::WorkflowStep>] The processed steps
-      def handle_viable_steps(task, sequence, steps)
-        # Delegate to the appropriate handler based on concurrent processing setting
-        if respond_to?(:use_concurrent_processing?) && use_concurrent_processing?
-          handle_viable_steps_concurrently(task, sequence, steps)
-        else
-          handle_viable_steps_sequentially(task, sequence, steps)
-        end
-      end
-
-      # Handle viable steps concurrently using futures
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
-      # @return [Array<Tasker::WorkflowStep>] The processed steps
-      def handle_viable_steps_concurrently(task, sequence, steps)
-        # Create an array of futures and processed steps
-        futures = []
-        processed_steps = Concurrent::Array.new
-
-        # Create a future for each step
-        steps.each do |step|
-          # Use Concurrent::Future to process each step asynchronously
-          future = Concurrent::Future.execute do
-            handle_one_step(task, sequence, step)
-          end
-
-          futures << future
-        end
-
-        # Wait for all futures to complete
-        futures.each do |future|
-          # Wait for the future to complete (with a reasonable timeout)
-
-          # 30 second timeout to prevent indefinite hanging
-          result = future.value(30)
-          processed_steps << result if result
-        rescue StandardError => e
-          Rails.logger.error("Error processing step concurrently: #{e.message}")
-        end
-
-        # Update annotations for this batch
-        update_annotations(task, sequence, processed_steps)
-
-        processed_steps.to_a
-      end
-
-      # Handle viable steps sequentially
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The viable steps to handle
-      # @return [Array<Tasker::WorkflowStep>] The processed steps
-      def handle_viable_steps_sequentially(task, sequence, steps)
-        processed_steps = []
-
-        # Process each step one at a time
-        steps.each do |step|
-          processed_step = handle_one_step(task, sequence, step)
-          processed_steps << processed_step
-        end
-
-        # Update annotations for this batch
-        update_annotations(task, sequence, processed_steps)
-
-        processed_steps
-      end
-
-      # Finalize a task after processing
-      #
-      # Determines whether a task is complete, should be re-enqueued,
-      # or has encountered errors that prevent completion.
-      #
-      # @param task [Tasker::Task] The task being finalized
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The steps that were processed
-      # @return [void]
-      def finalize(task, sequence, steps)
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::FINALIZE,
-          { task_id: task.task_id, task_name: task.name }
-        )
-
-        return if blocked_by_errors?(task, sequence, steps)
-
-        step_group = StepGroup.build(task, sequence, steps)
-
-        if step_group.complete?
-          task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-
-          Tasker::LifecycleEvents.fire(
-            Tasker::LifecycleEvents::Events::Task::COMPLETE,
-            { task_id: task.task_id, task_name: task.name }
-          )
-          return
-        end
-
-        # if we have steps that still need to be completed and in valid states
-        # set the status of the task back to pending, update it,
-        # and re-enqueue the task for processing
-        if step_group.pending?
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
-          enqueue_task(task)
-          return
-        end
-        # if we reach the end and have not re-enqueued the task
-        # then we mark it complete since none of the above proved true
-        task.update!({ status: Tasker::Constants::TaskStatuses::COMPLETE })
-
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::COMPLETE,
-          { task_id: task.task_id, task_name: task.name }
-        )
-        nil
-      end
-
-      # Check if any steps have exceeded their retry limit
-      #
-      # @param error_steps [Array<Tasker::WorkflowStep>] Steps in error state
-      # @return [Boolean] True if any step has too many attempts
-      def too_many_attempts?(error_steps)
-        too_many_attempts_steps = []
-        error_steps.each do |err_step|
-          too_many_attempts_steps << err_step if err_step.attempts.positive? && !err_step.retryable
-          too_many_attempts_steps << err_step if err_step.attempts >= err_step.retry_limit
-        end
-        too_many_attempts_steps.length.positive?
-      end
-
-      # Check if the task is blocked by errors
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The steps that were processed
-      # @return [Boolean] True if the task is blocked by errors
-      def blocked_by_errors?(task, sequence, steps)
-        # how many steps in this round are in an error state before, and based on
-        # being processed in this round of handling, is it still in an error state
-        error_steps = get_error_steps(steps, sequence)
-        # if there are no steps in error still, then move on to the rest of the checks
-        # if there are steps in error still, then we need to see if we have tried them
-        # too many times - if we have, we need to mark the whole task as in error
-        # if we have not, then we need to re-enqueue the task
-
-        if error_steps.length.positive?
-          if too_many_attempts?(error_steps)
-            task.update!({ status: Tasker::Constants::TaskStatuses::ERROR })
-
-            Tasker::LifecycleEvents.fire(
-              Tasker::LifecycleEvents::Events::Task::ERROR,
-              {
-                task_id: task.task_id,
-                task_name: task.name,
-                error_steps: error_steps.map(&:name).join(', '),
-                error_step_results: error_steps.map do |step|
-                  { step_id: step.workflow_step_id, step_name: step.name, step_results: step.results }
-                end
-              }
-            )
-            return true
-          end
-          task.update!({ status: Tasker::Constants::TaskStatuses::PENDING })
-          enqueue_task(task)
-          return true
-        end
-        false
-      end
+      def update_annotations(task, sequence, steps); end
 
       # Get a step handler for a specific step
+      #
+      # This method is public so that orchestration components can access step handlers.
       #
       # @param step [Tasker::WorkflowStep] The step to get a handler for
       # @return [Object] The step handler
@@ -469,65 +129,130 @@ module Tasker
         handler_class.new(config: handler_config)
       end
 
-      # Get steps that are still in error state
+      # Handle execution of a single step
       #
-      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @return [Array<Tasker::WorkflowStep>] Steps still in error state
-      def get_error_steps(steps, sequence)
-        error_steps = []
-        sequence.steps.each do |step|
-          # if in the original sequence this was an error
-          # we need to see if the updated steps are still in error
-          next unless step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
+      # This is a convenience method for testing that executes a single step.
+      # Delegates to StepExecutor for consistent behavior.
+      #
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param step [Tasker::WorkflowStep] The step to execute
+      # @return [Tasker::WorkflowStep] The processed step
+      def handle_one_step(task, sequence, step)
+        step_executor.execute_single_step(task, sequence, step, self)
+      end
 
-          processed_step =
-            steps.find do |s|
-              s.workflow_step_id == step.workflow_step_id
-            end
-          # no updated step was found to change our mind
-          # about whether it was in error before, so true, still in error
-          if processed_step.nil?
-            error_steps << step
-            next
-          end
+      private
 
-          # was the processed step in error still
-          error_steps << step if processed_step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
+      # Memoized step executor for consistent reuse
+      #
+      # @return [Tasker::Orchestration::StepExecutor] The step executor instance
+      def step_executor
+        @step_executor ||= Tasker::Orchestration::StepExecutor.new
+      end
+
+      # Memoized task finalizer for consistent reuse
+      #
+      # @return [Tasker::Orchestration::TaskFinalizer] The task finalizer instance
+      def task_finalizer
+        @task_finalizer ||= Tasker::Orchestration::TaskFinalizer.new
+      end
+
+      # ================================================================
+      # ASPIRATIONAL/FUTURE ENHANCEMENT METHODS
+      #
+      # These methods implement TaskWorkflowSummary-based intelligent
+      # workflow processing. They are kept for future enhancement but
+      # not currently used in core processing flows due to complexity
+      # vs. value considerations.
+      # ================================================================
+
+      # FUTURE: Handle steps based on TaskWorkflowSummary recommendations
+      #
+      # This method uses the TaskWorkflowSummary view to intelligently process steps
+      # with optimal processing strategies, eliminating the need for viable step discovery.
+      #
+      # @param summary [Tasker::TaskWorkflowSummary] The workflow summary with processing recommendations
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def handle_steps_via_summary(summary)
+        # Get the recommended step IDs for processing
+        step_ids = summary.next_steps_for_processing
+        return [] if step_ids.empty?
+
+        # Load steps with associations for processing
+        steps = Tasker::WorkflowStep.where(workflow_step_id: step_ids)
+        return [] if steps.empty?
+
+        # Log processing strategy for observability
+        Rails.logger.debug do
+          "TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy"
         end
-        error_steps
+
+        # Execute steps using the recommended strategy
+        task = summary.task
+        sequence = get_sequence(task)
+        execute_steps_with_strategy(task, sequence, steps, summary.processing_strategy)
       end
 
-      # Enqueue a task for processing
+      # FUTURE: Execute steps using the processing strategy recommended by TaskWorkflowSummary
       #
-      # @param task [Tasker::Task] The task to enqueue
-      # @return [void]
-      def enqueue_task(task)
-        Tasker::LifecycleEvents.fire(
-          Tasker::LifecycleEvents::Events::Task::ENQUEUE,
-          { task_id: task.task_id, task_name: task.name, task_context: task.context }
-        )
-        Tasker::TaskRunnerJob.perform_later(task.task_id)
+      # @param task [Tasker::Task] The task being processed
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param steps [Array<Tasker::WorkflowStep>] Steps to execute
+      # @param strategy [String] Processing strategy ('batch_parallel', 'small_parallel', 'sequential')
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def execute_steps_with_strategy(task, sequence, steps, _strategy)
+        # DELEGATE: Use the StepExecutor to handle all step execution logic
+        # The strategy is informational - StepExecutor will use task handler settings for actual execution mode
+        step_executor.execute_steps(task, sequence, steps)
       end
 
-      # Establish step dependencies and defaults
+      # Find steps that are ready for execution
       #
-      # This is a hook method that can be overridden by implementing classes.
+      # This method finds workflow steps that are ready to be executed by checking
+      # their state and dependencies. It's a proven pattern that works reliably.
       #
       # @param task [Tasker::Task] The task being processed
-      # @param steps [Array<Tasker::WorkflowStep>] The steps to establish dependencies for
-      # @return [void]
-      def establish_step_dependencies_and_defaults(task, steps); end
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @return [Array<Tasker::WorkflowStep>] Steps ready for execution
+      def find_viable_steps(task, sequence)
+        Orchestration::ViableStepDiscovery.new.find_viable_steps(task, sequence)
+      end
 
-      # Update annotations based on processed steps
+      # Handle execution of viable steps
       #
-      # This is a hook method that can be overridden by implementing classes.
+      # This method executes a collection of viable steps, delegating to the
+      # StepExecutor for implementation details.
       #
       # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The sequence of steps
-      # @param steps [Array<Tasker::WorkflowStep>] The processed steps
-      # @return [void]
-      def update_annotations(task, sequence, steps); end
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
+      # @return [Array<Tasker::WorkflowStep>] Processed steps
+      def handle_viable_steps(task, sequence, viable_steps)
+        step_executor.execute_steps(task, sequence, viable_steps, self)
+      end
+
+      # Check if task is blocked by errors
+      #
+      # @param task [Tasker::Task] The task to check
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param processed_steps [Array<Tasker::WorkflowStep>] Recently processed steps
+      # @return [Boolean] True if blocked by errors
+      def blocked_by_errors?(task, sequence, processed_steps)
+        task_finalizer.blocked_by_errors?(task, sequence, processed_steps)
+      end
+
+      # Finalize the task
+      #
+      # @param task [Tasker::Task] The task to finalize
+      # @param sequence [Tasker::Types::StepSequence] The final step sequence
+      # @param processed_steps [Array<Tasker::WorkflowStep>] All processed steps
+      def finalize(task, sequence, processed_steps)
+        # Call update_annotations hook before finalizing
+        update_annotations(task, sequence, processed_steps) if respond_to?(:update_annotations)
+
+        task_finalizer.finalize_task_with_steps(task, sequence, processed_steps)
+      end
 
       # Get the schema for validating task context
       #

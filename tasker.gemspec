@@ -33,14 +33,19 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'concurrent-ruby', '~> 1.3.5'
   spec.add_dependency 'concurrent-ruby-ext', '~> 1.3.5'
+  spec.add_dependency 'dry-events', '~> 1.1'
   spec.add_dependency 'dry-struct', '~> 1.8'
   spec.add_dependency 'dry-types', '~> 1.8'
+  spec.add_dependency 'dry-validation', '~> 1.10'
 
   spec.add_dependency 'faraday', '~> 2.12.2'
   spec.add_dependency 'graphql'
 
   spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'
   spec.add_dependency 'opentelemetry-sdk', '~> 1.8.0'
+
+  spec.add_dependency 'scenic', '~> 1.8'
+  spec.add_dependency 'statesman', '~> 12.0.0'
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 end

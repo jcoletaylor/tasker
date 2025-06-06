@@ -182,14 +182,16 @@
 22
 23
 24
-25</pre>
+25
+26</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/graphql/tasker/mutations/cancel_task.rb', line 14</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resolve'>resolve</span><span class='lparen'>(</span><span class='label'>task_id:</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_update!'>update!</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>status:</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskStatuses.html#CANCELLED-constant" title="Tasker::Constants::TaskStatuses::CANCELLED (constant)">CANCELLED</a></span></span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='comment'># Use state machine to transition task to cancelled
+</span>  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_transition_to!'>transition_to!</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/TaskStatuses.html#CANCELLED-constant" title="Tasker::Constants::TaskStatuses::CANCELLED (constant)">CANCELLED</a></span></span><span class='rparen'>)</span>
 
   <span class='comment'># we don&#39;t want to re-run save here because it will remove the
 </span>  <span class='comment'># context validation from the handler and check &quot;valid?&quot;
@@ -209,7 +211,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:23 2025 by
+  Generated on Thu Jun  5 21:42:05 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

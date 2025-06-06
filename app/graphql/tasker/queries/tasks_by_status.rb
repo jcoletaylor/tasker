@@ -17,7 +17,13 @@ module Tasker
       def resolve(limit:, offset:, sort_by:, sort_order:, status:)
         sorts = page_sort_params(model: Tasker::Task, limit: limit, offset: offset, sort_by: sort_by,
                                  sort_order: sort_order)
-        Tasker::Task.with_all_associated.where(status: status).limit(sorts[:limit]).offset(sorts[:offset]).order(sorts[:order])
+
+        # Use the ActiveRecord scope to query tasks by current state
+        Tasker::Task.with_all_associated
+                    .by_current_state(status)
+                    .limit(sorts[:limit])
+                    .offset(sorts[:offset])
+                    .order(sorts[:order])
       end
     end
   end

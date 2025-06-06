@@ -106,7 +106,7 @@
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
     
-<p>Task represents a workflow process that contains multiple workflow steps. Each Task is identified by a name and has a context which defines the parameters for the task. Tasks track their status, initiator, source system, and other metadata.</p>
+<p>Task represents a workflow process that contains multiple workflow steps. Each Task is identified by a name and has a context which defines the parameters for the task. Tasks track their status via state machine transitions, initiator, source system, and other metadata.</p>
 
 
   </div>
@@ -301,6 +301,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#by_current_state-instance_method" title="#by_current_state (instance method)">#<strong>by_current_state</strong>  &#x21d2; ActiveRecord::Relation </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Scopes a query to find tasks by their current state using state machine transitions.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#diagram-instance_method" title="#diagram (instance method)">#<strong>diagram</strong>(base_url = nil)  &#x21d2; Tasker::TaskDiagram </a>
     
 
@@ -341,6 +365,54 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Finds a workflow step by its name.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#state_machine-instance_method" title="#state_machine (instance method)">#<strong>state_machine</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>State machine integration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#status-instance_method" title="#status (instance method)">#<strong>status</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Status is now entirely managed by the state machine.</p>
 </div></span>
   
 </li>
@@ -468,14 +540,14 @@
       <pre class="lines">
 
 
-98
-99
-100
-101
-102</pre>
+141
+142
+143
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 98</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 141</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_with_defaults!'>create_with_defaults!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
@@ -551,20 +623,20 @@
       <pre class="lines">
 
 
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118</pre>
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 108</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 151</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -646,26 +718,24 @@
       <pre class="lines">
 
 
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153</pre>
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 141</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
-    <span class='label'>status:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#PENDING-constant" title="Tasker::Constants::TaskStatuses::PENDING (constant)">PENDING</a></span></span><span class='comma'>,</span>
     <span class='label'>initiator:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
     <span class='label'>source_system:</span> <span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
     <span class='label'>reason:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
@@ -745,25 +815,23 @@
       <pre class="lines">
 
 
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135</pre>
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 124</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 167</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
-    <span class='label'>status:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span>
     <span class='label'>initiator:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_initiator'>initiator</span><span class='comma'>,</span>
     <span class='label'>source_system:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_source_system'>source_system</span><span class='comma'>,</span>
     <span class='label'>reason:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
@@ -880,16 +948,16 @@
       <pre class="lines">
 
 
-76
-77
-78
-79
-80
-81
-82</pre>
+98
+99
+100
+101
+102
+103
+104</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 76</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 98</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_annotation</span><span class='comma'>,</span>
 <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='op'>|</span>
@@ -897,6 +965,111 @@
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:task_annotations</span><span class='comma'>,</span> <span class='symbol'>:annotation_types</span><span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>annotation_types:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>tasker_task_annotations.annotation-&gt;&gt;&#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_clean_key'>clean_key</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39; = :value</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>value:</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+<span class='rbrace'>}</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="by_current_state-instance_method">
+  
+    #<strong>by_current_state</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Scopes a query to find tasks by their current state using state machine transitions</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>state</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The state to filter by. If nil, returns all tasks with current state information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ActiveRecord::Relation</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Tasks with current state, optionally filtered by specific state</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 110</span>
+
+<span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_current_state</span><span class='comma'>,</span>
+<span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='op'>|</span>
+  <span class='id identifier rubyid_relation'>relation</span> <span class='op'>=</span> <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='heredoc_beg'>&lt;&lt;-SQL</span><span class='period'>.</span><span class='id identifier rubyid_squish'>squish</span><span class='rparen'>)</span>
+<span class='tstring_content'>    INNER JOIN (
+      SELECT DISTINCT ON (task_id) task_id, to_state
+      FROM tasker_task_transitions
+      ORDER BY task_id, sort_key DESC
+    ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
+</span><span class='heredoc_end'>  SQL
+</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_present?'>present?</span>
+    <span class='id identifier rubyid_relation'>relation</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>current_transitions:</span> <span class='lbrace'>{</span> <span class='label'>to_state:</span> <span class='id identifier rubyid_state'>state</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_relation'>relation</span>
+  <span class='kw'>end</span>
 <span class='rbrace'>}</span></pre>
     </td>
   </tr>
@@ -969,12 +1142,12 @@
       <pre class="lines">
 
 
-167
-168
-169</pre>
+208
+209
+210</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 167</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 208</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagram'>diagram</span><span class='lparen'>(</span><span class='id identifier rubyid_base_url'>base_url</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@diagram</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskDiagram.html" title="Tasker::TaskDiagram (class)">TaskDiagram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskDiagram.html#initialize-instance_method" title="Tasker::TaskDiagram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_base_url'>base_url</span><span class='rparen'>)</span>
@@ -1048,15 +1221,117 @@
       <pre class="lines">
 
 
-159
-160
-161</pre>
+200
+201
+202</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 159</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 200</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_step_by_name'>get_step_by_name</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>named_step:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="state_machine-instance_method">
+  
+    #<strong>state_machine</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>State machine integration</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+73
+74
+75
+76
+77
+78
+79</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 73</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_state_machine'>state_machine</span>
+  <span class='ivar'>@state_machine</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine.html" title="Tasker::StateMachine (module)">StateMachine</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine/TaskStateMachine.html" title="Tasker::StateMachine::TaskStateMachine (class)">TaskStateMachine</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
+    <span class='kw'>self</span><span class='comma'>,</span>
+    <span class='label'>transition_class:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskTransition.html" title="Tasker::TaskTransition (class)">TaskTransition</a></span></span><span class='comma'>,</span>
+    <span class='label'>association_name:</span> <span class='symbol'>:task_transitions</span>
+  <span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="status-instance_method">
+  
+    #<strong>status</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Status is now entirely managed by the state machine</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+82
+83
+84
+85
+86
+87
+88
+89
+90</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 82</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_new_record?'>new_record?</span>
+    <span class='comment'># For new records, return the initial state
+</span>    <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#PENDING-constant" title="Tasker::Constants::TaskStatuses::PENDING (constant)">PENDING</a></span></span>
+  <span class='kw'>else</span>
+    <span class='comment'># For persisted records, use state machine
+</span>    <span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_current_state'>current_state</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1107,14 +1382,14 @@
       <pre class="lines">
 
 
-87
-88
-89
-90
-91</pre>
+130
+131
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 87</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 130</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_all_associated</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span>
   <span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
@@ -1131,7 +1406,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:22 2025 by
+  Generated on Thu Jun  5 21:42:03 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

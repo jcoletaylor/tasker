@@ -10,6 +10,11 @@ RSpec.describe ApiTask::IntegrationYamlExample do
   let(:handler_class) { described_class }
   let(:handler_instance) { described_class.new }
 
+  before do
+    # Register the handler for any factory usage
+    register_task_handler('api_task/integration_yaml_example', described_class)
+  end
+
   describe '#initialize' do
     it 'loads the task configuration from YAML' do
       expect(handler_instance.config).to be_a(Hash)
@@ -82,6 +87,23 @@ RSpec.describe ApiTask::IntegrationYamlExample do
       expect(task).to respond_to(:schema)
       expect(task.schema).to include('type' => 'object')
       expect(task.schema['required']).to include('cart_id')
+    end
+  end
+
+  describe 'factory integration' do
+    it 'supports factory-based task creation for YAML-configured workflows' do
+      # This demonstrates that YAML-configured tasks can work with our factory system
+      # Create dependent systems that the YAML configuration expects
+      create(:dependent_system, name: 'ecommerce_system')
+
+      # Create a basic task that could use this YAML configuration
+      task = create(:task,
+                    named_task: create(:named_task, name: 'api_task/integration_yaml_example'),
+                    context: { cart_id: 1 })
+
+      expect(task).to be_valid
+      expect(task.context['cart_id']).to eq(1)
+      expect(task.named_task.name).to eq('api_task/integration_yaml_example')
     end
   end
 end

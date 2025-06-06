@@ -86,7 +86,7 @@
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
     
-<p>Step-related lifecycle events</p>
+<p>Step state and lifecycle events</p>
 
 
   </div>
@@ -103,133 +103,40 @@
 
     <dl class="constants">
       
-        <dt id="FIND_VIABLE-constant" class="">FIND_VIABLE =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when viable steps are found</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+        <dt id="INITIALIZE-constant" class="">INITIALIZE =
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.FindViable</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#INITIALIZE_REQUESTED-constant" title="Tasker::Constants::StepEvents::INITIALIZE_REQUESTED (constant)">INITIALIZE_REQUESTED</a></span></span></pre></dd>
       
-        <dt id="HANDLE-constant" class="">HANDLE =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step is handled</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+        <dt id="EXECUTION-constant" class="">EXECUTION =
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Handle</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#EXECUTION_REQUESTED-constant" title="Tasker::Constants::StepEvents::EXECUTION_REQUESTED (constant)">EXECUTION_REQUESTED</a></span></span></pre></dd>
       
         <dt id="COMPLETE-constant" class="">COMPLETE =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step is completed</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Complete</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#COMPLETED-constant" title="Tasker::Constants::StepEvents::COMPLETED (constant)">COMPLETED</a></span></span></pre></dd>
       
         <dt id="ERROR-constant" class="">ERROR =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step encounters an error</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Error</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#FAILED-constant" title="Tasker::Constants::StepEvents::FAILED (constant)">FAILED</a></span></span></pre></dd>
       
         <dt id="RETRY-constant" class="">RETRY =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step is retried</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Retry</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#RETRY_REQUESTED-constant" title="Tasker::Constants::StepEvents::RETRY_REQUESTED (constant)">RETRY_REQUESTED</a></span></span></pre></dd>
       
-        <dt id="BACKOFF-constant" class="">BACKOFF =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step needs to back off before retrying</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+        <dt id="CANCELLED-constant" class="">CANCELLED =
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Backoff</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#CANCELLED-constant" title="Tasker::Constants::StepEvents::CANCELLED (constant)">CANCELLED</a></span></span></pre></dd>
       
-        <dt id="SKIP-constant" class="">SKIP =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step is skipped</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
+        <dt id="RESOLVED_MANUALLY-constant" class="">RESOLVED_MANUALLY =
+          
         </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.Skip</span><span class='tstring_end'>&#39;</span></span></pre></dd>
-      
-        <dt id="MAX_RETRIES_REACHED-constant" class="">MAX_RETRIES_REACHED =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Fired when a step reaches its maximum retry limit</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TaskerStep.MaxRetriesReached</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html" title="Tasker::Constants::StepEvents (module)">StepEvents</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/StepEvents.html#RESOLVED_MANUALLY-constant" title="Tasker::Constants::StepEvents::RESOLVED_MANUALLY (constant)">RESOLVED_MANUALLY</a></span></span></pre></dd>
       
     </dl>
   
@@ -245,7 +152,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Apr 19 10:05:22 2025 by
+  Generated on Sat May 31 00:05:07 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

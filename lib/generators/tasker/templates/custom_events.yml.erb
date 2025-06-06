@@ -1,0 +1,62 @@
+---
+# <%= application_name.humanize %> Custom Events Configuration
+# Define your application-specific events here
+# The system automatically protects against namespace collisions
+
+events:
+  # Example order processing events
+  custom:
+    order_processed:
+      constant: "order.processed"
+      description: "Fired when an order is fully processed and ready for fulfillment"
+      payload_schema:
+        order_id: { type: "String", required: true }
+        customer_id: { type: "String", required: true }
+        total_amount: { type: "Float", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["OrderService"]
+
+    payment_completed:
+      constant: "payment.completed"
+      description: "Fired when a payment is successfully processed"
+      payload_schema:
+        payment_id: { type: "String", required: true }
+        order_id: { type: "String", required: true }
+        amount: { type: "Float", required: true }
+        payment_method: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PaymentService"]
+
+    notification_sent:
+      constant: "notification.sent"
+      description: "Fired when a notification is successfully sent"
+      payload_schema:
+        notification_id: { type: "String", required: true }
+        recipient: { type: "String", required: true }
+        channel: { type: "String", required: true }
+        success: { type: "Boolean", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["NotificationService"]
+
+# Uncomment and customize these examples for your application:
+#
+#     user_registered:
+#       constant: "user.registered"
+#       description: "Fired when a new user completes registration"
+#       payload_schema:
+#         user_id: { type: "String", required: true }
+#         email: { type: "String", required: true }
+#         registration_source: { type: "String", required: true }
+#         timestamp: { type: "Time", required: true }
+#       fired_by: ["UserService", "RegistrationController"]
+#
+#     data_exported:
+#       constant: "data.exported"
+#       description: "Fired when data export is completed"
+#       payload_schema:
+#         export_id: { type: "String", required: true }
+#         format: { type: "String", required: true }
+#         record_count: { type: "Integer", required: true }
+#         file_size: { type: "Integer", required: false }
+#         timestamp: { type: "Time", required: true }
+#       fired_by: ["ExportService"]

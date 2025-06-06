@@ -12,8 +12,23 @@ module Tasker
 
     def perform(task_id)
       task = Tasker::Task.where(task_id: task_id).first
+      return unless task
+
+      Rails.logger.info "TaskRunnerJob: Starting execution for task #{task_id}"
+
+      # Get the appropriate task handler and process the task
       handler = handler_factory.get(task.name)
-      handler.handle(task)
+      result = handler.handle(task)
+
+      unless result
+        Rails.logger.error "TaskRunnerJob: Task processing failed for task #{task_id}"
+        raise "Task processing failed for task #{task_id}"
+      end
+
+      Rails.logger.info "TaskRunnerJob: Completed execution for task #{task_id}"
+    rescue StandardError => e
+      Rails.logger.error "TaskRunnerJob: Error processing task #{task_id}: #{e.message}"
+      raise
     end
   end
 end

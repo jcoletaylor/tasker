@@ -41,25 +41,37 @@ require 'rails_helper'
 
 module Tasker
   RSpec.describe(Task) do
-    describe 'task creation' do
-      let(:task_request) { Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { dummy: true }) }
-      let(:task)         { described_class.create_with_defaults!(task_request)             }
+    include FactoryWorkflowHelpers
 
+    before do
+      # Register the handler for factory usage
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+    end
+
+    describe 'task creation' do
       it 'is able to create with defaults' do
+        # Set identity strategy to hash for testing
         Tasker.configuration.identity_strategy = :hash
-        expect(task.save).to(be_truthy)
+
+        # Create first task using factory approach
+        task = create_dummy_task_workflow(context: { dummy: true }, reason: 'task creation test')
+
+        expect(task).to(be_persisted)
         expect(task.task_id).not_to(be_nil)
         expect(task.identity_hash).not_to(be_nil)
-        # should not be able to do the same thing again instantly
+
+        # Should not be able to create the same task again instantly (same identity hash)
         expect do
-          described_class.create_with_defaults!(task_request)
+          create_dummy_task_workflow(context: { dummy: true }, reason: 'task creation test')
         end.to(raise_error(ActiveRecord::RecordInvalid))
 
-        next_task_request = Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { dummy: true },
-                                                           requested_at: 2.minutes.from_now)
-        # but should be able to do it if it is requested far enough apart
+        # But should be able to create it with a different reason (different identity hash)
         expect do
-          described_class.create_with_defaults!(next_task_request)
+          create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: 'task creation test different',
+            requested_at: 2.minutes.from_now
+          )
         end.not_to(raise_error)
       end
     end

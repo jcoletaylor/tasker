@@ -21,75 +21,36 @@ module Tasker
       allow(handler).to receive(:connection).and_return(connection)
     end
 
-    def stub_response(status:, headers: {}, body: '{}')
-      Faraday::Response.new(
-        Faraday::Env.from(
-          status: status,
-          response_headers: headers,
-          body: body,
-          url: "http://api.example.com/?step_name=#{step.name}"
-        )
-      )
-    end
-
-    def create_error_response(status:, body: '{}', headers: {})
-      response = Faraday::Response.new(
-        Faraday::Env.from(
-          status: status,
-          body: body,
-          response_headers: headers,
-          url: "http://api.example.com/?step_name=#{step.name}"
-        )
-      )
-
-      error_class = case status
-                    when 429
-                      Faraday::TooManyRequestsError
-                    when 503
-                      Faraday::ServerError
-                    else
-                      Faraday::ClientError
-                    end
-
-      error = error_class.new(nil, response)
-      error.instance_variable_set(:@response, response)
-      raise error
-    end
-
     describe 'successful API calls' do
       it 'processes successful responses' do
-        response = stub_response(
-          status: 200,
-          headers: { 'Content-Type' => 'application/json' },
-          body: '{"data": "successful response"}'
-        )
-
+        # Use proper Faraday test stub format: [status, headers, body]
         stubs.get("/?step_name=#{step.name}") do
-          response
+          [200, { 'Content-Type' => 'application/json' }, '{"data": "successful response"}']
         end
 
         handler.handle(task, sequence, step)
-        expect(step.results['status']['status']).to eq(200)
-        expect(step.results['status']['response_headers']).to eq({ 'Content-Type' => 'application/json' })
-        expect(step.results['status']['body']).to eq('{"data": "successful response"}')
+
+        # API handler stores Faraday::Response, but ActiveRecord serializes it to hash for jsonb storage
+        expect(step.results).to be_a(Hash)
+        expect(step.results['status']).to eq(200)
+        expect(step.results['response_headers']['Content-Type']).to eq('application/json')
+        expect(step.results['body']).to eq('{"data": "successful response"}')
       end
 
       it 'handles successful responses with different status codes' do
         [200, 201, 202, 204].each do |status|
-          response = stub_response(
-            status: status,
-            headers: { 'Content-Type' => 'application/json' },
-            body: status == 204 ? nil : '{"data": "successful response"}'
-          )
-
+          # Use proper Faraday test stub format
           stubs.get("/?step_name=#{step.name}") do
-            response
+            [status, { 'Content-Type' => 'application/json' }, status == 204 ? nil : '{"data": "successful response"}']
           end
 
           handler.handle(task, sequence, step)
-          expect(step.results['status']['status']).to eq(status)
-          expect(step.results['status']['response_headers']).to eq({ 'Content-Type' => 'application/json' })
-          expect(step.results['status']['body']).to eq(status == 204 ? nil : '{"data": "successful response"}')
+
+          # Verify ActiveRecord-serialized response hash is stored
+          expect(step.results).to be_a(Hash)
+          expect(step.results['status']).to eq(status)
+          expect(step.results['response_headers']['Content-Type']).to eq('application/json')
+          expect(step.results['body']).to eq(status == 204 ? nil : '{"data": "successful response"}')
         end
       end
     end
@@ -99,11 +60,7 @@ module Tasker
         context 'with Retry-After header' do
           it 'uses the Retry-After value for backoff' do
             stubs.get("/?step_name=#{step.name}") do
-              create_error_response(
-                status: 429,
-                headers: { 'Retry-After' => '30' },
-                body: '{"error": "Too many requests"}'
-              )
+              [429, { 'Retry-After' => '30' }, '{"error": "Too many requests"}']
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
@@ -113,11 +70,7 @@ module Tasker
           it 'parses Retry-After HTTP date format' do
             retry_after = (Time.zone.now + 60).httpdate
             stubs.get("/?step_name=#{step.name}") do
-              create_error_response(
-                status: 429,
-                headers: { 'Retry-After' => retry_after },
-                body: '{"error": "Too many requests"}'
-              )
+              [429, { 'Retry-After' => retry_after }, '{"error": "Too many requests"}']
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
@@ -128,11 +81,7 @@ module Tasker
         context 'without Retry-After header' do
           it 'applies exponential backoff' do
             stubs.get("/?step_name=#{step.name}") do
-              create_error_response(
-                status: 429,
-                headers: {},
-                body: '{"error": "Too many requests"}'
-              )
+              [429, {}, '{"error": "Too many requests"}']
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
@@ -141,11 +90,7 @@ module Tasker
 
           it 'increases backoff with each attempt' do
             stubs.get("/?step_name=#{step.name}") do
-              create_error_response(
-                status: 429,
-                headers: {},
-                body: '{"error": "Too many requests"}'
-              )
+              [429, {}, '{"error": "Too many requests"}']
             end
 
             step.attempts = 2
@@ -158,11 +103,7 @@ module Tasker
       context 'when receiving a 503 Service Unavailable response' do
         it 'applies exponential backoff' do
           stubs.get("/?step_name=#{step.name}") do
-            create_error_response(
-              status: 503,
-              headers: {},
-              body: '{"error": "Service unavailable"}'
-            )
+            [503, {}, '{"error": "Service unavailable"}']
           end
 
           expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
@@ -173,11 +114,7 @@ module Tasker
       context 'when receiving other error responses' do
         it 'does not apply backoff' do
           stubs.get("/?step_name=#{step.name}") do
-            create_error_response(
-              status: 500,
-              headers: {},
-              body: '{"error": "Internal server error"}'
-            )
+            [500, {}, '{"error": "Internal server error"}']
           end
 
           expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
@@ -197,11 +134,7 @@ module Tasker
 
         it 'does not apply exponential backoff' do
           stubs.get("/?step_name=#{step.name}") do
-            create_error_response(
-              status: 429,
-              headers: {},
-              body: '{"error": "Too many requests"}'
-            )
+            [429, {}, '{"error": "Too many requests"}']
           end
 
           expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)

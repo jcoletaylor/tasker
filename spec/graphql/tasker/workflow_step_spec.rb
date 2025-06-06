@@ -6,15 +6,24 @@ require_relative '../../mocks/dummy_task'
 
 module Tasker
   RSpec.describe('graphql steps', type: :request) do
+    include FactoryWorkflowHelpers
+
     before(:all) do
-      @factory = Tasker::HandlerFactory.instance
-      @handler = @factory.get(DummyTask::TASK_REGISTRY_NAME)
-      task_request = Tasker::Types::TaskRequest.new(name: DummyTask::TASK_REGISTRY_NAME, context: { dummy: true },
-                                                    initiator: 'pete@test', reason: "setup workflow step test #{Time.now.to_f}", source_system: 'test')
-      @task = @handler.initialize_task!(task_request)
-      @handler.handle(@task)
-      @task.reload
+      # Register the handler for factory usage
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+
+      # Create task using factory approach - but don't run the handler
+      @task = create_dummy_task_workflow(
+        context: { dummy: true },
+        reason: "setup workflow step test #{Time.now.to_f}",
+        initiator: 'pete@test',
+        source_system: 'test'
+      )
+
+      # Simply get the first step and mark it as processed using factory helpers
+      # This avoids triggering the complex orchestration system
       @step = @task.workflow_steps.first
+      complete_step_via_state_machine(@step)
     end
 
     context 'queries' do
@@ -41,7 +50,22 @@ module Tasker
 
       context 'cancel' do
         it 'is able to cancel a task' do
-          post '/tasker/graphql', params: { query: cancel_step_mutation }
+          # Create a separate task with a step in a cancellable state
+          cancel_task = create_dummy_task_workflow(
+            context: { dummy: true },
+            reason: "cancel test workflow step #{Time.now.to_f}",
+            initiator: 'pete@test',
+            source_system: 'test'
+          )
+
+          # Set up step in in_progress state (cancellable)
+          cancel_step = cancel_task.workflow_steps.first
+          cancel_step.state_machine.transition_to!('in_progress', {
+                                                     triggered_by: 'test_setup',
+                                                     test: true
+                                                   })
+
+          post '/tasker/graphql', params: { query: cancel_step_mutation(cancel_task, cancel_step) }
           json = JSON.parse(response.body).deep_symbolize_keys
           data = json[:data][:cancelStep]
           expect(data[:status]).to(eq('cancelled'))
@@ -49,12 +73,12 @@ module Tasker
       end
     end
 
-    def cancel_step_mutation
+    def cancel_step_mutation(task = @task, step = @step)
       <<~GQL
         mutation {
           cancelStep(input: {
-            taskId: #{@task.task_id}
-            stepId: #{@step.workflow_step_id}
+            taskId: #{task.task_id}
+            stepId: #{step.workflow_step_id}
           }) {
             #{step_fields}
           }

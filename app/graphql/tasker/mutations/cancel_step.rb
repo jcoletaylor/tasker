@@ -16,7 +16,8 @@ module Tasker
         step = Tasker::WorkflowStep.where({ task_id: task_id, workflow_step_id: step_id }).first
         return { step: nil, errors: 'no such step' } unless step
 
-        step.update!({ status: Tasker::Constants::WorkflowStepStatuses::CANCELLED })
+        # Use state machine to transition step to cancelled
+        step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::CANCELLED)
         if step.errors.empty?
           Tasker::WorkflowStepSerializer.new(step).to_hash
         else

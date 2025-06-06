@@ -9,43 +9,42 @@ module ApiTask
   module StepHandler
     class CartFetchStepHandler < Tasker::StepHandler::Api
       include ApiTask::ApiUtils
-      def call(task, _sequence, _step)
+
+      def process(task, _sequence, _step)
         cart_id = task.context['cart_id']
         connection.get("/carts/#{cart_id}")
       end
 
-      # by using super we allow handle of the base api class to run
-      # which will set the results to the response of the api call
-      # we then use the get_from_results method to extract the cart from the results
-      # this is valuable because the handle method automates exponential backoff and retries
-      # and we don't want to have to reimplement that
-      def handle(_task, _sequence, step)
-        super
-        step.results = get_from_results(step.results, 'cart')
+      # Override process_results to do custom response processing
+      def process_results(step, process_output, _initial_results)
+        # Extract and process the cart data from the API response
+        step.results = get_from_results(process_output, 'cart')
       end
     end
 
     class ProductsFetchStepHandler < Tasker::StepHandler::Api
       include ApiTask::ApiUtils
-      def call(_task, _sequence, _step)
+
+      def process(_task, _sequence, _step)
         connection.get('/products')
       end
 
-      def handle(_task, _sequence, step)
-        super
-        step.results = get_from_results(step.results, 'products')
+      # Override process_results to do custom response processing
+      def process_results(step, process_output, _initial_results)
+        # Extract and process the products data from the API response
+        step.results = get_from_results(process_output, 'products')
       end
     end
 
-    class ProductsValidateStepHandler
-      def handle(_task, sequence, step)
+    class ProductsValidateStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, _step)
         cart = _get_cart(sequence)
         products = _get_products(sequence)
         valid_products = _valid_cart_products(cart, products)
 
         raise "No valid products found for cart: #{cart.id}" if valid_products.empty?
 
-        step.results = { valid_products: valid_products.map(&:to_h) }
+        { valid_products: valid_products.map(&:to_h) }
       end
 
       private
@@ -85,14 +84,14 @@ module ApiTask
       end
     end
 
-    class CreateOrderStepHandler
-      def handle(_task, sequence, step)
+    class CreateOrderStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, _step)
         cart = _get_cart(sequence)
         valid_products = _get_valid_products(sequence)
 
         order = _build_order(cart, valid_products)
 
-        step.results = { order_id: order.id }
+        { order_id: order.id }
       end
 
       private
@@ -134,13 +133,13 @@ module ApiTask
       end
     end
 
-    class PublishEventStepHandler
-      def handle(_task, sequence, step)
+    class PublishEventStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, _step)
         order_step = sequence.find_step_by_name(ApiTask::IntegrationExample::STEP_CREATE_ORDER)
         order_id = order_step.results.deep_symbolize_keys[:order_id]
 
         publish_results = ApiTask::EventBus.publish('ExampleOrderCreated', order_id)
-        step.results = { published: true, publish_results: publish_results }
+        { published: true, publish_results: publish_results }
       end
     end
   end

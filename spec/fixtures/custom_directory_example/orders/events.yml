@@ -1,0 +1,37 @@
+---
+# Order-specific events organized by domain
+# This demonstrates organizing events in custom directories
+
+events:
+  custom:
+    order_created:
+      constant: "order.created"
+      description: "Fired when a new order is created"
+      payload_schema:
+        order_id: { type: "String", required: true }
+        customer_id: { type: "String", required: true }
+        order_total: { type: "Float", required: true }
+        items_count: { type: "Integer", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["OrderService", "CheckoutController"]
+
+    order_cancelled:
+      constant: "order.cancelled"
+      description: "Fired when an order is cancelled"
+      payload_schema:
+        order_id: { type: "String", required: true }
+        cancellation_reason: { type: "String", required: true }
+        refund_amount: { type: "Float", required: false }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["OrderService", "CustomerService"]
+
+    order_shipped:
+      constant: "order.shipped"
+      description: "Fired when an order is shipped"
+      payload_schema:
+        order_id: { type: "String", required: true }
+        tracking_number: { type: "String", required: true }
+        carrier: { type: "String", required: true }
+        estimated_delivery: { type: "String", required: false }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["FulfillmentService", "ShippingService"]

@@ -66,7 +66,7 @@ module Tasker
       # @return [Array<String>] Array of Mermaid syntax lines for the node
       def to_mermaid
         # Use HTML line breaks in the label
-        formatted_label = escape_mermaid_text(label).gsub("\n", "<br/>")
+        formatted_label = escape_mermaid_text(label).gsub("\n", '<br/>')
 
         # Basic node definition
         node_def = "#{id}[\"#{formatted_label}\"]"

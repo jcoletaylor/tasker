@@ -48,6 +48,10 @@ module Tasker
       #   @return [Array<String>] Names of steps that must be completed before this one
       attribute :depends_on_steps, Types.Array(Types::String).default([].freeze)
 
+      # @!attribute [r] custom_events
+      #   @return [Array<Hash>] Custom events that this step handler can publish
+      attribute :custom_events, Types.Array(Types::Hash).optional.default([].freeze)
+
       # Returns all dependency step names as a single array
       #
       # @return [Array<String>] All step dependencies

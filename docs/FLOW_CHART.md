@@ -111,7 +111,7 @@ graph TD
     style E fill:#b0b0b0,stroke:#222222
 ```
 
-The system implements advanced workflow traversal with parallel execution and sophisticated retry logic:
+The system implements advanced workflow traversal with parallel execution, sophisticated retry logic, and comprehensive event-driven observability:
 
 - **DAG Traversal & Parallel Execution**
   - Initial identification and queueing of root steps (no dependencies)
@@ -130,3 +130,20 @@ The system implements advanced workflow traversal with parallel execution and so
   - Real-time monitoring of all step statuses
   - Early failure detection and propagation
   - Graceful handling of unrecoverable errors
+
+- **Event-Driven Observability**
+  - Events published at every workflow transition point
+  - Custom subscribers for external integrations (Sentry, PagerDuty, Slack)
+  - OpenTelemetry integration for production observability
+  - Complete event catalog for discovery and documentation
+
+### Event Flow Architecture
+
+Throughout the workflow execution, Tasker publishes events that enable comprehensive observability and custom integrations:
+
+- **Task Events**: `task.started`, `task.completed`, `task.failed`
+- **Step Events**: `step.started`, `step.completed`, `step.failed`, `step.retry_requested`
+- **Workflow Events**: `workflow.viable_steps_discovered`, `workflow.no_viable_steps`
+- **Observability Events**: Performance and monitoring metrics
+
+For complete documentation on the event system and creating custom subscribers, see [EVENT_SYSTEM.md](EVENT_SYSTEM.md).

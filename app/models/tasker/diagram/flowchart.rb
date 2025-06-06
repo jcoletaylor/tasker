@@ -109,9 +109,9 @@ module Tasker
         # Use a subgraph with title if title is present
         if title
           lines << "subgraph \"#{title}\""
-          indent = "  "
+          indent = '  '
         else
-          indent = ""
+          indent = ''
         end
 
         # Add all nodes
@@ -127,7 +127,7 @@ module Tasker
         end
 
         # Close the subgraph if we have a title
-        lines << "end" if title
+        lines << 'end' if title
 
         # Join all lines with newlines
         lines.join("\n")

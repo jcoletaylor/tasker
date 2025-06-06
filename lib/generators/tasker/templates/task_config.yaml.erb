@@ -1,0 +1,75 @@
+---
+name: <%= @module_path ? "#{@module_path}/" : '' %><%= @task_name %>
+<% if @module_namespace %>
+module_namespace: <%= @module_namespace %>
+<% end %>
+task_handler_class: <%= @task_handler_class %>
+concurrent: <%= @concurrent %>
+
+default_dependent_system: <%= @dependent_system %>
+named_steps:
+  - fetch_data
+  - process_data
+  - complete_task
+
+schema:
+  type: object
+  required:
+    - input_id
+  properties:
+    input_id:
+      type: integer
+
+step_templates:
+  - name: fetch_data
+    description: Fetch required data from dependent system
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::FetchDataStepHandler
+    handler_config:
+      type: api
+      url: https://api.example.com/data
+      params:
+        id: 1
+
+  - name: process_data
+    description: Process fetched data
+    depends_on_steps:
+      - fetch_data
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::ProcessDataStepHandler
+    custom_events:
+      - name: data.processed
+        description: Published when data processing completes successfully
+      - name: data.validation_failed
+        description: Published when data validation fails during processing
+
+  - name: complete_task
+    description: Complete the task with processed data
+    depends_on_step: process_data
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::CompleteTaskStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: fetch_data
+        handler_config:
+          url: http://localhost:3000/api/data
+          params:
+            id: 1
+            debug: true
+
+  test:
+    step_templates:
+      - name: fetch_data
+        handler_config:
+          url: http://test-api.example.com/data
+          params:
+            id: 1
+            test_mode: true
+
+  production:
+    step_templates:
+      - name: fetch_data
+        handler_config:
+          url: https://api.example.com/data
+          params:
+            id: 1
+            api_key: ${API_KEY}

@@ -1,0 +1,308 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Subscriber do
+  let(:subscriber) { described_class.new }
+
+  describe 'subscription registration' do
+    it 'subscribes to the expected events' do
+<% if subscribed_events.any? -%>
+      expected_events = <%= subscribed_events.map { |e| "'#{e}'" }.join(', ') %>
+      expect(described_class.subscribed_events).to contain_exactly(<%= subscribed_events.map { |e| "'#{e}'" }.join(', ') %>)
+<% else -%>
+      # TODO: Test subscription to your specific events
+      # expect(described_class.subscribed_events).to contain_exactly('task.completed', 'task.failed')
+<% end -%>
+    end
+  end
+
+<% handler_methods.each do |method| -%>
+  describe '#<%= method[:method_name] %>' do
+<% if method[:event].include?('completed') -%>
+    let(:completion_event) do
+      {
+        task_id: 'task-123',
+        task_name: 'test_task',
+        execution_duration: 45.2,
+        total_steps: 3,
+        completed_steps: 3,
+        failed_steps: 0,
+        started_at: 2.minutes.ago,
+        completed_at: Time.current,
+        timestamp: Time.current
+      }
+    end
+
+    it 'records completion metrics' do
+      # Expect timing metrics to be recorded
+      expect(subscriber).to receive(:record_histogram)
+        .with('tasker.execution.duration', 45.2, anything)
+
+      expect(subscriber).to receive(:record_counter)
+        .with('tasker.completed', 1, anything)
+
+      expect(subscriber).to receive(:record_gauge)
+        .with('tasker.workflow.step_count', 3, anything)
+
+      subscriber.<%= method[:method_name] %>(completion_event)
+    end
+
+    it 'extracts correct timing metrics' do
+      allow(subscriber).to receive(:record_histogram)
+      allow(subscriber).to receive(:record_counter)
+      allow(subscriber).to receive(:record_gauge)
+
+      # Mock the helper method to test data extraction
+      expect(subscriber).to receive(:extract_timing_metrics).with(completion_event)
+        .and_call_original
+
+      timing = subscriber.send(:extract_timing_metrics, completion_event)
+      expect(timing[:execution_duration]).to eq(45.2)
+      expect(timing[:step_count]).to eq(3)
+
+      subscriber.<%= method[:method_name] %>(completion_event)
+    end
+
+    it 'generates appropriate tags' do
+      expected_tags = include('task:test_task', "environment:#{Rails.env}")
+
+      expect(subscriber).to receive(:record_histogram)
+        .with(anything, anything, expected_tags)
+
+      subscriber.<%= method[:method_name] %>(completion_event)
+    end
+
+<% elsif method[:event].include?('failed') -%>
+    let(:failure_event) do
+      {
+        task_id: 'task-456',
+        task_name: 'failed_task',
+        step_id: 'step-789',
+        step_name: 'failing_step',
+        error_message: 'Connection timeout',
+        exception_class: 'Net::TimeoutError',
+        attempt_number: 2,
+        retry_limit: 3,
+        retryable: true,
+        timestamp: Time.current
+      }
+    end
+
+    it 'records error metrics' do
+      # Expect error metrics to be recorded
+      expect(subscriber).to receive(:record_counter)
+        .with('tasker.errors', 1, include('error_type:timeout'))
+
+      expect(subscriber).to receive(:record_counter)
+        .with('tasker.retries', 1, include('attempt:2'))
+
+      expect(subscriber).to receive(:record_counter)
+        .with('tasker.error_types', 1, include('retryable:retryable'))
+
+      subscriber.<%= method[:method_name] %>(failure_event)
+    end
+
+    it 'categorizes error types correctly' do
+      allow(subscriber).to receive(:record_counter)
+
+      # Mock the helper method to test error categorization
+      expect(subscriber).to receive(:extract_error_metrics).with(failure_event)
+        .and_call_original
+
+      error = subscriber.send(:extract_error_metrics, failure_event)
+      expect(error[:error_type]).to eq('timeout')
+      expect(error[:is_retryable]).to be(true)
+      expect(error[:final_failure]).to be(false)
+
+      subscriber.<%= method[:method_name] %>(failure_event)
+    end
+
+    it 'tracks final failures when retries exhausted' do
+      final_failure_event = failure_event.merge(attempt_number: 3, retry_limit: 3)
+
+      expect(subscriber).to receive(:record_counter)
+        .with('tasker.final_failures', 1, anything)
+
+      subscriber.<%= method[:method_name] %>(final_failure_event)
+    end
+
+<% else -%>
+    let(:sample_event) do
+      {
+        task_id: 'task-123',
+        task_name: 'test_task',
+        timestamp: Time.current
+      }
+    end
+
+    it 'handles <%= method[:event] %> events' do
+      # TODO: Test specific behavior for <%= method[:event] %> events
+      expect { subscriber.<%= method[:method_name] %>(sample_event) }.not_to raise_error
+    end
+
+<% end -%>
+    it 'handles malformed events gracefully' do
+      malformed_event = { task_id: nil }
+
+      expect { subscriber.<%= method[:method_name] %>(malformed_event) }.not_to raise_error
+    end
+  end
+
+<% end -%>
+  describe 'metrics recording methods' do
+    describe '#record_completion_metrics' do
+      let(:timing) do
+        {
+          execution_duration: 30.5,
+          step_count: 5,
+          completed_steps: 4,
+          failed_steps: 1
+        }
+      end
+      let(:tags) { ['task:test_task', 'environment:test'] }
+
+      it 'records all completion metrics' do
+        expect(subscriber).to receive(:record_histogram)
+          .with('tasker.execution.duration', 30.5, tags)
+
+        expect(subscriber).to receive(:record_counter)
+          .with('tasker.completed', 1, tags)
+
+        expect(subscriber).to receive(:record_gauge)
+          .with('tasker.workflow.step_count', 5, tags)
+
+        expect(subscriber).to receive(:record_gauge)
+          .with('tasker.workflow.failed_steps', 1, tags)
+
+        expect(subscriber).to receive(:record_gauge)
+          .with('tasker.workflow.success_rate', 80.0, tags)
+
+        subscriber.send(:record_completion_metrics, timing, tags)
+      end
+    end
+
+    describe '#record_error_metrics' do
+      let(:error) do
+        {
+          error_type: 'timeout',
+          attempt_number: 2,
+          is_retryable: true,
+          final_failure: false
+        }
+      end
+      let(:tags) { ['task:test_task'] }
+
+      it 'records all error metrics' do
+        expected_error_tags = tags + ['error_type:timeout']
+
+        expect(subscriber).to receive(:record_counter)
+          .with('tasker.errors', 1, expected_error_tags)
+
+        expect(subscriber).to receive(:record_counter)
+          .with('tasker.retries', 1, tags + ['attempt:2'])
+
+        expect(subscriber).to receive(:record_counter)
+          .with('tasker.error_types', 1, tags + ['retryable:retryable'])
+
+        subscriber.send(:record_error_metrics, error, tags)
+      end
+    end
+
+    describe '#calculate_success_rate' do
+      it 'calculates correct success rate' do
+        expect(subscriber.send(:calculate_success_rate, 8, 2)).to eq(80.0)
+        expect(subscriber.send(:calculate_success_rate, 10, 0)).to eq(100.0)
+        expect(subscriber.send(:calculate_success_rate, 0, 5)).to eq(0.0)
+        expect(subscriber.send(:calculate_success_rate, 0, 0)).to eq(100.0)
+      end
+    end
+  end
+
+  describe 'metrics backend integration' do
+    describe '#record_histogram' do
+      it 'logs metrics when no backend configured' do
+        expect(Rails.logger).to receive(:info)
+          .with(match(/METRIC\[histogram\] test\.metric: 42\.5/))
+
+        subscriber.send(:record_histogram, 'test.metric', 42.5, ['tag:value'])
+      end
+    end
+
+    describe '#record_counter' do
+      it 'logs metrics when no backend configured' do
+        expect(Rails.logger).to receive(:info)
+          .with(match(/METRIC\[counter\] test\.counter: \+1/))
+
+        subscriber.send(:record_counter, 'test.counter', 1, ['tag:value'])
+      end
+    end
+
+    describe '#record_gauge' do
+      it 'logs metrics when no backend configured' do
+        expect(Rails.logger).to receive(:info)
+          .with(match(/METRIC\[gauge\] test\.gauge: 100/))
+
+        subscriber.send(:record_gauge, 'test.gauge', 100, ['tag:value'])
+      end
+    end
+
+    describe '#tags_to_labels' do
+      it 'converts tags to Prometheus labels' do
+        tags = ['environment:production', 'task:order_process', 'status:completed']
+        labels = subscriber.send(:tags_to_labels, tags)
+
+        expect(labels).to eq({
+          environment: 'production',
+          task: 'order_process',
+          status: 'completed'
+        })
+      end
+
+      it 'handles malformed tags gracefully' do
+        tags = ['malformed_tag', 'good:tag', '']
+        labels = subscriber.send(:tags_to_labels, tags)
+
+        expect(labels).to eq({ good: 'tag' })
+      end
+    end
+  end
+
+  describe 'BaseSubscriber helper integration' do
+    let(:event) do
+      {
+        task_id: 'task-123',
+        task_name: 'integration_test',
+        execution_duration: 25.7,
+        exception_class: 'Net::ReadTimeout',
+        attempt_number: 1,
+        retryable: true,
+        timestamp: Time.current
+      }
+    end
+
+    it 'uses extract_timing_metrics helper' do
+      timing = subscriber.send(:extract_timing_metrics, event)
+
+      expect(timing[:execution_duration]).to eq(25.7)
+      expect(timing).to have_key(:started_at)
+      expect(timing).to have_key(:step_count)
+    end
+
+    it 'uses extract_error_metrics helper' do
+      error = subscriber.send(:extract_error_metrics, event)
+
+      expect(error[:error_type]).to eq('timeout')
+      expect(error[:attempt_number]).to eq(1)
+      expect(error[:is_retryable]).to be(true)
+    end
+
+    it 'uses extract_metric_tags helper' do
+      tags = subscriber.send(:extract_metric_tags, event)
+
+      expect(tags).to include('task:integration_test')
+      expect(tags).to include("environment:#{Rails.env}")
+      expect(tags).to include('retryable:true')
+    end
+  end
+end

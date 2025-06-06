@@ -13,7 +13,8 @@ module Tasker
 
       def resolve(task_id:)
         task = Tasker::Task.find(task_id)
-        task.update!({ status: Tasker::Constants::TaskStatuses::CANCELLED })
+        # Use state machine to transition task to cancelled
+        task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::CANCELLED)
 
         # we don't want to re-run save here because it will remove the
         # context validation from the handler and check "valid?"

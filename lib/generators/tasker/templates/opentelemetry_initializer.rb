@@ -29,6 +29,20 @@ OpenTelemetry::SDK.configure do |c|
                                                                 'service.framework' => 'tasker'
                                                               })
 
-  # Use all auto-instrumentations that are available
-  c.use_all
+  # ✅ ENHANCED: PG instrumentation re-enabled after memory and connection management improvements
+  # Tasker v1.6+ includes fixes for:
+  # - Database connection pooling with ActiveRecord::Base.connection_pool.with_connection
+  # - Memory leak prevention with explicit futures.clear() calls
+  # - Batched concurrent processing (MAX_CONCURRENT_STEPS = 3) to prevent connection exhaustion
+  # - Proper error persistence ensuring no dangling database connections
+
+  # Use all auto-instrumentations except Faraday (which has a known bug)
+  # The Faraday instrumentation incorrectly passes Faraday::Response objects instead of status codes
+  # causing "undefined method `to_i' for #<Faraday::Response>" errors
+  #
+  # If you want to enable Faraday instrumentation, use:
+  # c.use_all
+  #
+  # For now, we exclude it to prevent API step handler failures:
+  c.use_all({ 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } })
 end

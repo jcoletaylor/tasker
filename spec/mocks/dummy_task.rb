@@ -1,6 +1,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require_relative '../../lib/tasker/step_handler/base'
+
 class DummyTask
   include Tasker::TaskHandler
 
@@ -14,14 +16,14 @@ class DummyTask
   ANNOTATION_TYPE = 'dummy-annotation'
   TASK_REGISTRY_NAME = 'dummy_task'
 
-  # this is for convenience to read, it could be any class that has a handle method with this signature
-  class Handler
-    # the handle method is only expected to catch around recoverable errors
-    # it is responsible for setting results back on the step
-    def handle(_task, _sequence, step)
+  # this is for convenience to read, it could be any class that has a process method with this signature
+  class Handler < Tasker::StepHandler::Base
+    # the process method is the developer extension point for step handlers
+    # it should return the results, which will be stored in step.results automatically
+    def process(_task, _sequence, _step)
       # task and sequence are passed in case the task context or the sequence's prior steps
       # may contain data that is necessary for the handling of this step
-      step.results = { dummy: true }
+      { dummy: true }
     end
   end
 

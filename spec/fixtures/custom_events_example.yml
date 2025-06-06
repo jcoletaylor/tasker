@@ -1,0 +1,64 @@
+---
+# Example Custom Events Configuration
+# This file demonstrates how applications can define their own events
+# The system automatically protects against namespace collisions
+
+events:
+  # Custom order processing events
+  custom:
+    order_processed:
+      constant: "order.processed"
+      description: "Fired when an order is fully processed and ready for fulfillment"
+      payload_schema:
+        order_id: { type: "String", required: true }
+        customer_id: { type: "String", required: true }
+        total_amount: { type: "Float", required: true }
+        processing_duration: { type: "Float", required: false }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["OrderService", "PaymentProcessor"]
+
+    payment_processed:
+      constant: "payment.processed"
+      description: "Fired when a payment is successfully processed"
+      payload_schema:
+        payment_id: { type: "String", required: true }
+        order_id: { type: "String", required: true }
+        amount: { type: "Float", required: true }
+        payment_method: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PaymentGateway", "PaymentService"]
+
+    inventory_updated:
+      constant: "inventory.updated"
+      description: "Fired when inventory levels are updated"
+      payload_schema:
+        product_id: { type: "String", required: true }
+        old_quantity: { type: "Integer", required: true }
+        new_quantity: { type: "Integer", required: true }
+        change_reason: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["InventoryService", "StockManager"]
+
+    notification_sent:
+      constant: "notification.sent"
+      description: "Fired when a notification is successfully sent to a customer"
+      payload_schema:
+        notification_id: { type: "String", required: true }
+        recipient: { type: "String", required: true }
+        channel: { type: "String", required: true }
+        notification_type: { type: "String", required: true }
+        success: { type: "Boolean", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["NotificationService", "EmailService", "SMSService"]
+
+    audit_log_created:
+      constant: "audit.log_created"
+      description: "Fired when an audit log entry is created for compliance"
+      payload_schema:
+        audit_id: { type: "String", required: true }
+        entity_type: { type: "String", required: true }
+        entity_id: { type: "String", required: true }
+        action: { type: "String", required: true }
+        user_id: { type: "String", required: false }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["AuditService", "ComplianceLogger"]

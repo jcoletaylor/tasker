@@ -3,8 +3,14 @@
 require 'rails_helper'
 
 RSpec.describe Tasker::IdentityStrategy do
-  let(:task_request) { Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { dummy: true }) }
-  let(:task)         { Tasker::Task.create_with_defaults!(task_request) }
+  include FactoryWorkflowHelpers
+
+  before do
+    # Register the handler for factory usage
+    register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+  end
+
+  let(:task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'identity strategy test') }
   let(:identity_options) { task.send(:identity_options) }
 
   describe '#generate_identity_hash' do

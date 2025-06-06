@@ -30,11 +30,17 @@ require_relative '../../mocks/dummy_task'
 
 module Tasker
   RSpec.describe(NamedTasksNamedStep) do
+    include FactoryWorkflowHelpers
+
+    before do
+      # Register the handler for factory usage
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+    end
+
     context 'class methods' do
-      let(:task_request) do
-        Tasker::Types::TaskRequest.new(name: 'dummy_action', context: { some: :value, it_is: :great })
+      let(:task) do
+        create_dummy_task_workflow(context: { some: :value, it_is: :great }, reason: 'named tasks named step test')
       end
-      let(:task) { Task.create_with_defaults!(task_request) }
       let(:template) do
         Tasker::Types::StepTemplate.new(
           dependent_system: 'dummy-system',

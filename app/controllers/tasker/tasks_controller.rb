@@ -58,7 +58,8 @@ module Tasker
 
     # DELETE /tasks/1
     def destroy
-      @task.update!({ status: Tasker::Constants::TaskStatuses::CANCELLED })
+      # Use state machine to transition task to cancelled
+      @task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::CANCELLED)
       render(status: :ok, json: { cancelled: true })
     end
 

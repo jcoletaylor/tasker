@@ -1,17 +1,29 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../helpers/task_helpers'
 
 module Tasker
   RSpec.describe WorkflowStepEdge do
-    let(:helper) { Helpers::TaskHelpers.new }
-    let(:task_handler) { helper.factory.get(Helpers::TaskHelpers::DUMMY_TASK) }
-    let(:task) { task_handler.initialize_task!(helper.task_request({ reason: 'edge relationship test' })) }
-    let(:step_one) { task.get_step_by_name(DummyTask::STEP_ONE) }
-    let(:step_two) { task.get_step_by_name(DummyTask::STEP_TWO) }
-    let(:step_three) { task.get_step_by_name(DummyTask::STEP_THREE) }
-    let(:step_four) { task.get_step_by_name(DummyTask::STEP_FOUR) }
+    # Create isolated steps for edge testing to avoid factory DAG conflicts
+    let(:dummy_system) { create(:dependent_system, name: 'edge-test-system') }
+    let(:test_task) { create(:task, context: { test: true }) }
+    let(:step_one) do
+      create(:workflow_step, task: test_task,
+                             named_step: create(:named_step, name: 'edge-test-one', dependent_system: dummy_system))
+    end
+    let(:step_two) do
+      create(:workflow_step, task: test_task,
+                             named_step: create(:named_step, name: 'edge-test-two', dependent_system: dummy_system))
+    end
+    let(:step_three) do
+      create(:workflow_step, task: test_task,
+                             named_step: create(:named_step, name: 'edge-test-three', dependent_system: dummy_system))
+    end
+    let(:step_four) do
+      create(:workflow_step, task: test_task,
+                             named_step: create(:named_step, name: 'edge-test-four', dependent_system: dummy_system))
+    end
+
     let(:edge) do
       described_class.create!(
         from_step: step_one,
@@ -42,11 +54,6 @@ module Tasker
         to_step: step_one,
         name: WorkflowStep::PROVIDES_EDGE_NAME
       )
-    end
-
-    before do
-      DependentSystem.find_or_create_by!(name: Helpers::TaskHelpers::DEPENDENT_SYSTEM)
-      task.save!
     end
 
     describe 'associations' do
@@ -92,9 +99,6 @@ module Tasker
       end
 
       it 'allows multiple paths to the same destination' do
-        # First, delete any existing edges from the setup to start with a clean graph
-        described_class.delete_all
-
         # Create two paths to step_three: step_one -> step_three and step_two -> step_three
         edge1 = described_class.create!(from_step: step_one, to_step: step_three,
                                         name: WorkflowStep::PROVIDES_EDGE_NAME)
@@ -104,8 +108,8 @@ module Tasker
         expect(edge1).to be_persisted
         expect(edge2).to be_persisted
 
-        # Create a path from step_four to step_three (should be valid as it doesn't create a cycle)
-        edge3 = described_class.create!(from_step: step_four, to_step: step_three,
+        # Create a path from step_four to step_one (valid as it doesn't create a cycle)
+        edge3 = described_class.create!(from_step: step_four, to_step: step_one,
                                         name: WorkflowStep::PROVIDES_EDGE_NAME)
         expect(edge3).to be_persisted
       end
@@ -128,47 +132,38 @@ module Tasker
 
       describe 'siblings_of' do
         it 'finds steps that share one parent' do
-          # Delete any existing edges
-          described_class.delete_all
-
           # Create a simple structure where step_one is a parent to both step_two and step_three
           described_class.create!(from_step: step_one, to_step: step_two,
                                   name: WorkflowStep::PROVIDES_EDGE_NAME)
           described_class.create!(from_step: step_one, to_step: step_three,
                                   name: WorkflowStep::PROVIDES_EDGE_NAME)
 
-          # Step_two has step_four as a child (to avoid cycles)
-          described_class.create!(from_step: step_two, to_step: step_four, name: WorkflowStep::PROVIDES_EDGE_NAME)
-
-          # Find the siblings of step_two
+          # Find the siblings of step_two (should find step_three)
           siblings = described_class.siblings_of(step_two)
           expect(siblings.count).to eq(1)
           expect(siblings.first.to_step).to eq(step_three)
         end
 
         it 'finds steps that share all parents' do
-          # Delete any existing edges to start with a clean graph
-          described_class.delete_all
-
-          # Create a structure where step_two and step_three share multiple parents
-          described_class.create!(from_step: step_one, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
-          described_class.create!(from_step: step_one, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
+          # Create a structure where step_one and step_two share multiple parents (step_three and step_four)
+          described_class.create!(from_step: step_three, to_step: step_one, name: WorkflowStep::PROVIDES_EDGE_NAME)
+          described_class.create!(from_step: step_three, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
+          described_class.create!(from_step: step_four, to_step: step_one, name: WorkflowStep::PROVIDES_EDGE_NAME)
           described_class.create!(from_step: step_four, to_step: step_two, name: WorkflowStep::PROVIDES_EDGE_NAME)
-          described_class.create!(from_step: step_four, to_step: step_three, name: WorkflowStep::PROVIDES_EDGE_NAME)
 
           # Verify the parent relationships
-          parents = described_class.parents_of(step_two)
+          parents = described_class.parents_of(step_one)
           expect(parents.count).to eq(2)
-          expect(parents.map(&:from_step)).to include(step_one, step_four)
+          expect(parents.map(&:from_step)).to include(step_three, step_four)
 
           # Check siblings
           # The siblings_of method returns the edges to sibling steps, one edge per parent
-          # Since we have two parents (step_one and step_four) and one sibling step (step_three),
-          # we expect two edges (step_one -> step_three and step_four -> step_three)
-          siblings = described_class.siblings_of(step_two)
+          # Since we have two parents (step_three and step_four) and one sibling step (step_two),
+          # we expect two edges (step_three -> step_two and step_four -> step_two)
+          siblings = described_class.siblings_of(step_one)
           expect(siblings.count).to eq(2)
-          expect(siblings.map(&:from_step)).to include(step_one, step_four)
-          expect(siblings.map(&:to_step).uniq).to eq([step_three])
+          expect(siblings.map(&:from_step)).to include(step_three, step_four)
+          expect(siblings.map(&:to_step).uniq).to eq([step_two])
         end
 
         it 'excludes the step itself from siblings' do

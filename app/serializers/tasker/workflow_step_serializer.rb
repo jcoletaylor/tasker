@@ -9,15 +9,20 @@ module Tasker
                :children_ids, :parents_ids, :siblings_ids
 
     def children_ids
-      object.children.pluck(:workflow_step_id)
+      # Use scenic view for efficient parent/child lookups - eliminates N+1 queries
+      object.step_dag_relationship&.child_step_ids_array || []
     end
 
     def parents_ids
-      object.parents.pluck(:workflow_step_id)
+      # Use scenic view for efficient parent/child lookups - eliminates N+1 queries
+      object.step_dag_relationship&.parent_step_ids_array || []
     end
 
     def siblings_ids
+      # Siblings are more complex - get all children of this step's parents, excluding self
+      # For now, fall back to original pattern but add comment for future optimization
       object.siblings.pluck(:workflow_step_id)
+      # TODO: Optimize siblings using DAG view - need to aggregate sibling relationships
     end
   end
 end
