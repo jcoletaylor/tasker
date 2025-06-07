@@ -224,6 +224,14 @@ module Tasker
       @engine_config = EngineConfiguration.new
     end
 
+    # Reset configuration to defaults (useful for testing)
+    def reset!
+      @auth_config = AuthConfiguration.new
+      @database_config = DatabaseConfiguration.new
+      @telemetry_config = TelemetryConfiguration.new
+      @engine_config = EngineConfiguration.new
+    end
+
     # Configure authentication and authorization settings
     #
     # @yield [AuthConfiguration] The auth configuration instance if a block is given

@@ -5,6 +5,8 @@ require_dependency 'tasker/application_controller'
 
 module Tasker
   class GraphqlController < ApplicationController
+    include Tasker::Concerns::Authenticatable
+
     # If accessing from outside this domain, nullify the session
     # This allows for outside API access while preventing CSRF attacks,
     # but you'll have to authenticate your user separately
@@ -16,7 +18,8 @@ module Tasker
       operation_name = params[:operationName]
       context = {
         # Query context goes here, for example:
-        # current_user: current_user,
+        current_user: current_tasker_user,
+        authenticated: tasker_user_authenticated?
       }
       result = Tasker::TaskerRailsSchema.execute(query, variables: variables, context: context,
                                                         operation_name: operation_name)

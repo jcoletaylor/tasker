@@ -6,6 +6,7 @@ require_dependency 'tasker/application_controller'
 module Tasker
   class TaskDiagramsController < ApplicationController
     include ActionController::MimeResponds
+    include Tasker::Concerns::Authenticatable
 
     before_action :set_full_task, only: %i[index]
 
