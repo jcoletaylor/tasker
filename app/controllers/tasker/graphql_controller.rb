@@ -5,8 +5,6 @@ require_dependency 'tasker/application_controller'
 
 module Tasker
   class GraphqlController < ApplicationController
-    include Tasker::Concerns::Authenticatable
-
     # If accessing from outside this domain, nullify the session
     # This allows for outside API access while preventing CSRF attacks,
     # but you'll have to authenticate your user separately

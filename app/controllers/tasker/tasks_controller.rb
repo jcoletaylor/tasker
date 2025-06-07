@@ -6,7 +6,6 @@ require_dependency 'tasker/application_controller'
 module Tasker
   class TasksController < ApplicationController
     include PageSort
-    include Tasker::Concerns::Authenticatable
 
     before_action :set_task, only: %i[update destroy]
     before_action :set_full_task, only: %i[show]

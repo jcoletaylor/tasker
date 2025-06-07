@@ -6,7 +6,6 @@ require_dependency 'tasker/application_controller'
 module Tasker
   class WorkflowStepsController < ApplicationController
     include PageSort
-    include Tasker::Concerns::Authenticatable
 
     before_action :set_task, only: %i[index show update destroy]
     before_action :set_workflow_step, only: %i[show update destroy]

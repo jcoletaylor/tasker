@@ -466,6 +466,11 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 
 # Generate a specialized metrics subscriber with helper methods
 rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
+
+# Generate authenticators for different authentication systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
 ```
 
 ### Example: Custom Events in Step Handlers
@@ -542,6 +547,7 @@ For complete documentation on telemetry features, configuration options, and bes
 ### Developer Resources
 
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration
+- **[Authentication Guide](docs/AUTH.md)** - Complete authentication system documentation with JWT, Devise, and custom authenticator examples
 - **[Event System](docs/EVENT_SYSTEM.md)** - Complete event system documentation with integration examples
 - **[Telemetry & Observability](docs/TELEMETRY.md)** - OpenTelemetry integration and custom monitoring setup
 - **[System Overview](docs/OVERVIEW.md)** - Architecture overview and configuration examples

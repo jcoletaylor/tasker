@@ -61,6 +61,53 @@ RSpec.configure do |config|
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
 
+      # Global authentication and configuration state cleanup
+  # Ensures authentication coordinator and configuration are reset between tests to prevent state leakage
+  config.around do |example|
+    # Store original configuration state before test
+    original_config = if defined?(Tasker::Configuration)
+                        Tasker::Configuration.instance_variable_get(:@configuration)
+                      end
+
+    # Reset authentication coordinator before each test
+    if defined?(Tasker::Authentication::Coordinator)
+      Tasker::Authentication::Coordinator.reset!
+    end
+
+    example.run
+
+  ensure
+    # Reset authentication coordinator after each test
+    if defined?(Tasker::Authentication::Coordinator)
+      Tasker::Authentication::Coordinator.reset!
+    end
+
+    # Check if we have test-only authenticator configuration that needs cleanup
+    if defined?(Tasker) && Tasker.respond_to?(:configuration)
+      current_config = Tasker.configuration
+      if current_config&.auth&.strategy == :custom
+        authenticator_class = current_config.auth.options[:authenticator_class] ||
+                              current_config.auth.options['authenticator_class']
+        # Reset to default if we're using test-only authenticators
+        if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
+          Tasker.configuration do |config|
+            config.auth.strategy = :none
+            config.auth.options = {}
+          end
+          # Reset coordinator again after config change
+          Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+        end
+      end
+    end
+
+    # Restore original configuration state after test if it was modified and it's clean
+    if original_config && defined?(Tasker::Configuration)
+      Tasker::Configuration.instance_variable_set(:@configuration, original_config)
+      # Final coordinator reset after config restoration
+      Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+    end
+  end
+
   # FactoryBot Configuration
   if defined?(FactoryBot)
     config.include FactoryBot::Syntax::Methods

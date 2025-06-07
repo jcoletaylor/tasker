@@ -1,0 +1,144 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Authenticator, type: :model do
+  let(:options) do
+    {
+      header_name: 'X-API-Token',
+      user_class: '<%= user_model_class %>',
+      token_field: 'api_token'
+    }
+  end
+
+  let(:authenticator) { described_class.new(options) }
+  let(:controller) { instance_double('ActionController::Base') }
+  let(:request) { instance_double('ActionDispatch::Request') }
+  let(:headers) { {} }
+
+  before do
+    allow(controller).to receive(:request).and_return(request)
+    allow(request).to receive(:headers).and_return(headers)
+  end
+
+  describe '#initialize' do
+    it 'sets configuration options' do
+      expect(authenticator.send(:header_name)).to eq('X-API-Token')
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+      expect(authenticator.send(:token_field)).to eq('api_token')
+    end
+
+    it 'uses default values when options are not provided' do
+      authenticator = described_class.new
+      expect(authenticator.send(:header_name)).to eq('X-API-Token')
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+      expect(authenticator.send(:token_field)).to eq('api_token')
+    end
+  end
+
+  describe '#current_user' do
+    let(:token) { 'abc123token' }
+    let(:user) { double('User', id: 1) }
+
+    before do
+      # Mock the user model
+      user_model = double('UserModel')
+      allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+      allow(user_model).to receive(:find_by).with('api_token' => token).and_return(user)
+    end
+
+    context 'with valid token in configured header' do
+      before do
+        headers['X-API-Token'] = token
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with valid token in Authorization header (Bearer format)' do
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with valid token in Authorization header (raw format)' do
+      before do
+        headers['Authorization'] = token
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with missing token' do
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'with invalid token' do
+      before do
+        headers['X-API-Token'] = 'invalid_token'
+        user_model = double('UserModel')
+        allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+        allow(user_model).to receive(:find_by).with('api_token' => 'invalid_token').and_return(nil)
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+  end
+
+  describe '#validate_configuration' do
+    context 'with valid configuration' do
+      before do
+        # Mock valid user model with token field
+        user_model = double('UserModel', column_names: ['id', 'name', 'api_token'])
+        allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+      end
+
+      it 'returns no errors' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to be_empty
+      end
+    end
+
+    context 'with invalid user class' do
+      let(:invalid_options) { options.merge(user_class: 'NonExistentUser') }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include(/not found/)
+      end
+    end
+
+    context 'when user model is missing token field' do
+      before do
+        user_model = double('UserModel', column_names: ['id', 'name'])
+        allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+      end
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to include(/does not have 'api_token' column/)
+      end
+    end
+
+    context 'with invalid header name type' do
+      let(:invalid_options) { options.merge(header_name: 123) }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include('Header name must be a string')
+      end
+    end
+  end
+end
