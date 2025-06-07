@@ -309,7 +309,7 @@ module Tasker
       #
       # @return [String] The path to the YAML file
       def yaml_path
-        @yaml_path ||= Rails.root.join("config/#{Tasker.configuration.task_config_directory}/#{task_name}.yaml")
+        @yaml_path ||= Rails.root.join("config/#{Tasker.configuration.engine.task_config_directory}/#{task_name}.yaml")
       end
 
       # Load the configuration from the YAML file

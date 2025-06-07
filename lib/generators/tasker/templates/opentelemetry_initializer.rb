@@ -9,8 +9,10 @@ require 'opentelemetry/instrumentation/all'
 
 # Configure OpenTelemetry
 OpenTelemetry::SDK.configure do |c|
-  # Use the configured service name
-  c.service_name = Tasker::Configuration.configuration.otel_telemetry_service_name
+  c.service_name = Tasker.configuration.telemetry.service_name
+
+  # Service version must be configured for instrumentation to work properly
+  c.service_version = 'v1.0.0'
 
   # Configure OTLP exporter to send to local Jaeger
   otlp_exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(
@@ -22,10 +24,11 @@ OpenTelemetry::SDK.configure do |c|
     OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(otlp_exporter)
   )
 
-  # Configure resource with additional attributes
+  # Resource configuration
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
-                                                                'service.name' => Tasker::Configuration.configuration.otel_telemetry_service_name,
-                                                                'service.version' => Tasker::Configuration.configuration.otel_telemetry_service_version,
+                                                                # Core service identification
+                                                                'service.name' => Tasker.configuration.telemetry.service_name,
+                                                                'service.version' => Tasker.configuration.telemetry.service_version,
                                                                 'service.framework' => 'tasker'
                                                               })
 

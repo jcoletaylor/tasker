@@ -34,15 +34,20 @@ RSpec.describe Tasker::Configuration, 'Singleton Behavior' do
 
     it 'allows configuration via block' do
       described_class.configuration do |config|
-        config.authentication_strategy = :devise
-        config.enable_authorization = true
-        config.database_name = :tasker
+        config.auth do |auth|
+          auth.strategy = :devise
+          auth.enabled = true
+        end
+
+        config.database do |db|
+          db.name = :tasker
+        end
       end
 
       config = described_class.configuration
-      expect(config.authentication_strategy).to eq(:devise)
-      expect(config.enable_authorization).to be(true)
-      expect(config.database_name).to eq(:tasker)
+      expect(config.auth.strategy).to eq(:devise)
+      expect(config.auth.enabled).to be(true)
+      expect(config.database.name).to eq(:tasker)
     end
   end
 
@@ -50,8 +55,10 @@ RSpec.describe Tasker::Configuration, 'Singleton Behavior' do
     it 'creates a new configuration instance' do
       # Set some values on the current config
       described_class.configuration do |config|
-        config.authentication_strategy = :devise
-        config.enable_authorization = true
+        config.auth do |auth|
+          auth.strategy = :devise
+          auth.enabled = true
+        end
       end
 
       old_config = described_class.configuration
@@ -61,8 +68,8 @@ RSpec.describe Tasker::Configuration, 'Singleton Behavior' do
 
       expect(new_config).to be_a(described_class)
       expect(new_config).not_to be(old_config)
-      expect(new_config.authentication_strategy).to eq(:none) # default value
-      expect(new_config.enable_authorization).to be(false) # default value
+      expect(new_config.auth.strategy).to eq(:none) # default value
+      expect(new_config.auth.enabled).to be(false) # default value
     end
   end
 

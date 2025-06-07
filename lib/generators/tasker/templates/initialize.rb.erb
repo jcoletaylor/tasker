@@ -1,40 +1,37 @@
 # frozen_string_literal: true
 
-# Configure Tasker task directories
+# Configure Tasker
 Tasker.configuration do |config|
-  # Directory within app/ where task handlers are stored (default: 'tasks')
-  # config.task_handler_directory = 'custom_tasks'
+  # Engine configuration
+  # config.engine do |engine|
+  #   engine.task_handler_directory = 'custom_tasks'
+  #   engine.task_config_directory = 'custom_tasks'
+  #   engine.default_module_namespace = 'OurTasks'
+  #   engine.identity_strategy = :hash
+  #   engine.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
+  # end
 
-  # Directory within config/ where task YAML configs are stored (default: 'tasker/tasks')
-  # config.task_config_directory = 'custom_tasks'
+  # Authentication and authorization configuration
+  # config.auth do |auth|
+  #   auth.strategy = :devise
+  #   auth.options = { scope: :user }
+  #   auth.enabled = true
+  #   auth.coordinator_class = 'MyApp::AuthorizationCoordinator'
+  #   auth.user_class = 'User'
+  # end
 
-  # Default module namespace for task handlers (default: nil)
-  # config.default_module_namespace = 'OurTasks'
+  # Database configuration
+  # config.database do |db|
+  #   db.enable_secondary_database = true
+  #   db.name = :tasker
+  # end
 
-  # Strategy for generating task identity hashes (options: :default, :hash, :custom)
-  # :default - Uses a GUID/UUID for each task (no duplicate detection)
-  # :hash - Uses SHA256 of task identity options (detects duplicates with same attributes)
-  # :custom - Uses a custom strategy class specified in identity_strategy_class
-  # config.identity_strategy = :hash
-
-  # Custom identity strategy class name (required if identity_strategy is :custom)
-  # Must be a fully qualified class name that responds to #generate_identity_hash(task_options)
-  # config.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
-
-  # Parameters to filter from telemetry data for privacy and security
-  # By default, uses Rails.application.config.filter_parameters if available, or a predefined list
-  # Default: [:passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn]
-  # config.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
-
-  # The mask to use when filtering sensitive data (default: '[FILTERED]')
-  # config.telemetry_filter_mask = '***REDACTED***'
-
-  # Service name used for OpenTelemetry traces (default: 'tasker')
-  # This value is used for tracer names and attribute prefixes in OpenTelemetry telemetry
-  # Note: This only affects how traces appear in your tracing system, not the internal event structure
-  # config.otel_telemetry_service_name = 'my_app_tasker'
-
-  # Service version used for OpenTelemetry traces (default: Tasker::VERSION)
-  # This value is used to identify the version of the service in traces
-  # config.otel_telemetry_service_version = '1.2.3'
+  # Telemetry configuration
+  # config.telemetry do |tel|
+  #   tel.enabled = true
+  #   tel.service_name = 'my_app_tasker'
+  #   tel.service_version = '1.2.3'
+  #   tel.filter_mask = '***REDACTED***'
+  #   tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
+  # end
 end

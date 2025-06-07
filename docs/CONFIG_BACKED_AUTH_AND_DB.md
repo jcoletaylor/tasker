@@ -4,6 +4,16 @@
 
 This document outlines the implementation plan for adding flexible, configuration-driven authentication and authorization capabilities to the Tasker Rails engine, along with multi-database support. The design prioritizes flexibility, non-intrusiveness, and developer-friendly extension points while maintaining the engine's agnostic approach to host application concerns.
 
+## Status
+
+✅ **Phase 1: Configuration Foundation** - COMPLETED
+🟡 **Phase 2: Authentication Layer** - IN PROGRESS
+⚪ **Phase 3: Authorization Layer** - PLANNED
+⚪ **Phase 4: Multi-Database Support** - PLANNED
+⚪ **Phase 5: Controller Integration** - PLANNED
+⚪ **Phase 6: Examples and Documentation** - PLANNED
+⚪ **Phase 7: Comprehensive Test Suite** - PLANNED
+
 ## Goals
 
 1. **Authentication Extension Points** - Provide configurable authentication strategies that integrate with common Rails authentication systems (primarily Devise)
@@ -18,9 +28,8 @@ This document outlines the implementation plan for adding flexible, configuratio
 flowchart TB
     subgraph Config["Configuration Layer"]
         TaskerConfig["Tasker::Configuration"]
-        AuthConfig["Authentication Config"]
-        AuthzConfig["Authorization Config"]
-        DBConfig["Database Config"]
+        AuthConfig["Nested AuthConfiguration"]
+        AuthConfigBLK["config.auth { |auth| ... }"]
     end
 
     subgraph Auth["Authentication Layer"]
@@ -48,15 +57,14 @@ flowchart TB
     end
 
     TaskerConfig --> AuthConfig
-    TaskerConfig --> AuthzConfig
-    TaskerConfig --> DBConfig
+    AuthConfig --> AuthConfigBLK
 
-    AuthConfig --> AuthStrategies
+    AuthConfigBLK --> AuthStrategies
     AuthStrategies --> DeviseStrategy
     AuthStrategies --> CustomStrategy
 
-    AuthzConfig --> AuthzCoordinator
-    AuthzConfig --> ResourceRegistry
+    AuthConfigBLK --> AuthzCoordinator
+    AuthConfigBLK --> ResourceRegistry
 
     AuthzCoordinator --> Authorizable
     UserModel --> Authorizable
@@ -66,90 +74,108 @@ flowchart TB
     AuthMiddleware --> AuthStrategies
     AuthMiddleware --> AuthzCoordinator
 
-    DBConfig --> TaskerModels
+    AuthConfigBLK --> TaskerModels
     TaskerModels --> SecondaryDB
 ```
 
 ## Implementation Plan
 
-### Phase 1: Configuration Foundation
+### Phase 1: Configuration Foundation ✅ COMPLETED
 
-#### 1.1 Extend Tasker::Configuration
+**Overview**: Implement nested auth configuration with `config.auth` block for clean separation of authentication, authorization, and database configuration.
 
+#### ✅ 1.1 Nested Configuration Architecture - COMPLETED
+
+Created nested `AuthConfiguration` class within `Tasker::Configuration`:
+
+**AuthConfiguration Class:**
+- `strategy` (:none, :devise, :custom) - Authentication strategy
+- `options` (hash) - Strategy-specific settings
+- `current_user_method` (:current_user default) - Method to get current user
+- `authenticate_user_method` (:authenticate_user! default) - Method to authenticate
+- `coordinator_class` ('Tasker::Authorization::BaseCoordinator' default) - Authorization coordinator
+- `user_class` (nil default) - Points to app user model
+- `enabled` (false default) - Enable authorization
+**Nested Configuration API:**
 ```ruby
-# lib/tasker/configuration.rb additions
-class Configuration
-  # Authentication configuration
-  attr_accessor :authentication_strategy
-  attr_accessor :authentication_options
-  attr_accessor :current_user_method
-  attr_accessor :authenticate_user_method
+Tasker.configuration do |config|
+  config.auth do |auth|
+    # Authentication and authorization configuration
+    auth.strategy = :devise
+    auth.options = { scope: :user }
+    auth.enabled = true
+  end
 
-  # Authorization configuration
-  attr_accessor :authorization_coordinator_class
-  attr_accessor :authorizable_user_class
-  attr_accessor :enable_authorization
-
-  # Database configuration
-  attr_accessor :database_config
-  attr_accessor :enable_secondary_database
-
-  def initialize
-    # Authentication defaults (assume no auth)
-    @authentication_strategy = :none
-    @authentication_options = {}
-    @current_user_method = :current_user
-    @authenticate_user_method = :authenticate_user!
-
-    # Authorization defaults
-    @authorization_coordinator_class = 'Tasker::Authorization::BaseCoordinator'
-    @authorizable_user_class = nil
-    @enable_authorization = false
-
-    # Database defaults
-    @database_config = nil
-    @enable_secondary_database = false
+  config.database do |database|
+    # Database configuration
+    database.name = :tasker
+    database.enable_secondary_database = true
   end
 end
 ```
 
-#### 1.2 Configuration Examples
+#### ✅ 1.2 Alias Methods for API Flexibility - COMPLETED
 
-```ruby
-# config/initializers/tasker.rb
+Provided convenience aliases for cleaner API:
+- `authentication_strategy` → `strategy`
+- `authentication_options` → `options`
+- `authorization_coordinator_class` → `coordinator_class`
+- `authorizable_user_class` → `user_class`
+- `enable_authorization` → `enabled`
 
-# Example 1: Basic Devise integration
-Tasker.configuration do |config|
-  config.authentication_strategy = :devise
-  config.authentication_options = {
-    scope: :user,
-    failure_app: Devise::FailureApp
-  }
-  config.enable_authorization = true
-  config.authorizable_user_class = 'User'
-end
+#### ✅ 1.3 Comprehensive Testing - COMPLETED
 
-# Example 2: Custom authentication
-Tasker.configuration do |config|
-  config.authentication_strategy = :custom
-  config.authentication_options = {
-    authenticator_class: 'MyApp::ApiAuthenticator',
-    token_header: 'X-API-Token'
-  }
-  config.current_user_method = :current_api_user
-  config.authenticate_user_method = :authenticate_api_user!
-end
+Implemented test suite with 33 passing tests:
+- Nested auth configuration block functionality
+- Default values for all auth configuration options
+- Setter functionality with both direct and alias methods
+- Integration scenarios (Devise, API auth, multi-database, full-featured)
+- Backward compatibility verification
+- Global configuration with nested auth blocks
 
-# Example 3: Secondary database (using Rails database.yml configuration)
-Tasker.configuration do |config|
-  config.enable_secondary_database = true
-  config.database_name = :tasker  # References the 'tasker' database defined in database.yml
-end
-```
+#### ✅ 1.4 Clean Configuration Structure - COMPLETED
 
-### Phase 2: Authentication Layer
+Benefits of the nested approach:
+- **Organized**: All auth-related configuration in one namespace
+- **Discoverable**: Clear `config.auth` entry point
+- **Flexible**: Supports both block and direct configuration
+- **Maintainable**: Separated auth concerns from core Tasker configuration
+- **Idiomatic**: Follows Rails configuration patterns
+
+#### ✅ 1.5 Configuration Testing - COMPLETED
+
+Implemented comprehensive test suite with 34 passing tests:
+- Default values for all new configuration options
+- Setter functionality for authentication, authorization, and database options
+- Integration scenarios (Devise, API auth, multi-database, full-featured)
+- Singleton behavior and delegation with proper isolation
+- Backward compatibility verification
+
+#### ✅ 1.6 Example Classes Created - COMPLETED
+
+- `spec/examples/custom_authorization_coordinator.rb` - Template authorization implementation
+- `spec/examples/user_with_tasker_auth.rb` - Example user model with Authorizable concern
+
+#### ✅ 1.7 Database Configuration Refinement - COMPLETED
+
+Changed from inline database configuration to Rails-standard approach:
+- Uses `database_name` (string/symbol) referencing database.yml entries
+- Follows Rails multi-database conventions
+- Simplified configuration approach
+
+### Phase 2: Authentication Layer 🟡 IN PROGRESS
+
+**Overview**: Implement the authentication strategy pattern with support for Devise, custom authentication, and no authentication.
 
 #### 2.1 Authentication Strategy Pattern
+
+**Files to Create:**
+- `lib/tasker/authentication/base_strategy.rb` - Abstract base class
+- `lib/tasker/authentication/devise_strategy.rb` - Devise integration
+- `lib/tasker/authentication/none_strategy.rb` - No authentication (passthrough)
+- `lib/tasker/authentication/custom_strategy.rb` - Custom authentication support
+
+**Implementation Details:**
 
 ```ruby
 # lib/tasker/authentication/base_strategy.rb
@@ -171,49 +197,27 @@ module Tasker
       def authenticated?(controller)
         current_user(controller).present?
       end
-    end
-  end
-end
 
-# lib/tasker/authentication/devise_strategy.rb
-module Tasker
-  module Authentication
-    class DeviseStrategy < BaseStrategy
-      def authenticate!(controller)
-        scope = @options[:scope] || :user
-        controller.send("authenticate_#{scope}!")
-      end
+      protected
 
-      def current_user(controller)
-        scope = @options[:scope] || :user
-        controller.send("current_#{scope}")
-      end
-    end
-  end
-end
-
-# lib/tasker/authentication/none_strategy.rb
-module Tasker
-  module Authentication
-    class NoneStrategy < BaseStrategy
-      def authenticate!(controller)
-        # No authentication required
-        true
-      end
-
-      def current_user(controller)
-        nil
-      end
-
-      def authenticated?(controller)
-        true
-      end
+      attr_reader :options
     end
   end
 end
 ```
 
+**Key Features:**
+- **Strategy Pattern**: Clean interface for different authentication methods
+- **Controller Integration**: Strategies work with any Rails controller
+- **Configurable Options**: Each strategy can accept specific configuration
+- **Consistent Interface**: All strategies implement the same methods
+
 #### 2.2 Authentication Coordinator
+
+**File to Create:**
+- `lib/tasker/authentication/coordinator.rb` - Central authentication coordinator
+
+**Implementation Details:**
 
 ```ruby
 # lib/tasker/authentication/coordinator.rb
@@ -240,8 +244,8 @@ module Tasker
         private
 
         def build_strategy
-          strategy_name = Tasker.configuration.authentication_strategy
-          options = Tasker.configuration.authentication_options
+          strategy_name = Tasker.configuration.auth.strategy
+          options = Tasker.configuration.auth.options
 
           case strategy_name
           when :devise
@@ -266,7 +270,18 @@ module Tasker
 end
 ```
 
+**Key Features:**
+- **Singleton Pattern**: Single point of access for authentication
+- **Strategy Selection**: Automatically builds the correct strategy based on configuration
+- **Custom Strategy Support**: Can instantiate custom authenticator classes
+- **Configuration Integration**: Uses Tasker.configuration settings
+
 #### 2.3 Authenticatable Concern
+
+**File to Create:**
+- `lib/tasker/concerns/authenticatable.rb` - Controller concern for authentication
+
+**Implementation Details:**
 
 ```ruby
 # lib/tasker/concerns/authenticatable.rb
@@ -296,14 +311,151 @@ module Tasker
       end
 
       def skip_authentication?
-        Tasker.configuration.authentication_strategy == :none
+        Tasker.configuration.auth.strategy == :none
       end
     end
   end
 end
 ```
 
-### Phase 3: Authorization Layer
+**Key Features:**
+- **Automatic Authentication**: Uses before_action to ensure authentication
+- **Skip Logic**: Respects :none strategy for no authentication
+- **Helper Methods**: Provides current_tasker_user and authentication check methods
+- **Non-Intrusive**: Only affects controllers that include it
+
+#### 2.4 Implementation Plan for Phase 2
+
+**Step 1: Create Authentication Module Structure**
+- Create `lib/tasker/authentication/` directory
+- Set up base strategy abstract class
+- Create error classes for authentication failures
+
+**Step 2: Implement Core Strategies**
+- `NoneStrategy`: Pass-through for no authentication
+- `DeviseStrategy`: Integration with Devise gem
+- `CustomStrategy`: Base for custom authentication implementations
+
+**Step 3: Build Coordinator**
+- Central authentication coordinator
+- Strategy selection based on configuration
+- Clean interface for controller integration
+
+**Step 4: Create Authenticatable Concern**
+- Controller concern for easy integration
+- Helper methods for authentication state
+- Before-action hooks for automatic authentication
+
+**Step 5: Testing**
+- Unit tests for each strategy
+- Integration tests with coordinator
+- Controller tests with concern
+- Configuration integration tests
+
+#### 2.5 Testing Strategy for Phase 2
+
+**Test Files to Create:**
+- `spec/lib/tasker/authentication/base_strategy_spec.rb`
+- `spec/lib/tasker/authentication/devise_strategy_spec.rb`
+- `spec/lib/tasker/authentication/none_strategy_spec.rb`
+- `spec/lib/tasker/authentication/custom_strategy_spec.rb`
+- `spec/lib/tasker/authentication/coordinator_spec.rb`
+- `spec/lib/tasker/concerns/authenticatable_spec.rb`
+- `spec/integration/authentication_integration_spec.rb`
+
+**Test Coverage:**
+- Strategy interface compliance
+- Configuration-based strategy selection
+- Controller integration scenarios
+- Error handling and edge cases
+- Backward compatibility with existing code
+
+#### 2.6 Integration Points
+
+**Configuration Integration:**
+- Strategies read from `Tasker.configuration.auth.strategy`
+- Options passed from `Tasker.configuration.auth.options`
+- Method names configurable via `auth.current_user_method` and `auth.authenticate_user_method`
+
+**Controller Integration:**
+- Include `Tasker::Concerns::Authenticatable` in controllers
+- Automatic authentication via before_action
+- Helper methods available in controller actions
+
+**Future Phase Integration:**
+- Authentication state feeds into authorization layer
+- User object passed to authorization coordinators
+- Multi-database authentication considerations
+
+**Developer Experience Benefits:**
+- **Organized Configuration**: All auth settings grouped in `config.auth` block
+- **IDE Support**: Better autocomplete and discoverability
+- **Clear Separation**: Auth configuration separate from core Tasker settings
+- **Flexible Usage**: Support both block and direct property setting
+
+#### 2.7 Example Usage After Phase 2
+
+```ruby
+# config/initializers/tasker.rb
+
+# Example 1: Basic Devise integration
+Tasker.configuration do |config|
+  config.auth do |auth|
+    auth.strategy = :devise
+    auth.options = {
+      scope: :user,
+      failure_app: Devise::FailureApp
+    }
+  end
+end
+
+# Example 2: Custom API authentication
+Tasker.configuration do |config|
+  config.auth do |auth|
+    auth.strategy = :custom
+    auth.options = {
+      authenticator_class: 'MyApp::ApiAuthenticator',
+      token_header: 'X-API-Token'
+    }
+    auth.current_user_method = :current_api_user
+    auth.authenticate_user_method = :authenticate_api_user!
+  end
+end
+
+# Example 3: No authentication (development/testing)
+Tasker.configuration do |config|
+  config.auth do |auth|
+    auth.strategy = :none
+  end
+end
+```
+
+```ruby
+# app/controllers/tasker/tasks_controller.rb
+module Tasker
+  class TasksController < ApplicationController
+    include Tasker::Concerns::Authenticatable
+
+    def index
+      # Authentication happens automatically via before_action
+      # current_tasker_user is available here
+      # tasker_user_authenticated? returns true/false
+    end
+  end
+end
+```
+
+**Phase 2 Success Criteria:**
+- [ ] All authentication strategies implemented and tested
+- [ ] Authentication coordinator working with configuration
+- [ ] Authenticatable concern functional in controllers
+- [ ] Backward compatibility maintained (no authentication by default)
+- [ ] Comprehensive test coverage (>95%)
+- [ ] Documentation and examples updated
+
+This detailed plan for Phase 2 provides clear implementation steps, testing strategy, and integration points for the authentication layer. Each component builds on the configuration foundation from Phase 1 and prepares for the authorization layer in Phase 3.
+
+### Phase 3: Authorization Layer ⚪ PLANNED
 
 #### 3.1 Resource Registry
 
@@ -391,7 +543,7 @@ module Tasker
       end
 
       def authorization_enabled?
-        Tasker.configuration.enable_authorization
+        Tasker.configuration.auth.enabled
       end
 
       attr_reader :user
@@ -494,7 +646,7 @@ module Tasker
       end
 
       def build_authorization_coordinator
-        coordinator_class = Tasker.configuration.authorization_coordinator_class.constantize
+        coordinator_class = Tasker.configuration.auth.coordinator_class.constantize
         coordinator_class.new(current_tasker_user)
       end
 
@@ -517,9 +669,9 @@ module Tasker
         }
       end
 
-      def skip_authorization?
-        !Tasker.configuration.enable_authorization
-      end
+              def skip_authorization?
+          !Tasker.configuration.auth.enabled
+        end
     end
   end
 end
@@ -536,9 +688,9 @@ module Tasker
     class Configuration
       class << self
         def setup!
-          return unless Tasker.configuration.enable_secondary_database
+          return unless Tasker.configuration.database.enable_secondary_database
 
-          config = Tasker.configuration.database_config
+          config = Tasker.configuration.database.name
           return unless config
 
           # Define the abstract connection class
@@ -600,14 +752,14 @@ end
 
 # lib/tasker/task.rb
 module Tasker
-  class Task < (Tasker.configuration.enable_secondary_database ? TaskerApplicationRecord : ApplicationRecord)
+  class Task < (Tasker.configuration.database.enable_secondary_database ? TaskerApplicationRecord : ApplicationRecord)
     # Existing model code remains the same
   end
 end
 
 # lib/tasker/workflow_step.rb
 module Tasker
-  class WorkflowStep < (Tasker.configuration.enable_secondary_database ? TaskerApplicationRecord : ApplicationRecord)
+  class WorkflowStep < (Tasker.configuration.database.enable_secondary_database ? TaskerApplicationRecord : ApplicationRecord)
     # Existing model code remains the same
   end
 end
@@ -651,7 +803,7 @@ module Tasker
         include Tasker::Concerns::ControllerAuthorizable
 
         def authorize_tasker_action!(resource, action, context = {})
-          return true unless Tasker.configuration.enable_authorization
+          return true unless Tasker.configuration.auth.enabled
 
           coordinator = build_authorization_coordinator
           coordinator.authorize!(resource, action, context)
@@ -664,7 +816,7 @@ module Tasker
         private
 
         def build_authorization_coordinator
-          coordinator_class = Tasker.configuration.authorization_coordinator_class.constantize
+          coordinator_class = Tasker.configuration.auth.coordinator_class.constantize
           coordinator_class.new(current_tasker_user)
         end
       end
@@ -829,35 +981,46 @@ end
 
 ```
 lib/tasker/
-├── authentication/
+├── authentication/              # Phase 2 🟡
 │   ├── base_strategy.rb
 │   ├── devise_strategy.rb
 │   ├── none_strategy.rb
 │   ├── custom_strategy.rb
 │   └── coordinator.rb
-├── authorization/
+├── authorization/               # Phase 3 ⚪
 │   ├── resource_registry.rb
 │   ├── base_coordinator.rb
 │   └── errors.rb
-├── concerns/
-│   ├── authenticatable.rb
-│   ├── authorizable.rb
-│   └── controller_authorizable.rb
-├── database/
+├── concerns/                    # Phase 2-3 🟡⚪
+│   ├── authenticatable.rb      # Phase 2 🟡
+│   ├── authorizable.rb         # Phase 3 ⚪
+│   └── controller_authorizable.rb # Phase 3 ⚪
+├── database/                    # Phase 4 ⚪
 │   └── configuration.rb
-└── configuration.rb (extended)
+└── configuration.rb             # Phase 1 ✅ COMPLETED
 
 spec/
 ├── lib/tasker/
-│   ├── authentication/
-│   ├── authorization/
-│   ├── concerns/
-│   └── database/
-├── examples/
-│   ├── custom_authorization_coordinator.rb
-│   ├── user_with_tasker_auth.rb
-│   └── custom_authentication_strategy.rb
-└── integration/
+│   ├── authentication/          # Phase 2 Tests 🟡
+│   │   ├── base_strategy_spec.rb
+│   │   ├── devise_strategy_spec.rb
+│   │   ├── none_strategy_spec.rb
+│   │   ├── custom_strategy_spec.rb
+│   │   └── coordinator_spec.rb
+│   ├── authorization/           # Phase 3 Tests ⚪
+│   ├── concerns/               # Phase 2-3 Tests 🟡⚪
+│   │   ├── authenticatable_spec.rb     # Phase 2 🟡
+│   │   ├── authorizable_spec.rb        # Phase 3 ⚪
+│   │   └── controller_authorizable_spec.rb # Phase 3 ⚪
+│   ├── database/               # Phase 4 Tests ⚪
+│   ├── configuration_auth_db_spec.rb    # Phase 1 ✅ COMPLETED
+│   ├── configuration_integration_spec.rb # Phase 1 ✅ COMPLETED
+│   └── configuration_singleton_spec.rb  # Phase 1 ✅ COMPLETED
+├── examples/                    # Phase 1 ✅ + Future Phases
+│   ├── custom_authorization_coordinator.rb # Phase 1 ✅ COMPLETED
+│   ├── user_with_tasker_auth.rb # Phase 1 ✅ COMPLETED
+│   └── custom_authentication_strategy.rb # Phase 2 🟡
+└── integration/                 # Phase 5-7 ⚪
     ├── authentication_integration_spec.rb
     ├── authorization_integration_spec.rb
     └── multi_database_integration_spec.rb

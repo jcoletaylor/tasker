@@ -140,8 +140,13 @@ module Tasker
 
         # Override BaseSubscriber to add telemetry-specific filtering
         def should_process_event?(event_constant)
+          # Get configuration once for efficiency
+          config = Tasker.configuration
+
           # Only process if telemetry is enabled
-          telemetry_enabled? && super
+          return false unless config.telemetry.enabled
+
+          super
         end
 
         private
@@ -155,7 +160,7 @@ module Tasker
 
         # Check if telemetry is enabled
         def telemetry_enabled?
-          Tasker.configuration.enable_telemetry != false
+          Tasker.configuration.telemetry.enabled != false
         end
 
         # Create a simple span for events that don't need complex hierarchy
@@ -292,10 +297,10 @@ module Tasker
         #
         # @return [OpenTelemetry::Tracer] The tracer instance
         def get_tracer
-          config = Tasker::Configuration.configuration
+          config = Tasker.configuration
           ::OpenTelemetry.tracer_provider.tracer(
-            config.otel_telemetry_service_name,
-            config.otel_telemetry_service_version
+            config.telemetry.service_name,
+            config.telemetry.service_version
           )
         end
 
@@ -305,8 +310,8 @@ module Tasker
         # @return [Hash] OpenTelemetry-compatible attributes
         def convert_attributes_for_otel(attributes)
           result = {}
-          config = Tasker::Configuration.configuration
-          service_name = config.otel_telemetry_service_name
+          config = Tasker.configuration
+          service_name = config.telemetry.service_name
 
           # Filter sensitive data first
           filtered_attributes = filter_sensitive_attributes(attributes)
@@ -358,7 +363,7 @@ module Tasker
         # @param attributes [Hash] The attributes to filter
         # @return [Hash] The filtered attributes
         def filter_sensitive_attributes(attributes)
-          filter = Tasker::Configuration.configuration.parameter_filter
+          filter = Tasker.configuration.telemetry.parameter_filter
           return attributes unless filter
 
           filtered_data = {}

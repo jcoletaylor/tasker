@@ -180,7 +180,9 @@ end
 # config/initializers/tasker.rb
 Tasker.configuration do |config|
   # Simple telemetry configuration
-  config.enable_telemetry = true  # Enable TelemetrySubscriber
+  config.telemetry do |tel|
+    tel.enabled = true  # Enable TelemetrySubscriber
+  end
 end
 ```
 
@@ -192,23 +194,22 @@ Configure Tasker's telemetry in `config/initializers/tasker.rb`:
 
 ```ruby
 Tasker.configuration do |config|
-  # Service name used for OpenTelemetry traces (default: 'tasker')
-  # This value is used for tracer names and attribute prefixes in OpenTelemetry telemetry
-  config.otel_telemetry_service_name = 'my_app_tasker'
+  config.telemetry do |tel|
+    # Enable telemetry (TelemetrySubscriber for OpenTelemetry spans)
+    tel.enabled = true
 
-  # Service version used for OpenTelemetry traces (default: Tasker::VERSION)
-  # This value is used to identify the version of the service in traces
-  config.otel_telemetry_service_version = '1.2.3'
+    # Service name used for OpenTelemetry traces (default: 'tasker')
+    tel.service_name = 'my_app_tasker'
 
-  # Parameters to filter from telemetry data for privacy and security
-  # By default, uses Rails.application.config.filter_parameters if available, or a predefined list
-  config.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
+    # Service version used for OpenTelemetry traces (default: Tasker::VERSION)
+    tel.service_version = '1.2.3'
 
-  # The mask to use when filtering sensitive data (default: '[FILTERED]')
-  config.telemetry_filter_mask = '***REDACTED***'
+    # Parameters to filter from telemetry data for privacy and security
+    tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
 
-  # Enable telemetry (TelemetrySubscriber for OpenTelemetry spans)
-  config.enable_telemetry = true
+    # The mask to use when filtering sensitive data (default: '[FILTERED]')
+    tel.filter_mask = '***REDACTED***'
+  end
 end
 ```
 
@@ -224,7 +225,7 @@ require 'opentelemetry/instrumentation/all'
 # Configure OpenTelemetry
 OpenTelemetry::SDK.configure do |c|
   # Use the configured service name
-  c.service_name = Tasker::Configuration.configuration.otel_telemetry_service_name
+  c.service_name = Tasker.configuration.telemetry.service_name
 
   # Configure OTLP exporter to send to local Jaeger
   otlp_exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(
@@ -238,8 +239,8 @@ OpenTelemetry::SDK.configure do |c|
 
   # Configure resource with additional attributes
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
-    'service.name' => Tasker::Configuration.configuration.otel_telemetry_service_name,
-    'service.version' => Tasker::Configuration.configuration.otel_telemetry_service_version,
+    'service.name' => Tasker.configuration.telemetry.service_name,
+    'service.version' => Tasker.configuration.telemetry.service_version,
     'service.framework' => 'tasker'
   })
 
@@ -445,7 +446,7 @@ end
 
 ```ruby
 # ✅ GOOD: Simple, clean telemetry configuration
-config.enable_telemetry = true  # TelemetrySubscriber creates OpenTelemetry spans
+  config.telemetry.enabled = true  # TelemetrySubscriber creates OpenTelemetry spans
 
 # ✅ GOOD: Create separate subscribers for different purposes
 # - TelemetrySubscriber: OpenTelemetry spans for debugging
@@ -688,7 +689,7 @@ The system includes safety mechanisms for production use:
 - **Multiple Telemetry Subscribers**: If you see unexpected behavior, ensure you're not creating multiple subscribers that handle the same events. Use single-responsibility subscribers:
   ```ruby
   # ✅ GOOD: Single responsibility per subscriber
-  config.enable_telemetry = true  # TelemetrySubscriber for spans only
+  config.telemetry.enabled = true  # TelemetrySubscriber for spans only
   # Create separate MetricsSubscriber for operational data
   ```
 

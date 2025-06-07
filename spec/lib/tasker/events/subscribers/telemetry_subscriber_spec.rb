@@ -205,7 +205,7 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
         allow(filter_double).to receive(:filter_param) do |key, value|
           key == 'password' ? '[FILTERED]' : value
         end
-        allow(Tasker::Configuration.configuration).to receive(:parameter_filter)
+        allow(Tasker.configuration.telemetry).to receive(:parameter_filter)
           .and_return(filter_double)
 
         attributes = { task_id: 'task-123', password: 'secret123' }
@@ -301,7 +301,9 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
   describe 'telemetry filtering' do
     describe 'when telemetry is disabled' do
       before do
-        allow(Tasker.configuration).to receive(:enable_telemetry).and_return(false)
+        allow(Tasker.configuration).to receive(:telemetry).and_return(
+          double(enabled: false)
+        )
       end
 
       it 'skips processing events' do
@@ -316,7 +318,9 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
 
     describe 'when telemetry is enabled' do
       before do
-        allow(Tasker.configuration).to receive(:enable_telemetry).and_return(true)
+        allow(Tasker.configuration).to receive(:telemetry).and_return(
+          double(enabled: true)
+        )
         allow(subscriber).to receive(:opentelemetry_available?).and_return(false)
       end
 

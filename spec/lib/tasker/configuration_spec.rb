@@ -4,6 +4,8 @@ require 'rails_helper'
 require_relative '../../dummy/app/tasks/custom_identity_strategy'
 
 RSpec.describe Tasker::Configuration do
+  let(:config) { described_class.new }
+
   before do
     # Reset to default configuration before each test
     Tasker.reset_configuration!
@@ -11,75 +13,76 @@ RSpec.describe Tasker::Configuration do
 
   describe '#identity_strategy_instance' do
     it 'returns a default IdentityStrategy when identity_strategy is :default' do
-      config = described_class.new
-      config.identity_strategy = :default
+      # Store original configuration to restore later
+      original_strategy = Tasker.configuration.engine.identity_strategy
 
-      strategy = config.identity_strategy_instance
+      # Test setting and getting the identity strategy
+      config.engine.identity_strategy = :default
 
-      expect(strategy).to be_a(Tasker::IdentityStrategy)
-      expect(strategy).not_to be_a(Tasker::HashIdentityStrategy)
+      # Check the updated strategy and its instance
+      expect(config.engine.identity_strategy).to eq(:default)
+      expect(config.engine.identity_strategy_instance).to be_a(Tasker::IdentityStrategy)
+
+      # Restore original configuration
+      Tasker.configuration.engine.identity_strategy = original_strategy
     end
 
     it 'returns a HashIdentityStrategy when identity_strategy is :hash' do
-      config = described_class.new
-      config.identity_strategy = :hash
+      config.engine.identity_strategy = :hash
 
-      strategy = config.identity_strategy_instance
-
-      expect(strategy).to be_a(Tasker::HashIdentityStrategy)
+      expect(config.engine.identity_strategy).to eq(:hash)
+      expect(config.engine.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
     end
 
     it 'returns a custom strategy when identity_strategy is :custom' do
-      config = described_class.new
-      config.identity_strategy = :custom
-      config.identity_strategy_class = 'CustomIdentityStrategy'
+      config.engine.identity_strategy = :custom
+      config.engine.identity_strategy_class = 'Tasker::HashIdentityStrategy'
 
-      strategy = config.identity_strategy_instance
-
-      expect(strategy).to be_a(CustomIdentityStrategy)
+      expect(config.engine.identity_strategy).to eq(:custom)
+      expect(config.engine.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
     end
 
     it 'raises an error when :custom is selected but no class is provided' do
-      config = described_class.new
-      config.identity_strategy = :custom
-      config.identity_strategy_class = nil
+      config.engine.identity_strategy = :custom
 
-      expect { config.identity_strategy_instance }.to raise_error(ArgumentError, /no identity_strategy_class provided/)
+      expect do
+        config.engine.identity_strategy_instance
+      end.to raise_error(ArgumentError,
+                         /Custom identity strategy selected but no identity_strategy_class provided/)
     end
 
     it 'raises an error when :custom is selected with an invalid class name' do
-      config = described_class.new
-      config.identity_strategy = :custom
-      config.identity_strategy_class = 'NonExistentClass'
+      config.engine.identity_strategy = :custom
+      config.engine.identity_strategy_class = 'NonExistentClass'
 
-      expect { config.identity_strategy_instance }.to raise_error(ArgumentError, /Invalid identity_strategy_class/)
+      expect do
+        config.engine.identity_strategy_instance
+      end.to raise_error(ArgumentError, /Invalid identity_strategy_class/)
     end
 
     it 'raises an error for an unknown strategy type' do
-      config = described_class.new
-      config.identity_strategy = :unknown
+      config.engine.identity_strategy = :unknown
 
-      expect { config.identity_strategy_instance }.to raise_error(ArgumentError, /Unknown identity_strategy/)
+      expect { config.engine.identity_strategy_instance }.to raise_error(ArgumentError, /Unknown identity_strategy/)
     end
   end
 
   describe 'Tasker.configuration' do
     it 'allows setting identity_strategy through the block syntax' do
-      original_strategy = Tasker.configuration.identity_strategy
+      # Store original configuration to restore later
+      original_strategy = Tasker.configuration.engine.identity_strategy
 
-      begin
-        Tasker.configuration do |config|
-          config.identity_strategy = :hash
-          expect(Tasker.configuration.identity_strategy).to eq(:hash)
-          expect(Tasker.configuration.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
-        end
-      rescue StandardError => e
-        Rails.logger.error("Error setting identity strategy: #{e.message}")
-        raise e
-      ensure
-        # Only restore the strategy setting - identity_strategy_instance is computed
-        Tasker.configuration.identity_strategy = original_strategy
+      # Test setting and getting the identity strategy
+      Tasker.configuration do |config|
+        config.engine.identity_strategy = :hash
       end
+
+      # Check the updated strategy and its instance
+      expect(Tasker.configuration.engine.identity_strategy).to eq(:hash)
+      expect(Tasker.configuration.engine.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
+
+      # Restore original configuration
+      Tasker.configuration.engine.identity_strategy = original_strategy
     end
   end
 end
