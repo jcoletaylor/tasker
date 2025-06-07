@@ -153,6 +153,13 @@
   
   
   
+  
+  
+  
+  
+  
+  
+  
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
@@ -199,7 +206,8 @@
 25
 26
 27
-28</pre>
+28
+29</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/controllers/tasker/graphql_controller.rb', line 13</span>
@@ -210,8 +218,9 @@
   <span class='id identifier rubyid_operation_name'>operation_name</span> <span class='op'>=</span> <span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:operationName</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
     <span class='comment'># Query context goes here, for example:
-</span>    <span class='comment'># current_user: current_user,
-</span>  <span class='rbrace'>}</span>
+</span>    <span class='label'>current_user:</span> <span class='id identifier rubyid_current_tasker_user'>current_tasker_user</span><span class='comma'>,</span>
+    <span class='label'>authenticated:</span> <span class='id identifier rubyid_tasker_user_authenticated?'>tasker_user_authenticated?</span>
+  <span class='rbrace'>}</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskerRailsSchema.html" title="Tasker::TaskerRailsSchema (class)">TaskerRailsSchema</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execute'>execute</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='label'>variables:</span> <span class='id identifier rubyid_variables'>variables</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
                                                     <span class='label'>operation_name:</span> <span class='id identifier rubyid_operation_name'>operation_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='label'>json:</span> <span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
@@ -230,7 +239,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun  7 11:08:33 2025 by
+  Generated on Sat Jun  7 13:02:18 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

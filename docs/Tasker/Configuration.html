@@ -295,6 +295,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#reset!-instance_method" title="#reset! (instance method)">#<strong>reset!</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Reset configuration to defaults (useful for testing).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#telemetry-instance_method" title="#telemetry (instance method)">#<strong>telemetry</strong> {|TelemetryConfiguration| ... } &#x21d2; TelemetryConfiguration </a>
     
 
@@ -440,17 +464,17 @@
       <pre class="lines">
 
 
-267
-268
-269
-270
-271
-272
-273
-274</pre>
+275
+276
+277
+278
+279
+280
+281
+282</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 267</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 275</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='ivar'>@configuration</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
@@ -509,12 +533,12 @@
       <pre class="lines">
 
 
-279
-280
-281</pre>
+287
+288
+289</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 279</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 287</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_reset_configuration!'>reset_configuration!</span>
   <span class='ivar'>@configuration</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
@@ -592,13 +616,13 @@
       <pre class="lines">
 
 
-231
-232
-233
-234</pre>
+239
+240
+241
+242</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 231</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 239</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_auth'>auth</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@auth_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -671,13 +695,13 @@
       <pre class="lines">
 
 
-240
-241
-242
-243</pre>
+248
+249
+250
+251</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 248</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_database'>database</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@database_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -750,17 +774,64 @@
       <pre class="lines">
 
 
-258
-259
-260
-261</pre>
+266
+267
+268
+269</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 258</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 266</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_engine'>engine</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@engine_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
   <span class='ivar'>@engine_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="reset!-instance_method">
+  
+    #<strong>reset!</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Reset configuration to defaults (useful for testing)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+228
+229
+230
+231
+232
+233</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 228</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_reset!'>reset!</span>
+  <span class='ivar'>@auth_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/AuthConfiguration.html#initialize-instance_method" title="Tasker::Configuration::AuthConfiguration#initialize (method)">new</a></span></span>
+  <span class='ivar'>@database_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html" title="Tasker::Configuration::DatabaseConfiguration (class)">DatabaseConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html#initialize-instance_method" title="Tasker::Configuration::DatabaseConfiguration#initialize (method)">new</a></span></span>
+  <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html" title="Tasker::Configuration::TelemetryConfiguration (class)">TelemetryConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html#initialize-instance_method" title="Tasker::Configuration::TelemetryConfiguration#initialize (method)">new</a></span></span>
+  <span class='ivar'>@engine_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/EngineConfiguration.html" title="Tasker::Configuration::EngineConfiguration (class)">EngineConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/EngineConfiguration.html#initialize-instance_method" title="Tasker::Configuration::EngineConfiguration#initialize (method)">new</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -829,13 +900,13 @@
       <pre class="lines">
 
 
-249
-250
-251
-252</pre>
+257
+258
+259
+260</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 249</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 257</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry'>telemetry</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@telemetry_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -851,7 +922,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun  7 11:08:31 2025 by
+  Generated on Sat Jun  7 13:02:16 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

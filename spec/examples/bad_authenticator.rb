@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # BadAuthenticator - Intentionally incomplete authenticator for testing interface validation
 # This class is missing required methods to test Tasker's interface validation
 class BadAuthenticator

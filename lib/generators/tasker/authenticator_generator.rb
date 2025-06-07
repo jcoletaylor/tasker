@@ -45,15 +45,20 @@ module Tasker
 
         case options[:type].downcase
         when 'jwt'
-          template 'jwt_authenticator_spec.rb.erb', File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+          template 'jwt_authenticator_spec.rb.erb',
+                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'devise'
-          template 'devise_authenticator_spec.rb.erb', File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+          template 'devise_authenticator_spec.rb.erb',
+                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'api_token'
-          template 'api_token_authenticator_spec.rb.erb', File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+          template 'api_token_authenticator_spec.rb.erb',
+                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'omniauth'
-          template 'omniauth_authenticator_spec.rb.erb', File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+          template 'omniauth_authenticator_spec.rb.erb',
+                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
         else
-          template 'custom_authenticator_spec.rb.erb', File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+          template 'custom_authenticator_spec.rb.erb',
+                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
         end
       end
 
@@ -112,10 +117,10 @@ module Tasker
 
       def ensure_directory_exists(directory)
         directory_path = Rails.root.join(directory)
-        unless File.directory?(directory_path)
-          FileUtils.mkdir_p(directory_path)
-          say "Created directory: #{directory_path}"
-        end
+        return if File.directory?(directory_path)
+
+        FileUtils.mkdir_p(directory_path)
+        say "Created directory: #{directory_path}"
       end
 
       def configuration_example

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'rails_helper'
 require_relative 'example_jwt_authenticator'
@@ -100,7 +102,7 @@ RSpec.describe ExampleJWTAuthenticator do
       described_class.generate_test_token(
         user_id: user_id,
         secret: test_secret,
-        expires_in: -1.hour  # Expired 1 hour ago
+        expires_in: -1.hour # Expired 1 hour ago
       )
     end
     let(:invalid_signature_token) do
@@ -184,7 +186,7 @@ RSpec.describe ExampleJWTAuthenticator do
         end
 
         it 'returns nil when user is not found' do
-          non_existent_user_token = described_class.generate_test_token(user_id: 999999, secret: test_secret)
+          non_existent_user_token = described_class.generate_test_token(user_id: 999_999, secret: test_secret)
           allow(mock_request).to receive(:headers).and_return({ 'Authorization' => "Bearer #{non_existent_user_token}" })
 
           user = authenticator.current_user(mock_controller)
@@ -261,12 +263,12 @@ RSpec.describe ExampleJWTAuthenticator do
     end
   end
 
-    describe 'different user types' do
+  describe 'different user types' do
     let(:user_token) { described_class.generate_test_token(user_id: 1, secret: test_secret) }
     let(:admin_token) { described_class.generate_test_token(user_id: 2, secret: test_secret) }
     let(:super_admin_token) { described_class.generate_test_token(user_id: 999, secret: test_secret) }
 
-        it 'loads different user types correctly' do
+    it 'loads different user types correctly' do
       # Test regular user
       user_auth = described_class.new(valid_options)
       user_controller = double('Controller')
@@ -295,7 +297,7 @@ RSpec.describe ExampleJWTAuthenticator do
       allow(super_admin_controller).to receive(:request).and_return(super_admin_request)
 
       super_admin = super_admin_auth.current_user(super_admin_controller)
-      expect(super_admin.roles).to eq(['admin', 'super_admin'])
+      expect(super_admin.roles).to eq(%w[admin super_admin])
       expect(super_admin.admin?).to be true
       expect(super_admin.email).to eq('admin@example.com')
     end
@@ -304,9 +306,7 @@ RSpec.describe ExampleJWTAuthenticator do
   describe 'error handling and logging' do
     before do
       # Mock Rails logger if it exists
-      if defined?(Rails)
-        allow(Rails).to receive(:logger).and_return(double('Logger', warn: nil, error: nil, info: nil))
-      end
+      allow(Rails).to receive(:logger).and_return(double('Logger', warn: nil, error: nil, info: nil)) if defined?(Rails)
     end
 
     it 'handles JWT decode errors gracefully' do
@@ -363,7 +363,7 @@ RSpec.describe ExampleJWTAuthenticator do
         payload, _header = JWT.decode(token, test_secret, true, { algorithm: 'HS256' })
 
         # Token should expire approximately 2 hours from now
-        expected_exp = (Time.current + 2.hours).to_i
+        expected_exp = 2.hours.from_now.to_i
         expect(payload['exp']).to be_within(60).of(expected_exp)
       end
     end
@@ -406,7 +406,7 @@ RSpec.describe ExampleJWTAuthenticator do
       }
 
       dev_auth = described_class.new(dev_config)
-      prod_auth = described_class.new(prod_config)
+      described_class.new(prod_config)
 
       expect(dev_auth.validate_configuration(dev_config)).to be_empty
       # prod_auth validation will fail because 'User' class doesn't exist in test environment

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Example JWT Authenticator for Tasker
 #
 # This demonstrates how to implement JWT-based authentication that works with Tasker.
@@ -38,7 +40,7 @@ class ExampleJWTAuthenticator
     user = current_user(controller)
     unless user
       raise Tasker::Authentication::AuthenticationError,
-            "Invalid or missing JWT token"
+            'Invalid or missing JWT token'
     end
     true
   end
@@ -73,9 +75,9 @@ class ExampleJWTAuthenticator
     # Validate JWT secret
     secret = options[:secret]
     if secret.blank?
-      errors << "JWT secret is required"
+      errors << 'JWT secret is required'
     elsif secret.length < 32
-      errors << "JWT secret should be at least 32 characters for security"
+      errors << 'JWT secret should be at least 32 characters for security'
     end
 
     # Validate algorithm
@@ -109,7 +111,7 @@ class ExampleJWTAuthenticator
 
   def extract_token(request)
     header = request.headers[header_name]
-    return nil unless header.present?
+    return nil if header.blank?
 
     # Support both "Bearer <token>" and raw token formats
     if header.start_with?('Bearer ')
@@ -124,20 +126,20 @@ class ExampleJWTAuthenticator
     payload, _header = JWT.decode(
       token,
       secret,
-      true,  # verify signature
+      true, # verify signature
       {
         algorithm: algorithm,
         verify_expiration: true,
-        verify_iat: true  # issued at time
+        verify_iat: true # issued at time
       }
     )
 
     payload
   rescue JWT::ExpiredSignature
-    Rails.logger.info "JWT token expired" if defined?(Rails)
+    Rails.logger.info 'JWT token expired' if defined?(Rails)
     nil
   rescue JWT::InvalidIatError
-    Rails.logger.warn "JWT token has invalid issued at time" if defined?(Rails)
+    Rails.logger.warn 'JWT token has invalid issued at time' if defined?(Rails)
     nil
   end
 
@@ -186,19 +188,15 @@ class JwtTestUser
 
   def self.find_by(conditions)
     # Simulate database lookup
-    if conditions[:id]
-      case conditions[:id].to_i
-      when 1
-        new(id: 1, email: 'alice@example.com', name: 'Alice Smith', roles: ['user'])
-      when 2
-        new(id: 2, email: 'bob@example.com', name: 'Bob Jones', roles: ['admin'])
-      when 999
-        new(id: 999, email: 'admin@example.com', name: 'Super Admin', roles: ['admin', 'super_admin'])
-      else
-        nil
-      end
-    else
-      nil
+    return unless conditions[:id]
+
+    case conditions[:id].to_i
+    when 1
+      new(id: 1, email: 'alice@example.com', name: 'Alice Smith', roles: ['user'])
+    when 2
+      new(id: 2, email: 'bob@example.com', name: 'Bob Jones', roles: ['admin'])
+    when 999
+      new(id: 999, email: 'admin@example.com', name: 'Super Admin', roles: %w[admin super_admin])
     end
   end
 

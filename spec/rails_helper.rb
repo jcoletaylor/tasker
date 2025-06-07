@@ -61,26 +61,19 @@ RSpec.configure do |config|
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
 
-      # Global authentication and configuration state cleanup
+  # Global authentication and configuration state cleanup
   # Ensures authentication coordinator and configuration are reset between tests to prevent state leakage
   config.around do |example|
     # Store original configuration state before test
-    original_config = if defined?(Tasker::Configuration)
-                        Tasker::Configuration.instance_variable_get(:@configuration)
-                      end
+    original_config = (Tasker::Configuration.instance_variable_get(:@configuration) if defined?(Tasker::Configuration))
 
     # Reset authentication coordinator before each test
-    if defined?(Tasker::Authentication::Coordinator)
-      Tasker::Authentication::Coordinator.reset!
-    end
+    Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
 
     example.run
-
   ensure
     # Reset authentication coordinator after each test
-    if defined?(Tasker::Authentication::Coordinator)
-      Tasker::Authentication::Coordinator.reset!
-    end
+    Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
 
     # Check if we have test-only authenticator configuration that needs cleanup
     if defined?(Tasker) && Tasker.respond_to?(:configuration)

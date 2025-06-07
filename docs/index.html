@@ -587,6 +587,11 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 
 # Generate a specialized metrics subscriber with helper methods
 rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
+
+# Generate authenticators for different authentication systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
 </code></pre>
 
 <h3 id="label-Example-3A+Custom+Events+in+Step+Handlers">Example: Custom Events in Step Handlers</h3>
@@ -668,6 +673,8 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 <ul><li>
 <p><strong>Guide[docs/DEVELOPER_GUIDE.md]</strong> - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration</p>
 </li><li>
+<p><strong>Guide[docs/AUTH.md]</strong> - Complete authentication system documentation with JWT, Devise, and custom authenticator examples</p>
+</li><li>
 <p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Complete event system documentation with integration examples</p>
 </li><li>
 <p><strong>&amp; Observability[docs/TELEMETRY.md]</strong> - OpenTelemetry integration and custom monitoring setup</p>
@@ -714,7 +721,7 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 </div></div>
 
       <div id="footer">
-  Generated on Sat Jun  7 11:08:30 2025 by
+  Generated on Sat Jun  7 13:02:15 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
