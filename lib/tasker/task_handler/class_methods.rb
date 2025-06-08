@@ -101,32 +101,7 @@ module Tasker
         # @param handler_class [Class] The handler class that can fire these events
         # @return [void]
         def register_custom_events_for_handler(custom_events, handler_class)
-          # Register YAML-based custom events
-          custom_events.each do |event_config|
-            # Support both symbol and string keys
-            event_name = event_config[:name] || event_config['name']
-            description = event_config[:description] || event_config['description'] || "Custom event from #{handler_class.name}"
-
-            next unless event_name
-
-            # Add the handler class to fired_by array automatically
-            fired_by = [handler_class.name]
-
-            begin
-              Tasker::Events::CustomRegistry.instance.register_event(
-                event_name,
-                description: description,
-                fired_by: fired_by
-              )
-            rescue StandardError => e
-              # Don't let custom event registration failures break step template definition
-              if defined?(Rails)
-                Rails.logger.warn "Failed to register custom event #{event_name} from #{handler_class}: #{e.message}"
-              end
-            end
-          end
-
-          # Also register class-based custom events from the step handler
+          YamlEventRegistrar.register(custom_events, handler_class)
           register_class_based_custom_events(handler_class)
         end
 
@@ -135,18 +110,144 @@ module Tasker
         # @param handler_class [Class] The step handler class to scan for custom events
         # @return [void]
         def register_class_based_custom_events(handler_class)
-          return unless handler_class.respond_to?(:custom_event_configuration)
+          ClassBasedEventRegistrar.register(handler_class)
+        end
 
-          begin
-            class_events = handler_class.custom_event_configuration
-            class_events.each do |event_config|
-              # Support both symbol and string keys
-              event_name = event_config[:name] || event_config['name']
-              description = event_config[:description] || event_config['description'] || "Custom event from #{handler_class.name}"
+        # Service class to register YAML-based custom events
+        # Reduces complexity by organizing YAML event registration logic
+        class YamlEventRegistrar
+          class << self
+            # Register YAML-based custom events
+            #
+            # @param custom_events [Array<Hash>] Array of custom event configurations from YAML
+            # @param handler_class [Class] The handler class that can fire these events
+            # @return [void]
+            def register(custom_events, handler_class)
+              custom_events.each do |event_config|
+                register_single_yaml_event(event_config, handler_class)
+              end
+            end
 
-              next unless event_name
+            private
 
-              # Add the handler class to fired_by array automatically
+            # Register a single YAML-based custom event
+            #
+            # @param event_config [Hash] Event configuration
+            # @param handler_class [Class] Handler class
+            # @return [void]
+            def register_single_yaml_event(event_config, handler_class)
+              event_name = extract_event_name(event_config)
+              return unless event_name
+
+              description = extract_event_description(event_config, handler_class)
+              fired_by = [handler_class.name]
+
+              safely_register_event(event_name, description, fired_by, handler_class)
+            end
+
+            # Extract event name from configuration
+            #
+            # @param event_config [Hash] Event configuration
+            # @return [String, nil] Event name
+            def extract_event_name(event_config)
+              event_config[:name] || event_config['name']
+            end
+
+            # Extract event description from configuration
+            #
+            # @param event_config [Hash] Event configuration
+            # @param handler_class [Class] Handler class
+            # @return [String] Event description
+            def extract_event_description(event_config, handler_class)
+              event_config[:description] ||
+                event_config['description'] ||
+                "Custom event from #{handler_class.name}"
+            end
+
+            # Safely register event with error handling
+            #
+            # @param event_name [String] Event name
+            # @param description [String] Event description
+            # @param fired_by [Array] Array of handler class names
+            # @param handler_class [Class] Handler class for error context
+            # @return [void]
+            def safely_register_event(event_name, description, fired_by, handler_class)
+              Tasker::Events::CustomRegistry.instance.register_event(
+                event_name,
+                description: description,
+                fired_by: fired_by
+              )
+            rescue StandardError => e
+              log_registration_failure(event_name, handler_class, e)
+            end
+
+            # Log registration failure
+            #
+            # @param event_name [String] Event name that failed
+            # @param handler_class [Class] Handler class
+            # @param error [StandardError] Error that occurred
+            # @return [void]
+            def log_registration_failure(event_name, handler_class, error)
+              return unless defined?(Rails)
+
+              Rails.logger.warn "Failed to register custom event #{event_name} from #{handler_class}: #{error.message}"
+            end
+          end
+        end
+
+        # Service class to register class-based custom events
+        # Reduces complexity by organizing event registration logic
+        class ClassBasedEventRegistrar
+          class << self
+            # Register class-based custom events from a step handler class
+            #
+            # @param handler_class [Class] The step handler class to scan for custom events
+            # @return [void]
+            def register(handler_class)
+              return unless has_custom_event_configuration?(handler_class)
+
+              safely_register_events(handler_class)
+            end
+
+            private
+
+            # Check if handler class has custom event configuration
+            #
+            # @param handler_class [Class] The step handler class
+            # @return [Boolean] True if class has custom event configuration
+            def has_custom_event_configuration?(handler_class)
+              handler_class.respond_to?(:custom_event_configuration)
+            end
+
+            # Safely register all custom events from handler class
+            #
+            # @param handler_class [Class] The step handler class
+            # @return [void]
+            def safely_register_events(handler_class)
+              class_events = get_class_events(handler_class)
+              class_events.each { |event_config| register_single_event(event_config, handler_class) }
+            rescue StandardError => e
+              log_registration_failure(handler_class, e)
+            end
+
+            # Get custom events from handler class configuration
+            #
+            # @param handler_class [Class] The step handler class
+            # @return [Array] Array of event configurations
+            def get_class_events(handler_class)
+              handler_class.custom_event_configuration
+            end
+
+            # Register a single custom event
+            #
+            # @param event_config [Hash] The event configuration
+            # @param handler_class [Class] The step handler class
+            # @return [void]
+            def register_single_event(event_config, handler_class)
+              event_name = extract_event_name(event_config)
+              return unless event_name
+
+              description = extract_event_description(event_config, handler_class)
               fired_by = [handler_class.name]
 
               Tasker::Events::CustomRegistry.instance.register_event(
@@ -155,10 +256,35 @@ module Tasker
                 fired_by: fired_by
               )
             end
-          rescue StandardError => e
-            # Don't let custom event registration failures break step template definition
-            if defined?(Rails)
-              Rails.logger.warn "Failed to register class-based custom events from #{handler_class}: #{e.message}"
+
+            # Extract event name from configuration
+            #
+            # @param event_config [Hash] The event configuration
+            # @return [String, nil] The event name
+            def extract_event_name(event_config)
+              event_config[:name] || event_config['name']
+            end
+
+            # Extract event description from configuration
+            #
+            # @param event_config [Hash] The event configuration
+            # @param handler_class [Class] The step handler class
+            # @return [String] The event description
+            def extract_event_description(event_config, handler_class)
+              event_config[:description] ||
+                event_config['description'] ||
+                "Custom event from #{handler_class.name}"
+            end
+
+            # Log registration failure
+            #
+            # @param handler_class [Class] The step handler class
+            # @param error [StandardError] The error that occurred
+            # @return [void]
+            def log_registration_failure(handler_class, error)
+              return unless defined?(Rails)
+
+              Rails.logger.warn "Failed to register class-based custom events from #{handler_class}: #{error.message}"
             end
           end
         end

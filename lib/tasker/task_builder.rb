@@ -125,26 +125,70 @@ module Tasker
     def validate_step_names
       return unless @config['named_steps']
 
-      # Create a set of named steps for quick lookups
-      named_steps_set = Set.new(@config['named_steps'])
+      StepNameValidator.validate(@config)
+    end
 
-      # Check if all template names are in the named_steps list
-      @config['step_templates'].each do |template|
-        unless named_steps_set.include?(template['name'])
+    # Service class to validate step names against named_steps list
+    # Reduces complexity by organizing validation logic
+    class StepNameValidator
+      class << self
+        # Validate all step names against named_steps list
+        #
+        # @param config [Hash] The configuration hash
+        # @return [void]
+        # @raise [InvalidTaskHandlerConfig] If validation fails
+        def validate(config)
+          named_steps_set = Set.new(config['named_steps'])
+
+          config['step_templates'].each do |template|
+            validate_template_name(template, named_steps_set)
+            validate_single_dependency(template, named_steps_set)
+            validate_multiple_dependencies(template, named_steps_set)
+          end
+        end
+
+        private
+
+        # Validate that template name is in named_steps list
+        #
+        # @param template [Hash] The step template
+        # @param named_steps_set [Set] Set of valid step names
+        # @return [void]
+        # @raise [InvalidTaskHandlerConfig] If validation fails
+        def validate_template_name(template, named_steps_set)
+          return if named_steps_set.include?(template['name'])
+
           raise InvalidTaskHandlerConfig, "Step template name '#{template['name']}' is not in the named_steps list"
         end
 
-        # Check if dependency steps are also in the named_steps list
-        if template['depends_on_step'] && named_steps_set.exclude?(template['depends_on_step'])
+        # Validate single dependency (depends_on_step) is in named_steps list
+        #
+        # @param template [Hash] The step template
+        # @param named_steps_set [Set] Set of valid step names
+        # @return [void]
+        # @raise [InvalidTaskHandlerConfig] If validation fails
+        def validate_single_dependency(template, named_steps_set)
+          return unless template['depends_on_step']
+
+          return if named_steps_set.include?(template['depends_on_step'])
+
           raise InvalidTaskHandlerConfig,
                 "Dependency step '#{template['depends_on_step']}' is not in the named_steps list"
         end
 
-        next unless template['depends_on_steps']
+        # Validate multiple dependencies (depends_on_steps) are in named_steps list
+        #
+        # @param template [Hash] The step template
+        # @param named_steps_set [Set] Set of valid step names
+        # @return [void]
+        # @raise [InvalidTaskHandlerConfig] If validation fails
+        def validate_multiple_dependencies(template, named_steps_set)
+          return unless template['depends_on_steps']
 
-        template['depends_on_steps'].each do |dep_step|
-          unless named_steps_set.include?(dep_step)
-            raise InvalidTaskHandlerConfig, "Dependency step '#{dep_step}' is not in the named_steps list"
+          template['depends_on_steps'].each do |dep_step|
+            unless named_steps_set.include?(dep_step)
+              raise InvalidTaskHandlerConfig, "Dependency step '#{dep_step}' is not in the named_steps list"
+            end
           end
         end
       end
@@ -225,38 +269,94 @@ module Tasker
     #
     # @return [void]
     def define_step_templates
-      templates = @config['step_templates']
-      default_system = @config['default_dependent_system']
+      StepTemplateDefiner.define_for_handler(@handler_class, @config)
+    end
 
-      @handler_class.define_step_templates do |definer|
-        templates.each do |template|
-          # Convert handler_class from string to actual class
-          handler_class_name = template['handler_class']
-          handler_class = Object.const_get(handler_class_name)
+    # Service class to define step templates for handler classes
+    # Reduces complexity by organizing template definition logic
+    class StepTemplateDefiner
+      class << self
+        # Define step templates for a handler class
+        #
+        # @param handler_class [Class] The handler class
+        # @param config [Hash] The configuration hash
+        # @return [void]
+        def define_for_handler(handler_class, config)
+          templates = config['step_templates']
+          default_system = config['default_dependent_system']
 
-          # Use default dependent system if not specified in the template
-          template['dependent_system'] ||= default_system
-
-          # Create handler_config object if needed
-          handler_config = nil
-          if template['handler_config']
-            config_data = template['handler_config']
-            handler_config = if config_data['type'] == 'api'
-                               Tasker::StepHandler::Api::Config.new(
-                                 url: config_data['url'],
-                                 params: config_data['params'] || {},
-                                 ssl: config_data['ssl'],
-                                 headers: config_data['headers'],
-                                 enable_exponential_backoff: config_data['enable_exponential_backoff'],
-                                 retry_delay: config_data['retry_delay']
-                               )
-                             else
-                               # Handle other config types as needed
-                               config_data
-                             end
+          handler_class.define_step_templates do |definer|
+            templates.each do |template|
+              process_template(definer, template, default_system)
+            end
           end
+        end
 
-          # Define the step template
+        private
+
+        # Process a single template
+        #
+        # @param definer [Object] The template definer object
+        # @param template [Hash] The template configuration
+        # @param default_system [String] The default dependent system
+        # @return [void]
+        def process_template(definer, template, default_system)
+          handler_class = resolve_handler_class(template)
+          template['dependent_system'] ||= default_system
+          handler_config = build_handler_config(template)
+
+          define_single_template(definer, template, handler_class, handler_config)
+        end
+
+        # Resolve handler class from string name
+        #
+        # @param template [Hash] The template configuration
+        # @return [Class] The handler class
+        def resolve_handler_class(template)
+          handler_class_name = template['handler_class']
+          Object.const_get(handler_class_name)
+        end
+
+        # Build handler config object if needed
+        #
+        # @param template [Hash] The template configuration
+        # @return [Object, nil] The handler config object
+        def build_handler_config(template)
+          return nil unless template['handler_config']
+
+          config_data = template['handler_config']
+
+          if config_data['type'] == 'api'
+            build_api_config(config_data)
+          else
+            # Handle other config types as needed
+            config_data
+          end
+        end
+
+        # Build API configuration object
+        #
+        # @param config_data [Hash] The config data
+        # @return [Tasker::StepHandler::Api::Config] The API config object
+        def build_api_config(config_data)
+          Tasker::StepHandler::Api::Config.new(
+            url: config_data['url'],
+            params: config_data['params'] || {},
+            ssl: config_data['ssl'],
+            headers: config_data['headers'],
+            enable_exponential_backoff: config_data['enable_exponential_backoff'],
+            retry_delay: config_data['retry_delay']
+          )
+        end
+
+        # Define the step template using the definer
+        #
+        # @param definer [Object] The template definer object
+        # @param template [Hash] The template configuration
+        # @param handler_class [Class] The handler class
+        # @param handler_config [Object] The handler config
+        # @return [void]
+        def define_single_template(definer, template, handler_class, handler_config)
           definer.define(
             dependent_system: template['dependent_system'],
             name: template['name'],

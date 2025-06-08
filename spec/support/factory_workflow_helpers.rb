@@ -93,60 +93,7 @@ module FactoryWorkflowHelpers
 
   # Complete step with realistic results for API integration (replacement for task_handler.handle_one_step)
   def complete_step_with_results(step, step_name = nil)
-    step_name ||= step.named_step.name
-
-    # Get current state and be defensive about transitions
-    current_state = step.state_machine.current_state
-    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
-
-    # Only transition through in_progress if not already complete
-    completion_states = [
-      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
-      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-    ]
-
-    unless completion_states.include?(current_state)
-      # Handle error state - must transition to pending first, then in_progress
-      if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
-        step.state_machine.transition_to!(:pending)
-        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING
-      end
-
-      # Set step to in progress if not already there or beyond
-      unless [
-        Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
-        Tasker::Constants::WorkflowStepStatuses::COMPLETE,
-        Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-      ].include?(current_state)
-        step.state_machine.transition_to!(:in_progress)
-      end
-
-      # Set step-specific results based on step name
-      results = case step_name
-                when 'fetch_cart'
-                  { cart: { id: 1, items: [{ product_id: 1, quantity: 2 }] } }
-                when 'fetch_products'
-                  { products: [{ id: 1, name: 'Test Product', in_stock: true }] }
-                when 'validate_products'
-                  { valid_products: [{ id: 1, validated: true }] }
-                when 'create_order'
-                  { order_id: SecureRandom.uuid }
-                when 'publish_event'
-                  { published: true, publish_results: { status: 'placed_pending_fulfillment' } }
-                else
-                  { dummy: true, other: true }
-                end
-
-      # Complete step with results
-      step.state_machine.transition_to!(:complete)
-      step.update_columns(
-        processed: true,
-        processed_at: Time.current,
-        results: results
-      )
-    end
-
-    step
+    StepCompletionService.complete_with_results(step, step_name)
   end
 
   # Reset step to pending using state machine (replacement for helper.reset_step_to_default)
@@ -341,72 +288,7 @@ module FactoryWorkflowHelpers
   # Create a dummy task following the real TaskRequest initialization pattern
   # This mirrors how tasks are actually created in production but allows factory overrides
   def create_dummy_task_via_request(options = {})
-    # Extract factory options vs task_request options
-    factory_options = options.extract!(:with_dependencies, :step_states, :complete_steps, :bypass_steps)
-
-    # Register the DummyTask handler first (essential for real workflow)
-    register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
-
-    # Create a TaskRequest following the real-world pattern
-    task_request_params = {
-      name: DummyTask::TASK_REGISTRY_NAME,
-      initiator: 'test@example.com',
-      reason: 'testing orchestration',
-      source_system: 'test-system',
-      context: { dummy: true },
-      tags: %w[dummy testing orchestration],
-      bypass_steps: factory_options[:bypass_steps] || []
-    }.merge(options)
-
-    task_request = Tasker::Types::TaskRequest.new(task_request_params)
-
-    # Create task using the real initialization flow
-    task = Tasker::Task.create_with_defaults!(task_request)
-
-    # Let the task handler establish steps and dependencies (real-world pattern)
-    if factory_options.fetch(:with_dependencies, true)
-      task_handler = Tasker::HandlerFactory.instance.get(DummyTask::TASK_REGISTRY_NAME)
-
-      # This follows the real workflow initialization pattern:
-      # 1. Get step templates from the handler
-      # 2. Get steps for the task (creates workflow steps if they don't exist)
-      # 3. Establish dependencies and defaults
-      step_templates = task_handler.step_templates
-      steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
-      task_handler.establish_step_dependencies_and_defaults(task, steps)
-
-      # Reload task to get the created workflow steps
-      task.reload
-
-      # Handle step state configuration if specified
-      step_states = factory_options[:step_states] || :pending
-      complete_steps = factory_options[:complete_steps] || []
-
-      case step_states
-      when :pending
-        # Steps are already in pending state by default - no action needed
-        nil
-      when :some_complete
-        # Complete the first two steps (step-one and step-two)
-        complete_steps = [DummyTask::STEP_ONE, DummyTask::STEP_TWO] if complete_steps.empty?
-      end
-
-      # Complete specified steps using state machine transitions
-      complete_steps.each do |step_name|
-        step = task.workflow_steps.joins(:named_step).find_by(named_step: { name: step_name })
-        next unless step
-
-        step.state_machine.transition_to!(:in_progress)
-        step.state_machine.transition_to!(:complete)
-        step.update_columns(
-          processed: true,
-          processed_at: Time.current,
-          results: { dummy: true, step_name: step_name }
-        )
-      end
-    end
-
-    task
+    DummyTaskRequestService.create_with_options(options)
   end
 
   # Create a dummy task specifically for orchestration testing
@@ -449,6 +331,352 @@ module FactoryWorkflowHelpers
           "Test Helper: Completing parent step #{parent.workflow_step_id} (currently #{parent_status}) to satisfy dependency for step #{step.workflow_step_id}"
         end
         complete_step_via_state_machine(parent)
+      end
+    end
+  end
+
+  # Service class to handle step completion with results
+  # Reduces complexity by organizing completion logic
+  class StepCompletionService
+    class << self
+      # Complete a step with appropriate results based on step name
+      #
+      # @param step [Tasker::WorkflowStep] The step to complete
+      # @param step_name [String] Optional step name override
+      # @return [Tasker::WorkflowStep] The completed step
+      def complete_with_results(step, step_name = nil)
+        step_name ||= step.named_step.name
+
+        # Handle state transition logic
+        StateTransitionHandler.handle_completion_transitions(step)
+
+        # Set step-specific results and complete
+        results = ResultsGenerator.generate_for_step(step_name)
+        finalize_step_completion(step, results)
+
+        step
+      end
+
+      private
+
+      # Finalize step completion with results
+      #
+      # @param step [Tasker::WorkflowStep] The step to complete
+      # @param results [Hash] Results to set
+      # @return [void]
+      def finalize_step_completion(step, results)
+        step.state_machine.transition_to!(:complete)
+        step.update_columns(
+          processed: true,
+          processed_at: Time.current,
+          results: results
+        )
+      end
+    end
+
+    # Service class to handle state transitions for step completion
+    class StateTransitionHandler
+      class << self
+        # Handle all necessary state transitions for completion
+        #
+        # @param step [Tasker::WorkflowStep] The step to transition
+        # @return [void]
+        def handle_completion_transitions(step)
+          current_state = get_current_state(step)
+
+          return if already_completed?(current_state)
+
+          handle_error_state_recovery(step) if error_state?(current_state)
+          transition_to_in_progress_if_needed(step, current_state)
+        end
+
+        private
+
+        # Get current state with defensive handling
+        #
+        # @param step [Tasker::WorkflowStep] The step
+        # @return [String] Current state
+        def get_current_state(step)
+          current_state = step.state_machine.current_state
+          current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
+        end
+
+        # Check if step is already completed
+        #
+        # @param current_state [String] Current state
+        # @return [Boolean] True if already completed
+        def already_completed?(current_state)
+          completion_states = [
+            Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+            Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+          ]
+          completion_states.include?(current_state)
+        end
+
+        # Check if step is in error state
+        #
+        # @param current_state [String] Current state
+        # @return [Boolean] True if in error state
+        def error_state?(current_state)
+          current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
+        end
+
+        # Handle recovery from error state
+        #
+        # @param step [Tasker::WorkflowStep] The step to recover
+        # @return [void]
+        def handle_error_state_recovery(step)
+          step.state_machine.transition_to!(:pending)
+        end
+
+        # Transition to in_progress if needed
+        #
+        # @param step [Tasker::WorkflowStep] The step to transition
+        # @param current_state [String] Current state
+        # @return [void]
+        def transition_to_in_progress_if_needed(step, current_state)
+          return if in_progress_or_beyond?(current_state)
+
+          step.state_machine.transition_to!(:in_progress)
+        end
+
+        # Check if step is in progress or beyond
+        #
+        # @param current_state [String] Current state
+        # @return [Boolean] True if in progress or beyond
+        def in_progress_or_beyond?(current_state)
+          advanced_states = [
+            Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+            Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+            Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+          ]
+          advanced_states.include?(current_state)
+        end
+      end
+    end
+
+    # Service class to generate results based on step names
+    class ResultsGenerator
+      class << self
+        # Generate appropriate results for a step based on its name
+        #
+        # @param step_name [String] The name of the step
+        # @return [Hash] Generated results
+        def generate_for_step(step_name)
+          case step_name
+          when 'fetch_cart'
+            generate_cart_results
+          when 'fetch_products'
+            generate_products_results
+          when 'validate_products'
+            generate_validation_results
+          when 'create_order'
+            generate_order_results
+          when 'publish_event'
+            generate_publish_results
+          else
+            generate_default_results
+          end
+        end
+
+        private
+
+        # Generate cart fetch results
+        #
+        # @return [Hash] Cart results
+        def generate_cart_results
+          { cart: { id: 1, items: [{ product_id: 1, quantity: 2 }] } }
+        end
+
+        # Generate products fetch results
+        #
+        # @return [Hash] Products results
+        def generate_products_results
+          { products: [{ id: 1, name: 'Test Product', in_stock: true }] }
+        end
+
+        # Generate validation results
+        #
+        # @return [Hash] Validation results
+        def generate_validation_results
+          { valid_products: [{ id: 1, validated: true }] }
+        end
+
+        # Generate order creation results
+        #
+        # @return [Hash] Order results
+        def generate_order_results
+          { order_id: SecureRandom.uuid }
+        end
+
+        # Generate publish event results
+        #
+        # @return [Hash] Publish results
+        def generate_publish_results
+          { published: true, publish_results: { status: 'placed_pending_fulfillment' } }
+        end
+
+        # Generate default results
+        #
+        # @return [Hash] Default results
+        def generate_default_results
+          { dummy: true, other: true }
+        end
+      end
+    end
+  end
+
+  # Service class to handle dummy task creation via request pattern
+  # Reduces complexity by organizing task creation logic
+  class DummyTaskRequestService
+    class << self
+      # Create a dummy task with specified options
+      #
+      # @param options [Hash] Task creation options
+      # @return [Tasker::Task] Created task
+      def create_with_options(options = {})
+        factory_options = options.extract!(:with_dependencies, :step_states, :complete_steps, :bypass_steps)
+
+        # Register handler and create task
+        register_dummy_task_handler
+        task = create_task_from_request(options, factory_options[:bypass_steps])
+
+        # Set up workflow dependencies if requested
+        setup_workflow_dependencies(task, factory_options) if factory_options.fetch(:with_dependencies, true)
+
+        task
+      end
+
+      private
+
+      # Register the DummyTask handler
+      #
+      # @return [void]
+      def register_dummy_task_handler
+        factory = Tasker::HandlerFactory.instance
+        factory.register(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+      end
+
+      # Create task from request parameters
+      #
+      # @param options [Hash] Task creation options
+      # @param bypass_steps [Array] Steps to bypass
+      # @return [Tasker::Task] Created task
+      def create_task_from_request(options, bypass_steps)
+        task_request_params = build_task_request_params(options, bypass_steps)
+        task_request = Tasker::Types::TaskRequest.new(task_request_params)
+        Tasker::Task.create_with_defaults!(task_request)
+      end
+
+      # Build task request parameters
+      #
+      # @param options [Hash] User-provided options
+      # @param bypass_steps [Array] Steps to bypass
+      # @return [Hash] Task request parameters
+      def build_task_request_params(options, bypass_steps)
+        {
+          name: DummyTask::TASK_REGISTRY_NAME,
+          initiator: 'test@example.com',
+          reason: 'testing orchestration',
+          source_system: 'test-system',
+          context: { dummy: true },
+          tags: %w[dummy testing orchestration],
+          bypass_steps: bypass_steps || []
+        }.merge(options)
+      end
+
+      # Set up workflow dependencies for the task
+      #
+      # @param task [Tasker::Task] The task to set up
+      # @param factory_options [Hash] Factory configuration options
+      # @return [void]
+      def setup_workflow_dependencies(task, factory_options)
+        WorkflowSetupService.configure_workflow(task, factory_options)
+      end
+    end
+
+    # Service class to handle workflow setup and step configuration
+    class WorkflowSetupService
+      class << self
+        # Configure workflow for the task
+        #
+        # @param task [Tasker::Task] The task to configure
+        # @param factory_options [Hash] Factory configuration options
+        # @return [void]
+        def configure_workflow(task, factory_options)
+          initialize_workflow_steps(task)
+          configure_step_states(task, factory_options)
+        end
+
+        private
+
+        # Initialize workflow steps using real-world pattern
+        #
+        # @param task [Tasker::Task] The task to initialize
+        # @return [void]
+        def initialize_workflow_steps(task)
+          task_handler = Tasker::HandlerFactory.instance.get(DummyTask::TASK_REGISTRY_NAME)
+
+          # Follow real workflow initialization pattern
+          step_templates = task_handler.step_templates
+          steps = Tasker::WorkflowStep.get_steps_for_task(task, step_templates)
+          task_handler.establish_step_dependencies_and_defaults(task, steps)
+
+          task.reload
+        end
+
+        # Configure step states based on factory options
+        #
+        # @param task [Tasker::Task] The task to configure
+        # @param factory_options [Hash] Factory configuration options
+        # @return [void]
+        def configure_step_states(task, factory_options)
+          step_states = factory_options[:step_states] || :pending
+          complete_steps = determine_steps_to_complete(step_states, factory_options[:complete_steps])
+
+          complete_specified_steps(task, complete_steps)
+        end
+
+        # Determine which steps to complete based on configuration
+        #
+        # @param step_states [Symbol] Step states configuration
+        # @param explicit_complete_steps [Array] Explicitly specified steps to complete
+        # @return [Array] Steps to complete
+        def determine_steps_to_complete(step_states, explicit_complete_steps)
+          return explicit_complete_steps || [] unless step_states == :some_complete
+
+          # Default for :some_complete - complete first two steps
+          explicit_complete_steps.presence || [DummyTask::STEP_ONE, DummyTask::STEP_TWO]
+        end
+
+        # Complete specified steps using state machine transitions
+        #
+        # @param task [Tasker::Task] The task containing steps
+        # @param complete_steps [Array] Step names to complete
+        # @return [void]
+        def complete_specified_steps(task, complete_steps)
+          complete_steps.each do |step_name|
+            step = task.workflow_steps.joins(:named_step).find_by(named_step: { name: step_name })
+            next unless step
+
+            complete_individual_step(step, step_name)
+          end
+        end
+
+        # Complete an individual step with transitions and results
+        #
+        # @param step [Tasker::WorkflowStep] The step to complete
+        # @param step_name [String] The step name
+        # @return [void]
+        def complete_individual_step(step, step_name)
+          step.state_machine.transition_to!(:in_progress)
+          step.state_machine.transition_to!(:complete)
+          step.update_columns(
+            processed: true,
+            processed_at: Time.current,
+            results: { dummy: true, step_name: step_name }
+          )
+        end
       end
     end
   end

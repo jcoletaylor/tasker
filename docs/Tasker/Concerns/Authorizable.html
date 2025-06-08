@@ -132,7 +132,17 @@
   </div>
 
 
-</div>
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Authorizable/AdminStatusChecker.html" title="Tasker::Concerns::Authorizable::AdminStatusChecker (class)">AdminStatusChecker</a></span>
+    
+  
+</p>
+
 
 
 
@@ -347,13 +357,13 @@
       <pre class="lines">
 
 
-162
-163
-164
-165</pre>
+156
+157
+158
+159</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 162</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 156</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_tasker_permissions'>all_tasker_permissions</span>
   <span class='id identifier rubyid_all_permissions'>all_permissions</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Authorization.html" title="Tasker::Authorization (module)">Authorization</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Authorization/ResourceRegistry.html" title="Tasker::Authorization::ResourceRegistry (class)">ResourceRegistry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all_permissions'><span class='object_link'><a href="../Authorization/ResourceRegistry.html#all_permissions-class_method" title="Tasker::Authorization::ResourceRegistry.all_permissions (method)">all_permissions</a></span></span>
@@ -428,12 +438,12 @@
       <pre class="lines">
 
 
-152
-153
-154</pre>
+146
+147
+148</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 152</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 146</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_can_access_tasker_resource?'>can_access_tasker_resource?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_tasker_permissions_for_resource'>tasker_permissions_for_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span>
@@ -599,13 +609,7 @@
 119
 120
 121
-122
-123
-124
-125
-126
-127
-128</pre>
+122</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 113</span>
@@ -616,14 +620,8 @@
 
   <span class='kw'>if</span> <span class='id identifier rubyid_admin_method'>admin_method</span> <span class='op'>!=</span> <span class='symbol'>:tasker_admin?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='id identifier rubyid_admin_method'>admin_method</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='id identifier rubyid_admin_method'>admin_method</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='kw'>false</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:admin?</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_admin?'>admin?</span>
-    <span class='kw'>true</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:role</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_role'>role</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>admin</span><span class='tstring_end'>&#39;</span></span>
-    <span class='kw'>true</span>
-  <span class='kw'>elsif</span> <span class='id identifier rubyid_tasker_roles'>tasker_roles</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>admin</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='kw'>true</span>
   <span class='kw'>else</span>
-    <span class='kw'>false</span>
+    <span class='const'><span class='object_link'><a href="Authorizable/AdminStatusChecker.html" title="Tasker::Concerns::Authorizable::AdminStatusChecker (class)">AdminStatusChecker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_check'><span class='object_link'><a href="Authorizable/AdminStatusChecker.html#check-class_method" title="Tasker::Concerns::Authorizable::AdminStatusChecker.check (method)">check</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -697,18 +695,18 @@
       <pre class="lines">
 
 
+132
+133
+134
+135
+136
+137
 138
 139
-140
-141
-142
-143
-144
-145
-146</pre>
+140</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 138</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/authorizable.rb', line 132</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_tasker_permissions_for_resource'>tasker_permissions_for_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='comment'># Default: return all actions for the resource if user has any permissions
@@ -808,7 +806,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  8 08:22:07 2025 by
+  Generated on Sun Jun  8 09:01:51 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

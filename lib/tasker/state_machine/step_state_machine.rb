@@ -348,39 +348,91 @@ module Tasker
         # @param context [Hash] The base context
         # @return [Hash] Enhanced context with standardized payload structure
         def build_standardized_payload(_event_name, context)
-          # Base payload with core identifiers
-          enhanced_context = {
-            # Core identifiers (always present)
-            task_id: context[:task_id],
-            step_id: context[:step_id],
-            step_name: context[:step_name],
+          StandardizedPayloadBuilder.build(context)
+        end
 
-            # State transition information
-            from_state: context[:from_state],
-            to_state: context[:to_state],
+        # Service class to build standardized event payloads
+        # Reduces complexity by organizing payload building logic
+        class StandardizedPayloadBuilder
+          class << self
+            # Build standardized payload from context
+            #
+            # @param context [Hash] The base context
+            # @return [Hash] Enhanced context with standardized payload structure
+            def build(context)
+              base_payload = build_base_payload(context)
+              enhanced_payload = add_timing_information(base_payload, context)
+              final_payload = add_error_information(enhanced_payload, context)
 
-            # Timing information (provide defaults for missing keys)
-            started_at: context[:started_at] || context[:transitioned_at],
-            completed_at: context[:completed_at] || context[:transitioned_at],
-            execution_duration: context[:execution_duration] || 0.0,
+              merge_additional_context(final_payload, context)
+            end
 
-            # Error information (for error events)
-            error_message: context[:error_message] || context[:error] || 'Unknown error',
-            exception_class: context[:exception_class] || 'StandardError',
-            attempt_number: context[:attempt_number] || 1,
+            private
 
-            # Additional context
-            transitioned_at: context[:transitioned_at] || Time.zone.now
-          }
+            # Build base payload with core identifiers
+            #
+            # @param context [Hash] The base context
+            # @return [Hash] Base payload
+            def build_base_payload(context)
+              {
+                # Core identifiers (always present)
+                task_id: context[:task_id],
+                step_id: context[:step_id],
+                step_name: context[:step_name],
 
-          # Merge in any additional context provided
-          enhanced_context.merge!(context.except(
-                                    :task_id, :step_id, :step_name, :from_state, :to_state,
-                                    :started_at, :completed_at, :execution_duration,
-                                    :error_message, :exception_class, :attempt_number, :transitioned_at
-                                  ))
+                # State transition information
+                from_state: context[:from_state],
+                to_state: context[:to_state],
 
-          enhanced_context
+                # Additional context
+                transitioned_at: context[:transitioned_at] || Time.zone.now
+              }
+            end
+
+            # Add timing information to payload
+            #
+            # @param payload [Hash] The base payload
+            # @param context [Hash] The context
+            # @return [Hash] Enhanced payload with timing info
+            def add_timing_information(payload, context)
+              payload.merge(
+                # Timing information (provide defaults for missing keys)
+                started_at: context[:started_at] || context[:transitioned_at],
+                completed_at: context[:completed_at] || context[:transitioned_at],
+                execution_duration: context[:execution_duration] || 0.0
+              )
+            end
+
+            # Add error information to payload
+            #
+            # @param payload [Hash] The base payload
+            # @param context [Hash] The context
+            # @return [Hash] Enhanced payload with error info
+            def add_error_information(payload, context)
+              payload.merge(
+                # Error information (for error events)
+                error_message: context[:error_message] || context[:error] || 'Unknown error',
+                exception_class: context[:exception_class] || 'StandardError',
+                attempt_number: context[:attempt_number] || 1
+              )
+            end
+
+            # Merge additional context while excluding already processed keys
+            #
+            # @param payload [Hash] The base payload
+            # @param context [Hash] The context
+            # @return [Hash] Final payload
+            def merge_additional_context(payload, context)
+              excluded_keys = %i[
+                task_id step_id step_name from_state to_state
+                started_at completed_at execution_duration
+                error_message exception_class attempt_number transitioned_at
+              ]
+
+              payload.merge!(context.except(*excluded_keys))
+              payload
+            end
+          end
         end
 
         # Determine the appropriate event name for a state transition using hashmap lookup

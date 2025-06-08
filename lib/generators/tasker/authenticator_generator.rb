@@ -63,38 +63,101 @@ module Tasker
       end
 
       def show_usage_instructions
-        say "\n#{set_color('Authenticator created successfully!', :green)}"
+        UsageInstructionsFormatter.display(self)
+      end
 
-        say "\n#{set_color('Files created:', :cyan)}"
-        say "  - #{File.join(options[:directory], "#{file_name}_authenticator.rb")}"
-        if options[:with_spec] && defined?(RSpec)
-          say "  - #{File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")}"
+      # Service class to format and display usage instructions
+      # Reduces complexity by organizing instruction display logic
+      class UsageInstructionsFormatter
+        class << self
+          # Display complete usage instructions for the generator
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display(generator)
+            display_success_header(generator)
+            display_created_files(generator)
+            display_configuration_example(generator)
+            display_type_specific_instructions(generator)
+            display_test_instructions(generator)
+            display_documentation_links(generator)
+          end
+
+          private
+
+          # Display success header
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_success_header(generator)
+            generator.say "\n#{generator.set_color('Authenticator created successfully!', :green)}"
+          end
+
+          # Display list of created files
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_created_files(generator)
+            generator.say "\n#{generator.set_color('Files created:', :cyan)}"
+            generator.say "  - #{File.join(generator.options[:directory],
+                                           "#{generator.send(:file_name)}_authenticator.rb")}"
+
+            return unless generator.options[:with_spec] && defined?(RSpec)
+
+            generator.say "  - #{File.join('spec/tasker/authenticators',
+                                           "#{generator.send(:file_name)}_authenticator_spec.rb")}"
+          end
+
+          # Display configuration example
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_configuration_example(generator)
+            generator.say "\n#{generator.set_color('Configuration example:', :yellow)}"
+            generator.say generator.send(:configuration_example)
+          end
+
+          # Display type-specific next steps
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_type_specific_instructions(generator)
+            generator.say "\n#{generator.set_color('Next steps:', :cyan)}"
+
+            case generator.options[:type].downcase
+            when 'jwt'
+              generator.send(:show_jwt_instructions)
+            when 'devise'
+              generator.send(:show_devise_instructions)
+            when 'api_token'
+              generator.send(:show_api_token_instructions)
+            when 'omniauth'
+              generator.send(:show_omniauth_instructions)
+            else
+              generator.send(:show_custom_instructions)
+            end
+          end
+
+          # Display test running instructions
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_test_instructions(generator)
+            return unless generator.options[:with_spec] && defined?(RSpec)
+
+            generator.say "\n  4. Run your tests:"
+            generator.say "     bundle exec rspec spec/tasker/authenticators/#{generator.send(:file_name)}_authenticator_spec.rb"
+          end
+
+          # Display documentation links
+          #
+          # @param generator [AuthenticatorGenerator] The generator instance
+          # @return [void]
+          def display_documentation_links(generator)
+            generator.say "\n#{generator.set_color('Documentation:', :magenta)}"
+            generator.say '  See docs/AUTH.md for complete authentication guide'
+          end
         end
-
-        say "\n#{set_color('Configuration example:', :yellow)}"
-        say configuration_example
-
-        say "\n#{set_color('Next steps:', :cyan)}"
-        case options[:type].downcase
-        when 'jwt'
-          show_jwt_instructions
-        when 'devise'
-          show_devise_instructions
-        when 'api_token'
-          show_api_token_instructions
-        when 'omniauth'
-          show_omniauth_instructions
-        else
-          show_custom_instructions
-        end
-
-        if options[:with_spec] && defined?(RSpec)
-          say "\n  4. Run your tests:"
-          say "     bundle exec rspec spec/tasker/authenticators/#{file_name}_authenticator_spec.rb"
-        end
-
-        say "\n#{set_color('Documentation:', :magenta)}"
-        say '  See docs/AUTH.md for complete authentication guide'
       end
 
       private

@@ -198,31 +198,7 @@ module Tasker
     #
     # @return [String] Description of what this transition represents
     def description
-      case to_state
-      when 'pending'
-        if retry_transition?
-          "Step retry attempt ##{attempt_number}"
-        else
-          'Step initialized and ready for execution'
-        end
-      when 'in_progress'
-        "Step execution started (attempt ##{attempt_number})"
-      when 'complete'
-        duration_text = execution_duration ? " in #{execution_duration.round(2)}s" : ''
-        "Step completed successfully#{duration_text}"
-      when 'error'
-        error_msg = get_metadata('error_message', 'Unknown error')
-        backoff_text = has_metadata?('backoff_until') ? ' (retry scheduled)' : ''
-        "Step failed: #{error_msg}#{backoff_text}"
-      when 'cancelled'
-        reason = get_metadata('triggered_by', 'manual cancellation')
-        "Step cancelled due to #{reason}"
-      when 'resolved_manually'
-        resolver = get_metadata('resolved_by', 'unknown')
-        "Step manually resolved by #{resolver}"
-      else
-        "Step transitioned to #{to_state}"
-      end
+      TransitionDescriptionFormatter.format(self)
     end
 
     # Get formatted metadata for display
@@ -320,6 +296,102 @@ module Tasker
     rescue ActiveRecord::StatementInvalid => e
       # Handle cases where the table might not exist (e.g., during migrations)
       Rails.logger.warn { "Could not validate workflow step existence: #{e.message}" }
+    end
+
+    # Service class to format transition descriptions
+    # Reduces complexity by organizing description logic by state
+    class TransitionDescriptionFormatter
+      class << self
+        # Format transition description based on state
+        #
+        # @param transition [WorkflowStepTransition] The transition to describe
+        # @return [String] Formatted description
+        def format(transition)
+          case transition.to_state
+          when 'pending'
+            format_pending_description(transition)
+          when 'in_progress'
+            format_in_progress_description(transition)
+          when 'complete'
+            format_complete_description(transition)
+          when 'error'
+            format_error_description(transition)
+          when 'cancelled'
+            format_cancelled_description(transition)
+          when 'resolved_manually'
+            format_resolved_description(transition)
+          else
+            format_unknown_description(transition)
+          end
+        end
+
+        private
+
+        # Format description for pending transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_pending_description(transition)
+          if transition.retry_transition?
+            "Step retry attempt ##{transition.attempt_number}"
+          else
+            'Step initialized and ready for execution'
+          end
+        end
+
+        # Format description for in_progress transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_in_progress_description(transition)
+          "Step execution started (attempt ##{transition.attempt_number})"
+        end
+
+        # Format description for complete transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_complete_description(transition)
+          duration_text = transition.execution_duration ? " in #{transition.execution_duration.round(2)}s" : ''
+          "Step completed successfully#{duration_text}"
+        end
+
+        # Format description for error transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_error_description(transition)
+          error_msg = transition.get_metadata('error_message', 'Unknown error')
+          backoff_text = transition.has_metadata?('backoff_until') ? ' (retry scheduled)' : ''
+          "Step failed: #{error_msg}#{backoff_text}"
+        end
+
+        # Format description for cancelled transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_cancelled_description(transition)
+          reason = transition.get_metadata('triggered_by', 'manual cancellation')
+          "Step cancelled due to #{reason}"
+        end
+
+        # Format description for resolved_manually transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_resolved_description(transition)
+          resolver = transition.get_metadata('resolved_by', 'unknown')
+          "Step manually resolved by #{resolver}"
+        end
+
+        # Format description for unknown transitions
+        #
+        # @param transition [WorkflowStepTransition] The transition
+        # @return [String] Formatted description
+        def format_unknown_description(transition)
+          "Step transitioned to #{transition.to_state}"
+        end
+      end
     end
   end
 end

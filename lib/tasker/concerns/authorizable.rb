@@ -116,14 +116,8 @@ module Tasker
 
         if admin_method != :tasker_admin? && respond_to?(admin_method)
           send(admin_method) || false
-        elsif respond_to?(:admin?) && admin?
-          true
-        elsif respond_to?(:role) && role == 'admin'
-          true
-        elsif tasker_roles.include?('admin')
-          true
         else
-          false
+          AdminStatusChecker.check(self)
         end
       end
 
@@ -162,6 +156,48 @@ module Tasker
       def all_tasker_permissions
         all_permissions = Tasker::Authorization::ResourceRegistry.all_permissions
         all_permissions.select { |permission| has_tasker_permission?(permission) }
+      end
+
+      # Service class to check admin status using various authentication sources
+      # Reduces complexity by organizing admin checking logic
+      class AdminStatusChecker
+        class << self
+          # Check if user has admin status using multiple strategies
+          #
+          # @param user [Object] User object to check
+          # @return [Boolean] True if user is an admin
+          def check(user)
+            admin_method_checker(user) ||
+              admin_role_checker(user) ||
+              admin_roles_list_checker(user)
+          end
+
+          private
+
+          # Check admin status using admin? method
+          #
+          # @param user [Object] User object to check
+          # @return [Boolean] True if user has admin? method and returns true
+          def admin_method_checker(user)
+            user.respond_to?(:admin?) && user.admin?
+          end
+
+          # Check admin status using role attribute
+          #
+          # @param user [Object] User object to check
+          # @return [Boolean] True if user role is 'admin'
+          def admin_role_checker(user)
+            user.respond_to?(:role) && user.role == 'admin'
+          end
+
+          # Check admin status using roles list
+          #
+          # @param user [Object] User object to check
+          # @return [Boolean] True if user roles include 'admin'
+          def admin_roles_list_checker(user)
+            user.respond_to?(:tasker_roles) && user.tasker_roles.include?('admin')
+          end
+        end
       end
     end
   end

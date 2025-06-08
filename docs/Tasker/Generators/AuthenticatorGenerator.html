@@ -101,6 +101,16 @@
   
 </div>
 
+<h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="AuthenticatorGenerator/UsageInstructionsFormatter.html" title="Tasker::Generators::AuthenticatorGenerator::UsageInstructionsFormatter (class)">UsageInstructionsFormatter</a></span>
+    
+  
+</p>
 
 
 
@@ -335,75 +345,13 @@
 
 65
 66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98</pre>
+67</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/generators/tasker/authenticator_generator.rb', line 65</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_show_usage_instructions'>show_usage_instructions</span>
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_set_color'>set_color</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Authenticator created successfully!</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:green</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_set_color'>set_color</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Files created:</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:cyan</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>  - </span><span class='embexpr_beg'>#{</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:directory</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_content'>_authenticator.rb</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:with_spec</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>RSpec</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>  - </span><span class='embexpr_beg'>#{</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>spec/tasker/authenticators</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_content'>_authenticator_spec.rb</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span>
-
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_set_color'>set_color</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Configuration example:</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:yellow</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='id identifier rubyid_say'>say</span> <span class='id identifier rubyid_configuration_example'>configuration_example</span>
-
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_set_color'>set_color</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Next steps:</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:cyan</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>case</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>jwt</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_show_jwt_instructions'>show_jwt_instructions</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>devise</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_show_devise_instructions'>show_devise_instructions</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>api_token</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_show_api_token_instructions'>show_api_token_instructions</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>omniauth</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_show_omniauth_instructions'>show_omniauth_instructions</span>
-  <span class='kw'>else</span>
-    <span class='id identifier rubyid_show_custom_instructions'>show_custom_instructions</span>
-  <span class='kw'>end</span>
-
-  <span class='kw'>if</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:with_spec</span><span class='rbracket'>]</span> <span class='op'>&amp;&amp;</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'>RSpec</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n  4. Run your tests:</span><span class='tstring_end'>&quot;</span></span>
-    <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>     bundle exec rspec spec/tasker/authenticators/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_file_name'>file_name</span><span class='embexpr_end'>}</span><span class='tstring_content'>_authenticator_spec.rb</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span>
-
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_set_color'>set_color</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Documentation:</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:magenta</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='id identifier rubyid_say'>say</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>  See docs/AUTH.md for complete authentication guide</span><span class='tstring_end'>&#39;</span></span>
+  <span class='const'><span class='object_link'><a href="AuthenticatorGenerator/UsageInstructionsFormatter.html" title="Tasker::Generators::AuthenticatorGenerator::UsageInstructionsFormatter (class)">UsageInstructionsFormatter</a></span></span><span class='period'>.</span><span class='id identifier rubyid_display'><span class='object_link'><a href="AuthenticatorGenerator/UsageInstructionsFormatter.html#display-class_method" title="Tasker::Generators::AuthenticatorGenerator::UsageInstructionsFormatter.display (method)">display</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -415,7 +363,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  8 08:22:11 2025 by
+  Generated on Sun Jun  8 09:01:54 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

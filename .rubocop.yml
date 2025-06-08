@@ -86,7 +86,7 @@ Metrics/PerceivedComplexity:
   Exclude:
     - 'spec/examples/**/*'   # Example code may have higher complexity for demonstration
 
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Enabled: false
 
 Naming/AccessorMethodName:

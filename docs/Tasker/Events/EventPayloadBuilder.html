@@ -114,7 +114,17 @@
 <div class="tags">
   
 
-</div>
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="EventPayloadBuilder/ErrorInfoExtractor.html" title="Tasker::Events::EventPayloadBuilder::ErrorInfoExtractor (class)">ErrorInfoExtractor</a></span>, <span class='object_link'><a href="EventPayloadBuilder/StepPayloadBuilder.html" title="Tasker::Events::EventPayloadBuilder::StepPayloadBuilder (class)">StepPayloadBuilder</a></span>
+    
+  
+</p>
+
 
 
 
@@ -292,20 +302,20 @@
       <pre class="lines">
 
 
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124</pre>
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/event_payload_builder.rb', line 114</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/event_payload_builder.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build_orchestration_payload'>build_orchestration_payload</span><span class='lparen'>(</span><span class='label'>event_type:</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -443,85 +453,13 @@
 
 25
 26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63</pre>
+27</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/events/event_payload_builder.rb', line 25</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build_step_payload'>build_step_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>event_type:</span> <span class='symbol'>:completed</span><span class='comma'>,</span> <span class='label'>additional_context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task'>task</span> <span class='op'>||=</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_task'>task</span>
-
-  <span class='id identifier rubyid_base_payload'>base_payload</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-    <span class='comment'># Core identifiers (always present)
-</span>    <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
-    <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
-    <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
-
-    <span class='comment'># Timing information - steps use last_attempted_at and processed_at
-</span>    <span class='label'>started_at:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_last_attempted_at'>last_attempted_at</span><span class='op'>&amp;.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
-    <span class='label'>completed_at:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_processed_at'>processed_at</span><span class='op'>&amp;.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
-
-    <span class='comment'># Retry and attempt tracking
-</span>    <span class='label'>attempt_number:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_attempts'>attempts</span> <span class='op'>||</span> <span class='int'>1</span><span class='comma'>,</span>
-    <span class='label'>retry_limit:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_retry_limit'>retry_limit</span><span class='comma'>,</span>
-
-    <span class='comment'># Event metadata
-</span>    <span class='label'>event_type:</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span>
-    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span>
-  <span class='rbrace'>}</span>
-
-  <span class='comment'># Add event-specific fields
-</span>  <span class='kw'>case</span> <span class='id identifier rubyid_event_type'>event_type</span>
-  <span class='kw'>when</span> <span class='symbol'>:completed</span>
-    <span class='id identifier rubyid_base_payload'>base_payload</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_build_completion_payload'>build_completion_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='kw'>when</span> <span class='symbol'>:failed</span>
-    <span class='id identifier rubyid_base_payload'>base_payload</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_build_failure_payload'>build_failure_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_additional_context'>additional_context</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='kw'>when</span> <span class='symbol'>:started</span>
-    <span class='id identifier rubyid_base_payload'>base_payload</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_build_start_payload'>build_start_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='kw'>when</span> <span class='symbol'>:retry</span>
-    <span class='id identifier rubyid_base_payload'>base_payload</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_build_retry_payload'>build_retry_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-
-  <span class='comment'># Merge additional context, allowing overrides
-</span>  <span class='id identifier rubyid_base_payload'>base_payload</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_additional_context'>additional_context</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_base_payload'>base_payload</span>
+  <span class='const'><span class='object_link'><a href="EventPayloadBuilder/StepPayloadBuilder.html" title="Tasker::Events::EventPayloadBuilder::StepPayloadBuilder (class)">StepPayloadBuilder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_build'><span class='object_link'><a href="EventPayloadBuilder/StepPayloadBuilder.html#build-class_method" title="Tasker::Events::EventPayloadBuilder::StepPayloadBuilder.build (method)">build</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='id identifier rubyid_additional_context'>additional_context</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -628,46 +566,46 @@
       <pre class="lines">
 
 
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99
-100
-101
-102
-103
-104
-105
-106
-107</pre>
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/events/event_payload_builder.rb', line 71</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/events/event_payload_builder.rb', line 35</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build_task_payload'>build_task_payload</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='label'>event_type:</span> <span class='symbol'>:completed</span><span class='comma'>,</span> <span class='label'>additional_context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='comment'># Get all completion stats in a single optimized query
@@ -716,7 +654,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  8 08:22:10 2025 by
+  Generated on Sun Jun  8 09:01:53 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

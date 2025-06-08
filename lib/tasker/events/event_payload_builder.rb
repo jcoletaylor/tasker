@@ -23,43 +23,7 @@ module Tasker
         # @param additional_context [Hash] Additional context to merge in
         # @return [Hash] Standardized event payload
         def build_step_payload(step, task = nil, event_type: :completed, additional_context: {})
-          task ||= step.task
-
-          base_payload = {
-            # Core identifiers (always present)
-            task_id: task.task_id,
-            step_id: step.workflow_step_id,
-            step_name: step.name,
-
-            # Timing information - steps use last_attempted_at and processed_at
-            started_at: step.last_attempted_at&.iso8601,
-            completed_at: step.processed_at&.iso8601,
-
-            # Retry and attempt tracking
-            attempt_number: step.attempts || 1,
-            retry_limit: step.retry_limit,
-
-            # Event metadata
-            event_type: event_type.to_s,
-            timestamp: Time.current.iso8601
-          }
-
-          # Add event-specific fields
-          case event_type
-          when :completed
-            base_payload.merge!(build_completion_payload(step))
-          when :failed
-            base_payload.merge!(build_failure_payload(step, additional_context))
-          when :started
-            base_payload.merge!(build_start_payload(step))
-          when :retry
-            base_payload.merge!(build_retry_payload(step))
-          end
-
-          # Merge additional context, allowing overrides
-          base_payload.merge!(additional_context)
-
-          base_payload
+          StepPayloadBuilder.build(step, task, event_type, additional_context)
         end
 
         # Build standardized payload for task events
@@ -167,8 +131,8 @@ module Tasker
         def build_failure_payload(step, additional_context = {})
           payload = {}
 
-          # Extract error information from step results or additional context
-          error_info = extract_error_info(step, additional_context)
+          # Extract error information using the refactored service
+          error_info = ErrorInfoExtractor.extract(step, additional_context)
           payload.merge!(error_info)
 
           # Include step results
@@ -276,42 +240,6 @@ module Tasker
           }
         end
 
-        # Extract error information from step and context
-        #
-        # @param step [WorkflowStep] The step with error
-        # @param additional_context [Hash] Additional context
-        # @return [Hash] Error information payload
-        def extract_error_info(step, additional_context = {})
-          error_payload = {}
-
-          # Primary error message (standardized key for TelemetrySubscriber)
-          error_payload[:error_message] = additional_context[:error_message] ||
-                                          additional_context[:error] ||
-                                          step.results&.dig('error') ||
-                                          step.results&.dig(:error) ||
-                                          'Unknown error'
-
-          # Exception class if available
-          error_payload[:exception_class] = if additional_context[:exception_object]
-                                              additional_context[:exception_object].class.name
-                                            elsif additional_context[:exception_class]
-                                              additional_context[:exception_class]
-                                            else
-                                              'StandardError'
-                                            end
-
-          # Backtrace if available
-          if additional_context[:backtrace]
-            error_payload[:backtrace] = additional_context[:backtrace]
-          elsif step.results&.dig('backtrace')
-            error_payload[:backtrace] = step.results['backtrace']
-          elsif step.results&.dig(:backtrace)
-            error_payload[:backtrace] = step.results[:backtrace]
-          end
-
-          error_payload
-        end
-
         # Check if a step is complete (reused from various helpers)
         #
         # @param step [WorkflowStep] The step to check
@@ -329,6 +257,203 @@ module Tasker
         # @return [Boolean] True if step is in error
         def step_in_error?(step)
           step.status == Tasker::Constants::WorkflowStepStatuses::ERROR
+        end
+
+        # Service class to build step payloads for different event types
+        # Reduces complexity by organizing payload building logic
+        class StepPayloadBuilder
+          class << self
+            # Build complete step payload for specified event type
+            #
+            # @param step [WorkflowStep] The workflow step
+            # @param task [Task] The task (optional, will be retrieved from step if nil)
+            # @param event_type [Symbol] The event type
+            # @param additional_context [Hash] Additional context to merge
+            # @return [Hash] Complete event payload
+            def build(step, task, event_type, additional_context)
+              task ||= step.task
+
+              base_payload = build_base_payload(step, task, event_type)
+              event_specific_payload = build_event_specific_payload(step, event_type, additional_context)
+
+              # Merge additional context, allowing overrides
+              base_payload.merge(event_specific_payload).merge(additional_context)
+            end
+
+            private
+
+            # Build base payload common to all step events
+            #
+            # @param step [WorkflowStep] The workflow step
+            # @param task [Task] The task
+            # @param event_type [Symbol] The event type
+            # @return [Hash] Base payload
+            def build_base_payload(step, task, event_type)
+              {
+                # Core identifiers (always present)
+                task_id: task.task_id,
+                step_id: step.workflow_step_id,
+                step_name: step.name,
+
+                # Timing information - steps use last_attempted_at and processed_at
+                started_at: step.last_attempted_at&.iso8601,
+                completed_at: step.processed_at&.iso8601,
+
+                # Retry and attempt tracking
+                attempt_number: step.attempts || 1,
+                retry_limit: step.retry_limit,
+
+                # Event metadata
+                event_type: event_type.to_s,
+                timestamp: Time.current.iso8601
+              }
+            end
+
+            # Build event-specific payload fields
+            #
+            # @param step [WorkflowStep] The workflow step
+            # @param event_type [Symbol] The event type
+            # @param additional_context [Hash] Additional context
+            # @return [Hash] Event-specific payload
+            def build_event_specific_payload(step, event_type, additional_context)
+              case event_type
+              when :completed
+                build_completion_payload(step)
+              when :failed
+                build_failure_payload(step, additional_context)
+              when :started
+                build_start_payload(step)
+              when :retry
+                build_retry_payload(step)
+              else
+                {}
+              end
+            end
+
+            # Build completion-specific payload fields
+            #
+            # @param step [WorkflowStep] The completed step
+            # @return [Hash] Completion payload fields
+            def build_completion_payload(step)
+              payload = {}
+
+              # Calculate execution duration using last_attempted_at and processed_at
+              payload[:execution_duration] = if step.last_attempted_at && step.processed_at
+                                               (step.processed_at - step.last_attempted_at).round(3)
+                                             else
+                                               0.0
+                                             end
+
+              # Include step results if available
+              payload[:step_results] = step.results if step.results.present?
+
+              payload
+            end
+
+            # Build failure-specific payload fields
+            #
+            # @param step [WorkflowStep] The failed step
+            # @param additional_context [Hash] Additional context (may include error details)
+            # @return [Hash] Failure payload fields
+            def build_failure_payload(step, additional_context = {})
+              payload = {}
+
+              # Extract error information using the refactored service
+              error_info = ErrorInfoExtractor.extract(step, additional_context)
+              payload.merge!(error_info)
+
+              # Include step results
+              payload[:step_results] = step.results if step.results.present?
+
+              payload
+            end
+
+            # Build start-specific payload fields
+            #
+            # @param step [WorkflowStep] The starting step
+            # @return [Hash] Start payload fields
+            def build_start_payload(step)
+              {
+                step_inputs: step.inputs,
+                step_dependencies: step.respond_to?(:parents) ? step.parents.map(&:name) : []
+              }
+            end
+
+            # Build retry-specific payload fields
+            #
+            # @param step [WorkflowStep] The step being retried
+            # @return [Hash] Retry payload fields
+            def build_retry_payload(step)
+              {
+                previous_attempts: step.attempts - 1,
+                retry_reason: 'Step execution failed',
+                backoff_strategy: 'exponential' # Could be made configurable
+              }
+            end
+          end
+        end
+      end
+
+      # Service class to extract error information from step and context
+      # Reduces complexity by organizing error extraction logic
+      class ErrorInfoExtractor
+        class << self
+          # Extract error information from step and context
+          #
+          # @param step [WorkflowStep] The step with error
+          # @param additional_context [Hash] Additional context
+          # @return [Hash] Error information payload
+          def extract(step, additional_context = {})
+            error_payload = {}
+
+            error_payload[:error_message] = extract_error_message(step, additional_context)
+            error_payload[:exception_class] = extract_exception_class(additional_context)
+
+            backtrace = extract_backtrace(step, additional_context)
+            error_payload[:backtrace] = backtrace if backtrace
+
+            error_payload
+          end
+
+          private
+
+          # Extract the primary error message from various sources
+          #
+          # @param step [WorkflowStep] The step with error
+          # @param additional_context [Hash] Additional context
+          # @return [String] The error message
+          def extract_error_message(step, additional_context)
+            additional_context[:error_message] ||
+              additional_context[:error] ||
+              step.results&.dig('error') ||
+              step.results&.dig(:error) ||
+              'Unknown error'
+          end
+
+          # Extract the exception class name
+          #
+          # @param additional_context [Hash] Additional context
+          # @return [String] The exception class name
+          def extract_exception_class(additional_context)
+            if additional_context[:exception_object]
+              additional_context[:exception_object].class.name
+            elsif additional_context[:exception_class]
+              additional_context[:exception_class]
+            else
+              'StandardError'
+            end
+          end
+
+          # Extract backtrace information from various sources
+          #
+          # @param step [WorkflowStep] The step with error
+          # @param additional_context [Hash] Additional context
+          # @return [String, nil] The backtrace or nil if not available
+          def extract_backtrace(step, additional_context)
+            additional_context[:backtrace] ||
+              step.results&.dig('backtrace') ||
+              step.results&.dig(:backtrace)
+          end
         end
       end
     end
