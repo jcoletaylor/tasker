@@ -505,22 +505,51 @@ For comprehensive documentation including quick start guides, custom authenticat
 8. **Document step dependencies**: Make it clear why steps depend on each other
 
 ```ruby
-# Example of good error handling
+# Example 1: Let exceptions bubble up (Recommended)
+def process(task, sequence, step)
+  # Attempt the operation - let exceptions propagate naturally
+  result = perform_complex_operation(task.context)
+  { success: true, data: result }
+
+  # Framework automatically handles exceptions:
+  # - Publishes step_failed event with error details
+  # - Stores error information in step.results
+  # - Transitions step to error state
+  # - Triggers retry logic if configured
+end
+
+# Example 2: Catch, record error details, then re-raise
 def process(task, sequence, step)
   begin
-    # Attempt the operation
     result = perform_complex_operation(task.context)
     { success: true, data: result }
   rescue StandardError => e
-    # Return error information - framework will still publish step_failed event
-    {
-      success: false,
+    # Add custom error context to step.results
+    step.results = {
       error: e.message,
       error_type: e.class.name,
-      backtrace: e.backtrace.first(5).join("\n")
+      custom_context: "Additional business context",
+      retry_recommended: should_retry?(e)
     }
-    # Re-raise to trigger retry logic
+    # Re-raise so framework knows this step failed
     raise
+  end
+end
+
+# Example 3: Treat handled exceptions as success
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue RecoverableError => e
+    # This exception is handled and considered a success case
+    # Step will be marked as COMPLETED, not failed
+    {
+      success: true,
+      data: get_fallback_data(task.context),
+      recovered_from_error: e.message,
+      used_fallback: true
+    }
   end
 end
 ```

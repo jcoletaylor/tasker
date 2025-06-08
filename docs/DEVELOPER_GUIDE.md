@@ -218,7 +218,7 @@ end
 
 - **Automatic Result Storage**: Return values automatically stored in `step.results`
 - **Context Access**: Full access to task context and previous step results
-- **Error Handling**: Exceptions trigger retry logic and error events
+- **Error Handling**: Framework determines success/failure based on exceptions (see Error Handling Patterns in Best Practices)
 - **Custom Processing**: Override `process_results` for custom result handling
 - **Event Integration**: Automatic event publishing for observability
 
@@ -673,9 +673,76 @@ bundle exec rails db:migrate
 
 1. **Focused Logic**: Each step should do one thing well
 2. **Clear Results**: Return meaningful data structure for dependent steps
-3. **Error Information**: Provide helpful error context when operations fail
+3. **Error Handling**: Understand how the framework determines step success/failure (see Error Handling Patterns below)
 4. **Idempotency**: Design steps to be safely retryable
 5. **Resource Cleanup**: Clean up resources in error scenarios
+
+#### Error Handling Patterns
+
+The framework determines step success/failure based on whether the `process` method raises an exception:
+
+- **Exception raised** → Step marked as FAILED, retry logic triggered, workflow stops
+- **No exception raised** → Step marked as COMPLETED, workflow continues
+
+**Pattern 1: Let exceptions bubble up (Recommended)**
+```ruby
+def process(task, sequence, step)
+  # Attempt the operation - let exceptions propagate naturally
+  result = perform_complex_operation(task.context)
+  { success: true, data: result }
+
+  # Framework automatically handles exceptions:
+  # - Publishes step_failed event with error details
+  # - Stores error information in step.results
+  # - Transitions step to error state
+  # - Triggers retry logic if configured
+end
+```
+
+**Pattern 2: Catch, record error details, then re-raise**
+```ruby
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue StandardError => e
+    # Add custom error context to step.results
+    step.results = {
+      error: e.message,
+      error_type: e.class.name,
+      custom_context: "Additional business context",
+      retry_recommended: should_retry?(e)
+    }
+    # Re-raise so framework knows this step failed
+    raise
+  end
+end
+```
+
+**Pattern 3: Treat handled exceptions as success**
+```ruby
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue RecoverableError => e
+    # This exception is handled and considered a success case
+    # Step will be marked as COMPLETED, not failed
+    {
+      success: true,
+      data: get_fallback_data(task.context),
+      recovered_from_error: e.message,
+      used_fallback: true
+    }
+  end
+end
+```
+
+⚠️ **Important**: Only catch exceptions in your `process` method if you intend to either:
+- Add custom error context to `step.results` and re-raise (Pattern 2)
+- Treat the exception as a recoverable success case (Pattern 3)
+
+**Never** catch an exception, return error data, and expect the framework to treat it as a failure - it will be marked as successful.
 
 ### Event Subscriber Guidelines
 
