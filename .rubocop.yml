@@ -5,6 +5,7 @@ plugins:
   - rubocop-rails
   - rubocop-performance
   - rubocop-factory_bot
+  - rubocop-rake
 
 AllCops:
   TargetRubyVersion: 3.2

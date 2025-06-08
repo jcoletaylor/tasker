@@ -21,6 +21,7 @@ group :development do
   gem 'rubocop-factory_bot', '~> 2.27', require: false
   gem 'rubocop-performance', '~> 1.24', require: false
   gem 'rubocop-rails', '~> 2.30', require: false
+  gem 'rubocop-rake', '~> 0.7', require: false
   gem 'rubocop-rspec', '~> 2.31', require: false
 end
 
@@ -38,9 +39,9 @@ group :development, :test do
   gem 'dotenv-rails', '~> 2.8'
   gem 'factory_bot_rails', '~> 6.4'
   gem 'opentelemetry-instrumentation-all', '~> 0.74.0'
+  gem 'rspec_junit_formatter', '~> 0.6.0' # For XML test output
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem 'rubocop-rails-omakase', require: false
-  gem 'rspec_junit_formatter', '~> 0.6.0'  # For XML test output
   gem 'sidekiq', '~> 7.3'
   gem 'yard', '~> 0.9'
 end

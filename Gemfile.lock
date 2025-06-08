@@ -591,6 +591,9 @@ GEM
       rubocop (>= 1.72)
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
+    rubocop-rake (0.7.1)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.72.1)
     rubocop-rspec (2.31.0)
       rubocop (~> 1.40)
       rubocop-capybara (~> 2.17)
@@ -659,6 +662,7 @@ DEPENDENCIES
   rubocop-performance (~> 1.24)
   rubocop-rails (~> 2.30)
   rubocop-rails-omakase
+  rubocop-rake (~> 0.7)
   rubocop-rspec (~> 2.31)
   sidekiq (~> 7.3)
   simplecov (~> 0.22)
