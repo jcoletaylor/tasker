@@ -5,20 +5,7 @@ require_relative '../../examples/test_authenticator'
 require_relative '../../examples/bad_authenticator'
 
 RSpec.describe 'Authentication Integration', type: :request do
-  # Isolate singleton state to prevent test pollution
-  around do |example|
-    original_config = Tasker::Configuration.instance_variable_get(:@configuration)
-    # Reset coordinator and test authenticator state
-    Tasker::Authentication::Coordinator.reset!
-    TestAuthenticator.reset!
-
-    example.run
-  ensure
-    # Restore original configuration and reset state
-    Tasker::Configuration.instance_variable_set(:@configuration, original_config)
-    Tasker::Authentication::Coordinator.reset!
-    TestAuthenticator.reset!
-  end
+  include_context 'configuration_test_isolation'
 
   let!(:task) { FactoryBot.create(:task, :pending) }
 

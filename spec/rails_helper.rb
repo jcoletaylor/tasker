@@ -75,21 +75,30 @@ RSpec.configure do |config|
     # Reset authentication coordinator after each test
     Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
 
-    # Check if we have test-only authenticator configuration that needs cleanup
+    # Check if we have test-only configuration that needs cleanup
     if defined?(Tasker) && Tasker.respond_to?(:configuration)
       current_config = Tasker.configuration
+      needs_reset = false
+
+      # Check if using test-only authenticators
       if current_config&.auth&.strategy == :custom
         authenticator_class = current_config.auth.options[:authenticator_class] ||
                               current_config.auth.options['authenticator_class']
-        # Reset to default if we're using test-only authenticators
-        if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
-          Tasker.configuration do |config|
-            config.auth.strategy = :none
-            config.auth.options = {}
-          end
-          # Reset coordinator again after config change
-          Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+        needs_reset = true if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
+      end
+
+      # Check if authorization is enabled (should be disabled by default)
+      needs_reset = true if current_config&.auth&.enabled == true
+
+      # Reset to defaults if needed
+      if needs_reset
+        Tasker.configuration do |config|
+          config.auth.strategy = :none
+          config.auth.options = {}
+          config.auth.enabled = false
         end
+        # Reset coordinator again after config change
+        Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
       end
     end
 
