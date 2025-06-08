@@ -36,8 +36,10 @@ module Tasker
     rescue_from NoMethodError do |exception|
       raise exception unless exception.message.include?('authorize!')
 
-      render json: { error: 'Authorization Interface Error', message: 'Coordinator does not implement required authorize! method' },
-             status: :internal_server_error
+      render json: {
+        error: 'Authorization Interface Error',
+        message: 'Coordinator does not implement required authorize! method'
+      }, status: :internal_server_error
     end
   end
 end

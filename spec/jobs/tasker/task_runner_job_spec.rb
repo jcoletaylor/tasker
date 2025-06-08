@@ -11,7 +11,7 @@ module Tasker
       register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
     end
 
-    context 'perform a task runner job' do
+    context 'when performing a task runner job' do
       it 'is able to perform a task job' do
         # Create task using factory approach
         task = create_dummy_task_workflow(context: { dummy: true }, reason: 'job runner test')

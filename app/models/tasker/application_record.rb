@@ -36,8 +36,9 @@ module Tasker
     def self.configure_database_connections
       # Ensure Tasker configuration is available - fail fast if not
       unless defined?(Tasker.configuration)
-        raise StandardError, 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
-                             'Ensure Tasker is properly initialized before models are loaded.'
+        error_message = 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
+                        'Ensure Tasker is properly initialized before models are loaded.'
+        raise StandardError, error_message
       end
 
       config = Tasker.configuration.database
@@ -47,7 +48,9 @@ module Tasker
           # Use connects_to for proper Rails multi-database support
           connects_to database: { writing: config.name.to_sym, reading: config.name.to_sym }
         else
-          Rails.logger.warn "Tasker secondary database '#{config.name}' is enabled but not found in database.yml. Using default database."
+          warning_message = "Tasker secondary database '#{config.name}' is enabled but not found in database.yml. " \
+                            'Using default database.'
+          Rails.logger.warn warning_message
         end
       end
     rescue ActiveRecord::DatabaseConfigurationError => e

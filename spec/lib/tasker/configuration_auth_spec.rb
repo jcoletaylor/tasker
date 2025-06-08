@@ -111,7 +111,7 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
   end
 
   describe 'integration scenarios' do
-    context 'Devise integration' do
+    context 'with Devise integration' do
       it 'configures for typical Devise setup' do
         config.auth do |auth|
           auth.authentication_enabled = true
@@ -129,7 +129,7 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
       end
     end
 
-    context 'API authentication' do
+    context 'with API authentication' do
       it 'configures for API token authentication' do
         config.auth do |auth|
           auth.authentication_enabled = true
@@ -146,7 +146,7 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
       end
     end
 
-    context 'No authentication' do
+    context 'without authentication' do
       it 'configures for development/testing with no auth' do
         config.auth do |auth|
           auth.authentication_enabled = false
