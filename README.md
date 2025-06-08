@@ -41,6 +41,11 @@ This guide will walk you through the fundamentals of using Tasker to build compl
   - [Best Practices](#best-practices)
   - [Event System \& Custom Integrations](#event-system--custom-integrations)
     - [Quick Start with Event Subscribers](#quick-start-with-event-subscribers)
+  - [Event Subscribers vs Workflow Steps: Architectural Distinction](#event-subscribers-vs-workflow-steps-architectural-distinction)
+    - [Use Event Subscribers For:](#use-event-subscribers-for)
+    - [Use Workflow Steps For:](#use-workflow-steps-for)
+    - [Examples of Proper Usage](#examples-of-proper-usage)
+    - [Practical Examples](#practical-examples)
     - [Example: Custom Events in Step Handlers](#example-custom-events-in-step-handlers)
     - [Example Custom Subscriber](#example-custom-subscriber)
   - [Telemetry and Observability](#telemetry-and-observability)
@@ -577,31 +582,99 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 
 # Generate a specialized metrics subscriber with helper methods
 rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
-
-# Generate authenticators for different authentication systems
-rails generate tasker:authenticator CompanyJWT --type=jwt
-rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
-rails generate tasker:authenticator ApiAuth --type=api_token
 ```
+
+## Event Subscribers vs Workflow Steps: Architectural Distinction
+
+**Critical Design Principle**: Event subscribers should handle **"collateral" or "secondary" logic** - operations that support observability, monitoring, and alerting but are not core business requirements.
+
+### Use Event Subscribers For:
+- **Operational Observability**: Logging, metrics, telemetry, traces
+- **Alerting & Monitoring**: Sentry errors, PagerDuty alerts, Slack notifications
+- **Analytics**: Business intelligence, usage tracking, performance monitoring
+- **External Integrations**: Non-critical third-party service notifications
+
+### Use Workflow Steps For:
+- **Business-Critical Operations**: Actions that must succeed for the workflow to be considered complete
+- **Operations Requiring**:
+  - **Idempotency**: Can be safely retried without side effects
+  - **Retryability**: Built-in retry logic with exponential backoff
+  - **Explicit Lifecycle Tracking**: Success/failure states that matter to the business
+  - **Transactional Integrity**: Operations that need to be rolled back on failure
+
+### Examples of Proper Usage
+
+**✅ Event Subscriber (Collateral Concerns)**:
+```ruby
+class ObservabilitySubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  subscribe_to 'order.fulfilled'
+
+  def handle_order_fulfilled(event)
+    # Operational logging and analytics - if these fail, the order is still fulfilled
+    AnalyticsService.track_fulfillment(order_id: safe_get(event, :order_id))
+    Rails.logger.info "Order #{safe_get(event, :order_id)} fulfilled"
+  end
+end
+```
+
+**✅ Workflow Step (Business Logic)**:
+```yaml
+# config/tasker/tasks/order_process.yaml
+- name: send_confirmation_email
+  description: Send order confirmation email to customer
+  depends_on_step: process_payment
+  handler_class: OrderProcess::StepHandler::SendConfirmationEmailHandler
+  default_retryable: true
+  default_retry_limit: 3
+```
+
+**❌ Wrong - Business Logic in Event Subscriber**:
+```ruby
+# DON'T DO THIS - Critical email sending belongs in a workflow step
+def handle_order_fulfilled(event)
+  CustomerService.send_confirmation_email(safe_get(event, :order_id))  # Critical business action!
+end
+```
+
+### Practical Examples
+
+**Sending Customer Emails**:
+- ✅ **Workflow Step**: Order confirmation email (customer expects this, must be delivered)
+- ✅ **Event Subscriber**: Internal team notification about order (operational awareness)
+
+**External API Calls**:
+- ✅ **Workflow Step**: Charging payment gateway (business transaction must succeed)
+- ✅ **Event Subscriber**: Sending metrics to DataDog (operational monitoring)
+
+**Database Operations**:
+- ✅ **Workflow Step**: Updating inventory levels (business state change)
+- ✅ **Event Subscriber**: Logging order details for analytics (operational insight)
+
+**Message Queues**:
+- ✅ **Workflow Step**: Publishing order to fulfillment queue (business requirement)
+- ✅ **Event Subscriber**: Publishing metrics to monitoring queue (operational data)
 
 ### Example: Custom Events in Step Handlers
 
 ```ruby
-# Register custom business events
-Tasker::Events.register_custom_event('order.fulfilled',
-  description: 'Order has been fulfilled and shipped')
-
-# Publish from step handlers
 class OrderFulfillmentStep < Tasker::StepHandler::Base
-  def handle(step)
-    order = fulfill_order(step.inputs['order_id'])
+  def self.custom_event_configuration
+    [
+      { name: 'order.fulfilled', description: 'Order has been fulfilled and shipped' }
+    ]
+  end
 
-    # Publish custom business event
+  def process(task, sequence, step)
+    order = fulfill_order(task.context['order_id'])
+
+    # Publish custom business event for collateral systems to observe
     publish_custom_event('order.fulfilled', {
       order_id: order.id,
       customer_id: order.customer_id,
       total_amount: order.total
     })
+
+    { order_id: order.id, fulfillment_date: Time.current }
   end
 end
 ```
@@ -609,31 +682,56 @@ end
 ### Example Custom Subscriber
 
 ```ruby
-class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  # Subscribe to system and custom events
-  subscribe_to 'task.completed', 'task.failed', 'order.fulfilled'
+class ObservabilitySubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  # Subscribe to system and custom events for observability/alerting purposes
+  subscribe_to 'task.completed', 'task.failed', 'order.fulfilled', 'payment.risk_flagged'
 
-  # Handle task completion events
+  # Log task completion for operational visibility
   def handle_task_completed(event)
     task_id = safe_get(event, :task_id)
-    NotificationService.send_success_email(task_id: task_id)
+    task_name = safe_get(event, :task_name, 'unknown')
+    execution_duration = safe_get(event, :execution_duration, 0)
+
+    # Operational logging and metrics (collateral concerns)
+    Rails.logger.info "Task completed: #{task_name} (#{task_id}) in #{execution_duration}s"
+    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
   end
 
-  # Handle failure events
+  # Alert on task failures for operational response
   def handle_task_failed(event)
     task_id = safe_get(event, :task_id)
     error_message = safe_get(event, :error_message, 'Unknown error')
-    AlertService.send_failure_alert(task_id: task_id, error: error_message)
+
+    # Send alerts to operational tools (collateral concerns)
+    Sentry.capture_message("Task failed: #{task_id}", level: 'error', extra: { error: error_message })
+    PagerDutyService.trigger_alert(
+      summary: "Tasker workflow failed",
+      severity: 'error',
+      details: { task_id: task_id, error: error_message }
+    )
   end
 
-  # Handle custom business events
+  # Monitor business events for analytics/alerting
   def handle_order_fulfilled(event)
     order_id = safe_get(event, :order_id)
     customer_id = safe_get(event, :customer_id)
-    NotificationService.send_fulfillment_notification(
-      order_id: order_id,
-      customer_id: customer_id
-    )
+
+    # Analytics and operational monitoring (collateral concerns)
+    AnalyticsService.track_order_fulfillment(order_id, customer_id)
+    Rails.logger.info "Order fulfilled: #{order_id} for customer #{customer_id}"
+  end
+
+  def handle_payment_risk_flagged(event)
+    risk_score = safe_get(event, :risk_score, 0)
+
+    # Alert on high-risk payments for operational response
+    if risk_score > 0.8
+      PagerDutyService.trigger_alert(
+        summary: "High-risk payment detected",
+        severity: 'warning',
+        details: event
+      )
+    end
   end
 end
 ```

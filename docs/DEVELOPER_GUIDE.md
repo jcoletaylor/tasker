@@ -244,7 +244,23 @@ end
 
 ## 3. Event Subscribers
 
-Event subscribers enable powerful integrations with external services and monitoring systems. They respond to workflow events and can trigger actions like notifications, alerts, or metrics collection.
+Event subscribers handle **"collateral" or "secondary" logic** - operations that support observability, monitoring, and alerting but are not core business requirements. They respond to workflow events and provide operational visibility into system behavior.
+
+### Architectural Distinction: Subscribers vs Steps
+
+**Event Subscribers** are for collateral concerns:
+- **Operational Observability**: Logging, metrics, telemetry, traces
+- **Alerting & Monitoring**: Sentry errors, PagerDuty alerts, operational notifications
+- **Analytics**: Business intelligence, usage tracking, performance monitoring
+- **External Integrations**: Non-critical third-party service notifications
+
+**Workflow Steps** are for business-critical operations requiring:
+- **Idempotency**: Can be safely retried without side effects
+- **Retryability**: Built-in retry logic with exponential backoff
+- **Explicit Lifecycle Tracking**: Success/failure states that matter to the business
+- **Transactional Integrity**: Operations that need to be rolled back on failure
+
+**Rule of Thumb**: If the operation must succeed for the workflow to be considered complete, it should be a workflow step. If it's supporting infrastructure (logging, monitoring, analytics), it should be an event subscriber.
 
 ### Creating Event Subscribers
 
@@ -261,10 +277,10 @@ rails generate tasker:subscriber metrics --events task.completed step.completed 
 ### Event Subscriber Structure
 
 ```ruby
-# app/subscribers/notification_subscriber.rb
-class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
-  # Subscribe to specific events
-  subscribe_to 'task.completed', 'task.failed', 'step.failed'
+# app/subscribers/observability_subscriber.rb
+class ObservabilitySubscriber < Tasker::Events::Subscribers::BaseSubscriber
+  # Subscribe to specific events for operational monitoring
+  subscribe_to 'task.completed', 'task.failed', 'step.failed', 'order.fulfilled'
 
   # Automatic method routing: task.completed -> handle_task_completed
   def handle_task_completed(event)
@@ -272,23 +288,21 @@ class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
     task_name = safe_get(event, :task_name, 'unknown')
     execution_duration = safe_get(event, :execution_duration, 0)
 
-    # Send success notification
-    NotificationService.send_email(
-      to: 'team@company.com',
-      subject: "Task Completed: #{task_name}",
-      body: "Task #{task_id} completed successfully in #{execution_duration}s"
-    )
+    # Operational logging and metrics (collateral concerns)
+    Rails.logger.info "Task completed: #{task_name} (#{task_id}) in #{execution_duration}s"
+    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
   end
 
   def handle_task_failed(event)
     task_id = safe_get(event, :task_id)
     error_message = safe_get(event, :error_message, 'Unknown error')
 
-    # Send failure alert
-    AlertService.notify(
-      level: 'error',
-      message: "Task #{task_id} failed: #{error_message}",
-      tags: { component: 'tasker', task_id: task_id }
+    # Send alerts to operational tools (collateral concerns)
+    Sentry.capture_message("Task failed: #{task_id}", level: 'error', extra: { error: error_message })
+    PagerDutyService.trigger_alert(
+      summary: "Tasker workflow failed",
+      severity: 'error',
+      details: { task_id: task_id, error: error_message }
     )
   end
 
@@ -297,8 +311,17 @@ class NotificationSubscriber < Tasker::Events::Subscribers::BaseSubscriber
     step_name = safe_get(event, :step_name, 'unknown')
     task_id = safe_get(event, :task_id)
 
-    # Log detailed step failure
+    # Operational logging for debugging (collateral concern)
     Rails.logger.error "Step failure in task #{task_id}: #{step_name} (#{step_id})"
+  end
+
+  def handle_order_fulfilled(event)
+    order_id = safe_get(event, :order_id)
+    customer_id = safe_get(event, :customer_id)
+
+    # Analytics and monitoring (collateral concerns)
+    AnalyticsService.track_order_fulfillment(order_id, customer_id)
+    Rails.logger.info "Order fulfilled: #{order_id} for customer #{customer_id}"
   end
 end
 ```
