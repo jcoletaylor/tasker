@@ -1,0 +1,298 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Authenticator, type: :model do
+  let(:secret) { 'test-secret-key-32-characters-minimum!' }
+  let(:algorithm) { 'HS256' }
+  let(:user_class) { '<%= user_model_class %>' }
+
+  let(:options) do
+    {
+      secret: secret,
+      algorithm: algorithm,
+      header_name: 'Authorization',
+      user_class: user_class
+    }
+  end
+
+  let(:authenticator) { described_class.new(options) }
+  let(:controller) { instance_double('ActionController::Base') }
+  let(:request) { instance_double('ActionDispatch::Request') }
+  let(:headers) { {} }
+
+  before do
+    allow(controller).to receive(:request).and_return(request)
+    allow(request).to receive(:headers).and_return(headers)
+  end
+
+  describe '#initialize' do
+    it 'sets configuration options' do
+      expect(authenticator.send(:secret)).to eq(secret)
+      expect(authenticator.send(:algorithm)).to eq(algorithm)
+      expect(authenticator.send(:header_name)).to eq('Authorization')
+      expect(authenticator.send(:user_class)).to eq(user_class)
+    end
+
+    it 'uses default values when options are not provided' do
+      authenticator = described_class.new
+      expect(authenticator.send(:algorithm)).to eq('HS256')
+      expect(authenticator.send(:header_name)).to eq('Authorization')
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+    end
+  end
+
+  describe '#authenticate!' do
+    context 'when user is authenticated' do
+      let(:user) { double('User', id: 1) }
+
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(user)
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticate!(controller)).to be true
+      end
+    end
+
+    context 'when user is not authenticated' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(nil)
+      end
+
+      it 'raises AuthenticationError' do
+        expect do
+          authenticator.authenticate!(controller)
+        end.to raise_error(Tasker::Authentication::AuthenticationError, 'Invalid or missing JWT token')
+      end
+    end
+  end
+
+  describe '#current_user' do
+    let(:user_id) { 1 }
+    let(:user) { double('User', id: user_id) }
+    let(:payload) { { 'user_id' => user_id, 'iat' => Time.current.to_i, 'exp' => 1.hour.from_now.to_i } }
+    let(:token) { JWT.encode(payload, secret, algorithm) }
+
+    before do
+      # Mock the user model
+      user_model = double('UserModel')
+      allow(user_class).to receive(:constantize).and_return(user_model)
+      allow(user_model).to receive(:find_by).with(id: user_id).and_return(user)
+    end
+
+    context 'with valid Bearer token' do
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+
+      it 'memoizes the result' do
+        expect(authenticator.current_user(controller)).to eq(user)
+        expect(authenticator.current_user(controller)).to eq(user) # Should not decode again
+      end
+    end
+
+    context 'with valid raw token' do
+      before do
+        headers['Authorization'] = token
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with token using sub claim' do
+      let(:payload) { { 'sub' => user_id, 'iat' => Time.current.to_i, 'exp' => 1.hour.from_now.to_i } }
+
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with missing Authorization header' do
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'with empty Authorization header' do
+      before do
+        headers['Authorization'] = ''
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'with expired token' do
+      let(:payload) { { 'user_id' => user_id, 'iat' => 2.hours.ago.to_i, 'exp' => 1.hour.ago.to_i } }
+
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'with invalid signature' do
+      let(:wrong_secret) { 'wrong-secret-key' }
+      let(:token) { JWT.encode(payload, wrong_secret, algorithm) }
+
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'with malformed token' do
+      before do
+        headers['Authorization'] = 'Bearer invalid.token.format'
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'when user is not found' do
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+        user_model = double('UserModel')
+        allow(user_class).to receive(:constantize).and_return(user_model)
+        allow(user_model).to receive(:find_by).with(id: user_id).and_return(nil)
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'when user model raises an error' do
+      before do
+        headers['Authorization'] = "Bearer #{token}"
+        allow(user_class).to receive(:constantize).and_raise(NameError, 'User class not found')
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+  end
+
+  describe '#authenticated?' do
+    context 'when current_user returns a user' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(double('User'))
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticated?(controller)).to be true
+      end
+    end
+
+    context 'when current_user returns nil' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(nil)
+      end
+
+      it 'returns false' do
+        expect(authenticator.authenticated?(controller)).to be false
+      end
+    end
+  end
+
+  describe '#validate_configuration' do
+    context 'with valid configuration' do
+      it 'returns no errors' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to be_empty
+      end
+    end
+
+    context 'with missing secret' do
+      let(:invalid_options) { options.merge(secret: nil) }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include('JWT secret is required')
+      end
+    end
+
+    context 'with short secret' do
+      let(:invalid_options) { options.merge(secret: 'short') }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include('JWT secret should be at least 32 characters for security')
+      end
+    end
+
+    context 'with invalid algorithm' do
+      let(:invalid_options) { options.merge(algorithm: 'INVALID') }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include(/JWT algorithm must be one of/)
+      end
+    end
+
+    context 'with invalid user class' do
+      let(:invalid_options) { options.merge(user_class: 'NonExistentUser') }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include(/not found/)
+      end
+    end
+  end
+
+  describe '.generate_test_token' do
+    let(:payload) { { user_id: 1, name: 'Test User' } }
+
+    it 'generates a valid JWT token' do
+      token = described_class.generate_test_token(payload, secret: secret)
+
+      decoded_payload = JWT.decode(token, secret, true, { algorithm: 'HS256' }).first
+      expect(decoded_payload['user_id']).to eq(1)
+      expect(decoded_payload['name']).to eq('Test User')
+      expect(decoded_payload['iat']).to be_present
+      expect(decoded_payload['exp']).to be_present
+    end
+
+    it 'sets expiration to 1 hour from now' do
+      token = described_class.generate_test_token(payload, secret: secret)
+
+      decoded_payload = JWT.decode(token, secret, true, { algorithm: 'HS256' }).first
+      expected_exp = Time.current.to_i + 1.hour.to_i
+      expect(decoded_payload['exp']).to be_within(5).of(expected_exp)
+    end
+  end
+
+  describe 'interface compliance' do
+    it 'includes the authentication interface' do
+      expect(described_class.included_modules).to include(Tasker::Authentication::Interface)
+    end
+
+    it 'responds to required interface methods' do
+      expect(authenticator).to respond_to(:authenticate!)
+      expect(authenticator).to respond_to(:current_user)
+      expect(authenticator).to respond_to(:authenticated?)
+      expect(authenticator).to respond_to(:validate_configuration)
+    end
+  end
+end

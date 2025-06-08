@@ -135,9 +135,7 @@
   
 
   
-    <span class="summary_desc"><div class='inline'>
-<p>If accessing from outside this domain, nullify the session This allows for outside API access while preventing CSRF attacks, but you’ll have to authenticate your user separately protect_from_forgery with: :null_session.</p>
-</div></span>
+    <span class="summary_desc"><div class='inline'></div></span>
   
 </li>
 
@@ -146,6 +144,20 @@
   
 
 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -167,26 +179,12 @@
   
 
   
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>If accessing from outside this domain, nullify the session This allows for outside API access while preventing CSRF attacks, but you’ll have to authenticate your user separately protect_from_forgery with: :null_session</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
+</h3><table class="source_code">
   <tr>
     <td>
       <pre class="lines">
 
 
-13
-14
-15
 16
 17
 18
@@ -199,19 +197,32 @@
 25
 26
 27
-28</pre>
+28
+29
+30
+31
+32
+33
+34
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/graphql_controller.rb', line 13</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/graphql_controller.rb', line 16</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execute'>execute</span>
   <span class='id identifier rubyid_variables'>variables</span> <span class='op'>=</span> <span class='id identifier rubyid_prepare_variables'>prepare_variables</span><span class='lparen'>(</span><span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:variables</span><span class='rbracket'>]</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_query'>query</span> <span class='op'>=</span> <span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:query</span><span class='rbracket'>]</span>
   <span class='id identifier rubyid_operation_name'>operation_name</span> <span class='op'>=</span> <span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:operationName</span><span class='rbracket'>]</span>
+
+  <span class='comment'># Authorize GraphQL operations before execution
+</span>  <span class='id identifier rubyid_authorize_graphql_operations!'>authorize_graphql_operations!</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='id identifier rubyid_operation_name'>operation_name</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_authorization_enabled?'>authorization_enabled?</span>
+
   <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
     <span class='comment'># Query context goes here, for example:
-</span>    <span class='comment'># current_user: current_user,
-</span>  <span class='rbrace'>}</span>
+</span>    <span class='label'>current_user:</span> <span class='id identifier rubyid_current_tasker_user'>current_tasker_user</span><span class='comma'>,</span>
+    <span class='label'>authenticated:</span> <span class='id identifier rubyid_tasker_user_authenticated?'>tasker_user_authenticated?</span>
+  <span class='rbrace'>}</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskerRailsSchema.html" title="Tasker::TaskerRailsSchema (class)">TaskerRailsSchema</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execute'>execute</span><span class='lparen'>(</span><span class='id identifier rubyid_query'>query</span><span class='comma'>,</span> <span class='label'>variables:</span> <span class='id identifier rubyid_variables'>variables</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span>
                                                     <span class='label'>operation_name:</span> <span class='id identifier rubyid_operation_name'>operation_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='label'>json:</span> <span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
@@ -230,7 +241,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 21:56:51 2025 by
+  Generated on Sun Jun  8 15:37:59 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

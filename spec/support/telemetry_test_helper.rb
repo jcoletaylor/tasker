@@ -43,11 +43,11 @@ module TelemetryTestHelper
   # Helper to handle API error tests by temporarily disabling telemetry
   def with_disabled_telemetry
     # Store original configuration
-    original_configuration = Tasker::Configuration.configuration.dup
+    original_configuration = Tasker.configuration.dup
 
     # Create a test configuration with telemetry disabled
     test_configuration = Tasker::Configuration.new
-    test_configuration.enable_telemetry = false
+    test_configuration.telemetry.enabled = false
 
     # Override the singleton instance
     Tasker::Configuration.instance_variable_set(:@configuration, test_configuration)

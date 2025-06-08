@@ -9,8 +9,9 @@
 # Load version first (required for gemspec and other components)
 require 'tasker/version'
 
-# Core configuration that must be available before engine loads
+# Core configuration and errors that must be available before engine loads
 require 'tasker/configuration'
+require 'tasker/errors'
 
 # Essential runtime dependencies from gemspec
 require 'concurrent'
@@ -51,9 +52,10 @@ module Tasker
 
   # Accesses the global configuration for Tasker
   #
+  # @yield [Configuration] The configuration instance if a block is given
   # @return [Tasker::Configuration] The current configuration
-  def self.configuration
-    Configuration.configuration
+  def self.configuration(&)
+    Configuration.configuration(&)
   end
 
   # Resets the configuration to default values

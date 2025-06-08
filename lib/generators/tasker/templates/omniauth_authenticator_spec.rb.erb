@@ -1,0 +1,196 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Authenticator, type: :model do
+  let(:options) do
+    {
+      user_finder_method: :find_by_provider_uid,
+      user_class: '<%= user_model_class %>',
+      failure_path: '/auth/failure'
+    }
+  end
+
+  let(:authenticator) { described_class.new(options) }
+  let(:controller) { instance_double('ActionController::Base') }
+  let(:session) { {} }
+
+  before do
+    allow(controller).to receive(:session).and_return(session)
+  end
+
+  describe '#initialize' do
+    it 'sets configuration options' do
+      expect(authenticator.send(:user_finder_method)).to eq(:find_by_provider_uid)
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+      expect(authenticator.send(:failure_path)).to eq('/auth/failure')
+    end
+
+    it 'uses default values when options are not provided' do
+      authenticator = described_class.new
+      expect(authenticator.send(:user_finder_method)).to eq(:find_by_provider_uid)
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+      expect(authenticator.send(:failure_path)).to eq('/auth/failure')
+    end
+  end
+
+  describe '#current_user' do
+    let(:user_id) { 1 }
+    let(:user) { double('User', id: user_id) }
+
+    before do
+      # Mock the user model
+      user_model = double('UserModel')
+      allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+      allow(user_model).to receive(:find_by).with(id: user_id).and_return(user)
+      allow(user_model).to receive(:find_by_provider_uid).with('github', '12345').and_return(user)
+    end
+
+    context 'with user_id in session' do
+      before do
+        session[:user_id] = user_id
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with omniauth_auth data in session' do
+      before do
+        session[:omniauth_auth] = {
+          'provider' => 'github',
+          'uid' => '12345'
+        }
+      end
+
+      it 'returns the authenticated user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'with no authentication data' do
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'when user lookup raises an error' do
+      before do
+        session[:user_id] = user_id
+        allow('<%= user_model_class %>').to receive(:constantize).and_raise(NameError, 'User class not found')
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+  end
+
+  describe '#authenticate!' do
+    let(:request) { instance_double('ActionDispatch::Request') }
+
+    before do
+      allow(controller).to receive(:request).and_return(request)
+    end
+
+    context 'when user is authenticated' do
+      before do
+        allow(authenticator).to receive(:authenticated?).with(controller).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticate!(controller)).to be true
+      end
+    end
+
+    context 'when user is not authenticated' do
+      before do
+        allow(authenticator).to receive(:authenticated?).with(controller).and_return(false)
+      end
+
+      context 'for HTML requests' do
+        before do
+          allow(request).to receive(:format).and_return(double('format', html?: true))
+          allow(controller).to receive(:redirect_to)
+        end
+
+        it 'redirects to failure path' do
+          expect(controller).to receive(:redirect_to).with('/auth/failure')
+          authenticator.authenticate!(controller)
+        end
+      end
+
+      context 'for API requests' do
+        before do
+          allow(request).to receive(:format).and_return(double('format', html?: false))
+        end
+
+        it 'raises AuthenticationError' do
+          expect do
+            authenticator.authenticate!(controller)
+          end.to raise_error(Tasker::Authentication::AuthenticationError, /Authentication required/)
+        end
+      end
+    end
+  end
+
+  describe '#validate_configuration' do
+    context 'with valid configuration' do
+      before do
+        stub_const('OmniAuth', double('OmniAuth'))
+        user_model = double('UserModel')
+        allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+        allow(user_model).to receive(:respond_to?).with(:find_by_provider_uid).and_return(true)
+      end
+
+      it 'returns no errors' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to be_empty
+      end
+    end
+
+    context 'when OmniAuth is not available' do
+      before do
+        hide_const('OmniAuth')
+      end
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to include('OmniAuth gem is required for OmniauthAuthenticator')
+      end
+    end
+
+    context 'with invalid user class' do
+      let(:invalid_options) { options.merge(user_class: 'NonExistentUser') }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include(/not found/)
+      end
+    end
+
+    context 'when user model is missing finder method' do
+      before do
+        stub_const('OmniAuth', double('OmniAuth'))
+        user_model = double('UserModel')
+        allow('<%= user_model_class %>').to receive(:constantize).and_return(user_model)
+        allow(user_model).to receive(:respond_to?).with(:find_by_provider_uid).and_return(false)
+      end
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to include(/does not have 'find_by_provider_uid' method/)
+      end
+    end
+
+    context 'with invalid failure path type' do
+      let(:invalid_options) { options.merge(failure_path: 123) }
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include('Failure path must be a string')
+      end
+    end
+  end
+end

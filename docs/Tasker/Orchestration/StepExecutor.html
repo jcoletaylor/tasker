@@ -388,7 +388,8 @@
 100
 101
 102
-103</pre>
+103
+104</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 91</span>
@@ -403,7 +404,8 @@
 </span>  <span class='id identifier rubyid_execute_step_workflow'>execute_step_workflow</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
 <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='comment'># Log unexpected errors that occur outside the normal workflow
-</span>  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepExecutor: Unexpected error in execute_single_step for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='op'>&amp;.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+</span>  <span class='id identifier rubyid_step_id'>step_id</span> <span class='op'>=</span> <span class='id identifier rubyid_step'>step</span><span class='op'>&amp;.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepExecutor: Unexpected error in execute_single_step for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step_id'>step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='kw'>nil</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -684,7 +686,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 21:56:51 2025 by
+  Generated on Sun Jun  8 15:37:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

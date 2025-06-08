@@ -5,6 +5,7 @@ plugins:
   - rubocop-rails
   - rubocop-performance
   - rubocop-factory_bot
+  - rubocop-rake
 
 AllCops:
   TargetRubyVersion: 3.2
@@ -13,6 +14,8 @@ AllCops:
   Exclude:
     - 'spec/requests/tasker/**'
     - 'spec/swagger_helper.rb'
+    - 'spec/dummy/db/schema.rb'  # Auto-generated database schema
+    - 'spec/examples/**/*'       # Example code files
 
 Style/Documentation:
   Enabled: false
@@ -49,22 +52,47 @@ Metrics/BlockLength:
   Max: 120
 
 Metrics/MethodLength:
-  Max: 24
+  Max: 40
+  Exclude:
+    - 'spec/examples/**/*'   # Example code may have longer methods for demonstration
+    - 'db/migrate/**/*'      # Database migrations often have long setup methods
+    - 'lib/generators/**/*'  # Generator methods often have long setup and instruction methods
 
 Metrics/ModuleLength:
-  Max: 160
+  Max: 400
+  Exclude:
+    - 'spec/support/**/*'    # Test support modules may be longer
 
 Metrics/ClassLength:
-  Max: 140
+  Max: 200
+  Exclude:
+    - 'spec/examples/**/*'   # Example classes may be longer for demonstration
+    - 'db/migrate/**/*'      # Database migrations can be long
+    - 'lib/generators/**/*'  # Generator classes often have many methods
 
 Metrics/ParameterLists:
   Max: 8
 
 Metrics/AbcSize:
-  Max: 100
+  Max: 120
 
-Naming/PredicateName:
+Metrics/CyclomaticComplexity:
+  Max: 8
+  Exclude:
+    - 'spec/examples/**/*'   # Example code may have higher complexity for demonstration
+
+Metrics/PerceivedComplexity:
+  Max: 8
+  Exclude:
+    - 'spec/examples/**/*'   # Example code may have higher complexity for demonstration
+
+Naming/PredicatePrefix:
   Enabled: false
+
+Naming/AccessorMethodName:
+  Exclude:
+    - 'spec/**/*'  # Test helpers often use descriptive method names
+    - 'spec/examples/**/*'  # Example code may use different naming patterns
 
 Capybara/RSpec/PredicateMatcher:
   Enabled: false
@@ -77,6 +105,51 @@ RSpec/ExampleLength:
 
 RSpec/MultipleMemoizedHelpers:
   Enabled: false
+
+# Exclude test files from many RSpec style checks
+RSpec/VerifiedDoubles:
+  Exclude:
+    - 'spec/**/*'   # Test files may use normal doubles for simplicity
+
+RSpec/MessageSpies:
+  Exclude:
+    - 'spec/**/*'   # Test files may use older expectation patterns
+
+RSpec/NestedGroups:
+  Max: 5  # Allow a bit more nesting
+  Exclude:
+    - 'spec/examples/**/*'   # Example tests may have deeper nesting
+
+RSpec/ContextWording:
+  Exclude:
+    - 'spec/examples/**/*'   # Example tests may use different context patterns
+    - 'spec/support/**/*'    # Shared contexts may use different naming patterns
+
+RSpec/BeforeAfterAll:
+  Exclude:
+    - 'spec/**/*'   # Test files may use before(:all) for performance reasons
+
+RSpec/InstanceVariable:
+  Exclude:
+    - 'spec/**/*'   # Test files may use instance variables for test setup
+
+RSpec/DescribeClass:
+  Exclude:
+    - 'spec/examples/**/*'   # Example integration tests may not follow this pattern
+
+RSpec/FilePath:
+  Exclude:
+    - 'spec/examples/**/*'   # Example files may not follow standard naming
+    - 'spec/tasks/**/*'      # Integration test files may not follow standard spec naming patterns
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/examples/**/*'   # Example files may not follow standard naming
+    - 'spec/tasks/**/*'      # Integration test files may not follow standard spec naming patterns
+
+RSpec/DescribeMethod:
+  Exclude:
+    - 'spec/examples/**/*'   # Example tests may not follow method testing pattern
 
 # Factory-specific RSpec exclusions
 FactoryBot/CreateList:
@@ -101,3 +174,65 @@ RSpec/MissingExampleGroupArgument:
 Rails/SkipsModelValidations:
   Exclude:
     - 'spec/factories/**/*'
+    - 'spec/support/**/*'    # Test helpers may skip validations for setup
+    - 'spec/tasks/**/*'      # Integration tests may skip validations for test setup
+
+# Line length exclusions for specific areas
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'spec/dummy/db/schema.rb'  # Auto-generated schema files
+    - 'spec/examples/**/*'       # Example code may have longer lines for clarity
+    - 'spec/factories/**/*'      # Factory files often have long lines for readability
+    - 'spec/support/**/*'        # Test support files may have longer descriptive lines
+    - 'db/migrate/**/*'          # Database migrations often have long constraint names
+    - 'app/models/**/dependent_system_object_map.rb'  # Schema comments are auto-generated
+
+# Lint exclusions for test code
+Lint/DuplicateBranch:
+  Exclude:
+    - 'spec/examples/**/*'       # Example code may have intentional duplication
+    - 'spec/factories/**/*'      # Factory conditionals may look duplicated
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - 'spec/examples/**/*'       # Example tests may define constants in blocks
+    - 'spec/**/*'                # Test files often define constants in describe blocks
+
+RSpec/LeakyConstantDeclaration:
+  Exclude:
+    - 'spec/examples/**/*'       # Example tests may define constants for demonstration
+    - 'spec/**/*'                # Test files often define test constants
+
+# Additional RSpec exclusions for test maintainability
+RSpec/IndexedLet:
+  Exclude:
+    - 'spec/**/*'                # Test files may use indexed lets for test data setup
+
+RSpec/ExpectActual:
+  Exclude:
+    - 'spec/**/*'                # Test files may have legitimate cases for testing booleans
+
+RSpec/IdenticalEqualityAssertion:
+  Exclude:
+    - 'spec/**/*'                # Test files may test object identity or meta-properties
+
+RSpec/RepeatedDescription:
+  Exclude:
+    - 'spec/**/*'                # Test files may have valid repeated descriptions in different contexts
+
+RSpec/StubbedMock:
+  Exclude:
+    - 'spec/**/*'                # Test files may use older RSpec patterns legitimately
+
+# Line length for generated content
+Naming/VariableNumber:
+  Exclude:
+    - 'spec/**/*'                # Test files often use numbered variables for test data
+
+Rails/HasManyOrHasOneDependent:
+  Exclude:
+    - 'spec/factories/**/*'
+    - 'spec/support/**/*'    # Test helpers may skip validations for setup
+    - 'app/models/tasker/task.rb'  # Contains view-based associations that can't be destroyed
+    - 'app/models/tasker/workflow_step.rb'  # Contains view-based associations that can't be destroyed

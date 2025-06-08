@@ -181,55 +181,152 @@ module Tasker
     def build_all_step_edges(workflow_steps)
       edges = []
 
-      # Add edges from task to root steps (those without parents)
-      workflow_steps.each do |step|
-        next unless step.step_dag_relationship&.is_root_step
+      # Add edges from task to root steps using dedicated builder
+      edges.concat(TaskToRootStepEdgeBuilder.build(@task, workflow_steps))
 
-        edges << build_edge(
-          "task_#{@task.task_id}",
-          "step_#{step.workflow_step_id}"
-        )
-      end
-
-      # Collect all edge relationships for efficient batch lookup
-      all_edge_data = []
-      workflow_steps.each do |step|
-        next unless step.step_dag_relationship
-
-        child_ids = step.step_dag_relationship.child_step_ids_array
-        child_ids.each do |child_id|
-          all_edge_data << {
-            from_step_id: step.workflow_step_id,
-            to_step_id: child_id
-          }
-        end
-      end
-
-      # Batch load all WorkflowStepEdge records for edge labels
-      edge_records = {}
-      if all_edge_data.any?
-        conditions = all_edge_data.map do |data|
-          "(from_step_id = #{data[:from_step_id]} AND to_step_id = #{data[:to_step_id]})"
-        end
-        Tasker::WorkflowStepEdge.where(conditions.join(' OR ')).find_each do |edge_record|
-          key = "#{edge_record.from_step_id}_#{edge_record.to_step_id}"
-          edge_records[key] = edge_record
-        end
-      end
-
-      # Build edges using pre-calculated data
-      all_edge_data.each do |data|
-        source_id = "step_#{data[:from_step_id]}"
-        target_id = "step_#{data[:to_step_id]}"
-
-        # Find edge label from batch-loaded records
-        key = "#{data[:from_step_id]}_#{data[:to_step_id]}"
-        edge_label = edge_records[key]&.name || ''
-
-        edges << build_edge(source_id, target_id, edge_label)
-      end
+      # Add edges between steps using dedicated builder
+      edges.concat(StepToStepEdgeBuilder.build(workflow_steps))
 
       edges
+    end
+
+    # Service class to build edges from task to root steps
+    # Reduces complexity by organizing edge building logic
+    class TaskToRootStepEdgeBuilder
+      class << self
+        # Build edges from task node to root steps
+        #
+        # @param task [Tasker::Task] The task
+        # @param workflow_steps [Array<Tasker::WorkflowStep>] All workflow steps
+        # @return [Array<Tasker::Diagram::Edge>] Task to root step edges
+        def build(task, workflow_steps)
+          edges = []
+
+          workflow_steps.each do |step|
+            next unless step.step_dag_relationship&.is_root_step
+
+            edges << build_edge(
+              "task_#{task.task_id}",
+              "step_#{step.workflow_step_id}"
+            )
+          end
+
+          edges
+        end
+
+        private
+
+        # Build an edge between two nodes
+        #
+        # @param source_id [String] The source node ID
+        # @param target_id [String] The target node ID
+        # @param label [String] The edge label
+        # @return [Tasker::Diagram::Edge] The edge
+        def build_edge(source_id, target_id, label = '')
+          Tasker::Diagram::Edge.new(
+            source_id: source_id,
+            target_id: target_id,
+            label: label
+          )
+        end
+      end
+    end
+
+    # Service class to build edges between workflow steps
+    # Reduces complexity by organizing edge building logic
+    class StepToStepEdgeBuilder
+      class << self
+        # Build edges between workflow steps
+        #
+        # @param workflow_steps [Array<Tasker::WorkflowStep>] All workflow steps
+        # @return [Array<Tasker::Diagram::Edge>] Step to step edges
+        def build(workflow_steps)
+          edge_data = collect_edge_data(workflow_steps)
+          return [] if edge_data.empty?
+
+          edge_records = batch_load_edge_records(edge_data)
+          build_edges_from_data(edge_data, edge_records)
+        end
+
+        private
+
+        # Collect all edge relationships for efficient batch lookup
+        #
+        # @param workflow_steps [Array<Tasker::WorkflowStep>] All workflow steps
+        # @return [Array<Hash>] Edge data with from_step_id and to_step_id
+        def collect_edge_data(workflow_steps)
+          edge_data = []
+
+          workflow_steps.each do |step|
+            next unless step.step_dag_relationship
+
+            child_ids = step.step_dag_relationship.child_step_ids_array
+            child_ids.each do |child_id|
+              edge_data << {
+                from_step_id: step.workflow_step_id,
+                to_step_id: child_id
+              }
+            end
+          end
+
+          edge_data
+        end
+
+        # Batch load all WorkflowStepEdge records for edge labels
+        #
+        # @param edge_data [Array<Hash>] Edge data to load records for
+        # @return [Hash] Hash mapping edge keys to edge records
+        def batch_load_edge_records(edge_data)
+          edge_records = {}
+
+          conditions = edge_data.map do |data|
+            "(from_step_id = #{data[:from_step_id]} AND to_step_id = #{data[:to_step_id]})"
+          end
+
+          Tasker::WorkflowStepEdge.where(conditions.join(' OR ')).find_each do |edge_record|
+            key = "#{edge_record.from_step_id}_#{edge_record.to_step_id}"
+            edge_records[key] = edge_record
+          end
+
+          edge_records
+        end
+
+        # Build edges using pre-calculated data and records
+        #
+        # @param edge_data [Array<Hash>] Edge data with IDs
+        # @param edge_records [Hash] Loaded edge records for labels
+        # @return [Array<Tasker::Diagram::Edge>] Built edges
+        def build_edges_from_data(edge_data, edge_records)
+          edges = []
+
+          edge_data.each do |data|
+            source_id = "step_#{data[:from_step_id]}"
+            target_id = "step_#{data[:to_step_id]}"
+
+            # Find edge label from batch-loaded records
+            key = "#{data[:from_step_id]}_#{data[:to_step_id]}"
+            edge_label = edge_records[key]&.name || ''
+
+            edges << build_edge(source_id, target_id, edge_label)
+          end
+
+          edges
+        end
+
+        # Build an edge between two nodes
+        #
+        # @param source_id [String] The source node ID
+        # @param target_id [String] The target node ID
+        # @param label [String] The edge label
+        # @return [Tasker::Diagram::Edge] The edge
+        def build_edge(source_id, target_id, label = '')
+          Tasker::Diagram::Edge.new(
+            source_id: source_id,
+            target_id: target_id,
+            label: label
+          )
+        end
+      end
     end
   end
 end

@@ -355,7 +355,6 @@
       <pre class="lines">
 
 
-107
 108
 109
 110
@@ -381,10 +380,11 @@
 130
 131
 132
-133</pre>
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build_event_context'>build_event_context</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_transition'>transition</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_base_context'>base_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -482,7 +482,6 @@
       <pre class="lines">
 
 
-74
 75
 76
 77
@@ -493,10 +492,11 @@
 82
 83
 84
-85</pre>
+85
+86</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 74</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 75</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_effective_current_state'>effective_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_state'>current_state</span> <span class='op'>=</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_current_state'>current_state</span>
@@ -595,7 +595,6 @@
       <pre class="lines">
 
 
-57
 58
 59
 60
@@ -606,10 +605,11 @@
 65
 66
 67
-68</pre>
+68
+69</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 57</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 58</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_idempotent_transition?'>idempotent_transition?</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_effective_state'>effective_state</span> <span class='op'>=</span> <span class='id identifier rubyid_effective_current_state'>effective_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span>
@@ -706,14 +706,14 @@
       <pre class="lines">
 
 
-161
 162
 163
 164
-165</pre>
+165
+166</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 161</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 162</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_condition_not_met'>log_condition_not_met</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
@@ -819,15 +819,15 @@
       <pre class="lines">
 
 
-149
 150
 151
 152
 153
-154</pre>
+154
+155</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 150</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_invalid_from_state'>log_invalid_from_state</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_current_state'>current_state</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
@@ -934,7 +934,6 @@
       <pre class="lines">
 
 
-173
 174
 175
 176
@@ -944,19 +943,22 @@
 180
 181
 182
-183</pre>
+183
+184
+185</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 174</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_transition_result'>log_transition_result</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_object_identifier'>object_identifier</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object_id'>object_id</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
   <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span>
     <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
-      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Allowing transition to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object_id'>object_id</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_reason'>reason</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Allowing transition to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object_identifier'>object_identifier</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_reason'>reason</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
   <span class='kw'>else</span>
     <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
-      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Blocking transition to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object_id'>object_id</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_reason'>reason</span><span class='embexpr_end'>}</span><span class='tstring_content'> failed)</span><span class='tstring_end'>&quot;</span></span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: Blocking transition to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_target_state'>target_state</span><span class='embexpr_end'>}</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object_identifier'>object_identifier</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_reason'>reason</span><span class='embexpr_end'>}</span><span class='tstring_content'> failed)</span><span class='tstring_end'>&quot;</span></span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -1029,7 +1031,6 @@
       <pre class="lines">
 
 
-91
 92
 93
 94
@@ -1038,10 +1039,11 @@
 97
 98
 99
-100</pre>
+100
+101</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 91</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/state_machine_base.rb', line 92</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_object_id'>object_id</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
@@ -1063,7 +1065,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 21:56:49 2025 by
+  Generated on Sun Jun  8 15:37:56 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

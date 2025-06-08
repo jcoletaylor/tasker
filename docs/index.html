@@ -58,7 +58,7 @@
       </div>
 
       <div id="content"><div id='filecontents'>
-<p><a href="https://github.com/jcoletaylor/tasker/actions/workflows/main.yml"><img src="https" alt="//github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg:CI"></a> <img src="https" alt="//img.shields.io/github/license/jcoletaylor/tasker:GitHub"> <img src="https" alt="//img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&amp;sort=semver:GitHub"> release (latest SemVer)</p>
+<p><a href="https://github.com/jcoletaylor/tasker/actions/workflows/main.yml"><img src="https://github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg" alt="CI"></a> <img src="https://img.shields.io/github/license/jcoletaylor/tasker" alt="GitHub"> <img src="https://img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&amp;sort=semver" alt="GitHub"> release (latest SemVer)</p>
 
 <h1 id="label-Tasker-3A+Queable+Multi-Step+Tasks+Made+Easy-ish">Tasker: Queable Multi-Step Tasks Made Easy-ish</h1>
 
@@ -115,6 +115,19 @@
 <p><a href="#accessing-data-from-previous-steps">Accessing Data from Previous Steps</a></p>
 </li></ul>
 </li><li>
+<p><a href="#authentication--authorization">Authentication &amp; Authorization</a></p>
+<ul><li>
+<p><a href="#key-features">Key Features</a></p>
+</li><li>
+<p><a href="#quick-start">Quick Start</a></p>
+</li><li>
+<p><a href="#generators">Generators</a></p>
+</li><li>
+<p><a href="#graphql-security">GraphQL Security</a></p>
+</li><li>
+<p><a href="#complete-documentation">Complete Documentation</a></p>
+</li></ul>
+</li><li>
 <p><a href="#best-practices">Best Practices</a></p>
 </li><li>
 <p><a href="#event-system--custom-integrations">Event System &amp; Custom Integrations</a></p>
@@ -166,7 +179,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.0.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.1.0</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -519,6 +532,85 @@ step_templates:
 <span class='kw'>end</span>
 </code></pre>
 
+<h2 id="label-Authentication+-26+Authorization">Authentication &amp; Authorization</h2>
+
+<p>Tasker includes a complete, production-ready authentication and authorization system that provides enterprise-grade security for both REST APIs and GraphQL endpoints. The system is designed to work with any Rails authentication solution while maintaining flexibility and security.</p>
+
+<h3 id="label-Key+Features">Key Features</h3>
+<ul><li>
+<p><strong>🔐 Provider Agnostic</strong>: Works seamlessly with Devise, JWT, OmniAuth, custom authentication, or no authentication</p>
+</li><li>
+<p><strong>🛡️ Resource-Based Authorization</strong>: Granular permissions using resource:action patterns (<code>tasker.task:create</code>, <code>tasker.workflow_step:show</code>)</p>
+</li><li>
+<p><strong>⚡ GraphQL Operation-Level Authorization</strong>: Revolutionary security that automatically maps GraphQL operations to resource permissions</p>
+</li><li>
+<p><strong>🔄 Automatic Integration</strong>: Authentication and authorization work seamlessly across REST and GraphQL endpoints</p>
+</li><li>
+<p><strong>🚀 Production-Ready Generators</strong>: Create complete authenticators and authorization coordinators with one command</p>
+</li><li>
+<p><strong>✅ Zero Breaking Changes</strong>: All features are opt-in and maintain backward compatibility</p>
+</li></ul>
+
+<h3 id="label-Quick+Start">Quick Start</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_auth'>auth</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_auth'>auth</span><span class='op'>|</span>
+    <span class='comment'># Enable authentication with your custom authenticator
+</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authentication_enabled'>authentication_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authenticator_class'>authenticator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourCustomAuthenticator</span><span class='tstring_end'>&#39;</span></span>
+
+    <span class='comment'># Enable resource-based authorization
+</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_coordinator_class'>authorization_coordinator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourAuthorizationCoordinator</span><span class='tstring_end'>&#39;</span></span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_user_class'>user_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>User</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<h3 id="label-Generators">Generators</h3>
+
+<p>Generate production-ready authenticators for popular authentication systems:</p>
+
+<pre class="code ruby"><code class="ruby"># JWT authenticator with comprehensive security features
+rails generate tasker:authenticator CompanyJWT --type=jwt
+
+# Devise integration with proper scope handling
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+
+# API token authenticator with header fallback
+rails generate tasker:authenticator ApiAuth --type=api_token
+
+# OmniAuth integration with session management
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Authorization coordinator with resource-based permissions
+rails generate tasker:authorization_coordinator CompanyAuth
+</code></pre>
+
+<h3 id="label-GraphQL+Security">GraphQL Security</h3>
+
+<p>The system provides revolutionary GraphQL authorization that automatically maps operations to permissions:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># GraphQL query automatically requires tasker.task:index permission
+</span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='id identifier rubyid_status'>status</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
+
+<span class='comment'># GraphQL mutation automatically requires tasker.task:create permission
+</span><span class='id identifier rubyid_mutation'>mutation</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_createTask'>createTask</span><span class='lparen'>(</span><span class='label'>input:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>New Task</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
+
+<span class='comment'># Mixed operations check all required permissions
+</span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span>
+  <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span>           <span class='comment'># Requires: tasker.task:index
+</span>  <span class='id identifier rubyid_workflowSteps'>workflowSteps</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_stepId'>stepId</span> <span class='rbrace'>}</span>   <span class='comment'># Requires: tasker.workflow_step:index
+</span><span class='rbrace'>}</span>
+</code></pre>
+
+<h3 id="label-Complete+Documentation">Complete Documentation</h3>
+
+<p>For comprehensive documentation including quick start guides, custom authenticator examples, authorization patterns, GraphQL security details, production best practices, and testing strategies:</p>
+
+<p><strong>📖 See &amp; Authorization Guide[docs/AUTH.md]</strong></p>
+
 <h2 id="label-Best+Practices">Best Practices</h2>
 <ol><li>
 <p><strong>Keep steps focused</strong>: Each step should do one thing well</p>
@@ -538,22 +630,51 @@ step_templates:
 <p><strong>Document step dependencies</strong>: Make it clear why steps depend on each other</p>
 </li></ol>
 
-<pre class="code ruby"><code class="ruby"><span class='comment'># Example of good error handling
+<pre class="code ruby"><code class="ruby"><span class='comment'># Example 1: Let exceptions bubble up (Recommended)
+</span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+  <span class='comment'># Attempt the operation - let exceptions propagate naturally
+</span>  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
+
+  <span class='comment'># Framework automatically handles exceptions:
+</span>  <span class='comment'># - Publishes step_failed event with error details
+</span>  <span class='comment'># - Stores error information in step.results
+</span>  <span class='comment'># - Transitions step to error state
+</span>  <span class='comment'># - Triggers retry logic if configured
+</span><span class='kw'>end</span>
+
+<span class='comment'># Example 2: Catch, record error details, then re-raise
 </span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='kw'>begin</span>
-    <span class='comment'># Attempt the operation
-</span>    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
     <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
   <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-    <span class='comment'># Return error information - framework will still publish step_failed event
-</span>    <span class='lbrace'>{</span>
-      <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span>
+    <span class='comment'># Add custom error context to step.results
+</span>    <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbrace'>{</span>
       <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
       <span class='label'>error_type:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
-      <span class='label'>backtrace:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_backtrace'>backtrace</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='lparen'>(</span><span class='int'>5</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+      <span class='label'>custom_context:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Additional business context</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='label'>retry_recommended:</span> <span class='id identifier rubyid_should_retry?'>should_retry?</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
     <span class='rbrace'>}</span>
-    <span class='comment'># Re-raise to trigger retry logic
+    <span class='comment'># Re-raise so framework knows this step failed
 </span>    <span class='id identifier rubyid_raise'>raise</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Example 3: Treat handled exceptions as success
+</span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+  <span class='kw'>begin</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
+  <span class='kw'>rescue</span> <span class='const'>RecoverableError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+    <span class='comment'># This exception is handled and considered a success case
+</span>    <span class='comment'># Step will be marked as COMPLETED, not failed
+</span>    <span class='lbrace'>{</span>
+      <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span>
+      <span class='label'>data:</span> <span class='id identifier rubyid_get_fallback_data'>get_fallback_data</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span><span class='comma'>,</span>
+      <span class='label'>recovered_from_error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+      <span class='label'>used_fallback:</span> <span class='kw'>true</span>
+    <span class='rbrace'>}</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span>
 </code></pre>
@@ -587,6 +708,11 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 
 # Generate a specialized metrics subscriber with helper methods
 rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
+
+# Generate authenticators for different authentication systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
 </code></pre>
 
 <h3 id="label-Example-3A+Custom+Events+in+Step+Handlers">Example: Custom Events in Step Handlers</h3>
@@ -668,6 +794,8 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 <ul><li>
 <p><strong>Guide[docs/DEVELOPER_GUIDE.md]</strong> - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration</p>
 </li><li>
+<p><strong>Guide[docs/AUTH.md]</strong> - Complete authentication system documentation with JWT, Devise, and custom authenticator examples</p>
+</li><li>
 <p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Complete event system documentation with integration examples</p>
 </li><li>
 <p><strong>&amp; Observability[docs/TELEMETRY.md]</strong> - OpenTelemetry integration and custom monitoring setup</p>
@@ -714,7 +842,7 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 </div></div>
 
       <div id="footer">
-  Generated on Thu Jun  5 21:56:48 2025 by
+  Generated on Sun Jun  8 15:37:55 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

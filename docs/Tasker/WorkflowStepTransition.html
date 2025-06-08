@@ -116,7 +116,17 @@
 <div class="tags">
   
 
-</div>
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="WorkflowStepTransition/TransitionDescriptionFormatter.html" title="Tasker::WorkflowStepTransition::TransitionDescriptionFormatter (class)">TransitionDescriptionFormatter</a></span>
+    
+  
+</p>
+
 
 
 
@@ -654,6 +664,11 @@
   
   
   
+  
+  
+  <h3 class="inherited">Methods inherited from <span class='object_link'><a href="ApplicationRecord.html" title="Tasker::ApplicationRecord (class)">ApplicationRecord</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="ApplicationRecord.html#configure_database_connections-class_method" title="Tasker::ApplicationRecord.configure_database_connections (method)">configure_database_connections</a></span>, <span class='object_link'><a href="ApplicationRecord.html#database_configuration_exists%3F-class_method" title="Tasker::ApplicationRecord.database_configuration_exists? (method)">database_configuration_exists?</a></span></p>
+
   
 
   <div id="class_method_details" class="method_details_list">
@@ -1253,18 +1268,18 @@
       <pre class="lines">
 
 
-274
-275
-276
-277
-278
-279
-280
-281
-282</pre>
+250
+251
+252
+253
+254
+255
+256
+257
+258</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 274</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 250</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_backoff_info'>backoff_info</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_error_transition?'>error_transition?</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_has_metadata?'>has_metadata?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>backoff_until</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1444,61 +1459,13 @@
 
 200
 201
-202
-203
-204
-205
-206
-207
-208
-209
-210
-211
-212
-213
-214
-215
-216
-217
-218
-219
-220
-221
-222
-223
-224
-225
-226</pre>
+202</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 200</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_description'>description</span>
-  <span class='kw'>case</span> <span class='id identifier rubyid_to_state'>to_state</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>pending</span><span class='tstring_end'>&#39;</span></span>
-    <span class='kw'>if</span> <span class='id identifier rubyid_retry_transition?'>retry_transition?</span>
-      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step retry attempt #</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_attempt_number'>attempt_number</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-    <span class='kw'>else</span>
-      <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Step initialized and ready for execution</span><span class='tstring_end'>&#39;</span></span>
-    <span class='kw'>end</span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>in_progress</span><span class='tstring_end'>&#39;</span></span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step execution started (attempt #</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_attempt_number'>attempt_number</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>complete</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_duration_text'>duration_text</span> <span class='op'>=</span> <span class='id identifier rubyid_execution_duration'>execution_duration</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> in </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_execution_duration'>execution_duration</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>s</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step completed successfully</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_duration_text'>duration_text</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>error</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_error_msg'>error_msg</span> <span class='op'>=</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>error_message</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_backoff_text'>backoff_text</span> <span class='op'>=</span> <span class='id identifier rubyid_has_metadata?'>has_metadata?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>backoff_until</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'> (retry scheduled)</span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step failed: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_error_msg'>error_msg</span><span class='embexpr_end'>}</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_backoff_text'>backoff_text</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>cancelled</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_reason'>reason</span> <span class='op'>=</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>triggered_by</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>manual cancellation</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step cancelled due to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_reason'>reason</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>when</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>resolved_manually</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_resolver'>resolver</span> <span class='op'>=</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>resolved_by</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step manually resolved by </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_resolver'>resolver</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>else</span>
-    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step transitioned to </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_to_state'>to_state</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span>
+  <span class='const'><span class='object_link'><a href="WorkflowStepTransition/TransitionDescriptionFormatter.html" title="Tasker::WorkflowStepTransition::TransitionDescriptionFormatter (class)">TransitionDescriptionFormatter</a></span></span><span class='period'>.</span><span class='id identifier rubyid_format'><span class='object_link'><a href="WorkflowStepTransition/TransitionDescriptionFormatter.html#format-class_method" title="Tasker::WorkflowStepTransition::TransitionDescriptionFormatter.format (method)">format</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1740,21 +1707,21 @@
       <pre class="lines">
 
 
-231
-232
-233
-234
-235
-236
-237
-238
-239
-240
-241
-242</pre>
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 231</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 207</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_formatted_metadata'>formatted_metadata</span>
   <span class='id identifier rubyid_base_metadata'>base_metadata</span> <span class='op'>=</span> <span class='id identifier rubyid_metadata'>metadata</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span>
@@ -1855,12 +1822,12 @@
       <pre class="lines">
 
 
-257
-258
-259</pre>
+233
+234
+235</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 257</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 233</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_metadata'>get_metadata</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_metadata'>metadata</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
@@ -1934,12 +1901,12 @@
       <pre class="lines">
 
 
-248
-249
-250</pre>
+224
+225
+226</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 248</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 224</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_has_metadata?'>has_metadata?</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_metadata'>metadata</span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
@@ -2088,13 +2055,13 @@
       <pre class="lines">
 
 
-266
-267
-268
-269</pre>
+242
+243
+244
+245</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 266</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_transition.rb', line 242</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_metadata'>set_metadata</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>=</span> <span class='id identifier rubyid_metadata'>metadata</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
@@ -2224,7 +2191,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun  5 21:56:51 2025 by
+  Generated on Sun Jun  8 15:37:59 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

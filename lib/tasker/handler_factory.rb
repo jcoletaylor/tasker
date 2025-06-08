@@ -110,7 +110,8 @@ module Tasker
       events_config.each do |event_config|
         # Support both symbol and string keys
         event_name = event_config[:name] || event_config['name']
-        description = event_config[:description] || event_config['description'] || "Custom event from #{handler_class.name}"
+        description = event_config[:description] || event_config['description'] ||
+                      "Custom event from #{handler_class.name}"
 
         next unless event_name
 

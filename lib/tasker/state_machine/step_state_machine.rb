@@ -88,77 +88,42 @@ module Tasker
       # - Idempotent transitions are handled by Statesman automatically
       # - Simple state changes (PENDING->ERROR, IN_PROGRESS->COMPLETE, etc.) don't need guards
 
+      # Frozen constant mapping state transitions to event names
+      # This provides O(1) lookup performance and ensures consistency
+      TRANSITION_EVENT_MAP = {
+        # Initial state transitions (from nil/initial)
+        [nil, Constants::WorkflowStepStatuses::PENDING] => Constants::StepEvents::INITIALIZE_REQUESTED,
+        [nil, Constants::WorkflowStepStatuses::IN_PROGRESS] => Constants::StepEvents::EXECUTION_REQUESTED,
+        [nil, Constants::WorkflowStepStatuses::COMPLETE] => Constants::StepEvents::COMPLETED,
+        [nil, Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
+        [nil, Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
+        [nil, Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY,
+
+        # Normal state transitions
+        [Constants::WorkflowStepStatuses::PENDING,
+         Constants::WorkflowStepStatuses::IN_PROGRESS] => Constants::StepEvents::EXECUTION_REQUESTED,
+        [Constants::WorkflowStepStatuses::PENDING,
+         Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
+        [Constants::WorkflowStepStatuses::PENDING,
+         Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
+        [Constants::WorkflowStepStatuses::PENDING,
+         Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY,
+
+        [Constants::WorkflowStepStatuses::IN_PROGRESS,
+         Constants::WorkflowStepStatuses::COMPLETE] => Constants::StepEvents::COMPLETED,
+        [Constants::WorkflowStepStatuses::IN_PROGRESS,
+         Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
+        [Constants::WorkflowStepStatuses::IN_PROGRESS,
+         Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
+
+        [Constants::WorkflowStepStatuses::ERROR,
+         Constants::WorkflowStepStatuses::PENDING] => Constants::StepEvents::RETRY_REQUESTED,
+        [Constants::WorkflowStepStatuses::ERROR,
+         Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY
+      }.freeze
+
       # Class methods for state machine management
       class << self
-        # Lazy-loaded hashmap for efficient event name lookup based on state transitions
-        # This is built on first access to avoid referencing constants before they're created
-        def transition_event_map
-          @transition_event_map ||= build_transition_event_map
-        end
-
-        # Build the transition event map when needed
-        def build_transition_event_map
-          # Load mappings from YAML (single source of truth)
-          yaml_file = File.join(Tasker::Engine.root, 'config', 'tasker', 'system_events.yml')
-
-          if File.exist?(yaml_file)
-            yaml_data = YAML.load_file(yaml_file)
-            mappings = yaml_data.dig('state_machine_mappings', 'step_transitions') || []
-
-            # Convert YAML mappings to hash format
-            transition_map = {}
-            mappings.each do |mapping|
-              from_state = mapping['from_state'] # nil for initial transitions
-              to_state = mapping['to_state']
-              event_constant = mapping['event_constant']
-
-              # Convert to our internal format
-              transition_map[[from_state, to_state]] = event_constant
-            end
-
-            transition_map.freeze
-          else
-            # Fallback to hardcoded mappings if YAML not available
-            Rails.logger.warn('Tasker: system_events.yml not found, using fallback mappings')
-            build_fallback_transition_map
-          end
-        end
-
-        # Fallback mappings in case YAML is not available
-        def build_fallback_transition_map
-          {
-            # Initial state transitions (from nil/initial)
-            [nil, Constants::WorkflowStepStatuses::PENDING] => Constants::StepEvents::INITIALIZE_REQUESTED,
-            [nil, Constants::WorkflowStepStatuses::IN_PROGRESS] => Constants::StepEvents::EXECUTION_REQUESTED,
-            [nil, Constants::WorkflowStepStatuses::COMPLETE] => Constants::StepEvents::COMPLETED,
-            [nil, Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
-            [nil, Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
-            [nil, Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY,
-
-            # Normal state transitions
-            [Constants::WorkflowStepStatuses::PENDING,
-             Constants::WorkflowStepStatuses::IN_PROGRESS] => Constants::StepEvents::EXECUTION_REQUESTED,
-            [Constants::WorkflowStepStatuses::PENDING,
-             Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
-            [Constants::WorkflowStepStatuses::PENDING,
-             Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
-            [Constants::WorkflowStepStatuses::PENDING,
-             Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY,
-
-            [Constants::WorkflowStepStatuses::IN_PROGRESS,
-             Constants::WorkflowStepStatuses::COMPLETE] => Constants::StepEvents::COMPLETED,
-            [Constants::WorkflowStepStatuses::IN_PROGRESS,
-             Constants::WorkflowStepStatuses::ERROR] => Constants::StepEvents::FAILED,
-            [Constants::WorkflowStepStatuses::IN_PROGRESS,
-             Constants::WorkflowStepStatuses::CANCELLED] => Constants::StepEvents::CANCELLED,
-
-            [Constants::WorkflowStepStatuses::ERROR,
-             Constants::WorkflowStepStatuses::PENDING] => Constants::StepEvents::RETRY_REQUESTED,
-            [Constants::WorkflowStepStatuses::ERROR,
-             Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY
-          }.freeze
-        end
-
         # Class-level wrapper methods for guard clause context
         # These delegate to instance methods to provide clean access from guard clauses
 
@@ -383,14 +348,14 @@ module Tasker
           enhanced_context
         end
 
-        # Determine the appropriate event name for a state transition using hashmap lookup
+        # Determine the appropriate event name for a state transition using constant lookup
         #
         # @param from_state [String, nil] The source state
         # @param to_state [String] The target state
         # @return [String, nil] The event name or nil if no mapping exists
         def determine_transition_event_name(from_state, to_state)
           transition_key = [from_state, to_state]
-          event_name = transition_event_map[transition_key]
+          event_name = TRANSITION_EVENT_MAP[transition_key]
 
           if event_name.nil?
             # For unexpected transitions, log a warning and return nil to skip event firing

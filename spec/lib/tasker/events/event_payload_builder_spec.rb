@@ -19,7 +19,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
   end
 
   describe '.build_step_payload' do
-    context 'for completed events' do
+    context 'when building completed events' do
       let(:payload) do
         described_class.build_step_payload(step, task, event_type: :completed)
       end
@@ -53,7 +53,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
       end
     end
 
-    context 'for failed events' do
+    context 'when building failed events' do
       let(:error_context) do
         {
           error: 'Test error occurred',
@@ -102,7 +102,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
       end
     end
 
-    context 'for started events' do
+    context 'when building started events' do
       let(:step_with_inputs) do
         task.workflow_steps.first.tap do |step|
           step.update!(inputs: { 'param1' => 'value1', 'param2' => 'value2' }) # Use string keys
@@ -247,7 +247,7 @@ RSpec.describe Tasker::Events::EventPayloadBuilder do
       end
     end
 
-    context 'for failed events' do
+    context 'when building failed events' do
       let(:error_context) do
         {
           error_message: 'Task failed due to step errors',

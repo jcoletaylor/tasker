@@ -2,12 +2,13 @@
 
 ## Overview
 
-This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around four main developer-facing components:
+This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around five main developer-facing components:
 
 1. **Task Handlers** - Define and coordinate multi-step workflows
 2. **Step Handlers** - Implement the business logic for individual workflow steps
 3. **Event Subscribers** - Create integrations with external services and monitoring systems
 4. **YAML Configuration** - Declarative workflow and step configuration
+5. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
 
 ## Architecture Overview
 
@@ -217,7 +218,7 @@ end
 
 - **Automatic Result Storage**: Return values automatically stored in `step.results`
 - **Context Access**: Full access to task context and previous step results
-- **Error Handling**: Exceptions trigger retry logic and error events
+- **Error Handling**: Framework determines success/failure based on exceptions (see Error Handling Patterns in Best Practices)
 - **Custom Processing**: Override `process_results` for custom result handling
 - **Event Integration**: Automatic event publishing for observability
 
@@ -492,6 +493,172 @@ environments:
     retries: 3
 ```
 
+## 5. Authentication & Authorization
+
+Tasker provides a comprehensive, production-ready authentication and authorization system that works with any Rails authentication solution. The system uses **dependency injection** and **resource-based authorization** to provide enterprise-grade security for both REST APIs and GraphQL endpoints.
+
+### Key Features
+
+- **Provider Agnostic**: Works with Devise, JWT, OmniAuth, custom authentication, or no authentication
+- **Resource-Based Authorization**: Granular permissions using resource:action patterns (e.g., `tasker.task:create`)
+- **GraphQL Operation-Level Authorization**: Revolutionary security for GraphQL that maps operations to resource permissions
+- **Automatic Controller Integration**: Authentication and authorization work seamlessly across REST and GraphQL
+- **Comprehensive Generators**: Create production-ready authenticators and authorization coordinators
+- **Zero Breaking Changes**: All features are opt-in and backward compatible
+
+### Quick Configuration Example
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.auth do |auth|
+    # Authentication
+    auth.authentication_enabled = true
+    auth.authenticator_class = 'YourCustomAuthenticator'
+
+    # Authorization
+    auth.authorization_enabled = true
+    auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
+    auth.user_class = 'User'
+  end
+end
+```
+
+### Available Generators
+
+```bash
+# Generate authenticators for different systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Generate authorization coordinator
+rails generate tasker:authorization_coordinator CompanyAuth
+```
+
+### GraphQL Authorization Example
+
+The system automatically maps GraphQL operations to resource permissions:
+
+```ruby
+# This GraphQL query:
+query { tasks { taskId status } }
+
+# Automatically requires: tasker.task:index permission
+
+# This mutation:
+mutation { createTask(input: {...}) { taskId } }
+
+# Automatically requires: tasker.task:create permission
+```
+
+### Resource-Based Permissions
+
+Authorization uses a simple resource:action permission model:
+
+```ruby
+# Available permissions:
+'tasker.task:index'           # List all tasks
+'tasker.task:create'          # Create new tasks
+'tasker.workflow_step:show'   # View individual workflow steps
+'tasker.task_diagram:index'   # List task diagrams
+```
+
+### Complete Documentation
+
+For comprehensive documentation including:
+- **Quick Start Guides** - Get authentication working in minutes
+- **Custom Authenticator Examples** - JWT, Devise, API tokens, and more
+- **Authorization Coordinator Patterns** - Role-based, context-aware, and time-based authorization
+- **GraphQL Authorization Details** - Operation mapping and context handling
+- **Production Best Practices** - Security, performance, and monitoring guidelines
+- **Testing Strategies** - Complete test examples and isolation techniques
+
+**See [Authentication & Authorization Guide](AUTH.md)** for complete documentation.
+
+## 6. Multi-Database Support
+
+Tasker provides optional multi-database support using Rails' standard multi-database conventions. This allows Tasker models to use a separate database from the host application for data isolation, performance, or compliance requirements.
+
+### Key Features
+
+- **Rails Multi-Database Integration**: Uses Rails' `connects_to` API following official conventions
+- **Standard Configuration**: Leverages Rails database.yml patterns with named databases
+- **Automatic Model Support**: All Tasker models inherit multi-database capability automatically
+- **Zero Breaking Changes**: Fully backward compatible with existing installations
+- **Environment-Specific**: Supports different database configurations per environment
+
+### Configuration
+
+```ruby
+# config/initializers/tasker.rb
+
+# Default: Use host application database (shared)
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = false
+end
+
+# Use dedicated Tasker database
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = true
+  config.database.name = :tasker
+end
+
+# Environment-specific configuration
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = Rails.env.production?
+  config.database.name = Rails.env.production? ? :tasker : nil
+end
+```
+
+### Database Configuration
+
+```yaml
+# config/database.yml
+production:
+  primary:
+    database: my_primary_database
+    adapter: postgresql
+    username: app_user
+    password: <%= ENV['DATABASE_PASSWORD'] %>
+
+  tasker:
+    database: my_tasker_database
+    adapter: postgresql
+    username: tasker_user
+    password: <%= ENV['TASKER_DATABASE_PASSWORD'] %>
+```
+
+### Benefits of Multi-Database Setup
+
+**Data Isolation**: Separate Tasker data from application data for security or compliance
+
+**Performance**: Dedicated database resources for workflow processing
+
+**Scaling**: Independent scaling of workflow database based on usage patterns
+
+**Backup Strategy**: Separate backup and recovery policies for workflow data
+
+**Development**: Easier testing and development with isolated workflow data
+
+### Migration Support
+
+When using a secondary database, Tasker migrations automatically target the correct database:
+
+```bash
+# Migrations run against the configured Tasker database
+bundle exec rails tasker:install:migrations
+bundle exec rails db:migrate
+```
+
+### Production Considerations
+
+- **Connection Pooling**: Configure appropriate connection pool sizes for both databases
+- **Monitoring**: Monitor connection usage and performance for both databases
+- **Backup Strategy**: Implement coordinated backup strategies if data consistency across databases is required
+- **Network Latency**: Consider network latency if databases are on different servers
+
 ## Best Practices
 
 ### Task Handler Design
@@ -506,9 +673,76 @@ environments:
 
 1. **Focused Logic**: Each step should do one thing well
 2. **Clear Results**: Return meaningful data structure for dependent steps
-3. **Error Information**: Provide helpful error context when operations fail
+3. **Error Handling**: Understand how the framework determines step success/failure (see Error Handling Patterns below)
 4. **Idempotency**: Design steps to be safely retryable
 5. **Resource Cleanup**: Clean up resources in error scenarios
+
+#### Error Handling Patterns
+
+The framework determines step success/failure based on whether the `process` method raises an exception:
+
+- **Exception raised** → Step marked as FAILED, retry logic triggered, workflow stops
+- **No exception raised** → Step marked as COMPLETED, workflow continues
+
+**Pattern 1: Let exceptions bubble up (Recommended)**
+```ruby
+def process(task, sequence, step)
+  # Attempt the operation - let exceptions propagate naturally
+  result = perform_complex_operation(task.context)
+  { success: true, data: result }
+
+  # Framework automatically handles exceptions:
+  # - Publishes step_failed event with error details
+  # - Stores error information in step.results
+  # - Transitions step to error state
+  # - Triggers retry logic if configured
+end
+```
+
+**Pattern 2: Catch, record error details, then re-raise**
+```ruby
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue StandardError => e
+    # Add custom error context to step.results
+    step.results = {
+      error: e.message,
+      error_type: e.class.name,
+      custom_context: "Additional business context",
+      retry_recommended: should_retry?(e)
+    }
+    # Re-raise so framework knows this step failed
+    raise
+  end
+end
+```
+
+**Pattern 3: Treat handled exceptions as success**
+```ruby
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue RecoverableError => e
+    # This exception is handled and considered a success case
+    # Step will be marked as COMPLETED, not failed
+    {
+      success: true,
+      data: get_fallback_data(task.context),
+      recovered_from_error: e.message,
+      used_fallback: true
+    }
+  end
+end
+```
+
+⚠️ **Important**: Only catch exceptions in your `process` method if you intend to either:
+- Add custom error context to `step.results` and re-raise (Pattern 2)
+- Treat the exception as a recoverable success case (Pattern 3)
+
+**Never** catch an exception, return error data, and expect the framework to treat it as a failure - it will be marked as successful.
 
 ### Event Subscriber Guidelines
 
@@ -711,5 +945,3 @@ publish_custom_event('order.processed', order_id: 123, status: 'completed')
 # Publish system events with custom data
 publish_step_completed(step, custom_data: 'value')
 ```
-
-This developer guide provides a comprehensive foundation for building sophisticated workflows with Tasker. The combination of task handlers, step handlers, event subscribers, and YAML configuration creates a powerful and flexible system for managing complex business processes.

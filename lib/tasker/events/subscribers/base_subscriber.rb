@@ -314,27 +314,111 @@ module Tasker
         #   tags = extract_metric_tags(event)
         #   StatsD.increment('tasker.task.completed', tags: tags)
         def extract_metric_tags(event)
-          tags = []
+          MetricTagsExtractor.extract(event)
+        end
 
-          # Core entity tags
-          task_name = safe_get(event, :task_name)
-          tags << "task:#{task_name}" if task_name && task_name != 'unknown'
+        # Service class to extract and build metric tags from events
+        # Reduces complexity by organizing tag building logic
+        class MetricTagsExtractor
+          class << self
+            # Extract all metric tags from event
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @return [Array<String>] Array of tag strings
+            def extract(event)
+              tags = []
 
-          step_name = safe_get(event, :step_name)
-          tags << "step:#{step_name}" if step_name && step_name != 'unknown_step'
+              tags.concat(extract_entity_tags(event))
+              tags.concat(extract_environment_tags(event))
+              tags.concat(extract_status_tags(event))
+              tags.concat(extract_business_tags(event))
 
-          # Environment and source tags
-          tags << "environment:#{Rails.env}" if defined?(Rails)
-          tags << "source:#{safe_get(event, :source_system)}" if safe_get(event, :source_system)
+              tags.compact
+            end
 
-          # Status and retry tags
-          tags << "retryable:#{safe_get(event, :retryable)}" if safe_get(event, :retryable)
-          tags << "attempt:#{safe_get(event, :attempt_number)}" if safe_get(event, :attempt_number)
+            private
 
-          # Priority and business context
-          tags << "priority:#{safe_get(event, :priority)}" if safe_get(event, :priority)
+            # Extract core entity tags (task, step names)
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @return [Array<String>] Entity tags
+            def extract_entity_tags(event)
+              tags = []
 
-          tags.compact
+              task_name = safe_get_from_event(event, :task_name)
+              tags << "task:#{task_name}" if task_name && task_name != 'unknown'
+
+              step_name = safe_get_from_event(event, :step_name)
+              tags << "step:#{step_name}" if step_name && step_name != 'unknown_step'
+
+              tags
+            end
+
+            # Extract environment and source tags
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @return [Array<String>] Environment tags
+            def extract_environment_tags(event)
+              tags = []
+
+              tags << "environment:#{Rails.env}" if defined?(Rails)
+
+              source_system = safe_get_from_event(event, :source_system)
+              tags << "source:#{source_system}" if source_system
+
+              tags
+            end
+
+            # Extract status and retry tags
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @return [Array<String>] Status tags
+            def extract_status_tags(event)
+              tags = []
+
+              retryable = safe_get_from_event(event, :retryable)
+              tags << "retryable:#{retryable}" if retryable
+
+              attempt_number = safe_get_from_event(event, :attempt_number)
+              tags << "attempt:#{attempt_number}" if attempt_number
+
+              tags
+            end
+
+            # Extract business context tags
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @return [Array<String>] Business tags
+            def extract_business_tags(event)
+              tags = []
+
+              priority = safe_get_from_event(event, :priority)
+              tags << "priority:#{priority}" if priority
+
+              tags
+            end
+
+            # Safely get value from event (reuse BaseSubscriber logic)
+            #
+            # @param event [Hash, Dry::Events::Event] The event payload
+            # @param key [Symbol] The key to extract
+            # @param default [Object] Default value
+            # @return [Object] Extracted value
+            def safe_get_from_event(event, key, default = nil)
+              return default if event.nil?
+
+              # Handle Dry::Events::Event object
+              if event.respond_to?(:payload) && event.payload.respond_to?(:fetch)
+                payload = event.payload
+                return payload.fetch(key.to_sym) { payload.fetch(key.to_s, default) }
+              end
+
+              # Handle plain hash events
+              event.fetch(key.to_sym) do
+                event.fetch(key.to_s, default)
+              end
+            end
+          end
         end
 
         # Create metric name with consistent naming convention
@@ -383,27 +467,132 @@ module Tasker
         # @param error_class [String] The exception class name
         # @return [String] Categorized error type
         def categorize_error(error_class)
-          return 'unknown' if error_class.blank?
+          ErrorCategorizer.categorize(error_class)
+        end
 
-          case error_class.to_s
-          when /Timeout/i, /TimeoutError/i
-            'timeout'
-          when /Connection/i, /Network/i
-            'network'
-          when /NotFound/i, /Missing/i, /404/
-            'not_found'
-          when /Unauthorized/i, /Forbidden/i, /401/, /403/
-            'auth'
-          when /RateLimit/i, /TooManyRequests/i, /429/
-            'rate_limit'
-          when /BadRequest/i, /Invalid/i, /400/
-            'client_error'
-          when /ServerError/i, /InternalError/i, /500/
-            'server_error'
-          when /StandardError/i, /RuntimeError/i
-            'runtime'
-          else
-            'other'
+        # Service class to categorize error types for metrics
+        # Reduces complexity by organizing error classification logic
+        class ErrorCategorizer
+          class << self
+            # Categorize error based on class name
+            #
+            # @param error_class [String] The exception class name
+            # @return [String] Categorized error type
+            def categorize(error_class)
+              return 'unknown' if error_class.blank?
+
+              error_string = error_class.to_s
+
+              classify_error_type(error_string)
+            end
+
+            private
+
+            # Classify error type using pattern matching
+            #
+            # @param error_string [String] The error class as string
+            # @return [String] Classified error type
+            def classify_error_type(error_string)
+              ErrorTypeClassifier.classify(error_string)
+            end
+
+            # Service class to classify error types using pattern matching
+            # Reduces complexity by organizing error type classification logic
+            class ErrorTypeClassifier
+              class << self
+                # Classify error type from error string
+                #
+                # @param error_string [String] The error class as string
+                # @return [String] Classified error type
+                def classify(error_string)
+                  ERROR_TYPE_MATCHERS.each do |type, matcher|
+                    return type if matcher.call(error_string)
+                  end
+
+                  'other'
+                end
+
+                # Map of error types to their matching logic
+                ERROR_TYPE_MATCHERS = {
+                  'timeout' => ->(str) { timeout_error?(str) },
+                  'network' => ->(str) { network_error?(str) },
+                  'not_found' => ->(str) { not_found_error?(str) },
+                  'auth' => ->(str) { auth_error?(str) },
+                  'rate_limit' => ->(str) { rate_limit_error?(str) },
+                  'client_error' => ->(str) { client_error?(str) },
+                  'server_error' => ->(str) { server_error?(str) },
+                  'runtime' => ->(str) { runtime_error?(str) }
+                }.freeze
+
+                # Check if error is timeout-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if timeout error
+                def self.timeout_error?(error_string)
+                  error_string.match?(/Timeout/i) || error_string.match?(/TimeoutError/i)
+                end
+
+                # Check if error is network-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if network error
+                def self.network_error?(error_string)
+                  error_string.match?(/Connection/i) || error_string.match?(/Network/i)
+                end
+
+                # Check if error is not found-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if not found error
+                def self.not_found_error?(error_string)
+                  error_string.match?(/NotFound/i) || error_string.match?(/Missing/i) || error_string.include?('404')
+                end
+
+                # Check if error is authentication-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if auth error
+                def self.auth_error?(error_string)
+                  error_string.match?(/Unauthorized/i) || error_string.match?(/Forbidden/i) ||
+                    error_string.include?('401') || error_string.include?('403')
+                end
+
+                # Check if error is rate limit-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if rate limit error
+                def self.rate_limit_error?(error_string)
+                  error_string.match?(/RateLimit/i) || error_string.match?(/TooManyRequests/i) ||
+                    error_string.include?('429')
+                end
+
+                # Check if error is client error-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if client error
+                def self.client_error?(error_string)
+                  error_string.match?(/BadRequest/i) || error_string.match?(/Invalid/i) ||
+                    error_string.include?('400')
+                end
+
+                # Check if error is server error-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if server error
+                def self.server_error?(error_string)
+                  error_string.match?(/ServerError/i) || error_string.match?(/InternalError/i) ||
+                    error_string.include?('500')
+                end
+
+                # Check if error is runtime-related
+                #
+                # @param error_string [String] The error class as string
+                # @return [Boolean] True if runtime error
+                def self.runtime_error?(error_string)
+                  error_string.match?(/StandardError/i) || error_string.match?(/RuntimeError/i)
+                end
+              end
+            end
           end
         end
       end

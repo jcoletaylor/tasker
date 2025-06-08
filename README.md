@@ -32,6 +32,12 @@ This guide will walk you through the fundamentals of using Tasker to build compl
     - [Processing Results](#processing-results)
     - [Customizing Result Processing](#customizing-result-processing)
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
+  - [Authentication \& Authorization](#authentication--authorization)
+    - [Key Features](#key-features)
+    - [Quick Start](#quick-start)
+    - [Generators](#generators)
+    - [GraphQL Security](#graphql-security)
+    - [Complete Documentation](#complete-documentation)
   - [Best Practices](#best-practices)
   - [Event System \& Custom Integrations](#event-system--custom-integrations)
     - [Quick Start with Event Subscribers](#quick-start-with-event-subscribers)
@@ -63,7 +69,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.0.0'
+  gem 'tasker', '~> 2.1.0'
 end
 ```
 
@@ -411,6 +417,82 @@ def process(_task, sequence, step)
 end
 ```
 
+## Authentication & Authorization
+
+Tasker includes a complete, production-ready authentication and authorization system that provides enterprise-grade security for both REST APIs and GraphQL endpoints. The system is designed to work with any Rails authentication solution while maintaining flexibility and security.
+
+### Key Features
+
+- **🔐 Provider Agnostic**: Works seamlessly with Devise, JWT, OmniAuth, custom authentication, or no authentication
+- **🛡️ Resource-Based Authorization**: Granular permissions using resource:action patterns (`tasker.task:create`, `tasker.workflow_step:show`)
+- **⚡ GraphQL Operation-Level Authorization**: Revolutionary security that automatically maps GraphQL operations to resource permissions
+- **🔄 Automatic Integration**: Authentication and authorization work seamlessly across REST and GraphQL endpoints
+- **🚀 Production-Ready Generators**: Create complete authenticators and authorization coordinators with one command
+- **✅ Zero Breaking Changes**: All features are opt-in and maintain backward compatibility
+
+### Quick Start
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.auth do |auth|
+    # Enable authentication with your custom authenticator
+    auth.authentication_enabled = true
+    auth.authenticator_class = 'YourCustomAuthenticator'
+
+    # Enable resource-based authorization
+    auth.authorization_enabled = true
+    auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
+    auth.user_class = 'User'
+  end
+end
+```
+
+### Generators
+
+Generate production-ready authenticators for popular authentication systems:
+
+```bash
+# JWT authenticator with comprehensive security features
+rails generate tasker:authenticator CompanyJWT --type=jwt
+
+# Devise integration with proper scope handling
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+
+# API token authenticator with header fallback
+rails generate tasker:authenticator ApiAuth --type=api_token
+
+# OmniAuth integration with session management
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Authorization coordinator with resource-based permissions
+rails generate tasker:authorization_coordinator CompanyAuth
+```
+
+### GraphQL Security
+
+The system provides revolutionary GraphQL authorization that automatically maps operations to permissions:
+
+```ruby
+# GraphQL query automatically requires tasker.task:index permission
+query { tasks { taskId status } }
+
+# GraphQL mutation automatically requires tasker.task:create permission
+mutation { createTask(input: { name: "New Task" }) { taskId } }
+
+# Mixed operations check all required permissions
+query {
+  tasks { taskId }           # Requires: tasker.task:index
+  workflowSteps { stepId }   # Requires: tasker.workflow_step:index
+}
+```
+
+### Complete Documentation
+
+For comprehensive documentation including quick start guides, custom authenticator examples, authorization patterns, GraphQL security details, production best practices, and testing strategies:
+
+**📖 See [Authentication & Authorization Guide](docs/AUTH.md)**
+
 ## Best Practices
 
 1. **Keep steps focused**: Each step should do one thing well
@@ -423,22 +505,51 @@ end
 8. **Document step dependencies**: Make it clear why steps depend on each other
 
 ```ruby
-# Example of good error handling
+# Example 1: Let exceptions bubble up (Recommended)
+def process(task, sequence, step)
+  # Attempt the operation - let exceptions propagate naturally
+  result = perform_complex_operation(task.context)
+  { success: true, data: result }
+
+  # Framework automatically handles exceptions:
+  # - Publishes step_failed event with error details
+  # - Stores error information in step.results
+  # - Transitions step to error state
+  # - Triggers retry logic if configured
+end
+
+# Example 2: Catch, record error details, then re-raise
 def process(task, sequence, step)
   begin
-    # Attempt the operation
     result = perform_complex_operation(task.context)
     { success: true, data: result }
   rescue StandardError => e
-    # Return error information - framework will still publish step_failed event
-    {
-      success: false,
+    # Add custom error context to step.results
+    step.results = {
       error: e.message,
       error_type: e.class.name,
-      backtrace: e.backtrace.first(5).join("\n")
+      custom_context: "Additional business context",
+      retry_recommended: should_retry?(e)
     }
-    # Re-raise to trigger retry logic
+    # Re-raise so framework knows this step failed
     raise
+  end
+end
+
+# Example 3: Treat handled exceptions as success
+def process(task, sequence, step)
+  begin
+    result = perform_complex_operation(task.context)
+    { success: true, data: result }
+  rescue RecoverableError => e
+    # This exception is handled and considered a success case
+    # Step will be marked as COMPLETED, not failed
+    {
+      success: true,
+      data: get_fallback_data(task.context),
+      recovered_from_error: e.message,
+      used_fallback: true
+    }
   end
 end
 ```
@@ -466,6 +577,11 @@ rails generate tasker:subscriber notification --events task.completed task.faile
 
 # Generate a specialized metrics subscriber with helper methods
 rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
+
+# Generate authenticators for different authentication systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
 ```
 
 ### Example: Custom Events in Step Handlers
@@ -542,6 +658,7 @@ For complete documentation on telemetry features, configuration options, and bes
 ### Developer Resources
 
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration
+- **[Authentication Guide](docs/AUTH.md)** - Complete authentication system documentation with JWT, Devise, and custom authenticator examples
 - **[Event System](docs/EVENT_SYSTEM.md)** - Complete event system documentation with integration examples
 - **[Telemetry & Observability](docs/TELEMETRY.md)** - OpenTelemetry integration and custom monitoring setup
 - **[System Overview](docs/OVERVIEW.md)** - Architecture overview and configuration examples

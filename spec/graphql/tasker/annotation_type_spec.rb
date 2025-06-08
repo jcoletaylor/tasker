@@ -10,7 +10,7 @@ module Tasker
       @annotation_type = AnnotationType.find_or_create_by!(name: 'simple-test', description: 'simple test')
     end
 
-    context 'queries' do
+    context 'when making queries' do
       it 'gets annotation types' do
         post '/tasker/graphql', params: { query: annotation_type_query }
         json = JSON.parse(response.body).deep_symbolize_keys

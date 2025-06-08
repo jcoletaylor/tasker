@@ -1,0 +1,126 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Authenticator, type: :model do
+  let(:options) { { scope: :user } }
+  let(:authenticator) { described_class.new(options) }
+  let(:controller) { instance_double('ActionController::Base') }
+
+  describe '#initialize' do
+    it 'sets default scope to :user' do
+      authenticator = described_class.new
+      expect(authenticator.send(:scope)).to eq(:user)
+    end
+
+    it 'accepts custom scope' do
+      authenticator = described_class.new(scope: :admin)
+      expect(authenticator.send(:scope)).to eq(:admin)
+    end
+  end
+
+  describe '#authenticate!' do
+    context 'when Devise authentication succeeds' do
+      before do
+        allow(controller).to receive(:authenticate_user!).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticate!(controller)).to be true
+      end
+    end
+
+    context 'when Devise authentication fails' do
+      before do
+        allow(controller).to receive(:authenticate_user!).and_raise(StandardError, 'Authentication failed')
+      end
+
+      it 'raises AuthenticationError' do
+        expect do
+          authenticator.authenticate!(controller)
+        end.to raise_error(Tasker::Authentication::AuthenticationError, /Devise authentication failed/)
+      end
+    end
+  end
+
+  describe '#current_user' do
+    let(:user) { double('User', id: 1) }
+
+    context 'when Devise current_user returns a user' do
+      before do
+        allow(controller).to receive(:current_user).and_return(user)
+      end
+
+      it 'returns the user' do
+        expect(authenticator.current_user(controller)).to eq(user)
+      end
+    end
+
+    context 'when Devise current_user returns nil' do
+      before do
+        allow(controller).to receive(:current_user).and_return(nil)
+      end
+
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+  end
+
+  describe '#authenticated?' do
+    context 'when user_signed_in? is available' do
+      before do
+        allow(controller).to receive(:respond_to?).with(:user_signed_in?).and_return(true)
+        allow(controller).to receive(:user_signed_in?).and_return(true)
+      end
+
+      it 'uses Devise signed_in helper' do
+        expect(authenticator.authenticated?(controller)).to be true
+      end
+    end
+
+    context 'when user_signed_in? is not available' do
+      let(:user) { double('User') }
+
+      before do
+        allow(controller).to receive(:respond_to?).with(:user_signed_in?).and_return(false)
+        allow(authenticator).to receive(:current_user).with(controller).and_return(user)
+      end
+
+      it 'falls back to checking current_user presence' do
+        expect(authenticator.authenticated?(controller)).to be true
+      end
+    end
+  end
+
+  describe '#validate_configuration' do
+    context 'when Devise is available' do
+      before do
+        stub_const('Devise', double('Devise', mappings: { user: double('mapping') }))
+      end
+
+      it 'returns no errors for valid configuration' do
+        errors = authenticator.validate_configuration(scope: :user)
+        expect(errors).to be_empty
+      end
+    end
+
+    context 'when Devise is not available' do
+      before do
+        hide_const('Devise')
+      end
+
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to include('Devise gem is required for DeviseAuthenticator')
+      end
+    end
+
+    context 'with invalid scope type' do
+      it 'returns validation error' do
+        errors = authenticator.validate_configuration(scope: 'user')
+        expect(errors).to include('Devise scope must be a symbol')
+      end
+    end
+  end
+end

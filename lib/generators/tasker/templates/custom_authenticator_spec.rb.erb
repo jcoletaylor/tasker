@@ -1,0 +1,162 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= class_name %>Authenticator, type: :model do
+  let(:options) do
+    {
+      user_class: '<%= user_model_class %>'
+      # Add your custom options here
+    }
+  end
+
+  let(:authenticator) { described_class.new(options) }
+  let(:controller) { instance_double('ActionController::Base') }
+  let(:request) { instance_double('ActionDispatch::Request') }
+  let(:headers) { {} }
+
+  before do
+    allow(controller).to receive(:request).and_return(request)
+    allow(request).to receive(:headers).and_return(headers)
+  end
+
+  describe '#initialize' do
+    it 'sets default options' do
+      authenticator = described_class.new
+      expect(authenticator.send(:user_class)).to eq('<%= user_model_class %>')
+    end
+
+    it 'accepts custom options' do
+      custom_options = { user_class: 'CustomUser' }
+      authenticator = described_class.new(custom_options)
+      expect(authenticator.send(:user_class)).to eq('CustomUser')
+    end
+  end
+
+  describe '#authenticate!' do
+    context 'when user is authenticated' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(double('User'))
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticate!(controller)).to be_truthy
+      end
+    end
+
+    context 'when user is not authenticated' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(nil)
+      end
+
+      it 'raises AuthenticationError' do
+        expect do
+          authenticator.authenticate!(controller)
+        end.to raise_error(Tasker::Authentication::AuthenticationError)
+      end
+    end
+  end
+
+  describe '#current_user' do
+    context 'when user authentication succeeds' do
+      # TODO: Implement test cases based on your authentication logic
+      # Example:
+      # let(:user) { create(:user) }
+      #
+      # before do
+      #   # Set up your authentication scenario
+      #   # e.g., session, headers, tokens, etc.
+      # end
+      #
+      # it 'returns the authenticated user' do
+      #   expect(authenticator.current_user(controller)).to eq(user)
+      # end
+
+      it 'needs implementation based on your authentication logic' do
+        pending 'Implement based on your specific authentication method'
+      end
+    end
+
+    context 'when user authentication fails' do
+      it 'returns nil' do
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+
+    context 'when authentication raises an error' do
+      before do
+        # Simulate an error in your authentication logic
+        allow(controller).to receive(:session).and_raise(StandardError, 'Session error')
+      end
+
+      it 'returns nil and logs the error' do
+        expect(Rails.logger).to receive(:error).with(/Authentication error/)
+        expect(authenticator.current_user(controller)).to be_nil
+      end
+    end
+  end
+
+  describe '#authenticated?' do
+    context 'when current_user returns a user' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(double('User'))
+      end
+
+      it 'returns true' do
+        expect(authenticator.authenticated?(controller)).to be true
+      end
+    end
+
+    context 'when current_user returns nil' do
+      before do
+        allow(authenticator).to receive(:current_user).with(controller).and_return(nil)
+      end
+
+      it 'returns false' do
+        expect(authenticator.authenticated?(controller)).to be false
+      end
+    end
+  end
+
+  describe '#validate_configuration' do
+    context 'with valid configuration' do
+      it 'returns no errors' do
+        errors = authenticator.validate_configuration(options)
+        expect(errors).to be_empty
+      end
+    end
+
+    context 'with invalid user class' do
+      let(:invalid_options) { { user_class: 'NonExistentUser' } }
+
+      it 'returns validation errors' do
+        errors = authenticator.validate_configuration(invalid_options)
+        expect(errors).to include(/not found/)
+      end
+    end
+
+    # TODO: Add more validation test cases based on your specific requirements
+    # Examples:
+    # context 'when required option is missing' do
+    #   let(:invalid_options) { options.except(:required_option) }
+    #
+    #   it 'returns validation error' do
+    #     errors = authenticator.validate_configuration(invalid_options)
+    #     expect(errors).to include(/required/)
+    #   end
+    # end
+  end
+
+  describe 'interface compliance' do
+    it 'includes the authentication interface' do
+      expect(described_class.included_modules).to include(Tasker::Authentication::Interface)
+    end
+
+    it 'responds to required interface methods' do
+      expect(authenticator).to respond_to(:authenticate!)
+      expect(authenticator).to respond_to(:current_user)
+      expect(authenticator).to respond_to(:authenticated?)
+      expect(authenticator).to respond_to(:validate_configuration)
+    end
+  end
+end

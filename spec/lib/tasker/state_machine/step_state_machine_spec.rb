@@ -40,7 +40,7 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
   end
 
   describe 'valid transitions' do
-    context 'from pending state' do
+    context 'when transitioning from pending state' do
       it 'can transition to in_progress' do
         expect(state_machine.can_transition_to?(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)).to be true
       end
@@ -58,7 +58,7 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
       end
     end
 
-    context 'from in_progress state' do
+    context 'when transitioning from in_progress state' do
       before do
         # Transition to in_progress using the state machine
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
@@ -77,7 +77,7 @@ RSpec.describe Tasker::StateMachine::StepStateMachine do
       end
     end
 
-    context 'from error state' do
+    context 'when transitioning from error state' do
       before do
         # Transition through the states using the state machine
         state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)

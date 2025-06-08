@@ -49,20 +49,72 @@ module Tasker
       # @param config [Object] Configuration to validate
       # @raise [ArgumentError] If configuration is invalid
       def validate_config(config)
-        raise ArgumentError, 'Configuration cannot be nil' if config.nil?
+        ConfigValidator.validate(config)
+      end
 
-        raise ArgumentError, 'Configuration must respond to :url' unless config.respond_to?(:url)
+      # Service class to validate connection configuration
+      # Reduces complexity by organizing validation logic
+      class ConfigValidator
+        class << self
+          # Validate configuration object
+          #
+          # @param config [Object] Configuration to validate
+          # @raise [ArgumentError] If configuration is invalid
+          def validate(config)
+            validate_config_presence(config)
+            validate_config_interface(config)
+            validate_url_presence(config)
+            validate_url_format(config)
+          end
 
-        raise ArgumentError, 'Configuration URL cannot be nil or empty' if config.url.nil? || config.url.strip.empty?
+          private
 
-        # Validate URL format
-        begin
-          uri = URI.parse(config.url)
-          unless uri.scheme && uri.host
+          # Validate configuration is present
+          #
+          # @param config [Object] Configuration to validate
+          # @raise [ArgumentError] If configuration is nil
+          def validate_config_presence(config)
+            raise ArgumentError, 'Configuration cannot be nil' if config.nil?
+          end
+
+          # Validate configuration has required interface
+          #
+          # @param config [Object] Configuration to validate
+          # @raise [ArgumentError] If configuration doesn't respond to :url
+          def validate_config_interface(config)
+            raise ArgumentError, 'Configuration must respond to :url' unless config.respond_to?(:url)
+          end
+
+          # Validate URL is present and non-empty
+          #
+          # @param config [Object] Configuration to validate
+          # @raise [ArgumentError] If URL is nil or empty
+          def validate_url_presence(config)
+            return unless config.url.nil? || config.url.strip.empty?
+
+            raise ArgumentError, 'Configuration URL cannot be nil or empty'
+          end
+
+          # Validate URL format using URI parsing
+          #
+          # @param config [Object] Configuration to validate
+          # @raise [ArgumentError] If URL format is invalid
+          def validate_url_format(config)
+            uri = URI.parse(config.url)
+            validate_uri_components(uri)
+          rescue URI::InvalidURIError => e
+            raise ArgumentError, "Configuration URL is not a valid URI: #{e.message}"
+          end
+
+          # Validate URI has required components
+          #
+          # @param uri [URI] Parsed URI to validate
+          # @raise [ArgumentError] If URI lacks scheme or host
+          def validate_uri_components(uri)
+            return if uri.scheme && uri.host
+
             raise ArgumentError, 'Configuration URL must be a valid URI with scheme and host'
           end
-        rescue URI::InvalidURIError => e
-          raise ArgumentError, "Configuration URL is not a valid URI: #{e.message}"
         end
       end
     end

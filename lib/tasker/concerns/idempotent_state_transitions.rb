@@ -72,9 +72,10 @@ module Tasker
 
         # Check if current state allows this transition
         unless allowed_from_states.include?(current_state)
+          allowed_states_list = allowed_from_states.join(', ')
           Rails.logger.debug do
             "#{self.class.name}: Cannot transition #{state_machine_object.class.name} #{state_machine_object.id} " \
-              "from #{current_state} to #{target_state}. Allowed from states: #{allowed_from_states.join(', ')}"
+              "from #{current_state} to #{target_state}. Allowed from states: #{allowed_states_list}"
           end
           return :invalid_from_state
         end
@@ -82,7 +83,8 @@ module Tasker
         # Perform the transition
         state_machine_object.state_machine.transition_to!(target_state, metadata)
         Rails.logger.debug do
-          "#{self.class.name}: Successfully transitioned #{state_machine_object.class.name} #{state_machine_object.id} " \
+          "#{self.class.name}: Successfully transitioned" \
+            "#{state_machine_object.class.name} #{state_machine_object.id} " \
             "from #{current_state} to #{target_state}"
         end
         :transitioned

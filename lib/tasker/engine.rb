@@ -27,6 +27,19 @@ module Tasker
       app.config.eager_load_paths << root.join('lib')
     end
 
+    # Validate required configuration files
+    initializer 'tasker.validate_configuration', before: :load_config_initializers do |_app|
+      # Check for required system configuration files
+      system_events_yaml = root.join('config', 'tasker', 'system_events.yml')
+
+      unless File.exist?(system_events_yaml)
+        raise Tasker::ConfigurationError,
+              "Required configuration file missing: #{system_events_yaml}. " \
+              'This file contains essential state machine mappings for Tasker. ' \
+              'Please ensure it exists or reinstall the gem.'
+      end
+    end
+
     # Initialize essential components before app initialization
     initializer 'tasker.setup', before: :load_config_initializers do |_app|
       # Load core components that need explicit initialization

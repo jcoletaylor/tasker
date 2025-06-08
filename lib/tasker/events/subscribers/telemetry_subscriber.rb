@@ -17,6 +17,8 @@ module Tasker
       # - SPANS: Individual trace records for detailed debugging (this class)
       # - METRICS: Aggregated data for dashboards/alerts (derived from spans or separate collectors)
       class TelemetrySubscriber < BaseSubscriber
+        attr_accessor :tracer
+
         # Use actual constants for consistent subscription (no string literals)
         subscribe_to Tasker::Constants::TaskEvents::INITIALIZE_REQUESTED,
                      Tasker::Constants::TaskEvents::START_REQUESTED,
@@ -26,6 +28,11 @@ module Tasker
                      Tasker::Constants::StepEvents::COMPLETED,
                      Tasker::Constants::StepEvents::FAILED,
                      Tasker::Constants::StepEvents::RETRY_REQUESTED
+
+        def initialize
+          super
+          @tracer = create_tracer
+        end
 
         # Handle task initialization events
         def handle_task_initialize_requested(event)
@@ -136,15 +143,16 @@ module Tasker
           create_simple_span(event, 'tasker.step.retry', attributes)
         end
 
-        protected
-
         # Override BaseSubscriber to add telemetry-specific filtering
         def should_process_event?(event_constant)
-          # Only process if telemetry is enabled
-          telemetry_enabled? && super
-        end
+          # Get configuration once for efficiency
+          config = Tasker.configuration
 
-        private
+          # Only process if telemetry is enabled
+          return false unless config.telemetry.enabled
+
+          super
+        end
 
         # Extract step-specific attributes (enhanced from BaseSubscriber)
         def extract_step_attributes(event)
@@ -155,7 +163,7 @@ module Tasker
 
         # Check if telemetry is enabled
         def telemetry_enabled?
-          Tasker.configuration.enable_telemetry != false
+          Tasker.configuration.telemetry.enabled != false
         end
 
         # Create a simple span for events that don't need complex hierarchy
@@ -166,7 +174,6 @@ module Tasker
         def create_simple_span(event, span_name, attributes)
           return unless opentelemetry_available?
 
-          tracer = get_tracer
           otel_attributes = convert_attributes_for_otel(attributes)
 
           tracer.in_span(span_name, attributes: otel_attributes) do |span|
@@ -188,7 +195,6 @@ module Tasker
           task_id = safe_get(event, :task_id)
           return unless task_id
 
-          tracer = get_tracer
           otel_attributes = convert_attributes_for_otel(attributes)
 
           span = tracer.start_root_span(span_name, attributes: otel_attributes)
@@ -246,7 +252,6 @@ module Tasker
           task_span = get_task_span(task_id)
           return unless task_span
 
-          tracer = get_tracer
           otel_attributes = convert_attributes_for_otel(attributes)
 
           # Create child span context
@@ -266,19 +271,18 @@ module Tasker
           Rails.logger.warn("Failed to create step span: #{e.message}")
         end
 
+        # Event type to annotation name mapping
+        EVENT_ANNOTATION_MAP = {
+          'initialize_requested' => 'task.initialize',
+          'execution_requested' => 'step.queued',
+          'retry_requested' => 'step.retry'
+        }.freeze
+
         # Convert event to annotation name
         def event_to_annotation_name(event)
           # Simple mapping from event to annotation
-          case safe_get(event, :event_type)
-          when 'initialize_requested'
-            'task.initialize'
-          when 'execution_requested'
-            'step.queued'
-          when 'retry_requested'
-            'step.retry'
-          else
-            'event.processed'
-          end
+          event_type = safe_get(event, :event_type)
+          EVENT_ANNOTATION_MAP.fetch(event_type, 'event.processed')
         end
 
         # Check if OpenTelemetry is available and configured
@@ -288,14 +292,14 @@ module Tasker
           defined?(::OpenTelemetry) && ::OpenTelemetry.tracer_provider
         end
 
-        # Get the OpenTelemetry tracer
+        # Create the OpenTelemetry tracer
         #
         # @return [OpenTelemetry::Tracer] The tracer instance
-        def get_tracer
-          config = Tasker::Configuration.configuration
+        def create_tracer
+          config = Tasker.configuration
           ::OpenTelemetry.tracer_provider.tracer(
-            config.otel_telemetry_service_name,
-            config.otel_telemetry_service_version
+            config.telemetry.service_name,
+            config.telemetry.service_version
           )
         end
 
@@ -305,8 +309,8 @@ module Tasker
         # @return [Hash] OpenTelemetry-compatible attributes
         def convert_attributes_for_otel(attributes)
           result = {}
-          config = Tasker::Configuration.configuration
-          service_name = config.otel_telemetry_service_name
+          config = Tasker.configuration
+          service_name = config.telemetry.service_name
 
           # Filter sensitive data first
           filtered_attributes = filter_sensitive_attributes(attributes)
@@ -321,17 +325,27 @@ module Tasker
             attr_key = key.to_s.start_with?(attr_prefix) ? key.to_s : "#{attr_prefix}#{key}"
 
             # Convert values based on their type
-            result[attr_key] = case value
-                               when Hash, Array
-                                 value.to_json
-                               when nil
-                                 ''
-                               else
-                                 value.to_s
-                               end
+            result[attr_key] = convert_value_for_otel(value)
           end
 
           result
+        end
+
+        private
+
+        # Convert value to OpenTelemetry-compatible format
+        #
+        # @param value [Object] The value to convert
+        # @return [String] OpenTelemetry-compatible value
+        def convert_value_for_otel(value)
+          case value
+          when Hash, Array
+            value.to_json
+          when nil
+            ''
+          else
+            value.to_s
+          end
         end
 
         # Set the span status based on the event status
@@ -342,11 +356,10 @@ module Tasker
         def set_span_status(span, status, attributes)
           return unless defined?(::OpenTelemetry::Trace::Status)
 
-          case status
-          when :error
+          if status == :error
             error_msg = attributes[:error] || attributes[:error_message] || 'Unknown error'
             span.status = ::OpenTelemetry::Trace::Status.error(error_msg)
-          when :ok
+          elsif status == :ok
             span.status = ::OpenTelemetry::Trace::Status.ok
           end
         rescue StandardError => e
@@ -358,7 +371,7 @@ module Tasker
         # @param attributes [Hash] The attributes to filter
         # @return [Hash] The filtered attributes
         def filter_sensitive_attributes(attributes)
-          filter = Tasker::Configuration.configuration.parameter_filter
+          filter = Tasker.configuration.telemetry.parameter_filter
           return attributes unless filter
 
           filtered_data = {}
@@ -434,12 +447,12 @@ module Tasker
         # @param timestamp [String, Time, DateTime] The timestamp to parse
         # @return [Time, nil] The parsed time or nil if parsing fails
         def parse_timestamp(timestamp)
-          case timestamp
-          when Time, DateTime
-            timestamp.to_time
-          when String
-            Time.zone.parse(timestamp) if timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+          return timestamp.to_time if timestamp.is_a?(Time) || timestamp.is_a?(DateTime)
+          if timestamp.is_a?(String) && timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+            return Time.zone.parse(timestamp)
           end
+
+          nil
         rescue StandardError
           nil
         end

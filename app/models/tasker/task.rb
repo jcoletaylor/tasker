@@ -278,7 +278,7 @@ module Tasker
     #
     # @return [Object] The identity strategy instance
     def identity_strategy
-      @identity_strategy ||= Tasker.configuration.identity_strategy_instance
+      @identity_strategy ||= Tasker.configuration.engine.identity_strategy_instance
     end
 
     # Sets the identity hash for this task using the configured identity strategy

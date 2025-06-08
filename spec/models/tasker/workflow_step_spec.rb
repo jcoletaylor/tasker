@@ -14,7 +14,7 @@ module Tasker
       register_task_handler('dummy_task_two', DummyTask)
     end
 
-    context 'Task and StepTemplate Logic' do
+    context 'with Task and StepTemplate Logic' do
       it 'is able to build a named step from a step template' do
         create(:dependent_system, name: 'test-system')
         template = Tasker::Types::StepTemplate.new(

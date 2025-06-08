@@ -1,0 +1,7 @@
+---
+description:
+globs: spec/**/*_spec.rb
+alwaysApply: false
+---
+When we run rspec tests, the command line switch `-v` does not mean verbose, it means
+version, and so when we want verbosity, use `--format documentation`

@@ -136,36 +136,84 @@ module Tasker
     end
 
     # Finds a WorkflowStep with the given name by traversing the DAG efficiently
-    # @param steps [Array<WorkflowStep>] Array of WorkflowStep instances to search through
+    # @param steps [Array<WorkflowStep>] Collection of steps to search through
     # @param name [String] Name of the step to find
     # @return [WorkflowStep, nil] The first matching step found or nil if none exists
     def self.find_step_by_name(steps, name)
-      return nil if steps.empty? || name.nil?
+      StepFinder.find_by_name(steps, name)
+    end
 
-      # First check if any of the provided steps match the name
-      matching_step = steps.find { |step| step.name == name }
-      return matching_step if matching_step
+    # Service class to find steps by name
+    # Reduces complexity by organizing step search logic
+    class StepFinder
+      class << self
+        # Find step by name in provided collection or task hierarchy
+        #
+        # @param steps [Array<WorkflowStep>] Collection of steps to search through
+        # @param name [String] Name of the step to find
+        # @return [WorkflowStep, nil] The first matching step found or nil if none exists
+        def find_by_name(steps, name)
+          return nil if steps.empty? || name.nil?
 
-      # If not found in provided steps, use efficient DAG traversal with scenic view
-      # Get all task IDs from the provided steps
-      task_ids = steps.map(&:task_id).uniq
+          # First check direct match in provided steps
+          direct_match = find_direct_match(steps, name)
+          return direct_match if direct_match
 
-      # For each task, get all steps and their DAG relationships
-      task_ids.each do |task_id|
-        # Get all workflow steps for this task with their DAG relationships
-        all_task_steps = WorkflowStep.joins(:named_step)
-                                     .includes(:step_dag_relationship)
-                                     .where(task_id: task_id)
+          # Fall back to task-wide search using DAG relationships
+          find_in_task_hierarchy(steps, name)
+        end
 
-        # Find step by name using simple lookup instead of recursive traversal
-        found_step = all_task_steps.joins(:named_step)
-                                   .find_by(named_steps: { name: name })
+        private
 
-        return found_step if found_step
+        # Find direct match in provided steps
+        #
+        # @param steps [Array<WorkflowStep>] Collection of steps
+        # @param name [String] Name to search for
+        # @return [WorkflowStep, nil] Matching step or nil
+        def find_direct_match(steps, name)
+          steps.find { |step| step.name == name }
+        end
+
+        # Find step in task hierarchy using efficient DAG traversal
+        #
+        # @param steps [Array<WorkflowStep>] Collection of steps to get task context
+        # @param name [String] Name to search for
+        # @return [WorkflowStep, nil] Matching step or nil
+        def find_in_task_hierarchy(steps, name)
+          task_ids = extract_task_ids(steps)
+
+          task_ids.each do |task_id|
+            found_step = find_in_single_task(task_id, name)
+            return found_step if found_step
+          end
+
+          nil
+        end
+
+        # Extract unique task IDs from steps
+        #
+        # @param steps [Array<WorkflowStep>] Collection of steps
+        # @return [Array<Integer>] Unique task IDs
+        def extract_task_ids(steps)
+          steps.map(&:task_id).uniq
+        end
+
+        # Find step by name in a single task
+        #
+        # @param task_id [Integer] Task ID to search in
+        # @param name [String] Name to search for
+        # @return [WorkflowStep, nil] Matching step or nil
+        def find_in_single_task(task_id, name)
+          # Get all workflow steps for this task with their DAG relationships
+          all_task_steps = WorkflowStep.joins(:named_step)
+                                       .includes(:step_dag_relationship)
+                                       .where(task_id: task_id)
+
+          # Find step by name using simple lookup instead of recursive traversal
+          all_task_steps.joins(:named_step)
+                        .find_by(named_steps: { name: name })
+        end
       end
-
-      # No matching step found
-      nil
     end
 
     def self.get_steps_for_task(task, templates)

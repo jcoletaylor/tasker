@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Authorization::ResourceRegistry
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Authorization::ResourceRegistry";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (R)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Authorization.html" title="Tasker::Authorization (module)">Authorization</a></span></span>
+     &raquo; 
+    <span class="title">ResourceRegistry</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Authorization::ResourceRegistry
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Authorization::ResourceRegistry</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/authorization/resource_registry.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Resource registry defining available resources and their permitted actions for authorization purposes.</p>
+
+<p>This registry serves as a central catalog of all resources that can be authorized within the Tasker system. Each resource defines a set of actions that can be performed on it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Checking if a resource exists</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='const'>ResourceRegistry</span><span class='period'>.</span><span class='id identifier rubyid_resource_exists?'><span class='object_link'><a href="#resource_exists%3F-class_method" title="Tasker::Authorization::ResourceRegistry.resource_exists? (method)">resource_exists?</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'>TASK</span><span class='rparen'>)</span> <span class='comment'># =&gt; true</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Checking if an action is valid for a resource</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='const'>ResourceRegistry</span><span class='period'>.</span><span class='id identifier rubyid_action_exists?'><span class='object_link'><a href="#action_exists%3F-class_method" title="Tasker::Authorization::ResourceRegistry.action_exists? (method)">action_exists?</a></span></span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'>TASK</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span><span class='rparen'>)</span> <span class='comment'># =&gt; true</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Getting all available permissions</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='const'>ResourceRegistry</span><span class='period'>.</span><span class='id identifier rubyid_all_permissions'><span class='object_link'><a href="#all_permissions-class_method" title="Tasker::Authorization::ResourceRegistry.all_permissions (method)">all_permissions</a></span></span>
+<span class='comment'># =&gt; [&quot;tasker.task:index&quot;, &quot;tasker.task:show&quot;, ...]</span></code></pre>
+    
+  </div>
+
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="RESOURCES-constant" class="">RESOURCES =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Registry of all available resources and their permitted actions</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbrace'>{</span>
+  <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#TASK-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK (constant)">TASK</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
+    <span class='label'>actions:</span> <span class='lbracket'>[</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#CREATE-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::CREATE (constant)">CREATE</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#UPDATE-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::UPDATE (constant)">UPDATE</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#DESTROY-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::DESTROY (constant)">DESTROY</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#RETRY-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::RETRY (constant)">RETRY</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#CANCEL-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::CANCEL (constant)">CANCEL</a></span></span>
+    <span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker workflow tasks</span><span class='tstring_end'>&#39;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#WORKFLOW_STEP-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP (constant)">WORKFLOW_STEP</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
+    <span class='label'>actions:</span> <span class='lbracket'>[</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#UPDATE-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::UPDATE (constant)">UPDATE</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#DESTROY-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::DESTROY (constant)">DESTROY</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#RETRY-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::RETRY (constant)">RETRY</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#CANCEL-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::CANCEL (constant)">CANCEL</a></span></span>
+    <span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Individual workflow steps</span><span class='tstring_end'>&#39;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#TASK_DIAGRAM-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM (constant)">TASK_DIAGRAM</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
+    <span class='label'>actions:</span> <span class='lbracket'>[</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span>
+    <span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task workflow diagrams</span><span class='tstring_end'>&#39;</span></span>
+  <span class='rbrace'>}</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#action_exists%3F-class_method" title="action_exists? (class method)">.<strong>action_exists?</strong>(resource, action)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if an action is valid for a given resource.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#actions_for_resource-class_method" title="actions_for_resource (class method)">.<strong>actions_for_resource</strong>(resource)  &#x21d2; Array&lt;Symbol&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get all actions for a specific resource.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_permissions-class_method" title="all_permissions (class method)">.<strong>all_permissions</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get all available permissions in “resource:action” format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#resource_description-class_method" title="resource_description (class method)">.<strong>resource_description</strong>(resource)  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get description for a resource.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#resource_exists%3F-class_method" title="resource_exists? (class method)">.<strong>resource_exists?</strong>(resource)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if a resource exists in the registry.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#resources-class_method" title="resources (class method)">.<strong>resources</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get all registered resources.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="action_exists?-class_method">
+  
+    .<strong>action_exists?</strong>(resource, action)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if an action is valid for a given resource</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>resource</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The resource name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>action</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The action name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if the action exists for the resource</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+81
+82
+83
+84
+85</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 81</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_action_exists?'>action_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_action'>action</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_resource'>resource</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:actions</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_action'>action</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="actions_for_resource-class_method">
+  
+    .<strong>actions_for_resource</strong>(resource)  &#x21d2; <tt>Array&lt;Symbol&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get all actions for a specific resource</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>resource</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The resource name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Symbol&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Available actions for the resource</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+100
+101
+102
+103
+104</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 100</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_actions_for_resource'>actions_for_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_resource'>resource</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:actions</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="all_permissions-class_method">
+  
+    .<strong>all_permissions</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get all available permissions in “resource:action” format</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>All available permissions</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+90
+91
+92
+93
+94</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 90</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_permissions'>all_permissions</span>
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_flat_map'>flat_map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+    <span class='id identifier rubyid_config'>config</span><span class='lbracket'>[</span><span class='symbol'>:actions</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_action'>action</span><span class='op'>|</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_resource'>resource</span><span class='embexpr_end'>}</span><span class='tstring_content'>:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_action'>action</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="resource_description-class_method">
+  
+    .<strong>resource_description</strong>(resource)  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get description for a resource</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>resource</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The resource name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Description of the resource</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+110
+111
+112
+113
+114</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 110</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_resource_description'>resource_description</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='lbracket'>[</span><span class='id identifier rubyid_resource'>resource</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:description</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="resource_exists?-class_method">
+  
+    .<strong>resource_exists?</strong>(resource)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if a resource exists in the registry</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>resource</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The resource name (e.g., ‘tasker.task’)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if the resource exists</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+72
+73
+74</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 72</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="resources-class_method">
+  
+    .<strong>resources</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get all registered resources</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The complete resource registry</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+64
+65
+66</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 64</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_resources'>resources</span>
+  <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Sun Jun  8 15:37:59 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

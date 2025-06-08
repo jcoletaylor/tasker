@@ -37,7 +37,7 @@ module Tasker
       register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
     end
 
-    context 'class methods' do
+    context 'when using class methods' do
       let(:task) do
         create_dummy_task_workflow(context: { some: :value, it_is: :great }, reason: 'named tasks named step test')
       end

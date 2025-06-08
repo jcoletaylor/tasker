@@ -27,7 +27,7 @@ module Tasker
     end
 
     context 'when making queries' do
-      context 'basic tasks' do
+      context 'with basic tasks' do
         it 'gets all tasks' do
           # Create a unique task for this test
           create_dummy_task_workflow(
@@ -64,7 +64,7 @@ module Tasker
         end
       end
 
-      context 'annotations' do
+      context 'with annotations' do
         before do
           # Create a unique task for annotation testing
           @annotation_task = create_dummy_task_workflow(
@@ -100,8 +100,8 @@ module Tasker
       end
     end
 
-    context 'mutations' do
-      context 'create' do
+    context 'when making mutations' do
+      context 'when creating' do
         it 'is able to create a task' do
           post '/tasker/graphql', params: { query: create_task_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
@@ -111,7 +111,7 @@ module Tasker
         end
       end
 
-      context 'update' do
+      context 'when updating' do
         it 'is able to update a task' do
           # Create a unique task for update testing
           @task = create_dummy_task_workflow(
@@ -130,7 +130,7 @@ module Tasker
         end
       end
 
-      context 'cancel' do
+      context 'when cancelling' do
         it 'is able to cancel a task' do
           # Create a unique task for cancel testing
           @task = create_dummy_task_workflow(

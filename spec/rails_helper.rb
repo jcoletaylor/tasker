@@ -61,6 +61,66 @@ RSpec.configure do |config|
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
 
+  # Global authentication and configuration state cleanup
+  # Ensures authentication coordinator and configuration are reset between tests to prevent state leakage
+  config.around do |example|
+    # Store original configuration state before test
+    original_config = (Tasker::Configuration.instance_variable_get(:@configuration) if defined?(Tasker::Configuration))
+
+    # Reset authentication coordinator before each test
+    Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+
+    example.run
+  ensure
+    # Reset authentication coordinator after each test
+    Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+
+    # Check if we have test-only configuration that needs cleanup
+    if defined?(Tasker) && Tasker.respond_to?(:configuration)
+      current_config = Tasker.configuration
+      needs_reset = false
+
+      # Check if using test-only authenticators (legacy style)
+      if current_config&.auth.respond_to?(:strategy) && current_config.auth.strategy == :custom
+        authenticator_class = current_config.auth.options[:authenticator_class] ||
+                              current_config.auth.options['authenticator_class']
+        needs_reset = true if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
+      end
+
+      # Check new configuration style
+      if current_config&.auth.respond_to?(:authenticator_class)
+        authenticator_class = current_config.auth.authenticator_class
+        needs_reset = true if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
+      end
+
+      # Check if authorization is enabled (should be disabled by default)
+      if current_config&.auth.respond_to?(:authorization_enabled)
+        needs_reset = true if current_config.auth.authorization_enabled == true
+      elsif current_config&.auth.respond_to?(:enabled)
+        needs_reset = true if current_config.auth.enabled == true
+      end
+
+      # Reset to defaults if needed
+      if needs_reset
+        Tasker.configuration do |config|
+          # Reset to new configuration style
+          config.auth.authentication_enabled = false
+          config.auth.authenticator_class = nil
+          config.auth.authorization_enabled = false
+        end
+        # Reset coordinator again after config change
+        Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+      end
+    end
+
+    # Restore original configuration state after test if it was modified and it's clean
+    if original_config && defined?(Tasker::Configuration)
+      Tasker::Configuration.instance_variable_set(:@configuration, original_config)
+      # Final coordinator reset after config restoration
+      Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)
+    end
+  end
+
   # FactoryBot Configuration
   if defined?(FactoryBot)
     config.include FactoryBot::Syntax::Methods
