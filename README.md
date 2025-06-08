@@ -32,6 +32,12 @@ This guide will walk you through the fundamentals of using Tasker to build compl
     - [Processing Results](#processing-results)
     - [Customizing Result Processing](#customizing-result-processing)
     - [Accessing Data from Previous Steps](#accessing-data-from-previous-steps)
+  - [Authentication \& Authorization](#authentication--authorization)
+    - [Key Features](#key-features)
+    - [Quick Start](#quick-start)
+    - [Generators](#generators)
+    - [GraphQL Security](#graphql-security)
+    - [Complete Documentation](#complete-documentation)
   - [Best Practices](#best-practices)
   - [Event System \& Custom Integrations](#event-system--custom-integrations)
     - [Quick Start with Event Subscribers](#quick-start-with-event-subscribers)
@@ -410,6 +416,82 @@ def process(_task, sequence, step)
   { processed: true, cart_data: processed_cart }
 end
 ```
+
+## Authentication & Authorization
+
+Tasker includes a complete, production-ready authentication and authorization system that provides enterprise-grade security for both REST APIs and GraphQL endpoints. The system is designed to work with any Rails authentication solution while maintaining flexibility and security.
+
+### Key Features
+
+- **🔐 Provider Agnostic**: Works seamlessly with Devise, JWT, OmniAuth, custom authentication, or no authentication
+- **🛡️ Resource-Based Authorization**: Granular permissions using resource:action patterns (`tasker.task:create`, `tasker.workflow_step:show`)
+- **⚡ GraphQL Operation-Level Authorization**: Revolutionary security that automatically maps GraphQL operations to resource permissions
+- **🔄 Automatic Integration**: Authentication and authorization work seamlessly across REST and GraphQL endpoints
+- **🚀 Production-Ready Generators**: Create complete authenticators and authorization coordinators with one command
+- **✅ Zero Breaking Changes**: All features are opt-in and maintain backward compatibility
+
+### Quick Start
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.auth do |auth|
+    # Enable authentication with your custom authenticator
+    auth.authentication_enabled = true
+    auth.authenticator_class = 'YourCustomAuthenticator'
+
+    # Enable resource-based authorization
+    auth.authorization_enabled = true
+    auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
+    auth.user_class = 'User'
+  end
+end
+```
+
+### Generators
+
+Generate production-ready authenticators for popular authentication systems:
+
+```bash
+# JWT authenticator with comprehensive security features
+rails generate tasker:authenticator CompanyJWT --type=jwt
+
+# Devise integration with proper scope handling
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+
+# API token authenticator with header fallback
+rails generate tasker:authenticator ApiAuth --type=api_token
+
+# OmniAuth integration with session management
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Authorization coordinator with resource-based permissions
+rails generate tasker:authorization_coordinator CompanyAuth
+```
+
+### GraphQL Security
+
+The system provides revolutionary GraphQL authorization that automatically maps operations to permissions:
+
+```ruby
+# GraphQL query automatically requires tasker.task:index permission
+query { tasks { taskId status } }
+
+# GraphQL mutation automatically requires tasker.task:create permission
+mutation { createTask(input: { name: "New Task" }) { taskId } }
+
+# Mixed operations check all required permissions
+query {
+  tasks { taskId }           # Requires: tasker.task:index
+  workflowSteps { stepId }   # Requires: tasker.workflow_step:index
+}
+```
+
+### Complete Documentation
+
+For comprehensive documentation including quick start guides, custom authenticator examples, authorization patterns, GraphQL security details, production best practices, and testing strategies:
+
+**📖 See [Authentication & Authorization Guide](docs/AUTH.md)**
 
 ## Best Practices
 

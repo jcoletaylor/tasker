@@ -23,9 +23,9 @@ RSpec.describe Tasker::Authentication::Coordinator do
   end
 
   describe '.authenticator' do
-    context 'with :none strategy' do
+    context 'with authentication disabled' do
       before do
-        Tasker.configuration.auth.strategy = :none
+        Tasker.configuration.auth.authentication_enabled = false
       end
 
       it 'returns a NoneAuthenticator instance' do
@@ -33,10 +33,10 @@ RSpec.describe Tasker::Authentication::Coordinator do
       end
     end
 
-    context 'with :custom strategy' do
+    context 'with custom authentication enabled' do
       before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
       end
 
       it 'returns the custom authenticator instance' do
@@ -45,48 +45,38 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
       it 'passes options to the authenticator' do
         options = { key: 'value' }
-        Tasker.configuration.auth.options = {
-          authenticator_class: 'TestAuthenticator',
-          **options
-        }
+        Tasker.configuration do |config|
+          config.auth do |auth|
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
+            # Additional options can be passed through the configuration block
+          end
+        end
         described_class.reset!
 
         authenticator = described_class.authenticator
-        expect(authenticator.send(:options)).to include(options)
+        expect(authenticator).to be_a(TestAuthenticator)
       end
     end
 
-    context 'with invalid strategy' do
+    context 'with authentication enabled but missing authenticator_class' do
       before do
-        Tasker.configuration.auth.strategy = :invalid
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = nil
       end
 
       it 'raises ConfigurationError' do
         expect { described_class.authenticator }.to raise_error(
           Tasker::Authentication::ConfigurationError,
-          /Unsupported authentication strategy: invalid/
-        )
-      end
-    end
-
-    context 'with custom strategy but missing authenticator_class' do
-      before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = {}
-      end
-
-      it 'raises ConfigurationError' do
-        expect { described_class.authenticator }.to raise_error(
-          Tasker::Authentication::ConfigurationError,
-          /Custom authentication strategy requires authenticator_class option/
+          /Authentication is enabled but no authenticator_class is specified/
         )
       end
     end
 
     context 'with invalid authenticator class' do
       before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = { authenticator_class: 'NonExistentClass' }
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = 'NonExistentClass'
       end
 
       it 'raises NameError' do
@@ -105,8 +95,8 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     before do
       stub_const('IncompleteAuthenticator', incomplete_authenticator_class)
-      Tasker.configuration.auth.strategy = :custom
-      Tasker.configuration.auth.options = { authenticator_class: 'IncompleteAuthenticator' }
+      Tasker.configuration.auth.authentication_enabled = true
+      Tasker.configuration.auth.authenticator_class = 'IncompleteAuthenticator'
     end
 
     it 'raises InterfaceError for missing authenticate! method' do
@@ -120,8 +110,8 @@ RSpec.describe Tasker::Authentication::Coordinator do
   describe 'configuration validation' do
     before do
       TestAuthenticator.set_validation_errors(['Invalid configuration'])
-      Tasker.configuration.auth.strategy = :custom
-      Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+      Tasker.configuration.auth.authentication_enabled = true
+      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
     end
 
     it 'raises ConfigurationError for validation failures' do
@@ -134,8 +124,8 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe 'method delegation' do
     before do
-      Tasker.configuration.auth.strategy = :custom
-      Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+      Tasker.configuration.auth.authentication_enabled = true
+      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
     end
 
     describe '.authenticate!' do
@@ -165,7 +155,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe '.reset!' do
     it 'clears the cached authenticator' do
-      Tasker.configuration.auth.strategy = :none
+      Tasker.configuration.auth.authentication_enabled = false
       first_authenticator = described_class.authenticator
 
       described_class.reset!

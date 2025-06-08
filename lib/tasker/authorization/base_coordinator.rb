@@ -100,7 +100,7 @@ module Tasker
       #
       # @return [Boolean] True if authorization is enabled
       def authorization_enabled?
-        Tasker.configuration.auth.enabled
+        Tasker.configuration.auth.authorization_enabled
       end
 
       # The user object for authorization checks

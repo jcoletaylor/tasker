@@ -12,7 +12,7 @@ module Tasker
       class_option :type, type: :string, default: 'custom',
                           desc: 'Type of authenticator (custom, devise, jwt, api_token, omniauth)'
 
-      class_option :directory, type: :string, default: 'app/lib/authenticators',
+      class_option :directory, type: :string, default: 'app/tasker/authenticators',
                                desc: 'Directory to place the authenticator'
 
       class_option :user_class, type: :string, default: 'User',
@@ -41,24 +41,24 @@ module Tasker
       def create_spec_file
         return unless options[:with_spec] && defined?(RSpec)
 
-        ensure_directory_exists('spec/lib/authenticators')
+        ensure_directory_exists('spec/tasker/authenticators')
 
         case options[:type].downcase
         when 'jwt'
           template 'jwt_authenticator_spec.rb.erb',
-                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+                   File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'devise'
           template 'devise_authenticator_spec.rb.erb',
-                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+                   File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'api_token'
           template 'api_token_authenticator_spec.rb.erb',
-                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+                   File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")
         when 'omniauth'
           template 'omniauth_authenticator_spec.rb.erb',
-                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+                   File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")
         else
           template 'custom_authenticator_spec.rb.erb',
-                   File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")
+                   File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")
         end
       end
 
@@ -68,7 +68,7 @@ module Tasker
         say "\n#{set_color('Files created:', :cyan)}"
         say "  - #{File.join(options[:directory], "#{file_name}_authenticator.rb")}"
         if options[:with_spec] && defined?(RSpec)
-          say "  - #{File.join('spec/lib/authenticators', "#{file_name}_authenticator_spec.rb")}"
+          say "  - #{File.join('spec/tasker/authenticators', "#{file_name}_authenticator_spec.rb")}"
         end
 
         say "\n#{set_color('Configuration example:', :yellow)}"
@@ -90,7 +90,7 @@ module Tasker
 
         if options[:with_spec] && defined?(RSpec)
           say "\n  4. Run your tests:"
-          say "     bundle exec rspec spec/lib/authenticators/#{file_name}_authenticator_spec.rb"
+          say "     bundle exec rspec spec/tasker/authenticators/#{file_name}_authenticator_spec.rb"
         end
 
         say "\n#{set_color('Documentation:', :magenta)}"
@@ -143,13 +143,9 @@ module Tasker
           # config/initializers/tasker.rb
           Tasker.configuration do |config|
             config.auth do |auth|
-              auth.strategy = :custom
-              auth.options = {
-                authenticator_class: '#{class_name}Authenticator',
-                secret: Rails.application.credentials.jwt_secret,
-                algorithm: 'HS256',
-                user_class: '#{user_model_class}'
-              }
+              auth.authentication_enabled = true
+              auth.authenticator_class = '#{class_name}Authenticator'
+              auth.user_class = '#{user_model_class}'
             end
           end
         CONFIG
@@ -160,11 +156,9 @@ module Tasker
           # config/initializers/tasker.rb
           Tasker.configuration do |config|
             config.auth do |auth|
-              auth.strategy = :custom
-              auth.options = {
-                authenticator_class: '#{class_name}Authenticator',
-                scope: :user
-              }
+              auth.authentication_enabled = true
+              auth.authenticator_class = '#{class_name}Authenticator'
+              auth.user_class = '#{user_model_class}'
             end
           end
         CONFIG
@@ -175,12 +169,9 @@ module Tasker
           # config/initializers/tasker.rb
           Tasker.configuration do |config|
             config.auth do |auth|
-              auth.strategy = :custom
-              auth.options = {
-                authenticator_class: '#{class_name}Authenticator',
-                header_name: 'X-API-Token',
-                user_class: '#{user_model_class}'
-              }
+              auth.authentication_enabled = true
+              auth.authenticator_class = '#{class_name}Authenticator'
+              auth.user_class = '#{user_model_class}'
             end
           end
         CONFIG
@@ -191,12 +182,9 @@ module Tasker
           # config/initializers/tasker.rb
           Tasker.configuration do |config|
             config.auth do |auth|
-              auth.strategy = :custom
-              auth.options = {
-                authenticator_class: '#{class_name}Authenticator',
-                user_finder_method: :find_by_provider_uid,
-                user_class: '#{user_model_class}'
-              }
+              auth.authentication_enabled = true
+              auth.authenticator_class = '#{class_name}Authenticator'
+              auth.user_class = '#{user_model_class}'
             end
           end
         CONFIG
@@ -207,12 +195,10 @@ module Tasker
           # config/initializers/tasker.rb
           Tasker.configuration do |config|
             config.auth do |auth|
-              auth.strategy = :custom
-              auth.options = {
-                authenticator_class: '#{class_name}Authenticator',
-                user_class: '#{user_model_class}'
-                # Add your custom options here
-              }
+              auth.authentication_enabled = true
+              auth.authenticator_class = '#{class_name}Authenticator'
+              auth.user_class = '#{user_model_class}'
+              # Add your custom configuration here
             end
           end
         CONFIG

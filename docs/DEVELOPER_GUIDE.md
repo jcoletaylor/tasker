@@ -2,12 +2,13 @@
 
 ## Overview
 
-This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around four main developer-facing components:
+This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around five main developer-facing components:
 
 1. **Task Handlers** - Define and coordinate multi-step workflows
 2. **Step Handlers** - Implement the business logic for individual workflow steps
 3. **Event Subscribers** - Create integrations with external services and monitoring systems
 4. **YAML Configuration** - Declarative workflow and step configuration
+5. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
 
 ## Architecture Overview
 
@@ -492,6 +493,90 @@ environments:
     retries: 3
 ```
 
+## 5. Authentication & Authorization
+
+Tasker provides a comprehensive, production-ready authentication and authorization system that works with any Rails authentication solution. The system uses **dependency injection** and **resource-based authorization** to provide enterprise-grade security for both REST APIs and GraphQL endpoints.
+
+### Key Features
+
+- **Provider Agnostic**: Works with Devise, JWT, OmniAuth, custom authentication, or no authentication
+- **Resource-Based Authorization**: Granular permissions using resource:action patterns (e.g., `tasker.task:create`)
+- **GraphQL Operation-Level Authorization**: Revolutionary security for GraphQL that maps operations to resource permissions
+- **Automatic Controller Integration**: Authentication and authorization work seamlessly across REST and GraphQL
+- **Comprehensive Generators**: Create production-ready authenticators and authorization coordinators
+- **Zero Breaking Changes**: All features are opt-in and backward compatible
+
+### Quick Configuration Example
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.auth do |auth|
+    # Authentication
+    auth.authentication_enabled = true
+    auth.authenticator_class = 'YourCustomAuthenticator'
+
+    # Authorization
+    auth.authorization_enabled = true
+    auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
+    auth.user_class = 'User'
+  end
+end
+```
+
+### Available Generators
+
+```bash
+# Generate authenticators for different systems
+rails generate tasker:authenticator CompanyJWT --type=jwt
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+rails generate tasker:authenticator ApiAuth --type=api_token
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Generate authorization coordinator
+rails generate tasker:authorization_coordinator CompanyAuth
+```
+
+### GraphQL Authorization Example
+
+The system automatically maps GraphQL operations to resource permissions:
+
+```ruby
+# This GraphQL query:
+query { tasks { taskId status } }
+
+# Automatically requires: tasker.task:index permission
+
+# This mutation:
+mutation { createTask(input: {...}) { taskId } }
+
+# Automatically requires: tasker.task:create permission
+```
+
+### Resource-Based Permissions
+
+Authorization uses a simple resource:action permission model:
+
+```ruby
+# Available permissions:
+'tasker.task:index'           # List all tasks
+'tasker.task:create'          # Create new tasks
+'tasker.workflow_step:show'   # View individual workflow steps
+'tasker.task_diagram:index'   # List task diagrams
+```
+
+### Complete Documentation
+
+For comprehensive documentation including:
+- **Quick Start Guides** - Get authentication working in minutes
+- **Custom Authenticator Examples** - JWT, Devise, API tokens, and more
+- **Authorization Coordinator Patterns** - Role-based, context-aware, and time-based authorization
+- **GraphQL Authorization Details** - Operation mapping and context handling
+- **Production Best Practices** - Security, performance, and monitoring guidelines
+- **Testing Strategies** - Complete test examples and isolation techniques
+
+**See [Authentication & Authorization Guide](AUTH.md)** for complete documentation.
+
 ## Best Practices
 
 ### Task Handler Design
@@ -711,5 +796,3 @@ publish_custom_event('order.processed', order_id: 123, status: 'completed')
 # Publish system events with custom data
 publish_step_completed(step, custom_data: 'value')
 ```
-
-This developer guide provides a comprehensive foundation for building sophisticated workflows with Tasker. The combination of task handlers, step handlers, event subscribers, and YAML configuration creates a powerful and flexible system for managing complex business processes.

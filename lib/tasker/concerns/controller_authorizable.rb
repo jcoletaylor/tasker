@@ -66,11 +66,11 @@ module Tasker
       #
       # @return [BaseCoordinator] New coordinator instance
       def build_authorization_coordinator
-        coordinator_class = Tasker.configuration.auth.coordinator_class.constantize
+        coordinator_class = Tasker.configuration.auth.authorization_coordinator_class.constantize
         coordinator_class.new(current_tasker_user)
       rescue NameError => e
         raise Tasker::Authorization::ConfigurationError,
-              "Authorization coordinator class '#{Tasker.configuration.auth.coordinator_class}' not found: #{e.message}"
+              "Authorization coordinator class '#{Tasker.configuration.auth.authorization_coordinator_class}' not found: #{e.message}"
       end
 
       # Extract the resource name from the controller
@@ -116,7 +116,7 @@ module Tasker
       #
       # @return [Boolean] True if authorization should be skipped
       def skip_authorization?
-        !Tasker.configuration.auth.enabled
+        !Tasker.configuration.auth.authorization_enabled
       end
     end
   end

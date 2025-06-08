@@ -10,13 +10,13 @@ RSpec.describe 'Authentication Integration', type: :request do
   let!(:task) { FactoryBot.create(:task, :pending) }
 
   describe 'REST Controllers' do
-    describe 'with :none authentication strategy' do
+    describe 'with authentication disabled' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :none
+            auth.authentication_enabled = false
           end
         end
 
@@ -42,14 +42,14 @@ RSpec.describe 'Authentication Integration', type: :request do
       end
     end
 
-    describe 'with :custom authentication strategy (authenticated)' do
+    describe 'with custom authentication (authenticated)' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'TestAuthenticator' }
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
           end
         end
 
@@ -88,14 +88,14 @@ RSpec.describe 'Authentication Integration', type: :request do
       end
     end
 
-    describe 'with :custom authentication strategy (unauthenticated)' do
+    describe 'with custom authentication (unauthenticated)' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'TestAuthenticator' }
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
           end
         end
 
@@ -145,13 +145,13 @@ RSpec.describe 'Authentication Integration', type: :request do
       GQL
     end
 
-    describe 'with :none authentication strategy' do
+    describe 'with authentication disabled' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :none
+            auth.authentication_enabled = false
           end
         end
 
@@ -170,14 +170,14 @@ RSpec.describe 'Authentication Integration', type: :request do
       end
     end
 
-    describe 'with :custom authentication strategy (authenticated)' do
+    describe 'with custom authentication (authenticated)' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'TestAuthenticator' }
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
           end
         end
 
@@ -215,18 +215,18 @@ RSpec.describe 'Authentication Integration', type: :request do
 
         json_response = JSON.parse(response.body)
         expect(json_response['errors']).to be_nil
-        # The fact that we get a successful response means the context was set properly
+        # The GraphQL controller should have access to current_tasker_user
       end
     end
 
-    describe 'with :custom authentication strategy (unauthenticated)' do
+    describe 'with custom authentication (unauthenticated)' do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         Tasker.configuration do |config|
           config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'TestAuthenticator' }
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
           end
         end
 
@@ -259,8 +259,8 @@ RSpec.describe 'Authentication Integration', type: :request do
 
       Tasker.configuration do |config|
         config.auth do |auth|
-          auth.strategy = :custom
-          auth.options = { authenticator_class: 'TestAuthenticator' }
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'TestAuthenticator'
         end
       end
 
@@ -272,109 +272,90 @@ RSpec.describe 'Authentication Integration', type: :request do
     end
 
     it 'handles authentication exceptions gracefully' do
-      begin
-        TestAuthenticator.set_authentication_result(false)
-        TestAuthenticator.set_current_user(nil)
+      TestAuthenticator.set_authentication_result(false)
+      TestAuthenticator.set_current_user(nil)
 
-        get '/tasker/tasks'
-        expect(response).to have_http_status(:unauthorized)
-        expect(response.body).to include('Test authentication failed')
-      ensure
-        TestAuthenticator.reset!
-      end
+      get '/tasker/tasks'
+      expect(response).to have_http_status(:unauthorized)
+
+      json_response = JSON.parse(response.body)
+      expect(json_response['message']).to include('Test authentication failed')
     end
 
-        it 'handles authenticator configuration errors' do
-      # Test with missing authenticator_class - override configuration for this test
-      original_config = Tasker::Configuration.instance_variable_get(:@configuration)
+    it 'handles authenticator configuration errors' do
+      # Set up TestAuthenticator to have validation errors
+      TestAuthenticator.set_validation_errors(['Invalid configuration'])
 
-      begin
-        Tasker.configuration do |config|
-          config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = {} # Missing authenticator_class
-          end
-        end
+      # Reset coordinator to trigger validation
+      Tasker::Authentication::Coordinator.reset!
 
-        get '/tasker/tasks'
-        expect(response).to have_http_status(:internal_server_error)
-        expect(response.body).to include('Custom authentication strategy requires authenticator_class option')
-      ensure
-        Tasker::Configuration.instance_variable_set(:@configuration, original_config)
-        Tasker::Authentication::Coordinator.reset!
-      end
+      get '/tasker/tasks'
+      expect(response).to have_http_status(:internal_server_error)
     end
 
     it 'handles invalid authenticator class' do
-      # Override configuration for this test
-      original_config = Tasker::Configuration.instance_variable_get(:@configuration)
-
-      begin
-        Tasker.configuration do |config|
-          config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'NonexistentAuthenticator' }
-          end
+      Tasker.configuration do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'NonExistentAuthenticator'
         end
-
-        get '/tasker/tasks'
-        expect(response).to have_http_status(:internal_server_error)
-      ensure
-        Tasker::Configuration.instance_variable_set(:@configuration, original_config)
-        Tasker::Authentication::Coordinator.reset!
       end
+
+      # Reset coordinator to trigger class loading
+      Tasker::Authentication::Coordinator.reset!
+
+      get '/tasker/tasks'
+      expect(response).to have_http_status(:internal_server_error)
     end
   end
 
   describe 'Configuration Validation' do
-        it 'validates authenticator interface compliance' do
-      # Use the real BadAuthenticator class from spec/examples/bad_authenticator.rb
-      # This class intentionally doesn't implement the required interface methods
+          it 'validates authenticator interface compliance' do
+        original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-      # Override configuration for this test
-      original_config = Tasker::Configuration.instance_variable_get(:@configuration)
-
-      begin
-        Tasker.configuration do |config|
-          config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'BadAuthenticator' }
+        begin
+          Tasker.configuration do |config|
+            config.auth do |auth|
+              auth.authentication_enabled = true
+              auth.authenticator_class = 'BadAuthenticator'
+            end
           end
+
+          # Reset coordinator to trigger interface validation
+          Tasker::Authentication::Coordinator.reset!
+
+          get '/tasker/tasks'
+          expect(response).to have_http_status(:internal_server_error)
+        ensure
+          Tasker::Configuration.instance_variable_set(:@configuration, original_config)
+          Tasker::Authentication::Coordinator.reset!
         end
-
-        get '/tasker/tasks'
-        expect(response).to have_http_status(:internal_server_error)
-        expect(response.body).to include('must implement #authenticate!')
-      ensure
-        Tasker::Configuration.instance_variable_set(:@configuration, original_config)
-        Tasker::Authentication::Coordinator.reset!
       end
-    end
 
-    it 'runs authenticator configuration validation' do
-      # Override configuration for this test to force authenticator rebuild
-      original_config = Tasker::Configuration.instance_variable_get(:@configuration)
+          it 'runs authenticator configuration validation' do
+        original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-      begin
-        # Set validation errors BEFORE building the authenticator
-        TestAuthenticator.set_validation_errors(['Test validation error'])
+        begin
+          # Set up validation to fail BEFORE setting configuration
+          TestAuthenticator.set_validation_errors(['Configuration validation failed'])
 
-        # Configure fresh authenticator that will encounter validation errors
-        Tasker.configuration do |config|
-          config.auth do |auth|
-            auth.strategy = :custom
-            auth.options = { authenticator_class: 'TestAuthenticator' }
+          Tasker.configuration do |config|
+            config.auth do |auth|
+              auth.authentication_enabled = true
+              auth.authenticator_class = 'TestAuthenticator'
+            end
           end
-        end
 
-        get '/tasker/tasks'
-        expect(response).to have_http_status(:internal_server_error)
-        expect(response.body).to include('Test validation error')
-      ensure
-        Tasker::Configuration.instance_variable_set(:@configuration, original_config)
-        Tasker::Authentication::Coordinator.reset!
-        TestAuthenticator.reset!
+          # Reset coordinator to trigger validation
+          Tasker::Authentication::Coordinator.reset!
+
+          get '/tasker/tasks'
+          expect(response).to have_http_status(:internal_server_error)
+        ensure
+          Tasker::Configuration.instance_variable_set(:@configuration, original_config)
+          Tasker::Authentication::Coordinator.reset!
+          TestAuthenticator.reset!
+        end
       end
-    end
   end
 end

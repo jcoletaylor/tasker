@@ -96,8 +96,8 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization disabled' do
       before do
         configure_tasker_auth(
-          strategy: :none,
-          enabled: false
+          authentication_enabled: false,
+          authorization_enabled: false
         )
       end
 
@@ -116,10 +116,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and authenticated admin user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(true)
@@ -181,10 +181,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and regular user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(true)
@@ -253,10 +253,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and limited user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(true)
@@ -304,10 +304,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and unauthenticated user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(false)
@@ -338,8 +338,8 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization disabled' do
       before do
         configure_tasker_auth(
-          strategy: :none,
-          enabled: false
+          authentication_enabled: false,
+          authorization_enabled: false
         )
       end
 
@@ -354,10 +354,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and admin user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(true)
@@ -391,10 +391,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and limited user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(true)
@@ -419,10 +419,10 @@ RSpec.describe 'Authorization Integration', type: :request do
     describe 'with authorization enabled and unauthenticated user' do
       before do
         configure_tasker_auth(
-          strategy: :custom,
-          options: { authenticator_class: 'TestAuthenticator' },
-          enabled: true,
-          coordinator_class: 'CustomAuthorizationCoordinator'
+          authentication_enabled: true,
+          authenticator_class: 'TestAuthenticator',
+          authorization_enabled: true,
+          authorization_coordinator_class: 'CustomAuthorizationCoordinator'
         )
 
         TestAuthenticator.set_authentication_result(false)
@@ -441,10 +441,10 @@ RSpec.describe 'Authorization Integration', type: :request do
   describe 'Authorization Error Handling' do
     before do
       configure_tasker_auth(
-        strategy: :custom,
-        options: { authenticator_class: 'TestAuthenticator' },
-        enabled: true,
-        coordinator_class: 'CustomAuthorizationCoordinator'
+        authentication_enabled: true,
+        authenticator_class: 'TestAuthenticator',
+        authorization_enabled: true,
+        authorization_coordinator_class: 'CustomAuthorizationCoordinator'
       )
 
       TestAuthenticator.set_authentication_result(true)
@@ -473,10 +473,10 @@ RSpec.describe 'Authorization Integration', type: :request do
   describe 'Configuration Validation' do
     it 'handles invalid authorization coordinator class' do
       configure_tasker_auth(
-        strategy: :custom,
-        options: { authenticator_class: 'TestAuthenticator' },
-        enabled: true,
-        coordinator_class: 'NonExistentCoordinator'
+        authentication_enabled: true,
+        authenticator_class: 'TestAuthenticator',
+        authorization_enabled: true,
+        authorization_coordinator_class: 'NonExistentCoordinator'
       )
 
       TestAuthenticator.set_authentication_result(true)
@@ -500,10 +500,10 @@ RSpec.describe 'Authorization Integration', type: :request do
       Object.const_set('InvalidCoordinator', invalid_coordinator)
 
       configure_tasker_auth(
-        strategy: :custom,
-        options: { authenticator_class: 'TestAuthenticator' },
-        enabled: true,
-        coordinator_class: 'InvalidCoordinator'
+        authentication_enabled: true,
+        authenticator_class: 'TestAuthenticator',
+        authorization_enabled: true,
+        authorization_coordinator_class: 'InvalidCoordinator'
       )
 
       TestAuthenticator.set_authentication_result(true)
@@ -522,10 +522,10 @@ RSpec.describe 'Authorization Integration', type: :request do
   describe 'Resource and Action Validation' do
     before do
       configure_tasker_auth(
-        strategy: :custom,
-        options: { authenticator_class: 'TestAuthenticator' },
-        enabled: true,
-        coordinator_class: 'CustomAuthorizationCoordinator'
+        authentication_enabled: true,
+        authenticator_class: 'TestAuthenticator',
+        authorization_enabled: true,
+        authorization_coordinator_class: 'CustomAuthorizationCoordinator'
       )
 
       TestAuthenticator.set_authentication_result(true)
@@ -547,10 +547,10 @@ RSpec.describe 'Authorization Integration', type: :request do
 
   private
 
-  def configure_tasker_auth(strategy: :none, options: {}, enabled: false, coordinator_class: nil)
-    Tasker.configuration.auth.strategy = strategy
-    Tasker.configuration.auth.options = options
-    Tasker.configuration.auth.enabled = enabled
-    Tasker.configuration.auth.coordinator_class = coordinator_class if coordinator_class
+  def configure_tasker_auth(authentication_enabled: false, authenticator_class: nil, authorization_enabled: false, authorization_coordinator_class: nil)
+    Tasker.configuration.auth.authentication_enabled = authentication_enabled
+    Tasker.configuration.auth.authenticator_class = authenticator_class if authenticator_class
+    Tasker.configuration.auth.authorization_enabled = authorization_enabled
+    Tasker.configuration.auth.authorization_coordinator_class = authorization_coordinator_class if authorization_coordinator_class
   end
 end

@@ -6,7 +6,7 @@ require_relative '../../../examples/test_authenticator'
 RSpec.describe Tasker::Concerns::Authenticatable do
   let(:controller_class) do
     Class.new do
-      attr_accessor :before_action_called, :action_executed
+      attr_reader :action_executed
 
       def self.before_action(method, options = {})
         # Mock before_action behavior
@@ -62,7 +62,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   describe '#authenticate_tasker_user!' do
     context 'when authentication is skipped' do
       before do
-        Tasker.configuration.auth.strategy = :none
+        Tasker.configuration.auth.authentication_enabled = false
       end
 
       it 'returns true without calling authenticator' do
@@ -73,8 +73,8 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
     context 'when authentication is required' do
       before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
       end
 
       it 'calls the authentication coordinator' do
@@ -108,8 +108,8 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
   describe '#current_tasker_user' do
     before do
-      Tasker.configuration.auth.strategy = :custom
-      Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+      Tasker.configuration.auth.authentication_enabled = true
+      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
     end
 
     it 'delegates to authentication coordinator' do
@@ -139,8 +139,8 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
   describe '#tasker_user_authenticated?' do
     before do
-      Tasker.configuration.auth.strategy = :custom
-      Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+      Tasker.configuration.auth.authentication_enabled = true
+      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
     end
 
     it 'delegates to authentication coordinator' do
@@ -157,9 +157,9 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   end
 
   describe '#skip_authentication?' do
-    context 'when strategy is :none' do
+    context 'when authentication is disabled' do
       before do
-        Tasker.configuration.auth.strategy = :none
+        Tasker.configuration.auth.authentication_enabled = false
       end
 
       it 'returns true' do
@@ -167,10 +167,10 @@ RSpec.describe Tasker::Concerns::Authenticatable do
       end
     end
 
-    context 'when strategy is not :none' do
+    context 'when authentication is enabled' do
       before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
       end
 
       it 'returns false' do
@@ -182,7 +182,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   describe 'integration with before_action' do
     context 'when authentication should be skipped' do
       before do
-        Tasker.configuration.auth.strategy = :none
+        Tasker.configuration.auth.authentication_enabled = false
       end
 
       it 'skips authentication when executing action' do
@@ -194,8 +194,8 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
     context 'when authentication is required' do
       before do
-        Tasker.configuration.auth.strategy = :custom
-        Tasker.configuration.auth.options = { authenticator_class: 'TestAuthenticator' }
+        Tasker.configuration.auth.authentication_enabled = true
+        Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
         TestAuthenticator.set_authentication_result(true)
       end
 

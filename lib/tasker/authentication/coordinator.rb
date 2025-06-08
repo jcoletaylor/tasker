@@ -26,29 +26,25 @@ module Tasker
         def build_authenticator
           auth_config = Tasker.configuration.auth
 
-          case auth_config.strategy
-          when :none
-            NoneAuthenticator.new
-          when :custom
+          if auth_config.authentication_enabled
             build_custom_authenticator(auth_config)
           else
-            raise ConfigurationError,
-                  "Unsupported authentication strategy: #{auth_config.strategy}. " \
-                  'Use :none or :custom with authenticator_class option.'
+            NoneAuthenticator.new
           end
         end
 
         def build_custom_authenticator(auth_config)
-          authenticator_class = auth_config.options[:authenticator_class]
+          authenticator_class = auth_config.authenticator_class
 
           unless authenticator_class
             raise ConfigurationError,
-                  'Custom authentication strategy requires authenticator_class option'
+                  'Authentication is enabled but no authenticator_class is specified'
           end
 
           # Instantiate the host app's authenticator
           klass = authenticator_class.constantize
-          authenticator = klass.new(auth_config.options)
+          # Pass empty options hash for now - authenticators can get config from Tasker.configuration
+          authenticator = klass.new({})
 
           # Validate it implements the interface
           validate_authenticator!(authenticator)
@@ -69,7 +65,8 @@ module Tasker
           # Run configuration validation if supported
           return unless authenticator.respond_to?(:validate_configuration)
 
-          errors = authenticator.validate_configuration(Tasker.configuration.auth.options)
+          # Pass configuration options for validation - authenticators can extract what they need
+          errors = authenticator.validate_configuration({})
           return unless errors.any?
 
           raise ConfigurationError,

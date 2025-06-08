@@ -3,11 +3,12 @@
 require 'rails_helper'
 
 RSpec.describe 'Tasker Configuration Integration' do
-  # Isolate singleton state
+  # Store original configuration before tests
   around do |example|
     original_config = Tasker::Configuration.instance_variable_get(:@configuration)
     example.run
   ensure
+    # Restore original configuration after each test
     Tasker::Configuration.instance_variable_set(:@configuration, original_config)
   end
 
@@ -20,13 +21,10 @@ RSpec.describe 'Tasker Configuration Integration' do
       # Configure like a real application would
       Tasker.configuration do |config|
         config.auth do |auth|
-          auth.strategy = :devise
-          auth.options = {
-            scope: :user,
-            failure_app: 'Devise::FailureApp'
-          }
-          auth.enabled = true
-          auth.coordinator_class = 'CustomAuthorizationCoordinator'
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'DeviseAuthenticator'
+          auth.authorization_enabled = true
+          auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
           auth.user_class = 'User'
         end
 
@@ -46,11 +44,10 @@ RSpec.describe 'Tasker Configuration Integration' do
       end
 
       # Verify the configuration is set up correctly
-      expect(config_instance.auth.strategy).to eq(:devise)
-      expect(config_instance.auth.options[:scope]).to eq(:user)
-      expect(config_instance.auth.options[:failure_app]).to eq('Devise::FailureApp')
-      expect(config_instance.auth.enabled).to be(true)
-      expect(config_instance.auth.coordinator_class).to eq('CustomAuthorizationCoordinator')
+      expect(config_instance.auth.authentication_enabled).to be(true)
+      expect(config_instance.auth.authenticator_class).to eq('DeviseAuthenticator')
+      expect(config_instance.auth.authorization_enabled).to be(true)
+      expect(config_instance.auth.authorization_coordinator_class).to eq('CustomAuthorizationCoordinator')
       expect(config_instance.auth.user_class).to eq('User')
 
       expect(config_instance.database.enable_secondary_database).to be(true)
@@ -70,14 +67,11 @@ RSpec.describe 'Tasker Configuration Integration' do
 
       Tasker.configuration do |config|
         config.auth do |auth|
-          auth.strategy = :custom
-          auth.options = {
-            authenticator_class: 'ApiAuthenticator',
-            token_header: 'X-API-Token'
-          }
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'ApiAuthenticator'
           auth.current_user_method = :current_api_user
           auth.authenticate_user_method = :authenticate_api_user!
-          auth.enabled = true
+          auth.authorization_enabled = true
         end
 
         config.database do |db|
@@ -96,12 +90,11 @@ RSpec.describe 'Tasker Configuration Integration' do
         end
       end
 
-      expect(config_instance.auth.strategy).to eq(:custom)
-      expect(config_instance.auth.options[:authenticator_class]).to eq('ApiAuthenticator')
-      expect(config_instance.auth.options[:token_header]).to eq('X-API-Token')
+      expect(config_instance.auth.authentication_enabled).to be(true)
+      expect(config_instance.auth.authenticator_class).to eq('ApiAuthenticator')
       expect(config_instance.auth.current_user_method).to eq(:current_api_user)
       expect(config_instance.auth.authenticate_user_method).to eq(:authenticate_api_user!)
-      expect(config_instance.auth.enabled).to be(true)
+      expect(config_instance.auth.authorization_enabled).to be(true)
 
       expect(config_instance.database.enable_secondary_database).to be(true)
       expect(config_instance.database.name).to eq('tasker_api')
@@ -156,7 +149,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      # Don't configure authentication - should default to :none
+      # Don't configure authentication - should default to disabled
       Tasker.configuration do |config|
         config.engine do |engine|
           engine.task_handler_directory = 'my_tasks'
@@ -167,8 +160,8 @@ RSpec.describe 'Tasker Configuration Integration' do
         end
       end
 
-      expect(config_instance.auth.strategy).to eq(:none)
-      expect(config_instance.auth.enabled).to be(false)
+      expect(config_instance.auth.authentication_enabled).to be(false)
+      expect(config_instance.auth.authorization_enabled).to be(false)
       expect(config_instance.database.enable_secondary_database).to be(false)
       expect(config_instance.engine.task_handler_directory).to eq('my_tasks')
       expect(config_instance.telemetry.enabled).to be(false)
@@ -183,12 +176,12 @@ RSpec.describe 'Tasker Configuration Integration' do
       Tasker.configuration do |config|
         config.auth do |auth|
           # Authentication
-          auth.strategy = :devise
-          auth.options = { scope: :admin }
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'DeviseAuthenticator'
 
           # Authorization
-          auth.enabled = true
-          auth.coordinator_class = 'MyApp::TaskerAuthorizationCoordinator'
+          auth.authorization_enabled = true
+          auth.authorization_coordinator_class = 'MyApp::TaskerAuthorizationCoordinator'
           auth.user_class = 'AdminUser'
         end
 
@@ -214,11 +207,11 @@ RSpec.describe 'Tasker Configuration Integration' do
         end
       end
 
-      # Verify all settings are preserved
-      expect(config_instance.auth.strategy).to eq(:devise)
-      expect(config_instance.auth.options[:scope]).to eq(:admin)
-      expect(config_instance.auth.enabled).to be(true)
-      expect(config_instance.auth.coordinator_class).to eq('MyApp::TaskerAuthorizationCoordinator')
+      # Verify all configurations are set correctly
+      expect(config_instance.auth.authentication_enabled).to be(true)
+      expect(config_instance.auth.authenticator_class).to eq('DeviseAuthenticator')
+      expect(config_instance.auth.authorization_enabled).to be(true)
+      expect(config_instance.auth.authorization_coordinator_class).to eq('MyApp::TaskerAuthorizationCoordinator')
       expect(config_instance.auth.user_class).to eq('AdminUser')
 
       expect(config_instance.database.enable_secondary_database).to be(true)
@@ -243,15 +236,15 @@ RSpec.describe 'Tasker Configuration Integration' do
 
       Tasker.configuration do |config|
         config.auth do |auth|
-          auth.strategy = :none
-          auth.enabled = true # This should be allowed
-          auth.coordinator_class = 'PublicResourceCoordinator'
+          auth.authentication_enabled = false
+          auth.authorization_enabled = true
+          auth.authorization_coordinator_class = 'PublicResourceCoordinator'
         end
       end
 
-      expect(config_instance.auth.strategy).to eq(:none)
-      expect(config_instance.auth.enabled).to be(true)
-      expect(config_instance.auth.coordinator_class).to eq('PublicResourceCoordinator')
+      expect(config_instance.auth.authentication_enabled).to be(false)
+      expect(config_instance.auth.authorization_enabled).to be(true)
+      expect(config_instance.auth.authorization_coordinator_class).to eq('PublicResourceCoordinator')
     end
 
     it 'allows database configuration without authentication' do
@@ -260,18 +253,18 @@ RSpec.describe 'Tasker Configuration Integration' do
 
       Tasker.configuration do |config|
         config.auth do |auth|
-          auth.strategy = :none
+          auth.authentication_enabled = false
         end
 
         config.database do |db|
           db.enable_secondary_database = true
-          db.name = :tasker_analytics
+          db.name = :tasker_readonly
         end
       end
 
-      expect(config_instance.auth.strategy).to eq(:none)
+      expect(config_instance.auth.authentication_enabled).to be(false)
       expect(config_instance.database.enable_secondary_database).to be(true)
-      expect(config_instance.database.name).to eq(:tasker_analytics)
+      expect(config_instance.database.name).to eq(:tasker_readonly)
     end
 
     it 'allows telemetry configuration independently' do
@@ -280,14 +273,14 @@ RSpec.describe 'Tasker Configuration Integration' do
 
       Tasker.configuration do |config|
         config.telemetry do |tel|
-          tel.enabled = false
-          tel.service_name = 'minimal-tasker'
+          tel.enabled = true
+          tel.service_name = 'monitoring-only-tasker'
         end
       end
 
-      expect(config_instance.telemetry.enabled).to be(false)
-      expect(config_instance.telemetry.service_name).to eq('minimal-tasker')
-      expect(config_instance.auth.strategy).to eq(:none) # Other configs remain default
+      expect(config_instance.telemetry.enabled).to be(true)
+      expect(config_instance.telemetry.service_name).to eq('monitoring-only-tasker')
+      expect(config_instance.auth.authentication_enabled).to be(false) # Other configs remain default
       expect(config_instance.database.enable_secondary_database).to be(false)
     end
   end
@@ -298,30 +291,28 @@ RSpec.describe 'Tasker Configuration Integration' do
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
       Tasker.configuration do |config|
-        # Modern nested configuration
         config.auth do |auth|
-          auth.strategy = :devise
-          auth.enabled = true
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'DeviseAuthenticator'
+          auth.authorization_enabled = true
         end
 
         config.database do |db|
-          db.name = :tasker_mixed
+          db.enable_secondary_database = false # Explicitly disable
         end
 
         config.telemetry do |tel|
-          tel.enabled = false
-        end
-
-        config.engine do |engine|
-          engine.task_handler_directory = 'mixed_workflows'
+          tel.enabled = true
+          tel.service_name = 'legacy-tasker'
         end
       end
 
-      expect(config_instance.auth.strategy).to eq(:devise)
-      expect(config_instance.auth.enabled).to be(true)
-      expect(config_instance.database.name).to eq(:tasker_mixed)
-      expect(config_instance.engine.task_handler_directory).to eq('mixed_workflows')
-      expect(config_instance.telemetry.enabled).to be(false)
+      expect(config_instance.auth.authentication_enabled).to be(true)
+      expect(config_instance.auth.authenticator_class).to eq('DeviseAuthenticator')
+      expect(config_instance.auth.authorization_enabled).to be(true)
+      expect(config_instance.database.enable_secondary_database).to be(false)
+      expect(config_instance.telemetry.enabled).to be(true)
+      expect(config_instance.telemetry.service_name).to eq('legacy-tasker')
     end
   end
 end

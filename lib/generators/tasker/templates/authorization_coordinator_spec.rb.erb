@@ -1,0 +1,142 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe <%= @coordinator_class_name %>, type: :model do
+  let(:user_class) { Struct.new(:id, :permissions, :roles, :admin, keyword_init: true) }
+
+  let(:admin_user) do
+    user_class.new(
+      id: 1,
+      permissions: [],
+      roles: ['admin'],
+      admin: true
+    )
+  end
+
+  let(:regular_user) do
+    user_class.new(
+      id: 2,
+      permissions: [
+        'tasker.task:index',
+        'tasker.task:show',
+        'tasker.workflow_step:index',
+        'tasker.task_diagram:index'
+      ],
+      roles: ['user'],
+      admin: false
+    )
+  end
+
+  let(:coordinator) { described_class.new(user) }
+
+  # Add required methods to test users
+  before do
+    user_class.class_eval do
+      def has_tasker_permission?(permission)
+        permissions.include?(permission)
+      end
+
+      def tasker_admin?
+        admin == true
+      end
+
+      def tasker_roles
+        roles
+      end
+    end
+  end
+
+  describe '#authorize!' do
+    context 'with admin user' do
+      let(:user) { admin_user }
+
+      it 'allows admin access to all resources' do
+        expect { coordinator.authorize!('tasker.task', :index) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.task', :create) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.workflow_step', :update) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.task_diagram', :show) }.not_to raise_error
+      end
+    end
+
+    context 'with regular user' do
+      let(:user) { regular_user }
+
+      it 'allows access to permitted resources' do
+        expect { coordinator.authorize!('tasker.task', :index) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.task', :show) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.workflow_step', :index) }.not_to raise_error
+        expect { coordinator.authorize!('tasker.task_diagram', :index) }.not_to raise_error
+      end
+
+      it 'denies access to forbidden resources' do
+        expect { coordinator.authorize!('tasker.task', :create) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+        expect { coordinator.authorize!('tasker.task', :destroy) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+        expect { coordinator.authorize!('tasker.workflow_step', :update) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+      end
+    end
+
+    context 'with no user' do
+      let(:user) { nil }
+
+      it 'denies all operations' do
+        expect { coordinator.authorize!('tasker.task', :index) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+        expect { coordinator.authorize!('tasker.workflow_step', :show) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+        expect { coordinator.authorize!('tasker.task_diagram', :show) }.to raise_error(Tasker::Authorization::UnauthorizedError)
+      end
+    end
+  end
+
+  describe '#can?' do
+    context 'with admin user' do
+      let(:user) { admin_user }
+
+      it 'returns true for valid operations' do
+        expect(coordinator.can?('tasker.task', :index)).to be true
+        expect(coordinator.can?('tasker.task', :create)).to be true
+        expect(coordinator.can?('tasker.workflow_step', :update)).to be true
+        expect(coordinator.can?('tasker.task_diagram', :show)).to be true
+      end
+    end
+
+    context 'with regular user' do
+      let(:user) { regular_user }
+
+      it 'returns true for permitted operations' do
+        expect(coordinator.can?('tasker.task', :index)).to be true
+        expect(coordinator.can?('tasker.task', :show)).to be true
+        expect(coordinator.can?('tasker.workflow_step', :index)).to be true
+        expect(coordinator.can?('tasker.task_diagram', :index)).to be true
+      end
+
+      it 'returns false for forbidden operations' do
+        expect(coordinator.can?('tasker.task', :create)).to be false
+        expect(coordinator.can?('tasker.task', :destroy)).to be false
+        expect(coordinator.can?('tasker.workflow_step', :update)).to be false
+      end
+    end
+
+    it 'returns false for unknown resources' do
+      expect(coordinator.can?('unknown.resource', :index)).to be false
+    end
+
+    it 'returns false for unknown actions' do
+      expect(coordinator.can?('tasker.task', :unknown_action)).to be false
+    end
+  end
+
+  describe 'interface compliance' do
+    it 'inherits from BaseCoordinator' do
+      expect(described_class.superclass).to eq(Tasker::Authorization::BaseCoordinator)
+    end
+
+    it 'implements the required authorized? method' do
+      expect(coordinator).to respond_to(:authorized?, true)
+    end
+
+    it 'provides access to the user' do
+      coordinator = described_class.new(regular_user)
+      expect(coordinator.send(:user)).to eq(regular_user)
+    end
+  end
+end

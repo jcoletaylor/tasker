@@ -17,6 +17,14 @@ module Tasker
         return true if skip_authentication?
 
         Tasker::Authentication::Coordinator.authenticate!(self)
+      rescue Tasker::Authentication::AuthenticationError => e
+        # Only render response if we're in a real controller context
+        # In unit tests, let the exception bubble up for testing
+        if respond_to?(:render) && respond_to?(:request)
+          render json: { error: 'Unauthorized', message: e.message }, status: :unauthorized
+        else
+          raise
+        end
       end
 
       def current_tasker_user
@@ -28,7 +36,7 @@ module Tasker
       end
 
       def skip_authentication?
-        Tasker.configuration.auth.strategy == :none
+        !Tasker.configuration.auth.authentication_enabled
       end
     end
   end

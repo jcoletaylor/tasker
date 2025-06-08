@@ -68,7 +68,7 @@ module Tasker
     # Authorization methods for GraphQL operations
 
     def authorization_enabled?
-      Tasker.configuration.auth.enabled
+      Tasker.configuration.auth.authorization_enabled
     end
 
     def authorize_graphql_operations!(query_string, operation_name)
@@ -168,11 +168,11 @@ module Tasker
     end
 
     def build_authorization_coordinator
-      coordinator_class = Tasker.configuration.auth.coordinator_class.constantize
+      coordinator_class = Tasker.configuration.auth.authorization_coordinator_class.constantize
       coordinator_class.new(current_tasker_user)
     rescue NameError => e
       raise Tasker::Authorization::ConfigurationError,
-            "Authorization coordinator class '#{Tasker.configuration.auth.coordinator_class}' not found: #{e.message}"
+            "Authorization coordinator class '#{Tasker.configuration.auth.authorization_coordinator_class}' not found: #{e.message}"
     end
 
     def graphql_authorization_context(operation)

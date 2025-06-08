@@ -8,35 +8,37 @@ module Tasker
   class Configuration
     # Nested configuration class for authentication and authorization settings
     class AuthConfiguration
-      # @!attribute [rw] strategy
-      #   @return [Symbol] The authentication strategy to use (:none, :devise, :custom)
-      # @!attribute [rw] options
-      #   @return [Hash] Options for the authentication strategy
+      # @!attribute [rw] authentication_enabled
+      #   @return [Boolean] Whether authentication is enabled
+      # @!attribute [rw] authenticator_class
+      #   @return [String, nil] Class name for the authenticator (nil means no authentication)
       # @!attribute [rw] current_user_method
       #   @return [Symbol] Method name to get the current user
       # @!attribute [rw] authenticate_user_method
       #   @return [Symbol] Method name to authenticate the user
-      # @!attribute [rw] coordinator_class
+      # @!attribute [rw] authorization_enabled
+      #   @return [Boolean] Whether authorization is enabled
+      # @!attribute [rw] authorization_coordinator_class
       #   @return [String] Class name for the authorization coordinator
       # @!attribute [rw] user_class
       #   @return [String, nil] Class name for the authorizable user class
-      # @!attribute [rw] enabled
-      #   @return [Boolean] Whether authorization is enabled
-      attr_accessor :strategy, :options, :current_user_method, :authenticate_user_method,
-                    :coordinator_class, :user_class, :enabled
+      attr_accessor :authentication_enabled, :authenticator_class, :current_user_method, :authenticate_user_method,
+                    :authorization_enabled, :authorization_coordinator_class, :user_class
 
       def initialize
-        # Authentication defaults (assume no auth)
-        @strategy = :none
-        @options = {}
+        # Authentication defaults (disabled by default)
+        @authentication_enabled = false
+        @authenticator_class = nil
         @current_user_method = :current_user
         @authenticate_user_method = :authenticate_user!
 
-        # Authorization defaults
-        @coordinator_class = 'Tasker::Authorization::BaseCoordinator'
+        # Authorization defaults (disabled by default)
+        @authorization_enabled = false
+        @authorization_coordinator_class = 'Tasker::Authorization::BaseCoordinator'
         @user_class = nil
-        @enabled = false
       end
+
+
     end
 
     # Nested configuration class for database settings
