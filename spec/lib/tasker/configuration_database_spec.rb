@@ -64,7 +64,7 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
   end
 
   describe 'integration scenarios' do
-    context 'production multi-database setup' do
+    context 'with production multi-database setup' do
       it 'configures for secondary database' do
         config.database do |db|
           db.name = :tasker_production
@@ -76,7 +76,7 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
       end
     end
 
-    context 'single database setup' do
+    context 'with single database setup' do
       it 'uses default application database' do
         config.database do |db|
           db.enable_secondary_database = false
@@ -87,7 +87,7 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
       end
     end
 
-    context 'test database setup' do
+    context 'with test database setup' do
       it 'configures for test environment' do
         config.database do |db|
           db.name = :tasker_test

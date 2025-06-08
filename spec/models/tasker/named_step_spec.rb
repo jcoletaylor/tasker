@@ -27,7 +27,7 @@ require_relative '../../mocks/dummy_task'
 
 module Tasker
   RSpec.describe(NamedStep) do
-    context 'class methods' do
+    context 'when using class methods' do
       it 'is able to create named steps from step templates' do
         templates = [
           Tasker::Types::StepTemplate.new(

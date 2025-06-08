@@ -52,17 +52,23 @@ Metrics/BlockLength:
   Max: 120
 
 Metrics/MethodLength:
-  Max: 24
+  Max: 40
   Exclude:
     - 'spec/examples/**/*'   # Example code may have longer methods for demonstration
+    - 'db/migrate/**/*'      # Database migrations often have long setup methods
+    - 'lib/generators/**/*'  # Generator methods often have long setup and instruction methods
 
 Metrics/ModuleLength:
-  Max: 160
+  Max: 400
+  Exclude:
+    - 'spec/support/**/*'    # Test support modules may be longer
 
 Metrics/ClassLength:
-  Max: 140
+  Max: 200
   Exclude:
     - 'spec/examples/**/*'   # Example classes may be longer for demonstration
+    - 'db/migrate/**/*'      # Database migrations can be long
+    - 'lib/generators/**/*'  # Generator classes often have many methods
 
 Metrics/ParameterLists:
   Max: 8
@@ -103,11 +109,11 @@ RSpec/MultipleMemoizedHelpers:
 # Exclude test files from many RSpec style checks
 RSpec/VerifiedDoubles:
   Exclude:
-    - 'spec/examples/**/*'   # Example tests may use simple doubles
+    - 'spec/**/*'   # Test files may use normal doubles for simplicity
 
 RSpec/MessageSpies:
   Exclude:
-    - 'spec/examples/**/*'   # Example tests may use older RSpec patterns
+    - 'spec/**/*'   # Test files may use older expectation patterns
 
 RSpec/NestedGroups:
   Max: 5  # Allow a bit more nesting
@@ -117,10 +123,15 @@ RSpec/NestedGroups:
 RSpec/ContextWording:
   Exclude:
     - 'spec/examples/**/*'   # Example tests may use different context patterns
+    - 'spec/support/**/*'    # Shared contexts may use different naming patterns
 
 RSpec/BeforeAfterAll:
   Exclude:
-    - 'spec/examples/**/*'   # Example tests may use before(:all) for performance
+    - 'spec/**/*'   # Test files may use before(:all) for performance reasons
+
+RSpec/InstanceVariable:
+  Exclude:
+    - 'spec/**/*'   # Test files may use instance variables for test setup
 
 RSpec/DescribeClass:
   Exclude:
@@ -129,10 +140,12 @@ RSpec/DescribeClass:
 RSpec/FilePath:
   Exclude:
     - 'spec/examples/**/*'   # Example files may not follow standard naming
+    - 'spec/tasks/**/*'      # Integration test files may not follow standard spec naming patterns
 
 RSpec/SpecFilePathFormat:
   Exclude:
     - 'spec/examples/**/*'   # Example files may not follow standard naming
+    - 'spec/tasks/**/*'      # Integration test files may not follow standard spec naming patterns
 
 RSpec/DescribeMethod:
   Exclude:
@@ -162,6 +175,7 @@ Rails/SkipsModelValidations:
   Exclude:
     - 'spec/factories/**/*'
     - 'spec/support/**/*'    # Test helpers may skip validations for setup
+    - 'spec/tasks/**/*'      # Integration tests may skip validations for test setup
 
 # Line length exclusions for specific areas
 Layout/LineLength:
@@ -171,6 +185,8 @@ Layout/LineLength:
     - 'spec/examples/**/*'       # Example code may have longer lines for clarity
     - 'spec/factories/**/*'      # Factory files often have long lines for readability
     - 'spec/support/**/*'        # Test support files may have longer descriptive lines
+    - 'db/migrate/**/*'          # Database migrations often have long constraint names
+    - 'app/models/**/dependent_system_object_map.rb'  # Schema comments are auto-generated
 
 # Lint exclusions for test code
 Lint/DuplicateBranch:

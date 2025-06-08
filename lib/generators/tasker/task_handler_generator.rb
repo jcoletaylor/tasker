@@ -10,7 +10,8 @@ module Tasker
       desc 'Generate a new Tasker task handler with YAML configuration and tests'
 
       class_option :module_namespace, type: :string, default: nil,
-                                      desc: 'The module namespace for the task handler (defaults to Tasker.configuration.engine.default_module_namespace)'
+                                      desc: 'The module namespace for the task handler ' \
+                                            '(defaults to Tasker.configuration.engine.default_module_namespace)'
       class_option :concurrent, type: :boolean, default: true,
                                 desc: 'Whether the task can be run concurrently'
       class_option :dependent_system, type: :string, default: 'default_system',
@@ -111,7 +112,8 @@ module Tasker
         say 'Next steps:'
         say '  1. Define your step handlers in the YAML configuration'
         say '  2. Implement step handlers as needed'
-        say "  3. Run your tests: bundle exec rspec spec/#{@task_handler_directory}/#{usable_module_path}#{@task_name}_spec.rb"
+        test_path = "spec/#{@task_handler_directory}/#{usable_module_path}#{@task_name}_spec.rb"
+        say "  3. Run your tests: bundle exec rspec #{test_path}"
         say ''
         say 'Usage example:'
         say '  task_request = Tasker::Types::TaskRequest.new('

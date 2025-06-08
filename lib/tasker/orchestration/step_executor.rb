@@ -98,7 +98,8 @@ module Tasker
         execute_step_workflow(task, sequence, step, task_handler)
       rescue StandardError => e
         # Log unexpected errors that occur outside the normal workflow
-        Rails.logger.error("StepExecutor: Unexpected error in execute_single_step for step #{step&.workflow_step_id}: #{e.message}")
+        step_id = step&.workflow_step_id
+        Rails.logger.error("StepExecutor: Unexpected error in execute_single_step for step #{step_id}: #{e.message}")
         nil
       end
 
@@ -294,7 +295,8 @@ module Tasker
 
         # If we got here, both save and transition succeeded
         unless completed_error_step
-          Rails.logger.error("StepExecutor: Error step completion transaction rolled back for step #{step.workflow_step_id}")
+          step_id = step.workflow_step_id
+          Rails.logger.error("StepExecutor: Error step completion transaction rolled back for step #{step_id}")
           return nil
         end
 
@@ -313,7 +315,8 @@ module Tasker
         Rails.logger.error("StepExecutor: Failed to save error step #{step.workflow_step_id}: #{e.message}")
         nil
       rescue StandardError => e
-        Rails.logger.error("StepExecutor: Unexpected error completing error step #{step.workflow_step_id}: #{e.message}")
+        step_id = step.workflow_step_id
+        Rails.logger.error("StepExecutor: Unexpected error completing error step #{step_id}: #{e.message}")
         nil
       end
 

@@ -47,5 +47,6 @@ OpenTelemetry::SDK.configure do |c|
   # c.use_all
   #
   # For now, we exclude it to prevent API step handler failures:
-  c.use_all({ 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } })
+  faraday_config = { 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } }
+  c.use_all(faraday_config)
 end

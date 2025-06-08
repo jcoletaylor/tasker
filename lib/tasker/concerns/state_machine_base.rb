@@ -27,8 +27,9 @@ module Tasker
 
           # Log the transition for debugging
           effective_current_state = StateMachineBase.effective_current_state(object)
+          object_id = StateMachineBase.object_id(object)
           Rails.logger.debug do
-            "#{object.class.name} #{StateMachineBase.object_id(object)} transitioning from #{effective_current_state} to #{transition.to_state}"
+            "#{object.class.name} #{object_id} transitioning from #{effective_current_state} to #{transition.to_state}"
           end
         end
 
@@ -171,13 +172,14 @@ module Tasker
         # @param result [Boolean] Whether the transition is allowed
         # @param reason [String] The reason for the result
         def log_transition_result(object, target_state, result, reason)
+          object_identifier = "#{object.class.name} #{object_id(object)}"
           if result
             Rails.logger.debug do
-              "#{name}: Allowing transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason})"
+              "#{name}: Allowing transition to #{target_state} for #{object_identifier} (#{reason})"
             end
           else
             Rails.logger.debug do
-              "#{name}: Blocking transition to #{target_state} for #{object.class.name} #{object_id(object)} (#{reason} failed)"
+              "#{name}: Blocking transition to #{target_state} for #{object_identifier} (#{reason} failed)"
             end
           end
         end

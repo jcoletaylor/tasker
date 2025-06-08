@@ -69,8 +69,9 @@ module Tasker
         coordinator_class = Tasker.configuration.auth.authorization_coordinator_class.constantize
         coordinator_class.new(current_tasker_user)
       rescue NameError => e
+        coordinator_class_name = Tasker.configuration.auth.authorization_coordinator_class
         raise Tasker::Authorization::ConfigurationError,
-              "Authorization coordinator class '#{Tasker.configuration.auth.authorization_coordinator_class}' not found: #{e.message}"
+              "Authorization coordinator class '#{coordinator_class_name}' not found: #{e.message}"
       end
 
       # Extract the resource name from the controller

@@ -26,7 +26,7 @@ module Tasker
       complete_step_via_state_machine(@step)
     end
 
-    context 'queries' do
+    context 'when making queries' do
       it 'gets a step' do
         post '/tasker/graphql', params: { query: step_query }
         json = JSON.parse(response.body).deep_symbolize_keys
@@ -38,8 +38,8 @@ module Tasker
       end
     end
 
-    context 'mutations' do
-      context 'update' do
+    context 'when making mutations' do
+      context 'when updating' do
         it 'is able to update a task' do
           post '/tasker/graphql', params: { query: update_step_mutation }
           json = JSON.parse(response.body).deep_symbolize_keys
@@ -48,7 +48,7 @@ module Tasker
         end
       end
 
-      context 'cancel' do
+      context 'when cancelling' do
         it 'is able to cancel a task' do
           # Create a separate task with a step in a cancellable state
           cancel_task = create_dummy_task_workflow(

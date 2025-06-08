@@ -69,7 +69,7 @@ module Tasker
         end
       end
 
-      context 'configuration examples' do
+      context 'with configuration examples' do
         it 'supports environment-specific database configuration' do
           Tasker.reset_configuration!
           Tasker.configuration do |config|
