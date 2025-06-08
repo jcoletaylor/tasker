@@ -448,7 +448,9 @@ module Tasker
         # @return [Time, nil] The parsed time or nil if parsing fails
         def parse_timestamp(timestamp)
           return timestamp.to_time if timestamp.is_a?(Time) || timestamp.is_a?(DateTime)
-          return Time.zone.parse(timestamp) if timestamp.is_a?(String) && timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+          if timestamp.is_a?(String) && timestamp.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+            return Time.zone.parse(timestamp)
+          end
 
           nil
         rescue StandardError
