@@ -20,11 +20,9 @@ module Tasker
       rescue Tasker::Authentication::AuthenticationError => e
         # Only render response if we're in a real controller context
         # In unit tests, let the exception bubble up for testing
-        if respond_to?(:render) && respond_to?(:request)
-          render json: { error: 'Unauthorized', message: e.message }, status: :unauthorized
-        else
-          raise
-        end
+        raise unless respond_to?(:render) && respond_to?(:request)
+
+        render json: { error: 'Unauthorized', message: e.message }, status: :unauthorized
       end
 
       def current_tasker_user

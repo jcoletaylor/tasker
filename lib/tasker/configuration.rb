@@ -37,8 +37,6 @@ module Tasker
         @authorization_coordinator_class = 'Tasker::Authorization::BaseCoordinator'
         @user_class = nil
       end
-
-
     end
 
     # Nested configuration class for database settings

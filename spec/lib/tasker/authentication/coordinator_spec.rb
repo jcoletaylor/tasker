@@ -44,7 +44,6 @@ RSpec.describe Tasker::Authentication::Coordinator do
       end
 
       it 'passes options to the authenticator' do
-        options = { key: 'value' }
         Tasker.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true

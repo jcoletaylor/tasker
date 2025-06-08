@@ -115,6 +115,19 @@
 <p><a href="#accessing-data-from-previous-steps">Accessing Data from Previous Steps</a></p>
 </li></ul>
 </li><li>
+<p><a href="#authentication--authorization">Authentication &amp; Authorization</a></p>
+<ul><li>
+<p><a href="#key-features">Key Features</a></p>
+</li><li>
+<p><a href="#quick-start">Quick Start</a></p>
+</li><li>
+<p><a href="#generators">Generators</a></p>
+</li><li>
+<p><a href="#graphql-security">GraphQL Security</a></p>
+</li><li>
+<p><a href="#complete-documentation">Complete Documentation</a></p>
+</li></ul>
+</li><li>
 <p><a href="#best-practices">Best Practices</a></p>
 </li><li>
 <p><a href="#event-system--custom-integrations">Event System &amp; Custom Integrations</a></p>
@@ -519,6 +532,85 @@ step_templates:
 <span class='kw'>end</span>
 </code></pre>
 
+<h2 id="label-Authentication+-26+Authorization">Authentication &amp; Authorization</h2>
+
+<p>Tasker includes a complete, production-ready authentication and authorization system that provides enterprise-grade security for both REST APIs and GraphQL endpoints. The system is designed to work with any Rails authentication solution while maintaining flexibility and security.</p>
+
+<h3 id="label-Key+Features">Key Features</h3>
+<ul><li>
+<p><strong>🔐 Provider Agnostic</strong>: Works seamlessly with Devise, JWT, OmniAuth, custom authentication, or no authentication</p>
+</li><li>
+<p><strong>🛡️ Resource-Based Authorization</strong>: Granular permissions using resource:action patterns (<code>tasker.task:create</code>, <code>tasker.workflow_step:show</code>)</p>
+</li><li>
+<p><strong>⚡ GraphQL Operation-Level Authorization</strong>: Revolutionary security that automatically maps GraphQL operations to resource permissions</p>
+</li><li>
+<p><strong>🔄 Automatic Integration</strong>: Authentication and authorization work seamlessly across REST and GraphQL endpoints</p>
+</li><li>
+<p><strong>🚀 Production-Ready Generators</strong>: Create complete authenticators and authorization coordinators with one command</p>
+</li><li>
+<p><strong>✅ Zero Breaking Changes</strong>: All features are opt-in and maintain backward compatibility</p>
+</li></ul>
+
+<h3 id="label-Quick+Start">Quick Start</h3>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_auth'>auth</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_auth'>auth</span><span class='op'>|</span>
+    <span class='comment'># Enable authentication with your custom authenticator
+</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authentication_enabled'>authentication_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authenticator_class'>authenticator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourCustomAuthenticator</span><span class='tstring_end'>&#39;</span></span>
+
+    <span class='comment'># Enable resource-based authorization
+</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_coordinator_class'>authorization_coordinator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourAuthorizationCoordinator</span><span class='tstring_end'>&#39;</span></span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_user_class'>user_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>User</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<h3 id="label-Generators">Generators</h3>
+
+<p>Generate production-ready authenticators for popular authentication systems:</p>
+
+<pre class="code ruby"><code class="ruby"># JWT authenticator with comprehensive security features
+rails generate tasker:authenticator CompanyJWT --type=jwt
+
+# Devise integration with proper scope handling
+rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
+
+# API token authenticator with header fallback
+rails generate tasker:authenticator ApiAuth --type=api_token
+
+# OmniAuth integration with session management
+rails generate tasker:authenticator SocialAuth --type=omniauth
+
+# Authorization coordinator with resource-based permissions
+rails generate tasker:authorization_coordinator CompanyAuth
+</code></pre>
+
+<h3 id="label-GraphQL+Security">GraphQL Security</h3>
+
+<p>The system provides revolutionary GraphQL authorization that automatically maps operations to permissions:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># GraphQL query automatically requires tasker.task:index permission
+</span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='id identifier rubyid_status'>status</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
+
+<span class='comment'># GraphQL mutation automatically requires tasker.task:create permission
+</span><span class='id identifier rubyid_mutation'>mutation</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_createTask'>createTask</span><span class='lparen'>(</span><span class='label'>input:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>New Task</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
+
+<span class='comment'># Mixed operations check all required permissions
+</span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span>
+  <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span>           <span class='comment'># Requires: tasker.task:index
+</span>  <span class='id identifier rubyid_workflowSteps'>workflowSteps</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_stepId'>stepId</span> <span class='rbrace'>}</span>   <span class='comment'># Requires: tasker.workflow_step:index
+</span><span class='rbrace'>}</span>
+</code></pre>
+
+<h3 id="label-Complete+Documentation">Complete Documentation</h3>
+
+<p>For comprehensive documentation including quick start guides, custom authenticator examples, authorization patterns, GraphQL security details, production best practices, and testing strategies:</p>
+
+<p><strong>📖 See &amp; Authorization Guide[docs/AUTH.md]</strong></p>
+
 <h2 id="label-Best+Practices">Best Practices</h2>
 <ol><li>
 <p><strong>Keep steps focused</strong>: Each step should do one thing well</p>
@@ -721,7 +813,7 @@ rails generate tasker:authenticator ApiAuth --type=api_token
 </div></div>
 
       <div id="footer">
-  Generated on Sat Jun  7 20:44:21 2025 by
+  Generated on Sat Jun  7 22:13:38 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

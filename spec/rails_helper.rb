@@ -81,22 +81,22 @@ RSpec.configure do |config|
       needs_reset = false
 
       # Check if using test-only authenticators (legacy style)
-      if current_config&.auth&.respond_to?(:strategy) && current_config.auth.strategy == :custom
+      if current_config&.auth.respond_to?(:strategy) && current_config.auth.strategy == :custom
         authenticator_class = current_config.auth.options[:authenticator_class] ||
                               current_config.auth.options['authenticator_class']
         needs_reset = true if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
       end
 
       # Check new configuration style
-      if current_config&.auth&.respond_to?(:authenticator_class)
+      if current_config&.auth.respond_to?(:authenticator_class)
         authenticator_class = current_config.auth.authenticator_class
         needs_reset = true if authenticator_class&.include?('Test') || authenticator_class&.include?('Bad')
       end
 
       # Check if authorization is enabled (should be disabled by default)
-      if current_config&.auth&.respond_to?(:authorization_enabled)
+      if current_config&.auth.respond_to?(:authorization_enabled)
         needs_reset = true if current_config.auth.authorization_enabled == true
-      elsif current_config&.auth&.respond_to?(:enabled)
+      elsif current_config&.auth.respond_to?(:enabled)
         needs_reset = true if current_config.auth.enabled == true
       end
 

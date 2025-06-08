@@ -19,8 +19,6 @@ module Tasker
 
       desc 'Generate a Tasker authorization coordinator class'
 
-
-
       class_option :user_class,
                    type: :string,
                    default: 'User',
@@ -36,7 +34,7 @@ module Tasker
                    default: true,
                    desc: 'Generate spec file'
 
-            # Generate the authorization coordinator class
+      # Generate the authorization coordinator class
       def create_coordinator_class
         @coordinator_class_name = coordinator_class_name
         @user_class_name = user_class_name
@@ -58,15 +56,18 @@ module Tasker
 
       # Print usage instructions
       def print_instructions
-        say "\n" + set_color("Authorization Coordinator Generated!", :green)
-        say set_color("=" * 50, :green)
+        say "\n#{set_color('Authorization Coordinator Generated!', :green)}"
+        say set_color('=' * 50, :green)
 
         say "\nGenerated files:"
         say "  #{set_color("#{options[:directory]}/#{file_name}_coordinator.rb", :cyan)} - Coordinator class"
-        say "  #{set_color("spec/#{options[:directory].sub('app/', '')}/#{file_name}_coordinator_spec.rb", :cyan)} - Test file" if options[:with_spec]
+        if options[:with_spec]
+          say "  #{set_color("spec/#{options[:directory].sub('app/', '')}/#{file_name}_coordinator_spec.rb",
+                             :cyan)} - Test file"
+        end
 
         say "\nNext steps:"
-        say "1. Configure Tasker to use your coordinator:"
+        say '1. Configure Tasker to use your coordinator:'
         say coordinator_configuration_example
 
         say "\n2. Ensure your User model includes the Authorizable concern:"
@@ -74,10 +75,12 @@ module Tasker
 
         say "\n3. Customize the authorization logic in your coordinator"
         say "\n4. Run the tests to verify everything works:"
-        say "   #{set_color("bundle exec rspec spec/#{options[:directory].sub('app/', '')}/#{file_name}_coordinator_spec.rb", :yellow)}"
+        say "   #{set_color(
+          "bundle exec rspec spec/#{options[:directory].sub('app/', '')}/#{file_name}_coordinator_spec.rb", :yellow
+        )}"
 
         say "\nFor more information, see the Tasker authentication guide:"
-        say "  #{set_color("docs/AUTH.md", :cyan)}"
+        say "  #{set_color('docs/AUTH.md', :cyan)}"
       end
 
       private
@@ -86,8 +89,6 @@ module Tasker
       def coordinator_class_name
         "#{class_name}Coordinator"
       end
-
-
 
       # Get the user class name
       def user_class_name
