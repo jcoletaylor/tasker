@@ -59,6 +59,12 @@ module FactoryWorkflowHelpers
     ]
 
     unless completion_states.include?(current_state)
+      # Handle error state - must transition to pending first, then in_progress
+      if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
+        step.state_machine.transition_to!(:pending)
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING
+      end
+
       # Transition to in_progress if not already there
       unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
         step.state_machine.transition_to!(:in_progress)
@@ -100,6 +106,12 @@ module FactoryWorkflowHelpers
     ]
 
     unless completion_states.include?(current_state)
+      # Handle error state - must transition to pending first, then in_progress
+      if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
+        step.state_machine.transition_to!(:pending)
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING
+      end
+
       # Set step to in progress if not already there or beyond
       unless [
         Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,

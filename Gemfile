@@ -40,6 +40,7 @@ group :development, :test do
   gem 'opentelemetry-instrumentation-all', '~> 0.74.0'
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem 'rubocop-rails-omakase', require: false
+  gem 'rspec_junit_formatter', '~> 0.6.0'  # For XML test output
   gem 'sidekiq', '~> 7.3'
   gem 'yard', '~> 0.9'
 end

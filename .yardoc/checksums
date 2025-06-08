@@ -3,7 +3,7 @@ lib/tasker/types.rb 3fbd9e620d6fabbacf747053d3e060d5174b5120
 lib/tasker/engine.rb d5eb279c78eecfd9d9ca6cf96137e36ace353def
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb 0281124edffc210e809d83205e2197c6a97f5fdf
+lib/tasker/version.rb b0ac91ef38720384619168d708726517de53a0cf
 lib/tasker/constants.rb 5eca3d1e3457efb9576fc885515711dcf82b4acb
 app/models/tasker/task.rb 71dcca3f9536c0b44d2c09aa82d1804f06d3b4b3
 lib/tasker/task_builder.rb f41b8245ddc4db8870fe889f6a4050f08575fd51
@@ -78,7 +78,7 @@ app/models/tasker/named_tasks_named_step.rb 410de0978ac6603b9ec4ca942f8010ac5f29
 app/models/tasker/task_execution_context.rb c1bf0c0d802a346a168f87db46594eae8382e6f4
 lib/tasker/orchestration/task_reenqueuer.rb c7d5bb36563dcdce12ccf4fffb61de8bd80560b4
 lib/tasker/task_handler/instance_methods.rb 7656256732be0ad0bbb980efe744f1486a9b45e5
-app/controllers/tasker/graphql_controller.rb 0757dbe895274d4678127b655822c9e65b148e96
+app/controllers/tasker/graphql_controller.rb cbc66fc4dc0c8eba0859b50ac9c8206006f8d70c
 lib/tasker/authorization/base_coordinator.rb eea55d42e7555819f38ea0d01119a3fe16a7703a
 lib/tasker/orchestration/task_initializer.rb fc990b98b27176861f835cdc9838480e682bc153
 app/graphql/tasker/mutations/base_mutation.rb 6ed4a09d3ab6ba02fd592490bcfe66cfd81463a1
