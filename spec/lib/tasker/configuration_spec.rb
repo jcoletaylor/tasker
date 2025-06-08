@@ -85,4 +85,30 @@ RSpec.describe Tasker::Configuration do
       Tasker.configuration.engine.identity_strategy = original_strategy
     end
   end
+
+  describe 'database configuration' do
+    it 'has default database configuration values' do
+      expect(config.database.name).to be_nil
+      expect(config.database.enable_secondary_database).to be false
+    end
+
+    it 'allows setting database configuration' do
+      config.database do |db|
+        db.name = :tasker
+        db.enable_secondary_database = true
+      end
+
+      expect(config.database.name).to eq(:tasker)
+      expect(config.database.enable_secondary_database).to be true
+    end
+
+    it 'supports string database names' do
+      config.database do |db|
+        db.name = 'tasker_production'
+        db.enable_secondary_database = true
+      end
+
+      expect(config.database.name).to eq('tasker_production')
+    end
+  end
 end

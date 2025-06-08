@@ -577,6 +577,88 @@ For comprehensive documentation including:
 
 **See [Authentication & Authorization Guide](AUTH.md)** for complete documentation.
 
+## 6. Multi-Database Support
+
+Tasker provides optional multi-database support using Rails' standard multi-database conventions. This allows Tasker models to use a separate database from the host application for data isolation, performance, or compliance requirements.
+
+### Key Features
+
+- **Rails Multi-Database Integration**: Uses Rails' `connects_to` API following official conventions
+- **Standard Configuration**: Leverages Rails database.yml patterns with named databases
+- **Automatic Model Support**: All Tasker models inherit multi-database capability automatically
+- **Zero Breaking Changes**: Fully backward compatible with existing installations
+- **Environment-Specific**: Supports different database configurations per environment
+
+### Configuration
+
+```ruby
+# config/initializers/tasker.rb
+
+# Default: Use host application database (shared)
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = false
+end
+
+# Use dedicated Tasker database
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = true
+  config.database.name = :tasker
+end
+
+# Environment-specific configuration
+Tasker.configuration do |config|
+  config.database.enable_secondary_database = Rails.env.production?
+  config.database.name = Rails.env.production? ? :tasker : nil
+end
+```
+
+### Database Configuration
+
+```yaml
+# config/database.yml
+production:
+  primary:
+    database: my_primary_database
+    adapter: postgresql
+    username: app_user
+    password: <%= ENV['DATABASE_PASSWORD'] %>
+
+  tasker:
+    database: my_tasker_database
+    adapter: postgresql
+    username: tasker_user
+    password: <%= ENV['TASKER_DATABASE_PASSWORD'] %>
+```
+
+### Benefits of Multi-Database Setup
+
+**Data Isolation**: Separate Tasker data from application data for security or compliance
+
+**Performance**: Dedicated database resources for workflow processing
+
+**Scaling**: Independent scaling of workflow database based on usage patterns
+
+**Backup Strategy**: Separate backup and recovery policies for workflow data
+
+**Development**: Easier testing and development with isolated workflow data
+
+### Migration Support
+
+When using a secondary database, Tasker migrations automatically target the correct database:
+
+```bash
+# Migrations run against the configured Tasker database
+bundle exec rails tasker:install:migrations
+bundle exec rails db:migrate
+```
+
+### Production Considerations
+
+- **Connection Pooling**: Configure appropriate connection pool sizes for both databases
+- **Monitoring**: Monitor connection usage and performance for both databases
+- **Backup Strategy**: Implement coordinated backup strategies if data consistency across databases is required
+- **Network Latency**: Consider network latency if databases are on different servers
+
 ## Best Practices
 
 ### Task Handler Design
