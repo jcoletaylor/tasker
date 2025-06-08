@@ -299,11 +299,24 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
   end
 
   describe 'telemetry filtering' do
+    let(:mock_telemetry_config) do
+      double('telemetry_config',
+             enabled: true,
+             service_name: 'tasker',
+             service_version: '1.0.0')
+    end
+    let(:mock_tracer_provider) { double('tracer_provider') }
+    let(:mock_tracer) { double('tracer') }
+
+    before do
+      allow(OpenTelemetry).to receive(:tracer_provider).and_return(mock_tracer_provider)
+      allow(mock_tracer_provider).to receive(:tracer).and_return(mock_tracer)
+    end
+
     describe 'when telemetry is disabled' do
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(
-          double(enabled: false)
-        )
+        allow(mock_telemetry_config).to receive(:enabled).and_return(false)
+        allow(Tasker.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
       end
 
       it 'skips processing events' do
@@ -318,9 +331,8 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
 
     describe 'when telemetry is enabled' do
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(
-          double(enabled: true)
-        )
+        allow(mock_telemetry_config).to receive(:enabled).and_return(true)
+        allow(Tasker.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
         allow(subscriber).to receive(:opentelemetry_available?).and_return(false)
       end
 
@@ -342,7 +354,8 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
       # Mock OpenTelemetry availability
 
       # Mock tracer and spans
-      allow(subscriber).to receive_messages(opentelemetry_available?: true, get_tracer: mock_tracer)
+      allow(subscriber).to receive(:opentelemetry_available?).and_return(true)
+      subscriber.tracer = mock_tracer
       allow(mock_tracer).to receive(:start_root_span).and_return(task_span)
       allow(mock_tracer).to receive(:in_span).and_yield(step_span)
 

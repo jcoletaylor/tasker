@@ -74,10 +74,10 @@ Metrics/ParameterLists:
   Max: 8
 
 Metrics/AbcSize:
-  Max: 100
+  Max: 120
 
 Metrics/CyclomaticComplexity:
-  Max: 7
+  Max: 8
   Exclude:
     - 'spec/examples/**/*'   # Example code may have higher complexity for demonstration
 

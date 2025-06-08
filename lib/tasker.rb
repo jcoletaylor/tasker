@@ -9,8 +9,9 @@
 # Load version first (required for gemspec and other components)
 require 'tasker/version'
 
-# Core configuration that must be available before engine loads
+# Core configuration and errors that must be available before engine loads
 require 'tasker/configuration'
+require 'tasker/errors'
 
 # Essential runtime dependencies from gemspec
 require 'concurrent'
