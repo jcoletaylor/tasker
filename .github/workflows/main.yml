@@ -16,15 +16,15 @@ jobs:
   # Linting job - runs first and fails fast if code style issues
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Use stable Ubuntu version
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@ec02537da5712d66d4d50a0f33b7eb52773b5ed1  # Latest stable version
+        uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.2.4'  # Use specific version
           bundler-cache: true
 
       - name: Run RuboCop
@@ -33,17 +33,17 @@ jobs:
   # Main test job with matrix strategy
   test:
     name: Test (Ruby ${{ matrix.ruby-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Use stable Ubuntu version
     needs: lint  # Run tests only after linting passes
 
     strategy:
       fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
-        ruby-version: ['3.1', '3.2', '3.3']  # Test multiple Ruby versions
+        ruby-version: ['3.1', '3.2', '3.3']  # Use major.minor versions for latest patches
 
     services:
       postgres:
-        image: postgres:14-alpine  # Updated PostgreSQL version
+        image: postgres:14-alpine
         ports:
           - "5432:5432"
         env:
@@ -65,10 +65,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
-        uses: ruby/setup-ruby@ec02537da5712d66d4d50a0f33b7eb52773b5ed1  # Latest stable version
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true  # Automatically cache gems
+          bundler-cache: true
 
       - name: Set up database schema
         run: bundle exec rails db:schema:load
