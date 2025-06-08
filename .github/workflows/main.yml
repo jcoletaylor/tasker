@@ -28,7 +28,7 @@ jobs:
           bundler-cache: true
 
       - name: Run RuboCop
-        run: bundle exec rubocop --format github
+        run: bundle exec rubocop
 
   # Main test job with matrix strategy
   test:
