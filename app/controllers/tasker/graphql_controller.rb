@@ -87,8 +87,13 @@ module Tasker
     end
 
     def extract_graphql_operations(query_string, _operation_name)
-      # Simple regex-based extraction of GraphQL operations
-      # This is a basic implementation - for production, consider using GraphQL-Ruby's parser
+      # Simple regex-based extraction of GraphQL operations for Tasker's current use case.
+      # This approach is sufficient for Tasker's limited, well-defined operations without aliases,
+      # fragments, or complex nesting. Consider upgrading to GraphQL-Ruby's parser if you add:
+      # - Field aliases (e.g., { taskList: tasks { ... } })
+      # - GraphQL fragments (e.g., { ...TaskFields })
+      # - Multiple operations in a single query
+      # - Operations with comments or complex string literals
       operations = []
 
       # Clean the query string
