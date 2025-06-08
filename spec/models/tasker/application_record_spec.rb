@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 module Tasker
-  RSpec.describe ApplicationRecord, type: :model do
+  RSpec.describe ApplicationRecord do
     describe 'database connection configuration' do
       let(:original_config) { Tasker.configuration }
 
@@ -24,9 +24,9 @@ module Tasker
         end
 
         it 'uses the default database connection' do
-          expect(ApplicationRecord.abstract_class?).to be true
+          expect(described_class.abstract_class?).to be true
           # When secondary database is disabled, the connection should be available
-          expect(ApplicationRecord.connection).to be_present
+          expect(described_class.connection).to be_present
         end
       end
 
@@ -42,9 +42,9 @@ module Tasker
         end
 
         it 'uses the default database connection' do
-          expect(ApplicationRecord.abstract_class?).to be true
+          expect(described_class.abstract_class?).to be true
           # When no name is provided, it should still use the default connection
-          expect(ApplicationRecord.connection).to be_present
+          expect(described_class.connection).to be_present
         end
       end
 
@@ -62,10 +62,10 @@ module Tasker
         it 'falls back to default database and logs warning' do
           expect(Rails.logger).to receive(:warn).with(/Tasker secondary database 'nonexistent_db' is enabled but not found/)
 
-          ApplicationRecord.configure_database_connections
+          described_class.configure_database_connections
 
-          expect(ApplicationRecord.abstract_class?).to be true
-          expect(ApplicationRecord.connection).to be_present
+          expect(described_class.abstract_class?).to be true
+          expect(described_class.connection).to be_present
         end
       end
 
@@ -113,42 +113,42 @@ module Tasker
 
       describe 'inheritance behavior' do
         it 'is an abstract class' do
-          expect(ApplicationRecord.abstract_class?).to be true
+          expect(described_class.abstract_class?).to be true
         end
 
         it 'inherits from ActiveRecord::Base' do
-          expect(ApplicationRecord.superclass).to eq(ActiveRecord::Base)
+          expect(described_class.superclass).to eq(ActiveRecord::Base)
         end
 
         it 'serves as base class for all Tasker models' do
           # Verify key models inherit from ApplicationRecord
-          expect(Task.superclass).to eq(ApplicationRecord)
-          expect(WorkflowStep.superclass).to eq(ApplicationRecord)
-          expect(NamedTask.superclass).to eq(ApplicationRecord)
+          expect(Task.superclass).to eq(described_class)
+          expect(WorkflowStep.superclass).to eq(described_class)
+          expect(NamedTask.superclass).to eq(described_class)
         end
       end
 
       describe 'database connection setup' do
         it 'has the configure_database_connections class method' do
-          expect(ApplicationRecord).to respond_to(:configure_database_connections)
+          expect(described_class).to respond_to(:configure_database_connections)
         end
 
         it 'has the database_configuration_exists? class method' do
-          expect(ApplicationRecord).to respond_to(:database_configuration_exists?)
+          expect(described_class).to respond_to(:database_configuration_exists?)
         end
 
         it 'can call configure_database_connections without errors when configuration is available' do
-          expect { ApplicationRecord.configure_database_connections }.not_to raise_error
+          expect { described_class.configure_database_connections }.not_to raise_error
         end
 
         it 'database_configuration_exists? returns false for nonexistent databases' do
-          expect(ApplicationRecord.database_configuration_exists?(:nonexistent)).to be false
+          expect(described_class.database_configuration_exists?(:nonexistent)).to be false
         end
 
         it 'database_configuration_exists? handles string and symbol names' do
           # These should return the same result
-          result_symbol = ApplicationRecord.database_configuration_exists?(:test)
-          result_string = ApplicationRecord.database_configuration_exists?('test')
+          result_symbol = described_class.database_configuration_exists?(:test)
+          result_string = described_class.database_configuration_exists?('test')
           expect(result_symbol).to eq(result_string)
         end
 
@@ -156,20 +156,20 @@ module Tasker
           # If Rails.application or its config is nil, this should raise an error, not return false
           allow(Rails).to receive(:application).and_return(nil)
 
-          expect { ApplicationRecord.database_configuration_exists?(:test) }.to raise_error(NoMethodError)
+          expect { described_class.database_configuration_exists?(:test) }.to raise_error(NoMethodError)
         end
 
         it 'raises an error when Tasker.configuration is not available' do
           # Create a test class that simulates the error condition
-          test_class = Class.new(ActiveRecord::Base) do
+          test_class = Class.new(ApplicationRecord) do
             self.abstract_class = true
 
             def self.configure_database_connections
               # Simulate the condition where Tasker.configuration is not defined
-              unless false  # This simulates defined?(Tasker.configuration) returning false
-                raise StandardError, "Tasker.configuration is not available. This indicates a Rails initialization order issue. " \
-                                   "Ensure Tasker is properly initialized before models are loaded."
-              end
+              # This simulates defined?(Tasker.configuration) returning false
+
+              raise StandardError, 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
+                                   'Ensure Tasker is properly initialized before models are loaded.'
             end
           end
 

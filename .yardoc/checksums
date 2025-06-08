@@ -50,7 +50,7 @@ lib/tasker/concerns/authenticatable.rb 50c1b43875dc5c75f48757f2c0b1354ce3aeb39e
 lib/tasker/concerns/event_publisher.rb 4c9dc88eb99afd06cd783488cc48a4078159c588
 lib/tasker/events/definition_loader.rb 3e7c246d872186e4013b64d5b5e4c7f7bc1a0739
 app/graphql/tasker/queries/all_tasks.rb 38c6f26750cf55ec101a092dde5971e2c72d3dab
-app/models/tasker/application_record.rb 6ee600aeb213984a959e59a94fe1befefcd3056c
+app/models/tasker/application_record.rb 3af59526414217f14962925d1edb0125ccb01091
 app/models/tasker/workflow_step_edge.rb 4e90d2f89be8a02515f334afea1e4cf241ef3571
 lib/tasker/orchestration/coordinator.rb 9ef8d920e479d2f424fff230ef9b58bf276d14e9
 app/graphql/tasker/queries/base_query.rb cda9ad15149a2087d33d370807f96dc88e401e6c

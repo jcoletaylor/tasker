@@ -36,8 +36,8 @@ module Tasker
     def self.configure_database_connections
       # Ensure Tasker configuration is available - fail fast if not
       unless defined?(Tasker.configuration)
-        raise StandardError, "Tasker.configuration is not available. This indicates a Rails initialization order issue. " \
-                           "Ensure Tasker is properly initialized before models are loaded."
+        raise StandardError, 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
+                             'Ensure Tasker is properly initialized before models are loaded.'
       end
 
       config = Tasker.configuration.database
