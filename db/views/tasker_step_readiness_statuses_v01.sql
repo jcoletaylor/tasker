@@ -36,7 +36,7 @@ SELECT
 
   -- Final Readiness Calculation
   CASE
-    WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'failed')
+    WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
     AND (dep_check.total_parents IS NULL OR dep_check.total_parents = 0 OR dep_check.completed_parents = dep_check.total_parents)
     AND (ws.attempts < COALESCE(ws.retry_limit, 3))
     AND (ws.in_process = false)  -- Step must not be in process
@@ -108,6 +108,6 @@ LEFT JOIN (
   SELECT DISTINCT ON (workflow_step_id)
     workflow_step_id, created_at
   FROM tasker_workflow_step_transitions
-  WHERE to_state = 'failed'
+  WHERE to_state = 'error'
   ORDER BY workflow_step_id, created_at DESC
 ) last_failure ON last_failure.workflow_step_id = ws.workflow_step_id

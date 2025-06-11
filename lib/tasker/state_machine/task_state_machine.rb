@@ -108,6 +108,20 @@ module Tasker
       # - Idempotent transitions are handled by Statesman automatically
       # - Simple state changes don't need business logic validation
 
+      # Override current_state to work with custom transition model
+      # Since TaskTransition doesn't include Statesman::Adapters::ActiveRecordTransition,
+      # we need to implement our own current_state logic using the most_recent column
+      def current_state
+        most_recent_transition = object.task_transitions.where(most_recent: true).first
+
+        if most_recent_transition
+          most_recent_transition.to_state
+        else
+          # Return initial state if no transitions exist
+          Constants::TaskStatuses::PENDING
+        end
+      end
+
       # Class methods for state machine management
       class << self
         # Lazy-loaded hashmap for efficient event name lookup based on state transitions

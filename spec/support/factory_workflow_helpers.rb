@@ -48,6 +48,10 @@ module FactoryWorkflowHelpers
     # Handle dependencies first - complete any parent steps that aren't already complete
     complete_step_dependencies(step)
 
+    # Use safe transitions to avoid state machine errors
+    # Include IdempotentStateTransitions concern for safe_transition_to
+    step.extend(Tasker::Concerns::IdempotentStateTransitions)
+
     # Get current state - be defensive about state transitions
     current_state = step.state_machine.current_state
     current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
@@ -61,17 +65,17 @@ module FactoryWorkflowHelpers
     unless completion_states.include?(current_state)
       # Handle error state - must transition to pending first, then in_progress
       if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
-        step.state_machine.transition_to!(:pending)
+        step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
         current_state = Tasker::Constants::WorkflowStepStatuses::PENDING
       end
 
       # Transition to in_progress if not already there
       unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-        step.state_machine.transition_to!(:in_progress)
+        step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
       end
 
       # Transition to complete
-      step.state_machine.transition_to!(:complete)
+      step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::COMPLETE)
     end
 
     # Always ensure step data is properly set for completed state
@@ -365,7 +369,27 @@ module FactoryWorkflowHelpers
       # @param results [Hash] Results to set
       # @return [void]
       def finalize_step_completion(step, results)
-        step.state_machine.transition_to!(:complete)
+        # Ensure step is in in_progress state before transitioning to complete
+        current_state = step.state_machine.current_state
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+        # Only transition to in_progress if not already there or beyond
+        unless [
+          Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+        ].include?(current_state)
+          step.state_machine.transition_to!(:in_progress)
+        end
+
+        # Now transition to complete (only if not already complete)
+        unless [
+          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+        ].include?(current_state)
+          step.state_machine.transition_to!(:complete)
+        end
+
         step.update_columns(
           processed: true,
           processed_at: Time.current,

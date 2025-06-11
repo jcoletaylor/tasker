@@ -75,12 +75,15 @@ module WorkflowTestingHelpers
   # @param configure_failures [Hash] Step failure configurations
   # @return [void]
   def setup_test_coordination(configure_failures: {})
-    # Activate test coordinator
-    Tasker::Orchestration::TestCoordinator.activate!
+    # Load test orchestration components
+    require_relative 'test_orchestration/test_coordinator'
+
+    # Activate new test coordinator
+    TestOrchestration::TestCoordinator.activate!
 
     # Configure step failures if specified
     configure_failures.each do |step_name, config|
-      Tasker::Orchestration::TestCoordinator.configure_step_failure(
+      TestOrchestration::TestCoordinator.configure_step_failure(
         step_name.to_s,
         **config
       )
@@ -121,9 +124,10 @@ module WorkflowTestingHelpers
   #
   # @return [void]
   def cleanup_test_coordination
-    Tasker::Orchestration::TestCoordinator.deactivate!
-    Tasker::Orchestration::TestCoordinator.clear_failure_patterns!
+    TestOrchestration::TestCoordinator.deactivate!
+    TestOrchestration::TestCoordinator.clear_failure_patterns!
     Tasker::Testing::IdempotencyTestHandler.clear_execution_registry!
+    Tasker::Testing::ConfigurableFailureHandler.clear_attempt_registry!
   end
 
   # Process workflows synchronously and gather performance metrics
@@ -131,59 +135,93 @@ module WorkflowTestingHelpers
   # @param workflows [Array<Tasker::Task>] Workflows to process
   # @return [Hash] Performance and success metrics
   def process_workflows_with_metrics(workflows)
-    return {} unless Tasker::Orchestration::TestCoordinator.active?
+    return {} unless TestOrchestration::TestCoordinator.active?
+
+    results = {
+      total_workflows: workflows.count,
+      successful_workflows: 0,
+      failed_workflows: 0,
+      total_execution_time: 0,
+      total_steps_processed: 0
+    }
 
     start_time = Time.current
 
-    # Process each workflow individually to get detailed metrics
-    individual_results = workflows.map do |workflow|
-      workflow_start = Time.current
-      success = Tasker::Orchestration::TestCoordinator.process_task_synchronously(workflow)
-      execution_time = Time.current - workflow_start
+    workflows.each do |workflow|
+      # Get the task handler for this workflow using base name extraction
+      handler_name = extract_base_handler_name(workflow.name)
+      handler = Tasker::HandlerFactory.instance.get(handler_name)
 
+      # Configure the handler to use test strategies
+      handler.workflow_coordinator_strategy = TestOrchestration::TestWorkflowCoordinator
+      handler.reenqueuer_strategy = TestOrchestration::TestReenqueuer
+
+      # Use the test coordinator's retry-aware execution
+      test_coordinator = TestOrchestration::TestWorkflowCoordinator.new(
+        reenqueuer_strategy: TestOrchestration::TestReenqueuer.new,
+        max_retry_attempts: 5
+      )
+
+      success = test_coordinator.execute_workflow_with_retries(workflow, handler)
+
+      if success
+        results[:successful_workflows] += 1
+      else
+        results[:failed_workflows] += 1
+      end
+
+      # Count processed steps
       workflow.reload
-
-      {
-        task_id: workflow.task_id,
-        pattern: workflow.context['pattern'],
-        success: success,
-        execution_time: execution_time,
-        step_count: workflow.workflow_steps.count,
-        completed_steps: workflow.workflow_steps.count(&:processed),
-        final_status: workflow.status
-      }
+      results[:total_steps_processed] += workflow.workflow_steps.count(&:processed)
     end
 
-    total_time = Time.current - start_time
-
-    # Calculate aggregate metrics
-    {
-      total_workflows: workflows.count,
-      successful_workflows: individual_results.count { |r| r[:success] },
-      failed_workflows: individual_results.count { |r| !r[:success] },
-      total_execution_time: total_time,
-      average_execution_time: total_time / workflows.count,
-      total_steps_processed: individual_results.sum { |r| r[:completed_steps] },
-      individual_results: individual_results,
-      coordinator_stats: Tasker::Orchestration::TestCoordinator.execution_stats
-    }
+    results[:total_execution_time] = Time.current - start_time
+    results[:average_execution_time] = results[:total_execution_time] / workflows.count if workflows.count > 0
+    results
   end
 
   # Test database view performance with large datasets
   #
   # @param task_count [Integer] Number of tasks to test with
+  # @param workflows [Array<Tasker::Task>] Optional pre-created workflows to use instead of creating new ones
   # @return [Hash] Performance metrics for each view
-  def benchmark_database_views(task_count: 50)
-    # Create diverse dataset
-    workflows = create_diverse_workflow_dataset(count: task_count)
+  def benchmark_database_views(task_count: 50, workflows: nil)
+    # Use provided workflows or create diverse dataset
+    workflows ||= create_diverse_workflow_dataset(count: task_count)
 
     # Partially complete some workflows to create realistic state distribution
     workflows.sample(task_count / 3).each do |workflow|
-      steps_to_complete = workflow.workflow_steps.sample(rand(1..3))
+      # Get steps in dependency order (topological sort) to avoid guard failures
+      steps_in_order = get_steps_in_dependency_order(workflow)
+
+      # Complete a random number of steps from the beginning of the dependency chain
+      steps_to_complete_count = rand(1..3).clamp(1, steps_in_order.length)
+      steps_to_complete = steps_in_order.first(steps_to_complete_count)
+
       steps_to_complete.each do |step|
-        step.state_machine.transition_to!(:in_progress)
-        step.state_machine.transition_to!(:complete)
-        step.update_columns(processed: true, processed_at: Time.current)
+        # Complete dependencies first to ensure state machine guards pass
+        complete_step_dependencies_safely(step)
+
+        # Use proper state machine transitions to avoid invalid transitions
+        current_state = step.state_machine.current_state
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+        # Only transition if not already complete
+        completion_states = [
+          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+        ]
+
+        unless completion_states.include?(current_state)
+          # Transition to in_progress first if not already there
+          unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+            step.state_machine.transition_to!(:in_progress)
+          end
+
+          # Then transition to complete
+          step.state_machine.transition_to!(:complete)
+          step.update_columns(processed: true, processed_at: Time.current)
+        end
       end
     end
 
@@ -225,7 +263,7 @@ module WorkflowTestingHelpers
   # @param re_execution_count [Integer] Number of times to re-execute
   # @return [Hash] Idempotency test results
   def test_workflow_idempotency(re_execution_count: 3)
-    return {} unless Tasker::Orchestration::TestCoordinator.active?
+    return {} unless TestOrchestration::TestCoordinator.active?
 
     # Create a workflow with idempotent handlers
     task_request = Tasker::Types::TaskRequest.new(
@@ -246,10 +284,10 @@ module WorkflowTestingHelpers
 
       if execution_index > 0
         # Reset for re-execution
-        Tasker::Orchestration::TestCoordinator.reenqueue_for_idempotency_test([task], reset_steps: true)
+        TestOrchestration::TestCoordinator.reenqueue_for_idempotency_test([task], reset_steps: true)
       end
 
-      success = Tasker::Orchestration::TestCoordinator.process_task_synchronously(task)
+      success = TestOrchestration::TestCoordinator.process_task_synchronously(task)
       execution_time = Time.current - start_time
 
       task.reload
@@ -307,6 +345,86 @@ module WorkflowTestingHelpers
       execution_results: execution_results,
       handler_execution_stats: Tasker::Testing::IdempotencyTestHandler.execution_stats
     }
+  end
+
+  # Extract base handler name by removing unique suffix
+  def extract_base_handler_name(task_name)
+    # Remove the unique suffix pattern: _timestamp_randomnumber
+    # e.g., "linear_workflow_task_1749555645_529" -> "linear_workflow_task"
+    task_name.gsub(/_\d+_\d+$/, '')
+  end
+
+  # Get steps in dependency order (topological sort) to avoid guard failures
+  #
+  # @param workflow [Tasker::Task] The workflow task
+  # @return [Array<Tasker::WorkflowStep>] Steps in dependency order
+  def get_steps_in_dependency_order(workflow)
+    steps = workflow.workflow_steps.includes(:parents, :children).to_a
+
+    # Simple topological sort - start with steps that have no dependencies
+    ordered_steps = []
+    remaining_steps = steps.dup
+
+    while remaining_steps.any?
+      # Find steps with no unprocessed dependencies
+      ready_steps = remaining_steps.select do |step|
+        step.parents.all? { |parent| ordered_steps.include?(parent) }
+      end
+
+      # If no steps are ready, we have a circular dependency or other issue
+      # Just take the first remaining step to avoid infinite loop
+      if ready_steps.empty?
+        ready_steps = [remaining_steps.first]
+      end
+
+      # Add ready steps to ordered list and remove from remaining
+      ordered_steps.concat(ready_steps)
+      remaining_steps -= ready_steps
+    end
+
+    ordered_steps
+  end
+
+  # Complete step dependencies safely to ensure state machine guards pass
+  #
+  # @param step [Tasker::WorkflowStep] The step whose dependencies to complete
+  # @return [void]
+  def complete_step_dependencies_safely(step)
+    return unless step.respond_to?(:parents)
+
+    parents = step.parents
+    return if parents.blank?
+
+    parents.each do |parent|
+      # Check if parent is already complete
+      completion_states = [
+        Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+        Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+      ]
+      current_state = parent.state_machine.current_state
+      parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
+
+      # If parent isn't complete, complete it recursively
+      unless completion_states.include?(parent_status)
+        Rails.logger.debug do
+          "Workflow Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
+        end
+
+        # Recursively complete parent's dependencies first
+        complete_step_dependencies_safely(parent)
+
+        # Then complete the parent
+        begin
+          unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+            parent.state_machine.transition_to!(:in_progress)
+          end
+          parent.state_machine.transition_to!(:complete)
+          parent.update_columns(processed: true, processed_at: Time.current)
+        rescue StandardError => e
+          Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
+        end
+      end
+    end
   end
 
   # Generate comprehensive test report for workflow infrastructure
@@ -373,8 +491,8 @@ module WorkflowTestingHelpers
       report[:results][:summary] = {
         total_workflows_created: Tasker::Task.count,
         total_steps_created: Tasker::WorkflowStep.count,
-        test_coordinator_active: Tasker::Orchestration::TestCoordinator.active?,
-        coordinator_execution_stats: Tasker::Orchestration::TestCoordinator.execution_stats
+        test_coordinator_active: TestOrchestration::TestCoordinator.active?,
+        coordinator_execution_stats: TestOrchestration::TestCoordinator.execution_stats
       }
     ensure
       # Cleanup

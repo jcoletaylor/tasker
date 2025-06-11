@@ -6,6 +6,7 @@ require 'tasker/constants'
 require 'tasker/types/step_sequence'
 require 'tasker/events/event_payload_builder'
 require_relative '../concerns/event_publisher'
+require_relative '../orchestration/workflow_coordinator'
 
 module Tasker
   module TaskHandler
@@ -64,30 +65,17 @@ module Tasker
 
       # Handle a task's execution
       #
-      # This is the main entry point for processing a task. Uses proven
-      # orchestration delegation patterns for reliable workflow execution.
+      # This is the main entry point for processing a task. Delegates to
+      # WorkflowCoordinator for the execution loop to enable strategy composition.
       #
       # @param task [Tasker::Task] The task to handle
       # @return [void]
       def handle(task)
         start_task(task)
 
-        # PROVEN APPROACH: Process steps iteratively until completion or error
-        all_processed_steps = []
-
-        loop do
-          task.reload
-          sequence = get_sequence(task)
-          viable_steps = find_viable_steps(task, sequence)
-          break if viable_steps.empty?
-
-          processed_steps = handle_viable_steps(task, sequence, viable_steps)
-          all_processed_steps.concat(processed_steps)
-          break if blocked_by_errors?(task, sequence, processed_steps)
-        end
-
-        # DELEGATE: Finalize via TaskFinalizer (fires events internally)
-        finalize(task, get_sequence(task), all_processed_steps)
+        # DELEGATE: Use WorkflowCoordinator for execution loop
+        # This enables strategy pattern composition for testing
+        workflow_coordinator.execute_workflow(task, self)
       end
 
       # Establish step dependencies and defaults
@@ -156,6 +144,56 @@ module Tasker
       # @return [Tasker::Orchestration::TaskFinalizer] The task finalizer instance
       def task_finalizer
         @task_finalizer ||= Tasker::Orchestration::TaskFinalizer.new
+      end
+
+      # Memoized workflow coordinator for consistent reuse
+      #
+      # Uses strategy pattern to allow composition of different coordinators
+      # and reenqueuer strategies for testing vs production.
+      #
+      # @return [Tasker::Orchestration::WorkflowCoordinator] The workflow coordinator instance
+      def workflow_coordinator
+        @workflow_coordinator ||= workflow_coordinator_strategy.new(
+          reenqueuer_strategy: reenqueuer_strategy.new
+        )
+      end
+
+      # Get the workflow coordinator strategy class
+      #
+      # Can be overridden for testing to inject TestWorkflowCoordinator
+      #
+      # @return [Class] The workflow coordinator strategy class
+      def workflow_coordinator_strategy
+        @workflow_coordinator_strategy || Tasker::Orchestration::WorkflowCoordinator
+      end
+
+      public
+
+      # Set the workflow coordinator strategy (for testing)
+      #
+      # @param strategy [Class] The workflow coordinator strategy class
+      def workflow_coordinator_strategy=(strategy)
+        @workflow_coordinator_strategy = strategy
+        @workflow_coordinator = nil # Reset memoized instance
+      end
+
+      # Set the reenqueuer strategy (for testing)
+      #
+      # @param strategy [Class] The reenqueuer strategy class
+      def reenqueuer_strategy=(strategy)
+        @reenqueuer_strategy = strategy
+        @workflow_coordinator = nil # Reset memoized instance
+      end
+
+      private
+
+      # Get the reenqueuer strategy class
+      #
+      # Can be overridden for testing to inject TestReenqueuer
+      #
+      # @return [Class] The reenqueuer strategy class
+      def reenqueuer_strategy
+        @reenqueuer_strategy || Tasker::Orchestration::TaskReenqueuer
       end
 
       # ================================================================

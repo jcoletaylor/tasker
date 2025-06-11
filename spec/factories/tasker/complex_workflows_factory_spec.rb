@@ -18,6 +18,7 @@ RSpec.describe 'Complex Workflows Factory', type: :factory do
       task = create(:linear_workflow_task)
 
       expect(task).to be_persisted
+      # NamedTask should have exact handler name for proper handler mapping
       expect(task.named_task.name).to eq('linear_workflow_task')
       expect(task.context['workflow_type']).to eq('linear')
       expect(task.context['batch_id']).to be_present
@@ -40,6 +41,7 @@ RSpec.describe 'Complex Workflows Factory', type: :factory do
       task = create(:diamond_workflow_task)
 
       expect(task).to be_persisted
+      # NamedTask should have exact handler name for proper handler mapping
       expect(task.named_task.name).to eq('diamond_workflow_task')
       expect(task.context['workflow_type']).to eq('diamond')
     end
@@ -48,6 +50,7 @@ RSpec.describe 'Complex Workflows Factory', type: :factory do
       task = create(:parallel_merge_workflow_task)
 
       expect(task).to be_persisted
+      # NamedTask should have exact handler name for proper handler mapping
       expect(task.named_task.name).to eq('parallel_merge_workflow_task')
     end
 
@@ -55,6 +58,7 @@ RSpec.describe 'Complex Workflows Factory', type: :factory do
       task = create(:tree_workflow_task)
 
       expect(task).to be_persisted
+      # NamedTask should have exact handler name for proper handler mapping
       expect(task.named_task.name).to eq('tree_workflow_task')
     end
 
@@ -62,6 +66,7 @@ RSpec.describe 'Complex Workflows Factory', type: :factory do
       task = create(:mixed_workflow_task)
 
       expect(task).to be_persisted
+      # NamedTask should have exact handler name for proper handler mapping
       expect(task.named_task.name).to eq('mixed_workflow_task')
     end
   end

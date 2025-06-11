@@ -260,8 +260,12 @@ module Tasker
       }
 
       step = new(step_attributes)
-
       step.save!
+
+      # Initialize the state machine with proper initial state
+      # This creates the initial transition to PENDING state
+      step.state_machine.initialize_state_machine!
+
       step
     end
 

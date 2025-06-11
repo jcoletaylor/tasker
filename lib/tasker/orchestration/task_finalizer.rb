@@ -59,7 +59,56 @@ module Tasker
 
       # Service method exposed for FinalizationDecisionMaker
       def complete_task(task, context)
-        return unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+        # Ensure task is in in_progress state before transitioning to complete
+        current_state = task.state_machine.current_state
+        current_state = Constants::TaskStatuses::PENDING if current_state.blank?
+
+        if Rails.env.test?
+          puts "TaskFinalizer: complete_task called for task #{task.task_id}, current_state: #{current_state}"
+        end
+
+        # Handle task in error state - must go through pending first
+        if current_state == Constants::TaskStatuses::ERROR
+          if Rails.env.test?
+            puts "TaskFinalizer: Task #{task.task_id} in error state, transitioning to pending"
+          end
+          unless safe_transition_to(task, Constants::TaskStatuses::PENDING)
+            if Rails.env.test?
+              puts "TaskFinalizer: FAILED to transition task #{task.task_id} from error to pending"
+            end
+            return
+          end
+          current_state = Constants::TaskStatuses::PENDING
+        end
+
+        # Only transition to in_progress if not already there or beyond
+        unless [
+          Constants::TaskStatuses::IN_PROGRESS,
+          Constants::TaskStatuses::COMPLETE
+        ].include?(current_state)
+          if Rails.env.test?
+            puts "TaskFinalizer: Task #{task.task_id} transitioning from #{current_state} to in_progress"
+          end
+          unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
+            if Rails.env.test?
+              puts "TaskFinalizer: FAILED to transition task #{task.task_id} from #{current_state} to in_progress"
+            end
+            return
+          end
+        end
+
+        # Now transition to complete (only if not already complete)
+        unless current_state == Constants::TaskStatuses::COMPLETE
+          if Rails.env.test?
+            puts "TaskFinalizer: Task #{task.task_id} transitioning to complete"
+          end
+          unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+            if Rails.env.test?
+              puts "TaskFinalizer: FAILED to transition task #{task.task_id} to complete"
+            end
+            return
+          end
+        end
 
         publish_task_completed(
           task,
@@ -242,18 +291,34 @@ module Tasker
           # @param synchronous [Boolean] Whether this is synchronous processing
           # @param finalizer [TaskFinalizer] The finalizer instance for callbacks
           def make_finalization_decision(task, context, synchronous, finalizer)
+            log_message("TaskFinalizer: Making decision for task #{task.task_id} with execution_status: #{context&.execution_status}")
+
             case context.execution_status
             when Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE
+              log_message("TaskFinalizer: Task #{task.task_id} - calling complete_task")
               finalizer.complete_task(task, context)
             when Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
+              log_message("TaskFinalizer: Task #{task.task_id} - calling error_task")
               finalizer.error_task(task, context)
             when Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS,
                  Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
+              log_message("TaskFinalizer: Task #{task.task_id} - handling ready/waiting state")
               handle_ready_or_waiting_state(task, context, synchronous, finalizer)
             when Constants::TaskExecution::ExecutionStatus::PROCESSING
+              log_message("TaskFinalizer: Task #{task.task_id} - handling processing state")
               handle_processing_state(task, context, synchronous, finalizer)
             else
+              log_message("TaskFinalizer: Task #{task.task_id} - handling unclear state")
               UnclearStateHandler.handle(task, context, finalizer)
+            end
+          end
+
+          # Helper method to log messages that work in test environment
+          def log_message(message)
+            if Rails.env.test?
+              puts message
+            else
+              Rails.logger.info(message)
             end
           end
 

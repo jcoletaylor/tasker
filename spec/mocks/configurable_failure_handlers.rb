@@ -1,38 +1,46 @@
 # frozen_string_literal: true
 
 require_relative '../../lib/tasker/step_handler/base'
-require_relative '../../lib/tasker/orchestration/test_coordinator'
 
 module Tasker
   module Testing
     # ConfigurableFailureHandler - A step handler that can be configured to fail
     # a specific number of times before succeeding, for testing retry logic
     class ConfigurableFailureHandler < Tasker::StepHandler::Base
-      attr_reader :step_name, :failure_count, :current_attempts
+      class_attribute :attempt_registry
+      self.attempt_registry = {}
+
+      attr_reader :step_name, :failure_count
 
       def initialize(step_name:, failure_count: 2, failure_message: 'Configurable test failure')
         super()
         @step_name = step_name
         @failure_count = failure_count
         @failure_message = failure_message
-        @current_attempts = 0
       end
 
       # Process method that implements configurable failure logic
       def process(task, _sequence, step)
-        @current_attempts += 1
+        # Use step-specific key for attempt tracking
+        attempt_key = "#{task.task_id}_#{step.workflow_step_id}_#{@step_name}"
+
+        # Initialize or increment attempts for this specific step
+        self.class.attempt_registry[attempt_key] ||= 0
+        self.class.attempt_registry[attempt_key] += 1
+
+        current_attempts = self.class.attempt_registry[attempt_key]
 
         # Check if we should fail based on configuration
-        if should_fail?
+        if should_fail?(current_attempts)
           # Store attempt info in step results for debugging
           step.results = {
             error: @failure_message,
-            attempt: @current_attempts,
+            attempt: current_attempts,
             max_failures: @failure_count,
-            will_succeed_next: @current_attempts >= @failure_count
+            will_succeed_next: current_attempts >= @failure_count
           }
 
-          Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{@current_attempts}")
+          Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{current_attempts}")
           raise StandardError, @failure_message
         end
 
@@ -40,20 +48,25 @@ module Tasker
         success_results = {
           success: true,
           step_name: @step_name,
-          total_attempts: @current_attempts,
-          failed_attempts: @current_attempts - 1,
+          total_attempts: current_attempts,
+          failed_attempts: current_attempts - 1,
           processed_at: Time.current,
           task_context_sample: task.context.slice(:batch_id, :workflow_type)
         }
 
-        Rails.logger.info("ConfigurableFailureHandler: #{@step_name} succeeded after #{@current_attempts} attempts")
+        Rails.logger.info("ConfigurableFailureHandler: #{@step_name} succeeded after #{current_attempts} attempts")
         success_results
+      end
+
+      # Class method to clear attempt registry (for test cleanup)
+      def self.clear_attempt_registry!
+        self.attempt_registry = {}
       end
 
       private
 
-      def should_fail?
-        @current_attempts <= @failure_count
+      def should_fail?(current_attempts)
+        current_attempts <= @failure_count
       end
     end
 
@@ -99,25 +112,35 @@ module Tasker
 
     # NetworkTimeoutHandler - Simulates network timeouts and retries
     class NetworkTimeoutHandler < Tasker::StepHandler::Base
+      class_attribute :attempt_registry
+      self.attempt_registry = {}
+
       def initialize(timeout_count: 2, timeout_message: 'Network timeout')
         super()
         @timeout_count = timeout_count
         @timeout_message = timeout_message
-        @attempts = 0
       end
 
       def process(task, _sequence, step)
-        @attempts += 1
+        # Use step-specific key for attempt tracking (same pattern as ConfigurableFailureHandler)
+        attempt_key = "#{task.task_id}_#{step.workflow_step_id}_network_timeout"
 
-        if @attempts <= @timeout_count
+        # Initialize or increment attempts for this specific step
+        self.class.attempt_registry[attempt_key] ||= 0
+        self.class.attempt_registry[attempt_key] += 1
+
+        current_attempts = self.class.attempt_registry[attempt_key]
+
+        if current_attempts <= @timeout_count
           step.results = {
             error: @timeout_message,
-            attempt: @attempts,
+            attempt: current_attempts,
             timeout_simulation: true,
-            retry_recommended: true
+            retry_recommended: true,
+            max_timeouts: @timeout_count
           }
 
-          Rails.logger.info("NetworkTimeoutHandler: Simulating timeout #{@attempts}/#{@timeout_count}")
+          Rails.logger.info("NetworkTimeoutHandler: Simulating timeout #{current_attempts}/#{@timeout_count}")
           raise StandardError, @timeout_message
         end
 
@@ -126,12 +149,18 @@ module Tasker
           success: true,
           network_response: {
             status: 200,
-            data: { message: "Success after #{@attempts} attempts" },
+            data: { message: "Success after #{current_attempts} attempts" },
             response_time_ms: rand(100..500)
           },
-          total_attempts: @attempts,
+          total_attempts: current_attempts,
+          failed_attempts: current_attempts - 1,
           task_context: task.context.slice(:batch_id)
         }
+      end
+
+      # Class method to clear attempt registry (for test cleanup)
+      def self.clear_attempt_registry!
+        self.attempt_registry = {}
       end
     end
 
@@ -415,6 +444,21 @@ class LinearWorkflowTask
       }
     }
   end
+
+  # Override get_step_handler to properly instantiate configurable handlers
+  def get_step_handler(step)
+    handler_config = step_handler_config_map[step.name] || {}
+
+    case step.name
+    when 'initialize_data', 'validate_input', 'process_data', 'transform_results', 'validate_output', 'finalize_workflow'
+      Tasker::Testing::ConfigurableFailureHandler.new(
+        step_name: step.name,
+        **handler_config
+      )
+    else
+      super
+    end
+  end
 end
 
 # Diamond workflow: Start → (Branch1, Branch2) → Merge → End
@@ -493,6 +537,23 @@ class DiamondWorkflowTask
       }
     }
   end
+
+  # Override get_step_handler to properly instantiate configurable handlers
+  def get_step_handler(step)
+    handler_config = step_handler_config_map[step.name] || {}
+
+    case step.name
+    when 'start_workflow', 'branch_one_process', 'branch_one_validate', 'branch_two_validate', 'merge_branches', 'end_workflow'
+      Tasker::Testing::ConfigurableFailureHandler.new(
+        step_name: step.name,
+        **handler_config
+      )
+    when 'branch_two_process'
+      Tasker::Testing::NetworkTimeoutHandler.new(**handler_config)
+    else
+      super
+    end
+  end
 end
 
 # Parallel Merge workflow: Multiple independent parallel branches that all converge
@@ -568,6 +629,23 @@ class ParallelMergeWorkflowTask
         batch_id: { type: 'string' }
       }
     }
+  end
+
+  # Override get_step_handler to properly instantiate configurable handlers
+  def get_step_handler(step)
+    handler_config = step_handler_config_map[step.name] || {}
+
+    case step.name
+    when 'fetch_user_data', 'fetch_order_data', 'fetch_pricing_data', 'process_user_data', 'process_order_data', 'merge_all_data'
+      Tasker::Testing::ConfigurableFailureHandler.new(
+        step_name: step.name,
+        **handler_config
+      )
+    when 'fetch_inventory_data'
+      Tasker::Testing::NetworkTimeoutHandler.new(**handler_config)
+    else
+      super
+    end
   end
 end
 
@@ -657,6 +735,23 @@ class TreeWorkflowTask
         batch_id: { type: 'string' }
       }
     }
+  end
+
+  # Override get_step_handler to properly instantiate configurable handlers
+  def get_step_handler(step)
+    handler_config = step_handler_config_map[step.name] || {}
+
+    case step.name
+    when 'root_initialization', 'branch_a_setup', 'branch_b_setup', 'branch_a_task_one', 'branch_b_task_one', 'branch_b_task_two', 'aggregate_results'
+      Tasker::Testing::ConfigurableFailureHandler.new(
+        step_name: step.name,
+        **handler_config
+      )
+    when 'branch_a_task_two'
+      Tasker::Testing::NetworkTimeoutHandler.new(**handler_config)
+    else
+      super
+    end
   end
 end
 
@@ -755,5 +850,24 @@ class MixedWorkflowTask
         batch_id: { type: 'string' }
       }
     }
+  end
+
+  # Override get_step_handler to properly instantiate configurable handlers
+  def get_step_handler(step)
+    handler_config = step_handler_config_map[step.name] || {}
+
+    case step.name
+    when 'init_auth', 'init_config', 'validate_permissions', 'begin_processing', 'process_critical_data', 'process_optional_data', 'cleanup_temp_files'
+      Tasker::Testing::ConfigurableFailureHandler.new(
+        step_name: step.name,
+        **handler_config
+      )
+    when 'setup_environment'
+      Tasker::Testing::NetworkTimeoutHandler.new(**handler_config)
+    when 'finalize_and_report'
+      Tasker::Testing::IdempotencyTestHandler.new(**handler_config)
+    else
+      super
+    end
   end
 end

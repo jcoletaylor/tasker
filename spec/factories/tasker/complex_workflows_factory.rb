@@ -94,13 +94,13 @@ FactoryBot.define do
   factory :workflow_dataset, class: 'Array' do
     transient do
       task_count { 30 }
-      patterns_distribution do
+      pattern_distribution do
         {
-          linear: 8,
-          diamond: 8,
-          parallel_merge: 6,
-          tree: 4,
-          mixed: 4
+          linear: 0.3,
+          diamond: 0.25,
+          parallel_merge: 0.2,
+          tree: 0.15,
+          mixed: 0.1
         }
       end
       failure_percentage { 0.15 }
@@ -109,23 +109,45 @@ FactoryBot.define do
 
     initialize_with do
       tasks = []
+
+      # Calculate counts for each pattern based on task_count
+      pattern_counts = pattern_distribution.transform_values { |ratio| (task_count * ratio).round }
+
+      # Adjust for rounding differences
+      total_assigned = pattern_counts.values.sum
+      if total_assigned < task_count
+        pattern_counts[:linear] += task_count - total_assigned
+      elsif total_assigned > task_count
+        pattern_counts[:linear] -= total_assigned - task_count
+      end
+
       total_created = 0
-
-      patterns_distribution.each do |pattern, count|
+      pattern_counts.each do |pattern, count|
         count.times do |i|
-          failure_steps = rand < failure_percentage ? %w[step_three step_four] : []
-          completed_steps = rand < completion_percentage ? %w[step_one step_two] : []
+          # Use the step template-based factories instead of the old complex_workflow factory
+          factory_name = case pattern
+                         when :linear
+                           :linear_workflow_task
+                         when :diamond
+                           :diamond_workflow_task
+                         when :parallel_merge
+                           :parallel_merge_workflow_task
+                         when :tree
+                           :tree_workflow_task
+                         when :mixed
+                           :mixed_workflow_task
+                         else
+                           :linear_workflow_task # fallback
+                         end
 
-          trait_name = :"#{pattern}_workflow"
-
-          task = create(:complex_workflow, trait_name,
+          task = create(factory_name,
                         context: {
+                          workflow_type: pattern.to_s,
                           batch_id: "dataset_#{Time.current.to_i}",
                           task_index: total_created + i,
-                          pattern: pattern
+                          pattern: pattern,
+                          created_at: Time.current.to_f
                         },
-                        failure_step_names: failure_steps,
-                        completed_step_names: completed_steps,
                         reason: "large_dataset_testing_#{pattern}")
           tasks << task
         end
@@ -307,6 +329,9 @@ end
 
 # Helper method to safely find or create NamedTask with race condition handling
 def find_or_create_named_task(name, description)
+  # Use the EXACT handler name - many tasks should share the same NamedTask
+  # This is critical for proper handler lookup in the HandlerFactory
+
   retries = 0
   begin
     Tasker::NamedTask.find_or_create_by!(name: name) do |named_task|
@@ -331,33 +356,111 @@ module ComplexWorkflowFactoryHelpers
     # Allow some time for the steps to be created
     task.reload
 
-    # Set failed steps
-    evaluator.failure_step_names.each do |step_name|
-      step = task.workflow_steps.joins(:named_step)
-                 .where(tasker_named_steps: { name: step_name }).first
-      next unless step
-
-      # Use Tasker's state machine for proper transitions
-      begin
-        step.state_machine.transition_to!(:in_progress) if step.state_machine.can_transition_to?(:in_progress)
-        step.state_machine.transition_to!(:error) if step.state_machine.can_transition_to?(:error)
-      rescue StandardError => e
-        Rails.logger.warn "Could not transition step #{step_name} to error state: #{e.message}"
-      end
-    end
-
-    # Set completed steps
+    # Set completed steps first (to satisfy dependencies for other steps)
     evaluator.completed_step_names.each do |step_name|
       step = task.workflow_steps.joins(:named_step)
                  .where(tasker_named_steps: { name: step_name }).first
       next unless step
 
-      # Use Tasker's state machine for proper transitions
+      # Complete dependencies first to ensure state machine guards pass
+      complete_step_dependencies(step)
+
+      # Use safe state machine transitions
       begin
-        step.state_machine.transition_to!(:in_progress) if step.state_machine.can_transition_to?(:in_progress)
-        step.state_machine.transition_to!(:complete) if step.state_machine.can_transition_to?(:complete)
+        current_state = step.state_machine.current_state
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+        # Only transition if not already complete
+        completion_states = [
+          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+        ]
+
+        unless completion_states.include?(current_state)
+          # Transition to in_progress first if not already there
+          unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+            step.state_machine.transition_to!(:in_progress)
+          end
+
+          # Then transition to complete
+          step.state_machine.transition_to!(:complete)
+          step.update_columns(processed: true, processed_at: Time.current)
+        end
       rescue StandardError => e
         Rails.logger.warn "Could not transition step #{step_name} to complete state: #{e.message}"
+      end
+    end
+
+    # Set failed steps after completing dependencies
+    evaluator.failure_step_names.each do |step_name|
+      step = task.workflow_steps.joins(:named_step)
+                 .where(tasker_named_steps: { name: step_name }).first
+      next unless step
+
+      # Complete dependencies first to ensure state machine guards pass
+      complete_step_dependencies(step)
+
+      # Use safe state machine transitions for error state
+      begin
+        current_state = step.state_machine.current_state
+        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+
+        # Only transition if not already in error or complete
+        unless [
+          Tasker::Constants::WorkflowStepStatuses::ERROR,
+          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+        ].include?(current_state)
+          # Transition to in_progress first if not already there
+          unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+            step.state_machine.transition_to!(:in_progress)
+          end
+
+          # Then transition to error
+          step.state_machine.transition_to!(:error)
+          step.update_columns(processed: false, results: { error: 'Factory-generated error' })
+        end
+      rescue StandardError => e
+        Rails.logger.warn "Could not transition step #{step_name} to error state: #{e.message}"
+      end
+    end
+  end
+
+  # Complete any dependencies for a step to ensure state machine guards pass
+  def self.complete_step_dependencies(step)
+    return unless step.respond_to?(:parents)
+
+    parents = step.parents
+    return if parents.blank?
+
+    parents.each do |parent|
+      # Check if parent is already complete
+      completion_states = [
+        Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+        Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+      ]
+      current_state = parent.state_machine.current_state
+      parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
+
+      # If parent isn't complete, complete it recursively
+      unless completion_states.include?(parent_status)
+        Rails.logger.debug do
+          "Factory Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
+        end
+
+        # Recursively complete parent's dependencies first
+        complete_step_dependencies(parent)
+
+        # Then complete the parent
+        begin
+          unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+            parent.state_machine.transition_to!(:in_progress)
+          end
+          parent.state_machine.transition_to!(:complete)
+          parent.update_columns(processed: true, processed_at: Time.current)
+        rescue StandardError => e
+          Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
+        end
       end
     end
   end

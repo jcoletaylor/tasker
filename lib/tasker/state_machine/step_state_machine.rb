@@ -122,6 +122,31 @@ module Tasker
          Constants::WorkflowStepStatuses::RESOLVED_MANUALLY] => Constants::StepEvents::RESOLVED_MANUALLY
       }.freeze
 
+      # Override current_state to work with custom transition model
+      # Since WorkflowStepTransition doesn't include Statesman::Adapters::ActiveRecordTransition,
+      # we need to implement our own current_state logic using the most_recent column
+      def current_state
+        most_recent_transition = object.workflow_step_transitions.where(most_recent: true).first
+
+        if most_recent_transition
+          most_recent_transition.to_state
+        else
+          # Return initial state if no transitions exist
+          Constants::WorkflowStepStatuses::PENDING
+        end
+      end
+
+      # Initialize the state machine with the initial state
+      # This ensures the state machine is properly initialized
+      def initialize_state_machine!
+        # Only initialize if no transitions exist yet
+        return if Tasker::WorkflowStepTransition.exists?(workflow_step_id: object.workflow_step_id)
+
+        # Statesman automatically creates the initial state transition when we access current_state
+        # Just accessing current_state will create the initial transition to PENDING
+        current_state
+      end
+
       # Class methods for state machine management
       class << self
         # Class-level wrapper methods for guard clause context

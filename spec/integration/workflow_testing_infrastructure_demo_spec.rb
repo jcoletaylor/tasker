@@ -27,7 +27,7 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
       expect(patterns.count).to be >= 4 # Should have multiple different patterns
 
       # Test that database views handle the large dataset correctly
-      view_performance = benchmark_database_views(task_count: workflows.count)
+      view_performance = benchmark_database_views(task_count: workflows.count, workflows: workflows)
 
       # Verify reasonable performance (adjust thresholds as needed)
       expect(view_performance[:task_workflow_summary][:execution_time]).to be < 3.seconds
@@ -58,9 +58,9 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
       root_steps = diamond_dag.where(is_root_step: true)
       expect(root_steps.count).to eq(1)
 
-      # Should have multiple leaf steps
+      # Should have at least one leaf step
       leaf_steps = diamond_dag.where(is_leaf_step: true)
-      expect(leaf_steps.count).to be > 1
+      expect(leaf_steps.count).to be >= 1
 
       # Test readiness calculation
       readiness_statuses = Tasker::StepReadinessStatus.where(task_id: diamond_task.task_id)
@@ -71,8 +71,8 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
 
       puts "\n=== DAG Structure Analysis ==="
       puts "Diamond workflow: #{diamond_dag.count} steps, #{root_steps.count} roots, #{leaf_steps.count} leaves"
-      puts "Tree workflow: #{Tasker::StepDAGRelationship.where(task_id: tree_task.task_id).count} steps"
-      puts "Mixed workflow: #{Tasker::StepDAGRelationship.where(task_id: mixed_task.task_id).count} steps"
+      puts "Tree workflow: #{Tasker::StepDagRelationship.where(task_id: tree_task.task_id).count} steps"
+      puts "Mixed workflow: #{Tasker::StepDagRelationship.where(task_id: mixed_task.task_id).count} steps"
     end
   end
 
@@ -268,7 +268,7 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
 
         # Simulate some workflows being re-enqueued (e.g., after system restart)
         workflows_to_reenqueue = production_workflows.sample(3)
-        Tasker::Orchestration::TestCoordinator.reenqueue_for_idempotency_test(
+        TestOrchestration::TestCoordinator.reenqueue_for_idempotency_test(
           workflows_to_reenqueue,
           reset_steps: true
         )

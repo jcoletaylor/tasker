@@ -128,7 +128,7 @@ module Tasker
       end
 
       # Ensure step has an initial state, set to pending if blank
-      def ensure_step_has_initial_state(step)
+      def ensure_step_has_initial_state(step) # rubocop:disable Naming/PredicateMethod
         current_state = step.state_machine.current_state
         return true if current_state.present?
 
@@ -216,11 +216,17 @@ module Tasker
 
         # Use database transaction to ensure atomic completion
         ActiveRecord::Base.transaction do
-          # STEP 1: Save the step results first
+          # STEP 1: Set completion flags for successful steps
+          # Mark step as processed and not in_process (mirrors error path logic)
+          step.processed = true
+          step.in_process = false
+          step.processed_at = Time.zone.now
+
+          # STEP 2: Save the step results and flags
           # This persists the output of the work that has already been performed
           step.save!
 
-          # STEP 2: Transition to complete state
+          # STEP 3: Transition to complete state
           # This marks the step as done, but only if the save succeeded
           unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::COMPLETE)
             Rails.logger.error("StepExecutor: Failed to transition step #{step.workflow_step_id} to complete")
@@ -278,11 +284,17 @@ module Tasker
 
         # Use database transaction to ensure atomic error completion
         ActiveRecord::Base.transaction do
-          # STEP 1: Save the step with error data first
+          # STEP 1: Reset step flags for retry eligibility
+          # Failed steps must be marked as not in_process and not processed
+          # so they can be picked up for retry by the step readiness view
+          step.in_process = false
+          step.processed = false
+
+          # STEP 2: Save the step with error data
           # This persists the error information and attempt tracking
           step.save!
 
-          # STEP 2: Transition to error state
+          # STEP 3: Transition to error state
           # This marks the step as failed, but only if the save succeeded
           unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::ERROR)
             Rails.logger.error("StepExecutor: Failed to transition step #{step.workflow_step_id} to error")
