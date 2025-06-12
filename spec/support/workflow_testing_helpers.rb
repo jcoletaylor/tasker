@@ -148,6 +148,9 @@ module WorkflowTestingHelpers
     start_time = Time.current
 
     workflows.each do |workflow|
+      # Bypass backoff timing for test environment to enable immediate retries
+      TestOrchestration::TestCoordinator.bypass_backoff_for_testing([workflow])
+
       # Get the task handler for this workflow using base name extraction
       handler_name = extract_base_handler_name(workflow.name)
       handler = Tasker::HandlerFactory.instance.get(handler_name)

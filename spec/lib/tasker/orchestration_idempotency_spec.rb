@@ -14,6 +14,28 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       ConfigurableFailureTask
     )
 
+    # Register step template-based task handlers
+    Tasker::HandlerFactory.instance.register(
+      LinearWorkflowTask::TASK_NAME,
+      LinearWorkflowTask
+    )
+    Tasker::HandlerFactory.instance.register(
+      DiamondWorkflowTask::TASK_NAME,
+      DiamondWorkflowTask
+    )
+    Tasker::HandlerFactory.instance.register(
+      ParallelMergeWorkflowTask::TASK_NAME,
+      ParallelMergeWorkflowTask
+    )
+    Tasker::HandlerFactory.instance.register(
+      TreeWorkflowTask::TASK_NAME,
+      TreeWorkflowTask
+    )
+    Tasker::HandlerFactory.instance.register(
+      MixedWorkflowTask::TASK_NAME,
+      MixedWorkflowTask
+    )
+
     # Activate test coordination mode
     TestOrchestration::TestCoordinator.activate!
   end
@@ -28,11 +50,15 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
     # Clear failure patterns and execution logs between tests
     TestOrchestration::TestCoordinator.clear_failure_patterns!
     Tasker::Testing::IdempotencyTestHandler.clear_execution_registry!
+    Tasker::Testing::ConfigurableFailureHandler.clear_attempt_registry!
   end
 
   describe 'Test Coordinator functionality' do
     it 'processes tasks synchronously without job queuing' do
       task = create(:linear_workflow_task)
+
+      # Bypass backoff timing for test environment
+      TestOrchestration::TestCoordinator.bypass_backoff_for_testing([task])
 
       # Process synchronously
       start_time = Time.current
@@ -54,6 +80,9 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
         create(:parallel_merge_workflow_task),
         create(:tree_workflow_task)
       ]
+
+      # Bypass backoff timing for test environment
+      tasks.each { |task| TestOrchestration::TestCoordinator.bypass_backoff_for_testing([task]) }
 
       results = TestOrchestration::TestCoordinator.process_tasks_batch(tasks)
 
@@ -184,14 +213,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       # Re-execute for idempotency test
       TestOrchestration::TestCoordinator.reenqueue_for_idempotency_test([task], reset_steps: true)
 
-      # Process again
-      puts "[DEBUG] Processing task again after reset"
-      puts "[DEBUG] Task status before re-execution: #{task.status}"
-      puts "[DEBUG] Task steps status: #{task.workflow_steps.map { |s| "#{s.name}: #{s.status}" }}"
-
-      result2 = TestOrchestration::TestCoordinator.process_task_synchronously(task)
-      puts "[DEBUG] Second execution result: #{result2}"
-      puts "[DEBUG] Task status after re-execution: #{task.reload.status}"
+          # Process again
+          result2 = TestOrchestration::TestCoordinator.process_task_synchronously(task)
 
       expect(result2).to be true
 
@@ -350,14 +373,7 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
         reason: 'testing_error_handling'
       )
 
-      puts "[DEBUG] Creating task with request: #{task_request.inspect}"
-      puts "[DEBUG] Task handler: #{task_handler.class.name}"
-
       task = task_handler.initialize_task!(task_request)
-
-      puts "[DEBUG] Task created: #{task.inspect}"
-      puts "[DEBUG] Task ID: #{task&.task_id}"
-      puts "[DEBUG] Task new_record?: #{task&.new_record?}"
 
       # Ensure task was created properly
       expect(task).to be_present

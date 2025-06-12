@@ -144,6 +144,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.index ["from_step_id"], name: "index_tasker_workflow_step_edges_on_from_step_id"
     t.index ["to_step_id", "from_step_id"], name: "index_step_edges_dependency_pair"
     t.index ["to_step_id", "from_step_id"], name: "index_step_edges_to_from_composite"
+    t.index ["to_step_id", "from_step_id"], name: "index_workflow_step_edges_dependency_lookup"
     t.index ["to_step_id"], name: "index_step_edges_child_lookup"
     t.index ["to_step_id"], name: "index_step_edges_to_step_for_parents"
     t.index ["to_step_id"], name: "index_tasker_workflow_step_edges_on_to_step_id"
@@ -222,9 +223,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
       ns.name,
       COALESCE(current_state.to_state, 'pending'::character varying) AS current_state,
           CASE
-              WHEN (dep_check.total_parents IS NULL) THEN true
-              WHEN (dep_check.total_parents = 0) THEN true
-              WHEN (dep_check.completed_parents = dep_check.total_parents) THEN true
+              WHEN (dep_edges.to_step_id IS NULL) THEN true
+              WHEN (count(dep_edges.from_step_id) = 0) THEN true
+              WHEN (count(
+              CASE
+                  WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+                  ELSE NULL::integer
+              END) = count(dep_edges.from_step_id)) THEN true
               ELSE false
           END AS dependencies_satisfied,
           CASE
@@ -236,7 +241,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
               ELSE true
           END AS retry_eligible,
           CASE
-              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])) AND ((dep_check.total_parents IS NULL) OR (dep_check.total_parents = 0) OR (dep_check.completed_parents = dep_check.total_parents)) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND ((ws.in_process = false) AND (ws.processed = false)) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
+              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])) AND ((dep_edges.to_step_id IS NULL) OR (count(dep_edges.from_step_id) = 0) OR (count(
+              CASE
+                  WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+                  ELSE NULL::integer
+              END) = count(dep_edges.from_step_id))) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND ((ws.in_process = false) AND (ws.processed = false)) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
               ELSE false
           END AS ready_for_execution,
       last_failure.created_at AS last_failure_at,
@@ -245,32 +254,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
               WHEN (last_failure.created_at IS NOT NULL) THEN (last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval))
               ELSE NULL::timestamp without time zone
           END AS next_retry_at,
-      COALESCE(dep_check.total_parents, (0)::bigint) AS total_parents,
-      COALESCE(dep_check.completed_parents, (0)::bigint) AS completed_parents,
+      COALESCE(count(dep_edges.from_step_id), (0)::bigint) AS total_parents,
+      COALESCE(count(
+          CASE
+              WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+              ELSE NULL::integer
+          END), (0)::bigint) AS completed_parents,
       ws.attempts,
       COALESCE(ws.retry_limit, 3) AS retry_limit,
       ws.backoff_request_seconds,
       ws.last_attempted_at
-     FROM ((((tasker_workflow_steps ws
+     FROM (((((tasker_workflow_steps ws
        JOIN tasker_named_steps ns ON ((ns.named_step_id = ws.named_step_id)))
        LEFT JOIN tasker_workflow_step_transitions current_state ON (((current_state.workflow_step_id = ws.workflow_step_id) AND (current_state.most_recent = true))))
-       LEFT JOIN ( SELECT child.workflow_step_id,
-              count(*) AS total_parents,
-              count(
-                  CASE
-                      WHEN ((parent_state.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
-                      ELSE NULL::integer
-                  END) AS completed_parents
-             FROM (((tasker_workflow_step_edges dep
-               JOIN tasker_workflow_steps child ON ((child.workflow_step_id = dep.to_step_id)))
-               JOIN tasker_workflow_steps parent ON ((parent.workflow_step_id = dep.from_step_id)))
-               LEFT JOIN tasker_workflow_step_transitions parent_state ON (((parent_state.workflow_step_id = parent.workflow_step_id) AND (parent_state.most_recent = true))))
-            GROUP BY child.workflow_step_id) dep_check ON ((dep_check.workflow_step_id = ws.workflow_step_id)))
-       LEFT JOIN ( SELECT DISTINCT ON (tasker_workflow_step_transitions.workflow_step_id) tasker_workflow_step_transitions.workflow_step_id,
-              tasker_workflow_step_transitions.created_at
-             FROM tasker_workflow_step_transitions
-            WHERE ((tasker_workflow_step_transitions.to_state)::text = 'error'::text)
-            ORDER BY tasker_workflow_step_transitions.workflow_step_id, tasker_workflow_step_transitions.created_at DESC) last_failure ON ((last_failure.workflow_step_id = ws.workflow_step_id)));
+       LEFT JOIN tasker_workflow_step_edges dep_edges ON ((dep_edges.to_step_id = ws.workflow_step_id)))
+       LEFT JOIN tasker_workflow_step_transitions parent_states ON (((parent_states.workflow_step_id = dep_edges.from_step_id) AND (parent_states.most_recent = true))))
+       LEFT JOIN tasker_workflow_step_transitions last_failure ON (((last_failure.workflow_step_id = ws.workflow_step_id) AND ((last_failure.to_state)::text = 'error'::text) AND (last_failure.most_recent = true))))
+    GROUP BY ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name, current_state.to_state, last_failure.created_at, ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at, ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id;
   SQL
   create_view "tasker_task_execution_contexts", sql_definition: <<-SQL
       SELECT t.task_id,

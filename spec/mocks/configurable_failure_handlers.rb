@@ -4,6 +4,10 @@ require_relative '../../lib/tasker/step_handler/base'
 
 module Tasker
   module Testing
+    # Debug logging helper - can be controlled via environment variable
+    def self.debug_log(message)
+      puts "[DEBUG] #{message}" if ENV['TASKER_DEBUG'] == 'true'
+    end
     # ConfigurableFailureHandler - A step handler that can be configured to fail
     # a specific number of times before succeeding, for testing retry logic
     class ConfigurableFailureHandler < Tasker::StepHandler::Base
@@ -30,10 +34,8 @@ module Tasker
 
         current_attempts = self.class.attempt_registry[attempt_key]
 
-        puts "[DEBUG] ConfigurableFailureHandler.process called for #{@step_name}"
-        puts "[DEBUG] attempt_key: #{attempt_key}, current_attempts: #{current_attempts}"
-        puts "[DEBUG] TestCoordinator.active?: #{TestOrchestration::TestCoordinator.active?}"
-        puts "[DEBUG] failure_patterns: #{TestOrchestration::TestCoordinator.failure_patterns.inspect}"
+        Tasker::Testing.debug_log("ConfigurableFailureHandler.process called for #{@step_name}")
+        Tasker::Testing.debug_log("attempt_key: #{attempt_key}, current_attempts: #{current_attempts}")
 
         # Check if TestCoordinator has configured failures for this step
         if TestOrchestration::TestCoordinator.active? &&
@@ -42,7 +44,7 @@ module Tasker
           pattern = TestOrchestration::TestCoordinator.failure_patterns[@step_name]
           pattern[:current_attempts] = current_attempts
 
-          puts "[DEBUG] Using configured pattern for #{@step_name}: #{pattern.inspect}"
+          Tasker::Testing.debug_log("Using configured pattern for #{@step_name}: #{pattern.inspect}")
 
           if current_attempts <= pattern[:failure_count]
             # Store attempt info in step results for debugging
@@ -53,7 +55,7 @@ module Tasker
               will_succeed_next: current_attempts >= pattern[:failure_count]
             }
 
-            puts "[DEBUG] #{@step_name} FAILING on attempt #{current_attempts} (configured)"
+            Tasker::Testing.debug_log("#{@step_name} FAILING on attempt #{current_attempts} (configured)")
             Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{current_attempts} (configured)")
             raise StandardError, pattern[:failure_message]
           end
@@ -66,7 +68,7 @@ module Tasker
             will_succeed_next: current_attempts >= @failure_count
           }
 
-          puts "[DEBUG] #{@step_name} FAILING on attempt #{current_attempts} (default)"
+          Tasker::Testing.debug_log("#{@step_name} FAILING on attempt #{current_attempts} (default)")
           Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{current_attempts}")
           raise StandardError, @failure_message
         end
@@ -81,7 +83,7 @@ module Tasker
           task_context_sample: task.context.slice(:batch_id, :workflow_type)
         }
 
-        puts "[DEBUG] #{@step_name} SUCCEEDED after #{current_attempts} attempts"
+        Tasker::Testing.debug_log("#{@step_name} SUCCEEDED after #{current_attempts} attempts")
         Rails.logger.info("ConfigurableFailureHandler: #{@step_name} succeeded after #{current_attempts} attempts")
         success_results
       end

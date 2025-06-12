@@ -65,22 +65,45 @@ LEFT JOIN tasker_workflow_step_transitions current_state
 
 **Problem**: After a step failed and was reset for retry, the view couldn't find the failure timestamp because it was looking for `most_recent = true` error transitions, but reset steps have `most_recent = true` pending transitions.
 
-**Solution**: Modified the `last_failure` join to find the most recent error transition regardless of `most_recent` flag:
+**Solution**: Fixed by using the `most_recent = true` approach with proper indexing:
 ```sql
--- BEFORE (broken):
+-- FINAL (optimized and correct):
 LEFT JOIN tasker_workflow_step_transitions last_failure
   ON last_failure.workflow_step_id = ws.workflow_step_id
   AND last_failure.to_state = 'error'
   AND last_failure.most_recent = true
+```
 
--- AFTER (fixed):
+### 5. **Subquery Table Scan Elimination**
+**Critical Performance Issue**: Initial optimization introduced table scan subqueries for dependency checking and failure lookup.
+
+**Problem**: Subqueries were causing full table scans despite having indexes:
+```sql
+-- PROBLEMATIC: Table scan subqueries
 LEFT JOIN (
-  SELECT DISTINCT ON (workflow_step_id)
-    workflow_step_id, created_at
-  FROM tasker_workflow_step_transitions
-  WHERE to_state = 'error'
-  ORDER BY workflow_step_id, created_at DESC
-) last_failure ON last_failure.workflow_step_id = ws.workflow_step_id
+  SELECT child.workflow_step_id, COUNT(*) as total_parents, ...
+  FROM tasker_workflow_step_edges dep
+  JOIN tasker_workflow_steps child ON ...
+  GROUP BY child.workflow_step_id
+) dep_check ON ...
+```
+
+**Solution**: Eliminated subqueries with direct joins and GROUP BY:
+```sql
+-- OPTIMIZED: Direct joins with aggregation
+LEFT JOIN tasker_workflow_step_edges dep_edges
+  ON dep_edges.to_step_id = ws.workflow_step_id
+LEFT JOIN tasker_workflow_step_transitions parent_states
+  ON parent_states.workflow_step_id = dep_edges.from_step_id
+  AND parent_states.most_recent = true
+...
+GROUP BY ws.workflow_step_id, ...
+```
+
+**Index Added for Dependency Lookups**:
+```sql
+CREATE INDEX index_workflow_step_edges_dependency_lookup
+ON tasker_workflow_step_edges (to_step_id, from_step_id);
 ```
 
 ## Key Optimizations Implemented

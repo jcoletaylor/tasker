@@ -7,11 +7,11 @@ SELECT
   -- Current State Information (optimized using most_recent flag)
   COALESCE(current_state.to_state, 'pending') as current_state,
 
-  -- Dependency Analysis (optimized with better joins)
+  -- Dependency Analysis (calculated from direct joins)
   CASE
-    WHEN dep_check.total_parents IS NULL THEN true  -- Root steps (no parents)
-    WHEN dep_check.total_parents = 0 THEN true      -- Steps with zero dependencies
-    WHEN dep_check.completed_parents = dep_check.total_parents THEN true
+    WHEN dep_edges.to_step_id IS NULL THEN true  -- Root steps (no parents)
+    WHEN COUNT(dep_edges.from_step_id) = 0 THEN true  -- Steps with zero dependencies
+    WHEN COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id) THEN true
     ELSE false
   END as dependencies_satisfied,
 
@@ -32,7 +32,9 @@ SELECT
   -- Optimized Final Readiness Calculation
   CASE
     WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
-    AND (dep_check.total_parents IS NULL OR dep_check.total_parents = 0 OR dep_check.completed_parents = dep_check.total_parents)
+    AND (dep_edges.to_step_id IS NULL OR
+         COUNT(dep_edges.from_step_id) = 0 OR
+         COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
     AND (ws.attempts < COALESCE(ws.retry_limit, 3))
     AND (ws.in_process = false AND ws.processed = false)
     AND (
@@ -56,9 +58,9 @@ SELECT
     ELSE NULL
   END as next_retry_at,
 
-  -- Dependency Context
-  COALESCE(dep_check.total_parents, 0) as total_parents,
-  COALESCE(dep_check.completed_parents, 0) as completed_parents,
+  -- Dependency Context (calculated from joins)
+  COALESCE(COUNT(dep_edges.from_step_id), 0) as total_parents,
+  COALESCE(COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END), 0) as completed_parents,
 
   -- Retry Context
   ws.attempts,
@@ -74,26 +76,21 @@ LEFT JOIN tasker_workflow_step_transitions current_state
   ON current_state.workflow_step_id = ws.workflow_step_id
   AND current_state.most_recent = true
 
--- OPTIMIZED: Dependency check with better join strategy
-LEFT JOIN (
-  SELECT
-    child.workflow_step_id,
-    COUNT(*) as total_parents,
-    COUNT(CASE WHEN parent_state.to_state IN ('complete', 'resolved_manually') THEN 1 END) as completed_parents
-  FROM tasker_workflow_step_edges dep
-  JOIN tasker_workflow_steps child ON child.workflow_step_id = dep.to_step_id
-  JOIN tasker_workflow_steps parent ON parent.workflow_step_id = dep.from_step_id
-  LEFT JOIN tasker_workflow_step_transitions parent_state
-    ON parent_state.workflow_step_id = parent.workflow_step_id
-    AND parent_state.most_recent = true
-  GROUP BY child.workflow_step_id
-) dep_check ON dep_check.workflow_step_id = ws.workflow_step_id
+-- OPTIMIZED: Dependency check using direct joins (no subquery)
+LEFT JOIN tasker_workflow_step_edges dep_edges
+  ON dep_edges.to_step_id = ws.workflow_step_id
+LEFT JOIN tasker_workflow_step_transitions parent_states
+  ON parent_states.workflow_step_id = dep_edges.from_step_id
+  AND parent_states.most_recent = true
 
--- OPTIMIZED: Last failure - find most recent error transition (not necessarily most_recent=true)
-LEFT JOIN (
-  SELECT DISTINCT ON (workflow_step_id)
-    workflow_step_id, created_at
-  FROM tasker_workflow_step_transitions
-  WHERE to_state = 'error'
-  ORDER BY workflow_step_id, created_at DESC
-) last_failure ON last_failure.workflow_step_id = ws.workflow_step_id
+-- OPTIMIZED: Last failure using index-optimized approach
+LEFT JOIN tasker_workflow_step_transitions last_failure
+  ON last_failure.workflow_step_id = ws.workflow_step_id
+  AND last_failure.to_state = 'error'
+  AND last_failure.most_recent = true
+
+GROUP BY
+  ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,
+  current_state.to_state, last_failure.created_at,
+  ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at,
+  ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id

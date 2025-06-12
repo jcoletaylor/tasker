@@ -71,6 +71,10 @@ module TestOrchestration
 
         log_execution("Starting complete processing for task #{task.task_id} (max_attempts: #{max_attempts})")
 
+        # Automatically bypass backoff timing and reset failed steps for test environment
+        bypass_backoff_for_testing([task])
+        reset_failed_steps_for_retry([task])
+
         # Get task handler using the base name (strip unique suffix)
         handler_name = extract_base_handler_name(task.name)
         handler = Tasker::HandlerFactory.instance.get(handler_name)
@@ -218,6 +222,111 @@ module TestOrchestration
         end
       end
 
+      # Simulate time passage for backoff logic by aging error transitions
+      # This makes failed steps eligible for retry by making their failure timestamps old enough
+      def simulate_backoff_time_passage(tasks, age_seconds: 60)
+        return unless active?
+
+        tasks.each do |task|
+          task.workflow_steps.each do |step|
+            # Find error transitions that are blocking retry due to backoff
+            error_transitions = step.workflow_step_transitions
+                                   .where(to_state: 'error')
+                                   .where('created_at > ?', age_seconds.seconds.ago)
+
+            if error_transitions.any?
+              # Age the error transitions to simulate time passage
+              aged_time = age_seconds.seconds.ago
+              error_transitions.update_all(created_at: aged_time, updated_at: aged_time)
+
+              log_execution("Aged #{error_transitions.count} error transitions for step #{step.workflow_step_id} by #{age_seconds} seconds")
+            end
+          end
+        end
+      end
+
+      # Reset failed steps to be ready for retry by manipulating their state correctly
+      def reset_failed_steps_for_retry(tasks)
+        return unless active?
+
+        reset_count = 0
+        tasks.each do |task|
+          failed_steps = task.workflow_steps.joins(:workflow_step_transitions)
+                            .where(tasker_workflow_step_transitions: {
+                              to_state: 'error',
+                              most_recent: true
+                            })
+
+          failed_steps.each do |step|
+            # Age the error transition to make it eligible for retry
+            error_transition = step.workflow_step_transitions
+                                  .where(to_state: 'error', most_recent: true)
+                                  .first
+
+            if error_transition
+              # Make the error old enough to pass backoff check (60 seconds ago)
+              aged_time = 60.seconds.ago
+              error_transition.update_columns(
+                created_at: aged_time,
+                updated_at: aged_time
+              )
+
+              # Also reset the step to pending state for retry
+              # Update the error transition to not be most_recent
+              error_transition.update_column(:most_recent, false)
+
+              # Create a new pending transition
+              step.workflow_step_transitions.create!(
+                to_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
+                sort_key: step.workflow_step_transitions.maximum(:sort_key).to_i + 1,
+                most_recent: true,
+                metadata: { reset_by: 'test_backoff_simulation', previous_state: 'error' }
+              )
+
+              # Reset step processing flags
+              step.update_columns(
+                processed: false,
+                in_process: false,
+                processed_at: nil
+              )
+
+              reset_count += 1
+              log_execution("Reset failed step #{step.workflow_step_id} (#{step.name}) to pending for retry eligibility")
+            end
+          end
+        end
+
+        log_execution("Reset #{reset_count} failed steps across #{tasks.count} tasks for retry eligibility")
+        reset_count
+      end
+
+      # Bypass backoff timing for all failed steps in test environment
+      # This makes failed steps immediately eligible for retry
+      def bypass_backoff_for_testing(tasks)
+        return unless active?
+
+        bypassed_count = 0
+        tasks.each do |task|
+          # Find all error transitions that might be blocking retry due to backoff
+          error_transitions = Tasker::WorkflowStepTransition.joins(:workflow_step)
+                                                           .where(tasker_workflow_steps: { task_id: task.task_id })
+                                                           .where(to_state: 'error')
+                                                           .where('tasker_workflow_step_transitions.created_at > ?', 60.seconds.ago)
+
+          if error_transitions.any?
+            # Age all error transitions to bypass backoff
+            aged_time = 60.seconds.ago
+            error_transitions.update_all(created_at: aged_time, updated_at: aged_time)
+            bypassed_count += error_transitions.count
+
+            log_execution("Bypassed backoff for #{error_transitions.count} error transitions in task #{task.task_id}")
+          end
+        end
+
+        log_execution("Bypassed backoff timing for #{bypassed_count} error transitions across #{tasks.count} tasks")
+        bypassed_count
+      end
+
       # Get execution statistics
       def execution_stats
         {
@@ -310,10 +419,6 @@ module TestOrchestration
         # Initialize retry_tracking if not already done
         self.retry_tracking ||= {}
 
-        puts "[DEBUG] update_retry_tracking called for task #{task.task_id}"
-        puts "[DEBUG] stats: #{stats.inspect}"
-        puts "[DEBUG] failure_patterns: #{failure_patterns.inspect}"
-
         # Track by task_id for task-level tracking
         retry_tracking[task.task_id] = {
           execution_log: stats[:recent_executions] || [],
@@ -334,7 +439,6 @@ module TestOrchestration
               step_name = match[1]
               # Store simple retry count for step names (what tests expect)
               retry_tracking[step_name] = (retry_tracking[step_name] || 0) + 1
-              puts "[DEBUG] Found retry for step #{step_name}, count now: #{retry_tracking[step_name]}"
             end
           end
         end
@@ -343,11 +447,8 @@ module TestOrchestration
         failure_patterns.each do |step_name, config|
           if config[:current_attempts] && config[:current_attempts] > 1
             retry_tracking[step_name] = config[:current_attempts] - 1
-            puts "[DEBUG] Tracking failure pattern for #{step_name}: #{config[:current_attempts] - 1} retries"
           end
         end
-
-        puts "[DEBUG] Final retry_tracking: #{retry_tracking.inspect}"
       end
 
       # Log execution for debugging and analysis

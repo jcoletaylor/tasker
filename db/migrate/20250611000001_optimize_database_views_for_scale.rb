@@ -58,6 +58,11 @@ class OptimizeDatabaseViewsForScale < ActiveRecord::Migration[7.2]
               [:task_id],
               include: [:workflow_step_id, :processed, :in_process, :attempts, :retry_limit],
               name: 'index_workflow_steps_task_covering'
+
+    # Index for dependency edge lookups (optimizes the new direct join approach)
+    add_index :tasker_workflow_step_edges,
+              [:to_step_id, :from_step_id],
+              name: 'index_workflow_step_edges_dependency_lookup'
   end
 
   def remove_performance_indexes
@@ -69,5 +74,6 @@ class OptimizeDatabaseViewsForScale < ActiveRecord::Migration[7.2]
     remove_index :tasker_workflow_step_transitions, name: 'index_step_transitions_current_errors'
     remove_index :tasker_workflow_step_transitions, name: 'index_step_transitions_completed_parents'
     remove_index :tasker_workflow_steps, name: 'index_workflow_steps_task_covering'
+    remove_index :tasker_workflow_step_edges, name: 'index_workflow_step_edges_dependency_lookup'
   end
 end
