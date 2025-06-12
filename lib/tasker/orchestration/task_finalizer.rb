@@ -258,12 +258,20 @@ module Tasker
           # @param task_id [Integer] The task ID
           # @return [Tasker::TaskExecutionContext, nil] The execution context or nil
           def get_task_execution_context(task_id)
-            # First try the active scope for operational queries (faster)
-            context = Tasker::TaskExecutionContext.active.for_task(task_id)
-            return context if context
+            # TEMPORARY FIX: Always use the full view to avoid timing issues with active view
+            # The active view might filter out tasks at different points in the workflow
+            context = Tasker::TaskExecutionContext.find(task_id)
 
-            # Fallback to full view for completed tasks or edge cases
-            Tasker::TaskExecutionContext.find(task_id)
+            # DEBUG: Log what we actually found
+            if Rails.env.test?
+              Rails.logger.debug("TaskFinalizer: Found context for task #{task_id}: execution_status=#{context.execution_status}, ready_steps=#{context.ready_steps}, total_steps=#{context.total_steps}")
+
+              # Also check the raw step readiness data
+              ready_count = Tasker::StepReadinessStatus.ready_for_execution.where(task_id: task_id).count
+              Rails.logger.debug("TaskFinalizer: Raw StepReadinessStatus ready count for task #{task_id}: #{ready_count}")
+            end
+
+            context
           rescue ActiveRecord::RecordNotFound
             Rails.logger.warn("TaskFinalizer: TaskExecutionContext not found for task #{task_id}")
             nil
@@ -309,6 +317,11 @@ module Tasker
           def make_finalization_decision(task, context, synchronous, finalizer)
             log_message("TaskFinalizer: Making decision for task #{task.task_id} with execution_status: #{context&.execution_status}")
 
+            # DEBUG: Log detailed context information
+            if context
+              log_message("TaskFinalizer: Task #{task.task_id} context details - ready_steps: #{context.ready_steps}, total_steps: #{context.total_steps}, pending_steps: #{context.pending_steps}, in_progress_steps: #{context.in_progress_steps}, completed_steps: #{context.completed_steps}, failed_steps: #{context.failed_steps}")
+            end
+
             # Handle nil context case
             unless context
               log_message("TaskFinalizer: Task #{task.task_id} - no context available, handling as unclear state")
@@ -323,10 +336,12 @@ module Tasker
             when Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
               log_message("TaskFinalizer: Task #{task.task_id} - calling error_task")
               finalizer.error_task(task, context)
-            when Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS,
-                 Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
-              log_message("TaskFinalizer: Task #{task.task_id} - handling ready/waiting state")
-              handle_ready_or_waiting_state(task, context, synchronous, finalizer)
+            when Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS
+              log_message("TaskFinalizer: Task #{task.task_id} - has ready steps, should execute them")
+              handle_ready_steps_state(task, context, synchronous, finalizer)
+            when Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
+              log_message("TaskFinalizer: Task #{task.task_id} - waiting for dependencies")
+              handle_waiting_state(task, context, synchronous, finalizer)
             when Constants::TaskExecution::ExecutionStatus::PROCESSING
               log_message("TaskFinalizer: Task #{task.task_id} - handling processing state")
               handle_processing_state(task, context, synchronous, finalizer)
@@ -347,17 +362,44 @@ module Tasker
 
           private
 
-          # Handle ready or waiting for dependencies state
+          # Handle ready steps state - should execute the ready steps
           #
           # @param task [Tasker::Task] The task
           # @param context [Tasker::TaskExecutionContext] The execution context
           # @param synchronous [Boolean] Whether this is synchronous processing
           # @param finalizer [TaskFinalizer] The finalizer instance
-          def handle_ready_or_waiting_state(task, context, synchronous, finalizer)
+          def handle_ready_steps_state(task, context, synchronous, finalizer)
+            # When we have ready steps, we should execute them, not just wait
+            # For now, transition task to in_progress and reenqueue for step execution
+            log_message("TaskFinalizer: Task #{task.task_id} has #{context.ready_steps} ready steps - transitioning to in_progress")
+
+            # Transition task to in_progress to indicate work is happening
+            current_state = task.state_machine.current_state
+            unless [Constants::TaskStatuses::IN_PROGRESS, Constants::TaskStatuses::COMPLETE].include?(current_state)
+              finalizer.safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
+            end
+
             if synchronous
-              finalizer.pending_task(task, context)
+              # In synchronous mode, we can't actually execute steps here
+              # The calling code should handle step execution
+              log_message("TaskFinalizer: Task #{task.task_id} ready for synchronous step execution")
             else
-              finalizer.reenqueue_task_with_context(task, context)
+              # In asynchronous mode, reenqueue immediately for step execution
+              finalizer.reenqueue_task_with_context(task, context, reason: Constants::TaskFinalization::ReenqueueReasons::READY_STEPS_AVAILABLE)
+            end
+          end
+
+          # Handle waiting for dependencies state
+          #
+          # @param task [Tasker::Task] The task
+          # @param context [Tasker::TaskExecutionContext] The execution context
+          # @param synchronous [Boolean] Whether this is synchronous processing
+          # @param finalizer [TaskFinalizer] The finalizer instance
+          def handle_waiting_state(task, context, synchronous, finalizer)
+            if synchronous
+              finalizer.pending_task(task, context, reason: Constants::TaskFinalization::PendingReasons::WAITING_FOR_DEPENDENCIES)
+            else
+              finalizer.reenqueue_task_with_context(task, context, reason: Constants::TaskFinalization::ReenqueueReasons::AWAITING_DEPENDENCIES)
             end
           end
 
