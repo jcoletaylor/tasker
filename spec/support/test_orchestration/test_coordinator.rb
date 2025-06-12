@@ -61,7 +61,7 @@ module TestOrchestration
 
       # Process a task with proper retry loop until completion or exhaustion
       #
-      # This method implements the core retry logic that works WITH the orchestration system
+      # This method delegates to TestWorkflowCoordinator's proven retry logic
       #
       # @param task [Tasker::Task] The task to process
       # @param max_attempts [Integer] Maximum retry attempts
@@ -71,70 +71,38 @@ module TestOrchestration
 
         log_execution("Starting complete processing for task #{task.task_id} (max_attempts: #{max_attempts})")
 
-        attempts = 0
-        success = false
+        # Get task handler using the base name (strip unique suffix)
+        handler_name = extract_base_handler_name(task.name)
+        handler = Tasker::HandlerFactory.instance.get(handler_name)
 
-        loop do
-          attempts += 1
-          log_execution("Processing attempt #{attempts}/#{max_attempts} for task #{task.task_id}")
-
-          # Process the task once using real orchestration
-          attempt_success = process_task_once(task)
-
-          if attempt_success
-            success = true
-            log_execution("Task #{task.task_id} completed successfully after #{attempts} attempts")
-            break
-          end
-
-          # Check if we've exceeded max attempts
-          if attempts >= max_attempts
-            log_execution("Task #{task.task_id} exhausted max attempts (#{max_attempts})")
-            break
-          end
-
-          # Check if task has ready steps for retry using the database views
-          task.reload
-          context = get_task_execution_context(task.task_id)
-
-          unless context&.ready_steps&.positive?
-            # Check if we have failed steps that might become ready after backoff
-            if context&.failed_steps&.positive?
-              # Get the earliest retry time for failed steps
-              earliest_retry_time = get_earliest_retry_time(task.task_id)
-
-              if earliest_retry_time && earliest_retry_time > Time.current
-                backoff_seconds = earliest_retry_time - Time.current
-
-                # Only wait if backoff is reasonable (< 10 seconds for tests)
-                if backoff_seconds > 0 && backoff_seconds < 10
-                  log_execution("Task #{task.task_id} has #{context.failed_steps} failed steps, waiting #{backoff_seconds.round(3)}s for backoff")
-                  sleep(backoff_seconds + 0.1) # Add small buffer
-
-                  # Re-check after backoff
-                  context = get_task_execution_context(task.task_id)
-                end
-              end
-            end
-
-            # Final check after potential backoff wait
-            unless context&.ready_steps&.positive?
-              log_execution("Task #{task.task_id} has no ready steps for retry (ready_steps: #{context&.ready_steps})")
-              break
-            end
-          end
-
-          log_execution("Task #{task.task_id} has #{context.ready_steps} ready steps, preparing for retry")
-
-          # Process any tasks that were added to retry queue by the orchestration system
-          process_retry_queue
-
-          # Small delay to allow database views to update
-          sleep(0.01)
+        unless handler
+          log_execution("No task handler found for task #{task.task_id} (handler: #{handler_name})")
+          return false
         end
 
-        log_execution("Completed processing for task #{task.task_id}: #{success ? 'SUCCESS' : 'FAILED'} after #{attempts} attempts")
-        success
+        begin
+          # Configure the handler to use test strategies for synchronous processing
+          handler.workflow_coordinator_strategy = TestOrchestration::TestWorkflowCoordinator
+          handler.reenqueuer_strategy = TestOrchestration::TestReenqueuer
+
+          # Create TestWorkflowCoordinator instance with proper retry settings
+          test_coordinator = TestOrchestration::TestWorkflowCoordinator.new(
+            reenqueuer_strategy: TestOrchestration::TestReenqueuer.new,
+            max_retry_attempts: max_attempts
+          )
+
+          # Use TestWorkflowCoordinator's proven retry logic
+          success = test_coordinator.execute_workflow_with_retries(task, handler)
+
+          # Track retry statistics from TestWorkflowCoordinator
+          update_retry_tracking(task, test_coordinator)
+
+          log_execution("Completed processing for task #{task.task_id}: #{success ? 'SUCCESS' : 'FAILED'}")
+          success
+        rescue StandardError => e
+          log_execution("Error processing task #{task.task_id}: #{e.message}")
+          false
+        end
       end
 
       # Process multiple tasks with retry logic
@@ -256,7 +224,7 @@ module TestOrchestration
           total_executions: execution_log.size,
           recent_executions: execution_log.last(10),
           failure_patterns_active: failure_patterns.keys,
-          retry_tracking: retry_tracking,
+          retry_tracking: retry_tracking || {},
           retry_queue_size: TestReenqueuer.retry_queue_size
         }
       end
@@ -333,6 +301,53 @@ module TestOrchestration
         # Remove the unique suffix pattern: _timestamp_randomnumber
         # e.g., "linear_workflow_task_1749555645_529" -> "linear_workflow_task"
         task_name.gsub(/_\d+_\d+$/, '')
+      end
+
+      # Update retry tracking statistics from TestWorkflowCoordinator
+      def update_retry_tracking(task, test_coordinator)
+        stats = test_coordinator.execution_stats
+
+        # Initialize retry_tracking if not already done
+        self.retry_tracking ||= {}
+
+        puts "[DEBUG] update_retry_tracking called for task #{task.task_id}"
+        puts "[DEBUG] stats: #{stats.inspect}"
+        puts "[DEBUG] failure_patterns: #{failure_patterns.inspect}"
+
+        # Track by task_id for task-level tracking
+        retry_tracking[task.task_id] = {
+          execution_log: stats[:recent_executions] || [],
+          total_executions: stats[:total_executions] || 0,
+          task_name: task.name,
+          final_status: task.status
+        }
+
+        # Track step-level retry counts for test expectations
+        # Parse the execution log to extract step-level retry information
+        stats[:recent_executions]&.each do |log_entry|
+          message = log_entry[:message]
+
+          # Look for step reset messages to identify retried steps
+          if message.include?("Reset step") && message.include?("to pending for retry")
+            # Extract step name from message like "Reset step process_data (43146) to pending for retry"
+            if match = message.match(/Reset step (\w+) \(\d+\) to pending for retry/)
+              step_name = match[1]
+              # Store simple retry count for step names (what tests expect)
+              retry_tracking[step_name] = (retry_tracking[step_name] || 0) + 1
+              puts "[DEBUG] Found retry for step #{step_name}, count now: #{retry_tracking[step_name]}"
+            end
+          end
+        end
+
+        # Also track configured failure patterns as retries
+        failure_patterns.each do |step_name, config|
+          if config[:current_attempts] && config[:current_attempts] > 1
+            retry_tracking[step_name] = config[:current_attempts] - 1
+            puts "[DEBUG] Tracking failure pattern for #{step_name}: #{config[:current_attempts] - 1} retries"
+          end
+        end
+
+        puts "[DEBUG] Final retry_tracking: #{retry_tracking.inspect}"
       end
 
       # Log execution for debugging and analysis

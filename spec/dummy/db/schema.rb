@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -102,6 +102,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
     t.datetime "updated_at", null: false
     t.index ["sort_key"], name: "index_tasker_task_transitions_on_sort_key"
     t.index ["task_id", "created_at"], name: "index_task_transitions_current_state"
+    t.index ["task_id", "most_recent"], name: "index_task_transitions_current_state_optimized", where: "(most_recent = true)"
     t.index ["task_id", "most_recent"], name: "index_tasker_task_transitions_on_task_id_and_most_recent", unique: true, where: "(most_recent = true)"
     t.index ["task_id", "sort_key"], name: "index_tasker_task_transitions_on_task_id_and_sort_key", unique: true
     t.index ["task_id"], name: "index_tasker_task_transitions_on_task_id"
@@ -159,7 +160,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
     t.datetime "updated_at", null: false
     t.index ["sort_key"], name: "index_tasker_workflow_step_transitions_on_sort_key"
     t.index ["workflow_step_id", "created_at"], name: "index_step_transitions_for_current_state"
+    t.index ["workflow_step_id", "most_recent", "created_at"], name: "index_step_transitions_current_errors", where: "(((to_state)::text = 'error'::text) AND (most_recent = true))"
     t.index ["workflow_step_id", "most_recent"], name: "idx_on_workflow_step_id_most_recent_97d5374ad6", unique: true, where: "(most_recent = true)"
+    t.index ["workflow_step_id", "most_recent"], name: "index_step_transitions_completed_parents", where: "(((to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) AND (most_recent = true))"
+    t.index ["workflow_step_id", "most_recent"], name: "index_step_transitions_current_state_optimized", where: "(most_recent = true)"
     t.index ["workflow_step_id", "sort_key"], name: "idx_on_workflow_step_id_sort_key_4d476d7adb", unique: true
     t.index ["workflow_step_id", "to_state", "created_at"], name: "index_step_transitions_failures_with_timing", where: "((to_state)::text = 'failed'::text)"
     t.index ["workflow_step_id", "to_state"], name: "index_step_transitions_completed", where: "((to_state)::text = 'complete'::text)"
@@ -182,13 +186,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "skippable", default: false, null: false
+    t.index ["attempts", "retry_limit", "retryable"], name: "index_workflow_steps_retry_logic"
     t.index ["attempts", "retry_limit"], name: "index_workflow_steps_retry_status"
+    t.index ["last_attempted_at", "backoff_request_seconds"], name: "index_workflow_steps_backoff_timing", where: "(backoff_request_seconds IS NOT NULL)"
     t.index ["last_attempted_at"], name: "workflow_steps_last_attempted_at_index"
     t.index ["named_step_id"], name: "workflow_steps_named_step_id_index"
     t.index ["processed_at"], name: "workflow_steps_processed_at_index"
+    t.index ["task_id", "processed", "in_process"], name: "index_workflow_steps_processing_status"
     t.index ["task_id", "workflow_step_id"], name: "index_workflow_steps_task_and_id"
     t.index ["task_id", "workflow_step_id"], name: "index_workflow_steps_task_and_step_id"
     t.index ["task_id"], name: "index_workflow_steps_by_task"
+    t.index ["task_id"], name: "index_workflow_steps_task_covering", include: ["workflow_step_id", "processed", "in_process", "attempts", "retry_limit"]
     t.index ["task_id"], name: "workflow_steps_task_id_index"
   end
 
@@ -223,20 +231,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
               WHEN (ws.attempts >= COALESCE(ws.retry_limit, 3)) THEN false
               WHEN ((ws.attempts > 0) AND (ws.retryable = false)) THEN false
               WHEN (last_failure.created_at IS NULL) THEN true
-              WHEN ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL)) THEN
-              CASE
-                  WHEN ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now()) THEN true
-                  ELSE false
-              END
-              WHEN (last_failure.created_at IS NOT NULL) THEN
-              CASE
-                  WHEN ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now()) THEN true
-                  ELSE false
-              END
+              WHEN ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL)) THEN ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())
+              WHEN (last_failure.created_at IS NOT NULL) THEN ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())
               ELSE true
           END AS retry_eligible,
           CASE
-              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'failed'::character varying])::text[])) AND ((dep_check.total_parents IS NULL) OR (dep_check.total_parents = 0) OR (dep_check.completed_parents = dep_check.total_parents)) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND (ws.in_process = false) AND (ws.processed = false) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
+              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])) AND ((dep_check.total_parents IS NULL) OR (dep_check.total_parents = 0) OR (dep_check.completed_parents = dep_check.total_parents)) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND ((ws.in_process = false) AND (ws.processed = false)) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
               ELSE false
           END AS ready_for_execution,
       last_failure.created_at AS last_failure_at,
@@ -253,10 +253,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
       ws.last_attempted_at
      FROM ((((tasker_workflow_steps ws
        JOIN tasker_named_steps ns ON ((ns.named_step_id = ws.named_step_id)))
-       LEFT JOIN ( SELECT DISTINCT ON (tasker_workflow_step_transitions.workflow_step_id) tasker_workflow_step_transitions.workflow_step_id,
-              tasker_workflow_step_transitions.to_state
-             FROM tasker_workflow_step_transitions
-            ORDER BY tasker_workflow_step_transitions.workflow_step_id, tasker_workflow_step_transitions.created_at DESC) current_state ON ((current_state.workflow_step_id = ws.workflow_step_id)))
+       LEFT JOIN tasker_workflow_step_transitions current_state ON (((current_state.workflow_step_id = ws.workflow_step_id) AND (current_state.most_recent = true))))
        LEFT JOIN ( SELECT child.workflow_step_id,
               count(*) AS total_parents,
               count(
@@ -267,15 +264,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
              FROM (((tasker_workflow_step_edges dep
                JOIN tasker_workflow_steps child ON ((child.workflow_step_id = dep.to_step_id)))
                JOIN tasker_workflow_steps parent ON ((parent.workflow_step_id = dep.from_step_id)))
-               LEFT JOIN ( SELECT DISTINCT ON (tasker_workflow_step_transitions.workflow_step_id) tasker_workflow_step_transitions.workflow_step_id,
-                      tasker_workflow_step_transitions.to_state
-                     FROM tasker_workflow_step_transitions
-                    ORDER BY tasker_workflow_step_transitions.workflow_step_id, tasker_workflow_step_transitions.created_at DESC) parent_state ON ((parent_state.workflow_step_id = parent.workflow_step_id)))
+               LEFT JOIN tasker_workflow_step_transitions parent_state ON (((parent_state.workflow_step_id = parent.workflow_step_id) AND (parent_state.most_recent = true))))
             GROUP BY child.workflow_step_id) dep_check ON ((dep_check.workflow_step_id = ws.workflow_step_id)))
        LEFT JOIN ( SELECT DISTINCT ON (tasker_workflow_step_transitions.workflow_step_id) tasker_workflow_step_transitions.workflow_step_id,
               tasker_workflow_step_transitions.created_at
              FROM tasker_workflow_step_transitions
-            WHERE ((tasker_workflow_step_transitions.to_state)::text = 'failed'::text)
+            WHERE ((tasker_workflow_step_transitions.to_state)::text = 'error'::text)
             ORDER BY tasker_workflow_step_transitions.workflow_step_id, tasker_workflow_step_transitions.created_at DESC) last_failure ON ((last_failure.workflow_step_id = ws.workflow_step_id)));
   SQL
   create_view "tasker_task_execution_contexts", sql_definition: <<-SQL
@@ -313,10 +307,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_04_102259) do
               ELSE 'unknown'::text
           END AS health_status
      FROM ((tasker_tasks t
-       LEFT JOIN ( SELECT DISTINCT ON (tasker_task_transitions.task_id) tasker_task_transitions.task_id,
-              tasker_task_transitions.to_state
-             FROM tasker_task_transitions
-            ORDER BY tasker_task_transitions.task_id, tasker_task_transitions.created_at DESC) task_state ON ((task_state.task_id = t.task_id)))
+       LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
        JOIN ( SELECT ws.task_id,
               count(*) AS total_steps,
               count(

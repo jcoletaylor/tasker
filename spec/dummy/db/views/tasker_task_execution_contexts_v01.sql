@@ -3,7 +3,7 @@ SELECT
   t.named_task_id,
   COALESCE(task_state.to_state, 'pending') as status,
 
-  -- Step Statistics
+  -- Step Statistics (using optimized aggregation)
   step_stats.total_steps,
   step_stats.pending_steps,
   step_stats.in_progress_steps,
@@ -45,14 +45,12 @@ SELECT
 
 FROM tasker_tasks t
 
--- Current Task State from State Machine
-LEFT JOIN (
-  SELECT DISTINCT ON (task_id)
-    task_id, to_state
-  FROM tasker_task_transitions
-  ORDER BY task_id, created_at DESC
-) task_state ON task_state.task_id = t.task_id
+-- OPTIMIZED: Current Task State using most_recent flag
+LEFT JOIN tasker_task_transitions task_state
+  ON task_state.task_id = t.task_id
+  AND task_state.most_recent = true
 
+-- OPTIMIZED: Step statistics using single query with better indexes
 JOIN (
   SELECT
     ws.task_id,

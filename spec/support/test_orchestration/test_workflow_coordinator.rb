@@ -54,26 +54,20 @@ module TestOrchestration
           break
         end
 
-        # Check if task has failed steps that can be retried
-        failed_steps = task.workflow_steps.joins(:workflow_step_transitions)
-                           .where(workflow_step_transitions: { most_recent: true, to_state: 'error' })
+        # Check if task has ready steps that can be executed
+        ready_steps = Tasker::StepReadinessStatus.where(task_id: task.task_id, ready_for_execution: true)
+        all_steps = Tasker::StepReadinessStatus.where(task_id: task.task_id)
 
-        if failed_steps.empty?
-          log_execution("Task #{task.task_id} has no failed steps to retry")
-          # If no failed steps and task isn't complete, it might be in a final state
-          # Check if task is in a final state that should be considered success
+        log_execution("Task #{task.task_id} step readiness analysis:")
+        all_steps.each do |step_status|
+          log_execution("  Step #{step_status.name}: state=#{step_status.current_state}, ready=#{step_status.ready_for_execution}, retry_eligible=#{step_status.retry_eligible}, attempts=#{step_status.attempts}/#{step_status.retry_limit}")
+        end
+
+        if ready_steps.empty?
+          log_execution("Task #{task.task_id} has no ready steps to execute")
+          # If no ready steps and task isn't complete, check final state
           task.reload # Make sure we have the latest state
           log_execution("Task #{task.task_id} current status: #{task.status}")
-
-          # Debug: Show ALL transitions to find the issue
-          all_transitions = task.task_transitions.order(:sort_key)
-          log_execution("Task #{task.task_id} has #{all_transitions.count} total transitions:")
-          all_transitions.each do |transition|
-            log_execution("Task #{task.task_id} transition: #{transition.from_state} -> #{transition.to_state} (sort_key: #{transition.sort_key}, most_recent: #{transition.most_recent})")
-          end
-
-          # Show what the state machine thinks is the current state
-          log_execution("Task #{task.task_id} state_machine.current_state: #{task.state_machine.current_state}")
 
           if [Tasker::Constants::TaskStatuses::COMPLETE,
               Tasker::Constants::TaskStatuses::RESOLVED_MANUALLY].include?(task.status)
@@ -85,15 +79,7 @@ module TestOrchestration
           break
         end
 
-        # Check if any failed steps are eligible for retry (haven't exceeded retry limits)
-        retryable_steps = failed_steps.select { |step| step.attempts < (step.retry_limit || 3) }
-
-        if retryable_steps.empty?
-          log_execution("Task #{task.task_id} has #{failed_steps.count} failed steps but none are retryable (exceeded retry limits)")
-          break
-        end
-
-        log_execution("Task #{task.task_id} has #{retryable_steps.count} retryable failed steps, preparing for retry")
+        log_execution("Task #{task.task_id} has #{ready_steps.count} ready steps, continuing execution")
 
         # Reset task to pending for retry (this is what the reenqueuer would do)
         reset_task_for_retry(task)

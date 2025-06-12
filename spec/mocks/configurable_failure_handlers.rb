@@ -30,9 +30,35 @@ module Tasker
 
         current_attempts = self.class.attempt_registry[attempt_key]
 
-        # Check if we should fail based on configuration
-        if should_fail?(current_attempts)
-          # Store attempt info in step results for debugging
+        puts "[DEBUG] ConfigurableFailureHandler.process called for #{@step_name}"
+        puts "[DEBUG] attempt_key: #{attempt_key}, current_attempts: #{current_attempts}"
+        puts "[DEBUG] TestCoordinator.active?: #{TestOrchestration::TestCoordinator.active?}"
+        puts "[DEBUG] failure_patterns: #{TestOrchestration::TestCoordinator.failure_patterns.inspect}"
+
+        # Check if TestCoordinator has configured failures for this step
+        if TestOrchestration::TestCoordinator.active? &&
+           TestOrchestration::TestCoordinator.failure_patterns[@step_name]
+
+          pattern = TestOrchestration::TestCoordinator.failure_patterns[@step_name]
+          pattern[:current_attempts] = current_attempts
+
+          puts "[DEBUG] Using configured pattern for #{@step_name}: #{pattern.inspect}"
+
+          if current_attempts <= pattern[:failure_count]
+            # Store attempt info in step results for debugging
+            step.results = {
+              error: pattern[:failure_message],
+              attempt: current_attempts,
+              max_failures: pattern[:failure_count],
+              will_succeed_next: current_attempts >= pattern[:failure_count]
+            }
+
+            puts "[DEBUG] #{@step_name} FAILING on attempt #{current_attempts} (configured)"
+            Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{current_attempts} (configured)")
+            raise StandardError, pattern[:failure_message]
+          end
+        elsif should_fail?(current_attempts)
+          # Use default failure logic
           step.results = {
             error: @failure_message,
             attempt: current_attempts,
@@ -40,6 +66,7 @@ module Tasker
             will_succeed_next: current_attempts >= @failure_count
           }
 
+          puts "[DEBUG] #{@step_name} FAILING on attempt #{current_attempts} (default)"
           Rails.logger.info("ConfigurableFailureHandler: #{@step_name} failing on attempt #{current_attempts}")
           raise StandardError, @failure_message
         end
@@ -54,6 +81,7 @@ module Tasker
           task_context_sample: task.context.slice(:batch_id, :workflow_type)
         }
 
+        puts "[DEBUG] #{@step_name} SUCCEEDED after #{current_attempts} attempts"
         Rails.logger.info("ConfigurableFailureHandler: #{@step_name} succeeded after #{current_attempts} attempts")
         success_results
       end

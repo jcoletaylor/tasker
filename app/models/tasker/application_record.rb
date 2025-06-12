@@ -53,7 +53,7 @@ module Tasker
           Rails.logger.warn warning_message
         end
       end
-    rescue ActiveRecord::DatabaseConfigurationError => e
+    rescue ActiveRecord::DatabaseConfigurations::InvalidConfigurationError => e
       # Log database configuration errors but don't fail startup - this allows for
       # environments where the secondary database might not be available
       Rails.logger.warn "Tasker database configuration error: #{e.message}"

@@ -89,11 +89,8 @@ LEFT JOIN (
   GROUP BY child.workflow_step_id
 ) dep_check ON dep_check.workflow_step_id = ws.workflow_step_id
 
--- OPTIMIZED: Last failure - find most recent error transition (not necessarily most_recent=true)
-LEFT JOIN (
-  SELECT DISTINCT ON (workflow_step_id)
-    workflow_step_id, created_at
-  FROM tasker_workflow_step_transitions
-  WHERE to_state = 'error'
-  ORDER BY workflow_step_id, created_at DESC
-) last_failure ON last_failure.workflow_step_id = ws.workflow_step_id
+-- OPTIMIZED: Last failure using most_recent flag
+LEFT JOIN tasker_workflow_step_transitions last_failure
+  ON last_failure.workflow_step_id = ws.workflow_step_id
+  AND last_failure.to_state = 'error'
+  AND last_failure.most_recent = true
