@@ -443,24 +443,24 @@ module ComplexWorkflowFactoryHelpers
       parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
 
       # If parent isn't complete, complete it recursively
-      unless completion_states.include?(parent_status)
-        Rails.logger.debug do
-          "Factory Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
-        end
+      next if completion_states.include?(parent_status)
 
-        # Recursively complete parent's dependencies first
-        complete_step_dependencies(parent)
+      Rails.logger.debug do
+        "Factory Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
+      end
 
-        # Then complete the parent
-        begin
-          unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-            parent.state_machine.transition_to!(:in_progress)
-          end
-          parent.state_machine.transition_to!(:complete)
-          parent.update_columns(processed: true, processed_at: Time.current)
-        rescue StandardError => e
-          Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
+      # Recursively complete parent's dependencies first
+      complete_step_dependencies(parent)
+
+      # Then complete the parent
+      begin
+        unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+          parent.state_machine.transition_to!(:in_progress)
         end
+        parent.state_machine.transition_to!(:complete)
+        parent.update_columns(processed: true, processed_at: Time.current)
+      rescue StandardError => e
+        Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
       end
     end
   end

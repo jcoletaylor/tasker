@@ -64,17 +64,19 @@ module Tasker
         current_state = Constants::TaskStatuses::PENDING if current_state.blank?
 
         if Rails.env.test?
-          puts "TaskFinalizer: complete_task called for task #{task.task_id}, current_state: #{current_state}"
+          Rails.logger.debug do
+            "TaskFinalizer: complete_task called for task #{task.task_id}, current_state: #{current_state}"
+          end
         end
 
         # Handle task in error state - must go through pending first
         if current_state == Constants::TaskStatuses::ERROR
           if Rails.env.test?
-            puts "TaskFinalizer: Task #{task.task_id} in error state, transitioning to pending"
+            Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} in error state, transitioning to pending" }
           end
           unless safe_transition_to(task, Constants::TaskStatuses::PENDING)
             if Rails.env.test?
-              puts "TaskFinalizer: FAILED to transition task #{task.task_id} from error to pending"
+              Rails.logger.debug { "TaskFinalizer: FAILED to transition task #{task.task_id} from error to pending" }
             end
             return
           end
@@ -87,11 +89,15 @@ module Tasker
           Constants::TaskStatuses::COMPLETE
         ].include?(current_state)
           if Rails.env.test?
-            puts "TaskFinalizer: Task #{task.task_id} transitioning from #{current_state} to in_progress"
+            Rails.logger.debug do
+              "TaskFinalizer: Task #{task.task_id} transitioning from #{current_state} to in_progress"
+            end
           end
           unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
             if Rails.env.test?
-              puts "TaskFinalizer: FAILED to transition task #{task.task_id} from #{current_state} to in_progress"
+              Rails.logger.debug do
+                "TaskFinalizer: FAILED to transition task #{task.task_id} from #{current_state} to in_progress"
+              end
             end
             return
           end
@@ -99,12 +105,12 @@ module Tasker
 
         # Now transition to complete (only if not already complete)
         unless current_state == Constants::TaskStatuses::COMPLETE
-          if Rails.env.test?
-            puts "TaskFinalizer: Task #{task.task_id} transitioning to complete"
-          end
+          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
           unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
             if Rails.env.test?
-              puts "TaskFinalizer: FAILED to transition task #{task.task_id} to complete"
+              Rails.logger.debug do
+                "TaskFinalizer: FAILED to transition task #{task.task_id} to complete"
+              end
             end
             return
           end
@@ -333,7 +339,7 @@ module Tasker
           # Helper method to log messages that work in test environment
           def log_message(message)
             if Rails.env.test?
-              puts message
+              Rails.logger.debug message
             else
               Rails.logger.info(message)
             end

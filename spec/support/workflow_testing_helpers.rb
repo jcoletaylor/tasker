@@ -215,16 +215,16 @@ module WorkflowTestingHelpers
           Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
         ]
 
-        unless completion_states.include?(current_state)
-          # Transition to in_progress first if not already there
-          unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-            step.state_machine.transition_to!(:in_progress)
-          end
+        next if completion_states.include?(current_state)
 
-          # Then transition to complete
-          step.state_machine.transition_to!(:complete)
-          step.update_columns(processed: true, processed_at: Time.current)
+        # Transition to in_progress first if not already there
+        unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+          step.state_machine.transition_to!(:in_progress)
         end
+
+        # Then transition to complete
+        step.state_machine.transition_to!(:complete)
+        step.update_columns(processed: true, processed_at: Time.current)
       end
     end
 
@@ -376,9 +376,7 @@ module WorkflowTestingHelpers
 
       # If no steps are ready, we have a circular dependency or other issue
       # Just take the first remaining step to avoid infinite loop
-      if ready_steps.empty?
-        ready_steps = [remaining_steps.first]
-      end
+      ready_steps = [remaining_steps.first] if ready_steps.empty?
 
       # Add ready steps to ordered list and remove from remaining
       ordered_steps.concat(ready_steps)
@@ -408,24 +406,24 @@ module WorkflowTestingHelpers
       parent_status = current_state.presence || Tasker::Constants::WorkflowStepStatuses::PENDING
 
       # If parent isn't complete, complete it recursively
-      unless completion_states.include?(parent_status)
-        Rails.logger.debug do
-          "Workflow Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
-        end
+      next if completion_states.include?(parent_status)
 
-        # Recursively complete parent's dependencies first
-        complete_step_dependencies_safely(parent)
+      Rails.logger.debug do
+        "Workflow Helper: Completing parent step #{parent.workflow_step_id} to satisfy dependency for step #{step.workflow_step_id}"
+      end
 
-        # Then complete the parent
-        begin
-          unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-            parent.state_machine.transition_to!(:in_progress)
-          end
-          parent.state_machine.transition_to!(:complete)
-          parent.update_columns(processed: true, processed_at: Time.current)
-        rescue StandardError => e
-          Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
+      # Recursively complete parent's dependencies first
+      complete_step_dependencies_safely(parent)
+
+      # Then complete the parent
+      begin
+        unless parent_status == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
+          parent.state_machine.transition_to!(:in_progress)
         end
+        parent.state_machine.transition_to!(:complete)
+        parent.update_columns(processed: true, processed_at: Time.current)
+      rescue StandardError => e
+        Rails.logger.warn "Could not complete parent step #{parent.workflow_step_id}: #{e.message}"
       end
     end
   end

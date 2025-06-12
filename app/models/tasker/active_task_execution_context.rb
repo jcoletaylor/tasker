@@ -8,7 +8,7 @@ module Tasker
     self.primary_key = 'task_id'
 
     # Associations
-    belongs_to :task, class_name: 'Tasker::Task', foreign_key: 'task_id'
+    belongs_to :task, class_name: 'Tasker::Task'
 
     # Scopes using view-calculated fields - no business logic duplication
     scope :ready_for_execution, -> { where('ready_steps > 0') }
@@ -16,10 +16,10 @@ module Tasker
     scope :blocked, -> { where(execution_status: 'blocked_by_failures') }
     scope :healthy, -> { where(health_status: 'healthy') }
     scope :with_failures, -> { where('failed_steps > 0') }
-    scope :near_completion, ->(threshold = 90) { where('completion_percentage >= ?', threshold) }
+    scope :near_completion, ->(threshold = 90) { where(completion_percentage: threshold..) }
 
     # Use view-calculated fields for complex business logic
-    scope :needs_attention, -> { where(recommended_action: ['execute_ready_steps', 'handle_failures']) }
+    scope :needs_attention, -> { where(recommended_action: %w[execute_ready_steps handle_failures]) }
     scope :by_health, ->(status) { where(health_status: status) }
 
     # Class methods for common operations
@@ -31,18 +31,18 @@ module Tasker
 
       # Performance monitoring - get slow tasks
       def slow_tasks(step_threshold = 10)
-        where('total_steps >= ?', step_threshold)
+        where(total_steps: step_threshold..)
           .where('completion_percentage < 50')
       end
     end
 
     # Instance methods - delegate to view-calculated fields
     def ready_to_execute?
-      ready_steps > 0
+      ready_steps.positive?
     end
 
     def has_failures?
-      failed_steps > 0
+      failed_steps.positive?
     end
 
     def nearly_complete?(threshold = 90)
@@ -50,7 +50,7 @@ module Tasker
     end
 
     def needs_attention?
-      recommended_action.in?(['execute_ready_steps', 'handle_failures'])
+      recommended_action.in?(%w[execute_ready_steps handle_failures])
     end
 
     # Summary methods using view-calculated data

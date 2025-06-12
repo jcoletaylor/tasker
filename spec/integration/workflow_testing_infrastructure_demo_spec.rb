@@ -129,7 +129,7 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
         initial_metrics = process_workflows_with_metrics(failure_workflows)
 
         # Reset failed steps to be ready for retry (simulate time passage)
-        reset_count = TestOrchestration::TestCoordinator.reset_failed_steps_for_retry(failure_workflows)
+        TestOrchestration::TestCoordinator.reset_failed_steps_for_retry(failure_workflows)
 
         # Process again after reset - should succeed on retry
         retry_metrics = process_workflows_with_metrics(failure_workflows)
@@ -158,7 +158,9 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
         puts "Successful with retries: #{metrics[:successful_workflows]}"
         puts "Failed scenarios: #{metrics[:failed_workflows]}"
         puts "Total coordinator executions: #{coordinator_stats[:total_executions]}"
-        puts "Reset operations logged: #{coordinator_stats[:recent_executions].count { |e| e[:message].include?('Reset') }}"
+        puts "Reset operations logged: #{coordinator_stats[:recent_executions].count do |e|
+          e[:message].include?('Reset')
+        end}"
       ensure
         cleanup_test_coordination
       end

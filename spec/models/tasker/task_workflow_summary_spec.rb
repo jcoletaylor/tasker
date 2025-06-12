@@ -58,7 +58,8 @@ RSpec.describe Tasker::TaskWorkflowSummary do
       # Verify workflow insights are provided (new descriptive approach)
       # With 2 ready steps, should show parallelism potential
       expect(summary.workflow_efficiency).to be_in(%w[optimal recovering processing blocked waiting])
-      expect(summary.parallelism_potential).to be_in(%w[high_parallelism moderate_parallelism sequential_only no_ready_work])
+      expect(summary.parallelism_potential).to be_in(%w[high_parallelism moderate_parallelism sequential_only
+                                                        no_ready_work])
 
       # Verify the new view structure provides meaningful insights
       expect(summary.workflow_efficiency).to be_present

@@ -8,8 +8,8 @@ module Tasker
     self.primary_key = 'workflow_step_id'
 
     # Associations
-    belongs_to :workflow_step, class_name: 'Tasker::WorkflowStep', foreign_key: 'workflow_step_id'
-    belongs_to :task, class_name: 'Tasker::Task', foreign_key: 'task_id'
+    belongs_to :workflow_step, class_name: 'Tasker::WorkflowStep'
+    belongs_to :task, class_name: 'Tasker::Task'
 
     # Scopes for common query patterns - using view-calculated fields
     scope :ready, -> { where(ready_for_execution: true) }
@@ -47,7 +47,7 @@ module Tasker
 
       # Performance monitoring - get steps with many retries
       def high_retry_steps(threshold = 3)
-        where('attempts >= ?', threshold)
+        where(attempts: threshold..)
       end
     end
 
@@ -57,7 +57,7 @@ module Tasker
     end
 
     def has_dependencies?
-      total_parents > 0
+      total_parents.positive?
     end
 
     def dependencies_met?

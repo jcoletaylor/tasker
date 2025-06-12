@@ -213,8 +213,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       # Re-execute for idempotency test
       TestOrchestration::TestCoordinator.reenqueue_for_idempotency_test([task], reset_steps: true)
 
-          # Process again
-          result2 = TestOrchestration::TestCoordinator.process_task_synchronously(task)
+      # Process again
+      result2 = TestOrchestration::TestCoordinator.process_task_synchronously(task)
 
       expect(result2).to be true
 
@@ -231,14 +231,14 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
         next unless first_result[:step_name] == ConfigurableFailureTask::IDEMPOTENT_STEP
 
         # Check if results exist and have the expected structure
-        if first_result[:results] && second_result[:results]
-          expect(second_result[:results]['checksum']).to eq(first_result[:results]['checksum'])
-          expect(second_result[:results]['sequence_number']).to eq(first_result[:results]['sequence_number'])
+        next unless first_result[:results] && second_result[:results]
 
-          # Check idempotency check exists
-          if second_result[:results]['idempotency_check']
-            expect(second_result[:results]['idempotency_check']['is_repeat_execution']).to be true
-          end
+        expect(second_result[:results]['checksum']).to eq(first_result[:results]['checksum'])
+        expect(second_result[:results]['sequence_number']).to eq(first_result[:results]['sequence_number'])
+
+        # Check idempotency check exists
+        if second_result[:results]['idempotency_check']
+          expect(second_result[:results]['idempotency_check']['is_repeat_execution']).to be true
         end
       end
     end
@@ -432,7 +432,7 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       dependent_steps.each do |step|
         # Dependent steps may be in error state due to failed dependency
         # or remain pending if they haven't been processed yet
-        expect(step.status).to be_in(['pending', 'error'])
+        expect(step.status).to be_in(%w[pending error])
       end
     end
   end

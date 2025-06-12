@@ -8,6 +8,7 @@ module Tasker
     def self.debug_log(message)
       puts "[DEBUG] #{message}" if ENV['TASKER_DEBUG'] == 'true'
     end
+
     # ConfigurableFailureHandler - A step handler that can be configured to fail
     # a specific number of times before succeeding, for testing retry logic
     class ConfigurableFailureHandler < Tasker::StepHandler::Base

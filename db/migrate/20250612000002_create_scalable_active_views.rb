@@ -31,30 +31,30 @@ class CreateScalableActiveViews < ActiveRecord::Migration[7.2]
     # Index for active tasks (incomplete tasks only)
     add_index :tasker_tasks,
               [:task_id],
-              where: "complete = false OR complete IS NULL",
+              where: 'complete = false OR complete IS NULL',
               name: 'idx_tasks_active_operations'
 
     # Index for active workflow steps (from incomplete tasks)
     add_index :tasker_workflow_steps,
-              [:workflow_step_id, :task_id],
-              where: "processed = false OR processed IS NULL",
+              %i[workflow_step_id task_id],
+              where: 'processed = false OR processed IS NULL',
               name: 'idx_steps_active_operations'
 
     # Composite index for task completion status and creation time
     add_index :tasker_tasks,
-              [:complete, :created_at, :task_id],
+              %i[complete created_at task_id],
               name: 'idx_tasks_completion_status_created'
 
     # Index for task transitions with most_recent flag
     add_index :tasker_task_transitions,
-              [:task_id, :most_recent],
-              where: "most_recent = true",
+              %i[task_id most_recent],
+              where: 'most_recent = true',
               name: 'idx_task_transitions_most_recent'
 
     # Index for workflow step transitions with most_recent flag
     add_index :tasker_workflow_step_transitions,
-              [:workflow_step_id, :most_recent],
-              where: "most_recent = true",
+              %i[workflow_step_id most_recent],
+              where: 'most_recent = true',
               name: 'idx_step_transitions_most_recent'
   end
 

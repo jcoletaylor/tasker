@@ -34,8 +34,8 @@ RSpec.describe 'Task Execution Context Performance Optimization' do
       @tasks << task
     end
 
-    puts "\n=== Performance Test Dataset ==="
-    puts "Created #{@tasks.count} tasks with #{@total_steps} total steps"
+    Rails.logger.debug "\n=== Performance Test Dataset ==="
+    Rails.logger.debug { "Created #{@tasks.count} tasks with #{@total_steps} total steps" }
   end
 
   after(:all) do
@@ -52,7 +52,7 @@ RSpec.describe 'Task Execution Context Performance Optimization' do
 
         # Query using the original view structure (simulate the subquery approach)
         result_count = ActiveRecord::Base.connection.execute(
-          File.read(Rails.root.join('db/views/tasker_task_execution_contexts_v01.sql'))
+          Rails.root.join('db/views/tasker_task_execution_contexts_v01.sql').read
         ).count
 
         execution_time = Time.current - start_time
@@ -82,12 +82,12 @@ RSpec.describe 'Task Execution Context Performance Optimization' do
       avg_optimized = optimized_times.sum / optimized_times.size
       improvement_ratio = avg_original / avg_optimized
 
-      puts "\n=== Performance Comparison Results ==="
-      puts "Dataset: #{@tasks.count} tasks, #{@total_steps} steps"
-      puts "Original query average: #{avg_original.round(4)}s"
-      puts "Optimized query average: #{avg_optimized.round(4)}s"
-      puts "Performance improvement: #{improvement_ratio.round(2)}x faster"
-      puts "Time saved: #{((avg_original - avg_optimized) * 1000).round(2)}ms per query"
+      Rails.logger.debug "\n=== Performance Comparison Results ==="
+      Rails.logger.debug { "Dataset: #{@tasks.count} tasks, #{@total_steps} steps" }
+      Rails.logger.debug { "Original query average: #{avg_original.round(4)}s" }
+      Rails.logger.debug { "Optimized query average: #{avg_optimized.round(4)}s" }
+      Rails.logger.debug { "Performance improvement: #{improvement_ratio.round(2)}x faster" }
+      Rails.logger.debug { "Time saved: #{((avg_original - avg_optimized) * 1000).round(2)}ms per query" }
 
       # The optimized query should be faster (or at least not significantly slower)
       expect(avg_optimized).to be <= (avg_original * 1.2) # Allow 20% tolerance for test variance
@@ -114,17 +114,17 @@ RSpec.describe 'Task Execution Context Performance Optimization' do
 
       plan_text = execution_plan.map { |row| row['QUERY PLAN'] }.join("\n")
 
-      puts "\n=== Index Utilization Analysis ==="
-      puts "Query plan for single task lookup:"
-      execution_plan.each { |row| puts row['QUERY PLAN'] }
+      Rails.logger.debug "\n=== Index Utilization Analysis ==="
+      Rails.logger.debug 'Query plan for single task lookup:'
+      execution_plan.each { |row| Rails.logger.debug row['QUERY PLAN'] }
 
       # Check for index usage indicators
       uses_index_scan = plan_text.include?('Index Scan') || plan_text.include?('Index Only Scan')
       uses_seq_scan = plan_text.include?('Seq Scan')
 
-      puts "\n--- Index Usage Summary ---"
-      puts "Uses index scans: #{uses_index_scan}"
-      puts "Uses sequential scans: #{uses_seq_scan}"
+      Rails.logger.debug "\n--- Index Usage Summary ---"
+      Rails.logger.debug { "Uses index scans: #{uses_index_scan}" }
+      Rails.logger.debug { "Uses sequential scans: #{uses_seq_scan}" }
 
       # For a single task query, we should be using indexes
       expect(uses_index_scan).to be true
@@ -143,24 +143,24 @@ RSpec.describe 'Task Execution Context Performance Optimization' do
       execution_time = Time.current - start_time
       records_per_second = results.count / execution_time
 
-      puts "\n=== Scalability Analysis ==="
-      puts "Dataset size: #{@tasks.count} tasks, #{@total_steps} steps"
-      puts "Query execution time: #{execution_time.round(4)}s"
-      puts "Records processed per second: #{records_per_second.round(0)}"
+      Rails.logger.debug "\n=== Scalability Analysis ==="
+      Rails.logger.debug { "Dataset size: #{@tasks.count} tasks, #{@total_steps} steps" }
+      Rails.logger.debug { "Query execution time: #{execution_time.round(4)}s" }
+      Rails.logger.debug { "Records processed per second: #{records_per_second.round(0)}" }
 
       # Performance should be reasonable for the dataset size
       expect(execution_time).to be < 2.seconds, "Query should complete within 2 seconds for #{@tasks.count} tasks"
-      expect(records_per_second).to be > 25, "Should process at least 25 records per second"
+      expect(records_per_second).to be > 25, 'Should process at least 25 records per second'
 
       # Estimate performance for larger datasets
       estimated_1000_tasks = (1000.0 / @tasks.count) * execution_time
-      estimated_10000_tasks = (10000.0 / @tasks.count) * execution_time
+      estimated_10000_tasks = (10_000.0 / @tasks.count) * execution_time
 
-      puts "Estimated time for 1,000 tasks: #{estimated_1000_tasks.round(2)}s"
-      puts "Estimated time for 10,000 tasks: #{estimated_10000_tasks.round(2)}s"
+      Rails.logger.debug { "Estimated time for 1,000 tasks: #{estimated_1000_tasks.round(2)}s" }
+      Rails.logger.debug { "Estimated time for 10,000 tasks: #{estimated_10000_tasks.round(2)}s" }
 
       # Should scale reasonably (sub-linear growth is ideal)
-      expect(estimated_1000_tasks).to be < 10.seconds, "Should handle 1,000 tasks in under 10 seconds"
+      expect(estimated_1000_tasks).to be < 10.seconds, 'Should handle 1,000 tasks in under 10 seconds'
     end
   end
 end

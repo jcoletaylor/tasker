@@ -8,7 +8,7 @@ module Tasker
     self.primary_key = 'task_id'
 
     # Associations
-    belongs_to :task, class_name: 'Tasker::Task', foreign_key: 'task_id'
+    belongs_to :task, class_name: 'Tasker::Task'
 
     # Scopes using view-calculated fields
     scope :optimal, -> { where(workflow_efficiency: 'optimal') }
@@ -29,8 +29,8 @@ module Tasker
     scope :highly_parallel, -> { where('parallel_branches > 3') }
 
     # Efficiency scopes (corresponding to instance methods)
-    scope :efficient, -> { where(workflow_efficiency: ['optimal', 'recovering', 'processing']) }
-    scope :has_parallelism_potential, -> { where(parallelism_potential: ['high_parallelism', 'moderate_parallelism']) }
+    scope :efficient, -> { where(workflow_efficiency: %w[optimal recovering processing]) }
+    scope :has_parallelism_potential, -> { where(parallelism_potential: %w[high_parallelism moderate_parallelism]) }
     scope :has_ready_work, -> { where('ready_steps > 0') }
 
     # Class methods for workflow analysis
@@ -42,7 +42,7 @@ module Tasker
 
       # Get tasks with parallelism potential (insights, not directives)
       def with_parallelism_opportunities
-        has_parallelism_potential.where(workflow_efficiency: ['optimal', 'recovering'])
+        has_parallelism_potential.where(workflow_efficiency: %w[optimal recovering])
       end
 
       # Get tasks that need attention
@@ -52,18 +52,18 @@ module Tasker
 
       # Performance monitoring - get inefficient workflows
       def inefficient_workflows
-        where(workflow_efficiency: ['blocked', 'waiting'])
+        where(workflow_efficiency: %w[blocked waiting])
           .where('ready_steps = 0')
       end
     end
 
     # Instance methods for workflow analysis
     def efficient?
-      workflow_efficiency.in?(['optimal', 'recovering', 'processing'])
+      workflow_efficiency.in?(%w[optimal recovering processing])
     end
 
     def has_parallelism_potential?
-      parallelism_potential.in?(['high_parallelism', 'moderate_parallelism'])
+      parallelism_potential.in?(%w[high_parallelism moderate_parallelism])
     end
 
     def is_complex_workflow?
@@ -71,7 +71,7 @@ module Tasker
     end
 
     def has_ready_work?
-      ready_steps > 0
+      ready_steps.positive?
     end
 
     def workflow_health_summary

@@ -196,7 +196,6 @@ module Tasker
         @reenqueuer_strategy || Tasker::Orchestration::TaskReenqueuer
       end
 
-
       # Find steps that are ready for execution
       #
       # This method finds workflow steps that are ready to be executed by checking
