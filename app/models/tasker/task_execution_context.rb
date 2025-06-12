@@ -146,5 +146,10 @@ module Tasker
               Constants::TaskExecution::ExecutionStatus::PROCESSING
             ])
     end
+
+    # Performance optimization - use active view for operational queries
+    def self.active
+      Tasker::ActiveTaskExecutionContext
+    end
   end
 end

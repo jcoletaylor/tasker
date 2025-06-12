@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_12_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -102,6 +102,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.datetime "updated_at", null: false
     t.index ["sort_key"], name: "index_tasker_task_transitions_on_sort_key"
     t.index ["task_id", "created_at"], name: "index_task_transitions_current_state"
+    t.index ["task_id", "most_recent"], name: "idx_task_transitions_most_recent", where: "(most_recent = true)"
     t.index ["task_id", "most_recent"], name: "index_task_transitions_current_state_optimized", where: "(most_recent = true)"
     t.index ["task_id", "most_recent"], name: "index_tasker_task_transitions_on_task_id_and_most_recent", unique: true, where: "(most_recent = true)"
     t.index ["task_id", "sort_key"], name: "index_tasker_task_transitions_on_task_id_and_sort_key", unique: true
@@ -121,6 +122,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.string "identity_hash", limit: 128, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["complete", "created_at", "task_id"], name: "idx_tasks_completion_status_created"
     t.index ["context"], name: "tasks_context_idx", using: :gin
     t.index ["context"], name: "tasks_context_idx1", opclass: :jsonb_path_ops, using: :gin
     t.index ["identity_hash"], name: "index_tasks_on_identity_hash", unique: true
@@ -130,6 +132,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.index ["source_system"], name: "tasks_source_system_index"
     t.index ["tags"], name: "tasks_tags_idx", using: :gin
     t.index ["tags"], name: "tasks_tags_idx1", opclass: :jsonb_path_ops, using: :gin
+    t.index ["task_id", "complete"], name: "idx_tasks_active_workflow_summary", where: "((complete = false) OR (complete IS NULL))"
+    t.index ["task_id"], name: "idx_tasks_active_operations", where: "((complete = false) OR (complete IS NULL))"
   end
 
   create_table "tasker_workflow_step_edges", force: :cascade do |t|
@@ -142,6 +146,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.index ["from_step_id"], name: "index_step_edges_from_step_for_children"
     t.index ["from_step_id"], name: "index_step_edges_parent_lookup"
     t.index ["from_step_id"], name: "index_tasker_workflow_step_edges_on_from_step_id"
+    t.index ["to_step_id", "from_step_id"], name: "idx_workflow_step_edges_dependency_lookup"
     t.index ["to_step_id", "from_step_id"], name: "index_step_edges_dependency_pair"
     t.index ["to_step_id", "from_step_id"], name: "index_step_edges_to_from_composite"
     t.index ["to_step_id", "from_step_id"], name: "index_workflow_step_edges_dependency_lookup"
@@ -163,6 +168,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.index ["workflow_step_id", "created_at"], name: "index_step_transitions_for_current_state"
     t.index ["workflow_step_id", "most_recent", "created_at"], name: "index_step_transitions_current_errors", where: "(((to_state)::text = 'error'::text) AND (most_recent = true))"
     t.index ["workflow_step_id", "most_recent"], name: "idx_on_workflow_step_id_most_recent_97d5374ad6", unique: true, where: "(most_recent = true)"
+    t.index ["workflow_step_id", "most_recent"], name: "idx_step_transitions_most_recent", where: "(most_recent = true)"
     t.index ["workflow_step_id", "most_recent"], name: "index_step_transitions_completed_parents", where: "(((to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) AND (most_recent = true))"
     t.index ["workflow_step_id", "most_recent"], name: "index_step_transitions_current_state_optimized", where: "(most_recent = true)"
     t.index ["workflow_step_id", "sort_key"], name: "idx_on_workflow_step_id_sort_key_4d476d7adb", unique: true
@@ -194,11 +200,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
     t.index ["named_step_id"], name: "workflow_steps_named_step_id_index"
     t.index ["processed_at"], name: "workflow_steps_processed_at_index"
     t.index ["task_id", "processed", "in_process"], name: "index_workflow_steps_processing_status"
+    t.index ["task_id", "workflow_step_id"], name: "idx_workflow_steps_task_grouping_active", where: "((processed = false) OR (processed IS NULL))"
     t.index ["task_id", "workflow_step_id"], name: "index_workflow_steps_task_and_id"
     t.index ["task_id", "workflow_step_id"], name: "index_workflow_steps_task_and_step_id"
+    t.index ["task_id", "workflow_step_id"], name: "index_workflow_steps_task_and_step_optimized"
     t.index ["task_id"], name: "index_workflow_steps_by_task"
     t.index ["task_id"], name: "index_workflow_steps_task_covering", include: ["workflow_step_id", "processed", "in_process", "attempts", "retry_limit"]
     t.index ["task_id"], name: "workflow_steps_task_id_index"
+    t.index ["workflow_step_id", "task_id"], name: "idx_steps_active_operations", where: "((processed = false) OR (processed IS NULL))"
   end
 
   add_foreign_key "tasker_dependent_system_object_maps", "tasker_dependent_systems", column: "dependent_system_one_id", primary_key: "dependent_system_id", name: "dependent_system_object_maps_dependent_system_one_id_foreign"
@@ -245,7 +254,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
               CASE
                   WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
                   ELSE NULL::integer
-              END) = count(dep_edges.from_step_id))) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND ((ws.in_process = false) AND (ws.processed = false)) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
+              END) = count(dep_edges.from_step_id))) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND (ws.in_process = false) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
               ELSE false
           END AS ready_for_execution,
       last_failure.created_at AS last_failure_at,
@@ -270,45 +279,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
        LEFT JOIN tasker_workflow_step_edges dep_edges ON ((dep_edges.to_step_id = ws.workflow_step_id)))
        LEFT JOIN tasker_workflow_step_transitions parent_states ON (((parent_states.workflow_step_id = dep_edges.from_step_id) AND (parent_states.most_recent = true))))
        LEFT JOIN tasker_workflow_step_transitions last_failure ON (((last_failure.workflow_step_id = ws.workflow_step_id) AND ((last_failure.to_state)::text = 'error'::text) AND (last_failure.most_recent = true))))
+    WHERE ((ws.processed = false) OR (ws.processed IS NULL))
     GROUP BY ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name, current_state.to_state, last_failure.created_at, ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at, ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id;
   SQL
   create_view "tasker_task_execution_contexts", sql_definition: <<-SQL
-      SELECT t.task_id,
-      t.named_task_id,
-      COALESCE(task_state.to_state, 'pending'::character varying) AS status,
-      step_stats.total_steps,
-      step_stats.pending_steps,
-      step_stats.in_progress_steps,
-      step_stats.completed_steps,
-      step_stats.failed_steps,
-      step_stats.ready_steps,
-          CASE
-              WHEN (step_stats.ready_steps > 0) THEN 'has_ready_steps'::text
-              WHEN (step_stats.in_progress_steps > 0) THEN 'processing'::text
-              WHEN ((step_stats.failed_steps > 0) AND (step_stats.ready_steps = 0)) THEN 'blocked_by_failures'::text
-              WHEN (step_stats.completed_steps = step_stats.total_steps) THEN 'all_complete'::text
-              ELSE 'waiting_for_dependencies'::text
-          END AS execution_status,
-          CASE
-              WHEN (step_stats.ready_steps > 0) THEN 'execute_ready_steps'::text
-              WHEN (step_stats.in_progress_steps > 0) THEN 'wait_for_completion'::text
-              WHEN ((step_stats.failed_steps > 0) AND (step_stats.ready_steps = 0)) THEN 'handle_failures'::text
-              WHEN (step_stats.completed_steps = step_stats.total_steps) THEN 'finalize_task'::text
-              ELSE 'wait_for_dependencies'::text
-          END AS recommended_action,
-          CASE
-              WHEN (step_stats.total_steps = 0) THEN 0.0
-              ELSE round((((step_stats.completed_steps)::numeric / (step_stats.total_steps)::numeric) * (100)::numeric), 2)
-          END AS completion_percentage,
-          CASE
-              WHEN (step_stats.failed_steps = 0) THEN 'healthy'::text
-              WHEN ((step_stats.failed_steps > 0) AND (step_stats.ready_steps > 0)) THEN 'recovering'::text
-              WHEN ((step_stats.failed_steps > 0) AND (step_stats.ready_steps = 0)) THEN 'blocked'::text
-              ELSE 'unknown'::text
-          END AS health_status
-     FROM ((tasker_tasks t
-       LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
-       JOIN ( SELECT ws.task_id,
+      WITH step_aggregates AS (
+           SELECT ws.task_id,
               count(*) AS total_steps,
               count(
                   CASE
@@ -337,7 +313,44 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
                   END) AS ready_steps
              FROM (tasker_workflow_steps ws
                JOIN tasker_step_readiness_statuses srs ON ((srs.workflow_step_id = ws.workflow_step_id)))
-            GROUP BY ws.task_id) step_stats ON ((step_stats.task_id = t.task_id)));
+            GROUP BY ws.task_id
+          )
+   SELECT t.task_id,
+      t.named_task_id,
+      COALESCE(task_state.to_state, 'pending'::character varying) AS status,
+      step_aggregates.total_steps,
+      step_aggregates.pending_steps,
+      step_aggregates.in_progress_steps,
+      step_aggregates.completed_steps,
+      step_aggregates.failed_steps,
+      step_aggregates.ready_steps,
+          CASE
+              WHEN (step_aggregates.ready_steps > 0) THEN 'has_ready_steps'::text
+              WHEN (step_aggregates.in_progress_steps > 0) THEN 'processing'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked_by_failures'::text
+              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'all_complete'::text
+              ELSE 'waiting_for_dependencies'::text
+          END AS execution_status,
+          CASE
+              WHEN (step_aggregates.ready_steps > 0) THEN 'execute_ready_steps'::text
+              WHEN (step_aggregates.in_progress_steps > 0) THEN 'wait_for_completion'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'handle_failures'::text
+              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'finalize_task'::text
+              ELSE 'wait_for_dependencies'::text
+          END AS recommended_action,
+          CASE
+              WHEN (step_aggregates.total_steps = 0) THEN 0.0
+              ELSE round((((step_aggregates.completed_steps)::numeric / (step_aggregates.total_steps)::numeric) * (100)::numeric), 2)
+          END AS completion_percentage,
+          CASE
+              WHEN (step_aggregates.failed_steps = 0) THEN 'healthy'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps > 0)) THEN 'recovering'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked'::text
+              ELSE 'unknown'::text
+          END AS health_status
+     FROM ((tasker_tasks t
+       LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
+       JOIN step_aggregates ON ((step_aggregates.task_id = t.task_id)));
   SQL
   create_view "tasker_step_dag_relationships", sql_definition: <<-SQL
       SELECT ws.workflow_step_id,
@@ -388,56 +401,202 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_11_000001) do
              FROM step_depths
             GROUP BY step_depths.workflow_step_id) depth_info ON ((depth_info.workflow_step_id = ws.workflow_step_id)));
   SQL
+  create_view "tasker_active_step_readiness_statuses", sql_definition: <<-SQL
+      SELECT ws.workflow_step_id,
+      ws.task_id,
+      ws.named_step_id,
+      ns.name,
+      COALESCE(current_state.to_state, 'pending'::character varying) AS current_state,
+          CASE
+              WHEN (dep_edges.to_step_id IS NULL) THEN true
+              WHEN (count(dep_edges.from_step_id) = 0) THEN true
+              WHEN (count(
+              CASE
+                  WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+                  ELSE NULL::integer
+              END) = count(dep_edges.from_step_id)) THEN true
+              ELSE false
+          END AS dependencies_satisfied,
+          CASE
+              WHEN (ws.attempts >= COALESCE(ws.retry_limit, 3)) THEN false
+              WHEN ((ws.attempts > 0) AND (ws.retryable = false)) THEN false
+              WHEN (last_failure.created_at IS NULL) THEN true
+              WHEN ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL)) THEN ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())
+              WHEN (last_failure.created_at IS NOT NULL) THEN ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())
+              ELSE true
+          END AS retry_eligible,
+          CASE
+              WHEN (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])) AND ((dep_edges.to_step_id IS NULL) OR (count(dep_edges.from_step_id) = 0) OR (count(
+              CASE
+                  WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+                  ELSE NULL::integer
+              END) = count(dep_edges.from_step_id))) AND (ws.attempts < COALESCE(ws.retry_limit, 3)) AND (ws.in_process = false) AND (((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL) AND ((ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval)) <= now())) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NULL)) OR ((ws.backoff_request_seconds IS NULL) AND (last_failure.created_at IS NOT NULL) AND ((last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval)) <= now())))) THEN true
+              ELSE false
+          END AS ready_for_execution,
+      last_failure.created_at AS last_failure_at,
+          CASE
+              WHEN ((ws.backoff_request_seconds IS NOT NULL) AND (ws.last_attempted_at IS NOT NULL)) THEN (ws.last_attempted_at + ((ws.backoff_request_seconds)::double precision * 'PT1S'::interval))
+              WHEN (last_failure.created_at IS NOT NULL) THEN (last_failure.created_at + LEAST((power((2)::double precision, (COALESCE(ws.attempts, 1))::double precision) * 'PT1S'::interval), 'PT30S'::interval))
+              ELSE NULL::timestamp without time zone
+          END AS next_retry_at,
+      COALESCE(count(dep_edges.from_step_id), (0)::bigint) AS total_parents,
+      COALESCE(count(
+          CASE
+              WHEN ((parent_states.to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) THEN 1
+              ELSE NULL::integer
+          END), (0)::bigint) AS completed_parents,
+      ws.attempts,
+      COALESCE(ws.retry_limit, 3) AS retry_limit,
+      ws.backoff_request_seconds,
+      ws.last_attempted_at
+     FROM ((((((tasker_workflow_steps ws
+       JOIN tasker_named_steps ns ON ((ns.named_step_id = ws.named_step_id)))
+       JOIN tasker_tasks t ON (((t.task_id = ws.task_id) AND ((t.complete = false) OR (t.complete IS NULL)))))
+       LEFT JOIN tasker_workflow_step_transitions current_state ON (((current_state.workflow_step_id = ws.workflow_step_id) AND (current_state.most_recent = true))))
+       LEFT JOIN tasker_workflow_step_edges dep_edges ON ((dep_edges.to_step_id = ws.workflow_step_id)))
+       LEFT JOIN tasker_workflow_step_transitions parent_states ON (((parent_states.workflow_step_id = dep_edges.from_step_id) AND (parent_states.most_recent = true))))
+       LEFT JOIN tasker_workflow_step_transitions last_failure ON (((last_failure.workflow_step_id = ws.workflow_step_id) AND ((last_failure.to_state)::text = 'error'::text) AND (last_failure.most_recent = true))))
+    WHERE (((ws.processed = false) OR (ws.processed IS NULL)) AND (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying, 'in_progress'::character varying])::text[])) OR (ws.in_process = false)))
+    GROUP BY ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name, current_state.to_state, last_failure.created_at, ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at, ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id;
+  SQL
+  create_view "tasker_active_task_execution_contexts", sql_definition: <<-SQL
+      WITH active_step_aggregates AS (
+           SELECT ws.task_id,
+              count(*) AS total_steps,
+              count(
+                  CASE
+                      WHEN ((srs.current_state)::text = 'pending'::text) THEN 1
+                      ELSE NULL::integer
+                  END) AS pending_steps,
+              count(
+                  CASE
+                      WHEN ((srs.current_state)::text = 'in_progress'::text) THEN 1
+                      ELSE NULL::integer
+                  END) AS in_progress_steps,
+              count(
+                  CASE
+                      WHEN ((srs.current_state)::text = 'complete'::text) THEN 1
+                      ELSE NULL::integer
+                  END) AS completed_steps,
+              count(
+                  CASE
+                      WHEN ((srs.current_state)::text = 'error'::text) THEN 1
+                      ELSE NULL::integer
+                  END) AS failed_steps,
+              count(
+                  CASE
+                      WHEN (srs.ready_for_execution = true) THEN 1
+                      ELSE NULL::integer
+                  END) AS ready_steps
+             FROM ((tasker_workflow_steps ws
+               JOIN tasker_active_step_readiness_statuses srs ON ((srs.workflow_step_id = ws.workflow_step_id)))
+               JOIN tasker_tasks t_1 ON (((t_1.task_id = ws.task_id) AND ((t_1.complete = false) OR (t_1.complete IS NULL)))))
+            GROUP BY ws.task_id
+          )
+   SELECT t.task_id,
+      t.named_task_id,
+      COALESCE(task_state.to_state, 'pending'::character varying) AS status,
+      step_aggregates.total_steps,
+      step_aggregates.pending_steps,
+      step_aggregates.in_progress_steps,
+      step_aggregates.completed_steps,
+      step_aggregates.failed_steps,
+      step_aggregates.ready_steps,
+          CASE
+              WHEN (step_aggregates.ready_steps > 0) THEN 'has_ready_steps'::text
+              WHEN (step_aggregates.in_progress_steps > 0) THEN 'processing'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked_by_failures'::text
+              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'all_complete'::text
+              ELSE 'waiting_for_dependencies'::text
+          END AS execution_status,
+          CASE
+              WHEN (step_aggregates.ready_steps > 0) THEN 'execute_ready_steps'::text
+              WHEN (step_aggregates.in_progress_steps > 0) THEN 'wait_for_completion'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'handle_failures'::text
+              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'finalize_task'::text
+              ELSE 'wait_for_dependencies'::text
+          END AS recommended_action,
+          CASE
+              WHEN (step_aggregates.total_steps = 0) THEN 0.0
+              ELSE round((((step_aggregates.completed_steps)::numeric / (step_aggregates.total_steps)::numeric) * (100)::numeric), 2)
+          END AS completion_percentage,
+          CASE
+              WHEN (step_aggregates.failed_steps = 0) THEN 'healthy'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps > 0)) THEN 'recovering'::text
+              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked'::text
+              ELSE 'unknown'::text
+          END AS health_status
+     FROM ((tasker_tasks t
+       LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
+       JOIN active_step_aggregates step_aggregates ON ((step_aggregates.task_id = t.task_id)))
+    WHERE ((t.complete = false) OR (t.complete IS NULL));
+  SQL
   create_view "tasker_task_workflow_summaries", sql_definition: <<-SQL
-      SELECT t.task_id,
-      tec.total_steps,
-      tec.pending_steps,
-      tec.in_progress_steps,
-      tec.completed_steps,
-      tec.failed_steps,
-      tec.ready_steps,
-      tec.execution_status,
-      tec.recommended_action,
-      tec.completion_percentage,
-      tec.health_status,
-      root_steps.root_step_ids,
-      root_steps.root_step_count,
-      blocking_info.blocked_step_ids,
-      blocking_info.blocking_reasons,
+      SELECT atec.task_id,
+      atec.named_task_id,
+      atec.status,
+      atec.total_steps,
+      atec.pending_steps,
+      atec.in_progress_steps,
+      atec.completed_steps,
+      atec.failed_steps,
+      atec.ready_steps,
+      atec.execution_status,
+      atec.recommended_action,
+      atec.completion_percentage,
+      atec.health_status,
+      workflow_analysis.root_step_ids,
+      workflow_analysis.root_step_count,
+      workflow_analysis.ready_step_ids,
+      workflow_analysis.blocked_step_ids,
+      workflow_analysis.blocking_reasons,
+      workflow_analysis.max_dependency_depth,
+      workflow_analysis.parallel_branches,
           CASE
-              WHEN (tec.ready_steps > 0) THEN ready_steps.ready_step_ids
-              ELSE NULL::jsonb
-          END AS next_executable_step_ids,
-          CASE
-              WHEN (tec.ready_steps > 5) THEN 'batch_parallel'::text
-              WHEN (tec.ready_steps > 1) THEN 'small_parallel'::text
-              WHEN (tec.ready_steps = 1) THEN 'sequential'::text
+              WHEN ((atec.ready_steps > 0) AND (atec.failed_steps = 0)) THEN 'optimal'::text
+              WHEN ((atec.ready_steps > 0) AND (atec.failed_steps > 0)) THEN 'recovering'::text
+              WHEN ((atec.ready_steps = 0) AND (atec.in_progress_steps > 0)) THEN 'processing'::text
+              WHEN ((atec.ready_steps = 0) AND (atec.failed_steps > 0)) THEN 'blocked'::text
               ELSE 'waiting'::text
-          END AS processing_strategy
-     FROM ((((tasker_tasks t
-       JOIN tasker_task_execution_contexts tec ON ((tec.task_id = t.task_id)))
-       LEFT JOIN ( SELECT srs.task_id,
-              jsonb_agg(srs.workflow_step_id ORDER BY srs.workflow_step_id) AS root_step_ids,
-              count(*) AS root_step_count
-             FROM tasker_step_readiness_statuses srs
-            WHERE (srs.total_parents = 0)
-            GROUP BY srs.task_id) root_steps ON ((root_steps.task_id = t.task_id)))
-       LEFT JOIN ( SELECT srs.task_id,
-              jsonb_agg(srs.workflow_step_id ORDER BY srs.workflow_step_id) AS ready_step_ids
-             FROM tasker_step_readiness_statuses srs
-            WHERE (srs.ready_for_execution = true)
-            GROUP BY srs.task_id) ready_steps ON ((ready_steps.task_id = t.task_id)))
-       LEFT JOIN ( SELECT srs.task_id,
-              jsonb_agg(srs.workflow_step_id ORDER BY srs.workflow_step_id) AS blocked_step_ids,
+          END AS workflow_efficiency,
+          CASE
+              WHEN (atec.ready_steps > 5) THEN 'high_parallelism'::text
+              WHEN (atec.ready_steps > 1) THEN 'moderate_parallelism'::text
+              WHEN (atec.ready_steps = 1) THEN 'sequential_only'::text
+              ELSE 'no_ready_work'::text
+          END AS parallelism_potential
+     FROM (tasker_active_task_execution_contexts atec
+       LEFT JOIN ( SELECT asrs.task_id,
               jsonb_agg(
                   CASE
-                      WHEN (srs.dependencies_satisfied = false) THEN 'dependencies_not_satisfied'::text
-                      WHEN (srs.retry_eligible = false) THEN 'retry_not_eligible'::text
-                      WHEN ((srs.current_state)::text <> ALL ((ARRAY['pending'::character varying, 'failed'::character varying])::text[])) THEN 'invalid_state'::text
-                      ELSE 'unknown'::text
-                  END ORDER BY srs.workflow_step_id) AS blocking_reasons
-             FROM tasker_step_readiness_statuses srs
-            WHERE ((srs.ready_for_execution = false) AND ((srs.current_state)::text = ANY ((ARRAY['pending'::character varying, 'failed'::character varying])::text[])))
-            GROUP BY srs.task_id) blocking_info ON ((blocking_info.task_id = t.task_id)));
+                      WHEN (asrs.total_parents = 0) THEN asrs.workflow_step_id
+                      ELSE NULL::bigint
+                  END) FILTER (WHERE (asrs.total_parents = 0)) AS root_step_ids,
+              count(*) FILTER (WHERE (asrs.total_parents = 0)) AS root_step_count,
+              jsonb_agg(
+                  CASE
+                      WHEN (asrs.ready_for_execution = true) THEN asrs.workflow_step_id
+                      ELSE NULL::bigint
+                  END) FILTER (WHERE (asrs.ready_for_execution = true)) AS ready_step_ids,
+              jsonb_agg(
+                  CASE
+                      WHEN ((asrs.ready_for_execution = false) AND ((asrs.current_state)::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[]))) THEN asrs.workflow_step_id
+                      ELSE NULL::bigint
+                  END) FILTER (WHERE ((asrs.ready_for_execution = false) AND ((asrs.current_state)::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])))) AS blocked_step_ids,
+              jsonb_agg(
+                  CASE
+                      WHEN ((asrs.ready_for_execution = false) AND ((asrs.current_state)::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[]))) THEN
+                      CASE
+                          WHEN (asrs.dependencies_satisfied = false) THEN 'dependencies_not_satisfied'::text
+                          WHEN (asrs.retry_eligible = false) THEN 'retry_not_eligible'::text
+                          WHEN ((asrs.current_state)::text <> ALL ((ARRAY['pending'::character varying, 'error'::character varying])::text[])) THEN 'invalid_state'::text
+                          ELSE 'unknown'::text
+                      END
+                      ELSE NULL::text
+                  END) FILTER (WHERE ((asrs.ready_for_execution = false) AND ((asrs.current_state)::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying])::text[])))) AS blocking_reasons,
+              max(asrs.total_parents) AS max_dependency_depth,
+              count(DISTINCT asrs.total_parents) AS parallel_branches
+             FROM tasker_active_step_readiness_statuses asrs
+            GROUP BY asrs.task_id) workflow_analysis ON ((workflow_analysis.task_id = atec.task_id)));
   SQL
 end

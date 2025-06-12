@@ -98,5 +98,10 @@ module Tasker
         effective_backoff_seconds: effective_backoff_seconds
       }
     end
+
+    # Performance optimization - use active view for operational queries
+    def self.active
+      Tasker::ActiveStepReadinessStatus
+    end
   end
 end

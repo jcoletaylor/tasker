@@ -1,6 +1,7 @@
--- OPTIMIZED Step Readiness Status View
--- This version uses the `processed` boolean to exclude completed steps
--- Significant performance improvement by filtering out steps that can't be ready
+-- Active Step Readiness Status View (Tier 1)
+-- This view focuses only on steps from incomplete tasks for operational queries
+-- Provides sub-100ms performance by filtering the "haystack" early
+-- Built from scratch to avoid executing the full step readiness query first
 
 SELECT
   ws.workflow_step_id,
@@ -34,14 +35,13 @@ SELECT
   END as retry_eligible,
 
   -- Optimized Final Readiness Calculation
-  -- Since we've already filtered out processed steps, we can simplify this logic
   CASE
     WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
     AND (dep_edges.to_step_id IS NULL OR
          COUNT(dep_edges.from_step_id) = 0 OR
          COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
     AND (ws.attempts < COALESCE(ws.retry_limit, 3))
-    AND (ws.in_process = false)  -- No need to check processed = false since we filter it out
+    AND (ws.in_process = false)
     AND (
       (ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL AND
        ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()) OR
@@ -76,6 +76,10 @@ SELECT
 FROM tasker_workflow_steps ws
 JOIN tasker_named_steps ns ON ns.named_step_id = ws.named_step_id
 
+-- CRITICAL OPTIMIZATION: Filter to incomplete tasks FIRST (reduces haystack size)
+JOIN tasker_tasks t ON t.task_id = ws.task_id
+  AND (t.complete = false OR t.complete IS NULL)
+
 -- OPTIMIZED: Current State using most_recent flag instead of DISTINCT ON
 LEFT JOIN tasker_workflow_step_transitions current_state
   ON current_state.workflow_step_id = ws.workflow_step_id
@@ -95,9 +99,14 @@ LEFT JOIN tasker_workflow_step_transitions last_failure
   AND last_failure.most_recent = true
 
 -- PERFORMANCE OPTIMIZATION: Filter out processed steps early
--- This is the key optimization - processed steps can never be ready for execution
--- However, we need to be less restrictive to handle test environments
+-- Combined with task completion filter above for maximum efficiency
 WHERE (ws.processed = false OR ws.processed IS NULL)
+
+-- Additional optimization: exclude steps that are definitely not ready
+AND (
+  COALESCE(current_state.to_state, 'pending') IN ('pending', 'error', 'in_progress')
+  OR ws.in_process = false
+)
 
 GROUP BY
   ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,

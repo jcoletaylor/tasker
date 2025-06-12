@@ -1,12 +1,8 @@
--- OPTIMIZED Task Execution Context View
--- This version uses the `complete` boolean to provide different views for completed vs active tasks
--- Significant performance improvement by handling completed tasks separately
+-- Active Task Execution Context View (Tier 1)
+-- This view focuses only on incomplete tasks for operational queries
+-- Provides sub-100ms performance by excluding completed tasks from the dataset
 
--- Optimized Task Execution Context View
--- This version eliminates the expensive subquery by using a CTE approach
--- that avoids the window function + GROUP BY conflict
-
-WITH step_aggregates AS (
+WITH active_step_aggregates AS (
   SELECT
     ws.task_id,
     COUNT(*) as total_steps,
@@ -16,7 +12,10 @@ WITH step_aggregates AS (
     COUNT(CASE WHEN srs.current_state = 'error' THEN 1 END) as failed_steps,
     COUNT(CASE WHEN srs.ready_for_execution = true THEN 1 END) as ready_steps
   FROM tasker_workflow_steps ws
-  JOIN tasker_step_readiness_statuses srs ON srs.workflow_step_id = ws.workflow_step_id
+  JOIN tasker_active_step_readiness_statuses srs ON srs.workflow_step_id = ws.workflow_step_id
+  -- PERFORMANCE OPTIMIZATION: Direct join to incomplete tasks (more efficient than subquery)
+  JOIN tasker_tasks t ON t.task_id = ws.task_id
+    AND (t.complete = false OR t.complete IS NULL)
   GROUP BY ws.task_id
 )
 
@@ -72,5 +71,8 @@ LEFT JOIN tasker_task_transitions task_state
   ON task_state.task_id = t.task_id
   AND task_state.most_recent = true
 
--- OPTIMIZED: Join with pre-aggregated step statistics
-JOIN step_aggregates ON step_aggregates.task_id = t.task_id
+-- OPTIMIZED: Join with pre-aggregated step statistics for active tasks only
+JOIN active_step_aggregates step_aggregates ON step_aggregates.task_id = t.task_id
+
+-- PERFORMANCE OPTIMIZATION: Only process incomplete tasks
+WHERE t.complete = false OR t.complete IS NULL
