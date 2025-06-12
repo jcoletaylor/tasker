@@ -24,43 +24,43 @@ SELECT
   t.named_task_id,
   COALESCE(task_state.to_state, 'pending') as status,
 
-  -- Step Statistics (from CTE)
-  step_aggregates.total_steps,
-  step_aggregates.pending_steps,
-  step_aggregates.in_progress_steps,
-  step_aggregates.completed_steps,
-  step_aggregates.failed_steps,
-  step_aggregates.ready_steps,
+  -- Step Statistics (from CTE, with defaults for tasks without step readiness entries)
+  COALESCE(step_aggregates.total_steps, 0) as total_steps,
+  COALESCE(step_aggregates.pending_steps, 0) as pending_steps,
+  COALESCE(step_aggregates.in_progress_steps, 0) as in_progress_steps,
+  COALESCE(step_aggregates.completed_steps, 0) as completed_steps,
+  COALESCE(step_aggregates.failed_steps, 0) as failed_steps,
+  COALESCE(step_aggregates.ready_steps, 0) as ready_steps,
 
   -- Execution State
   CASE
-    WHEN step_aggregates.ready_steps > 0 THEN 'has_ready_steps'
-    WHEN step_aggregates.in_progress_steps > 0 THEN 'processing'
-    WHEN step_aggregates.failed_steps > 0 AND step_aggregates.ready_steps = 0 THEN 'blocked_by_failures'
-    WHEN step_aggregates.completed_steps = step_aggregates.total_steps THEN 'all_complete'
+    WHEN COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'has_ready_steps'
+    WHEN COALESCE(step_aggregates.in_progress_steps, 0) > 0 THEN 'processing'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'blocked_by_failures'
+    WHEN COALESCE(step_aggregates.completed_steps, 0) = COALESCE(step_aggregates.total_steps, 0) AND COALESCE(step_aggregates.total_steps, 0) > 0 THEN 'all_complete'
     ELSE 'waiting_for_dependencies'
   END as execution_status,
 
   -- Next Action Recommendations
   CASE
-    WHEN step_aggregates.ready_steps > 0 THEN 'execute_ready_steps'
-    WHEN step_aggregates.in_progress_steps > 0 THEN 'wait_for_completion'
-    WHEN step_aggregates.failed_steps > 0 AND step_aggregates.ready_steps = 0 THEN 'handle_failures'
-    WHEN step_aggregates.completed_steps = step_aggregates.total_steps THEN 'finalize_task'
+    WHEN COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'execute_ready_steps'
+    WHEN COALESCE(step_aggregates.in_progress_steps, 0) > 0 THEN 'wait_for_completion'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'handle_failures'
+    WHEN COALESCE(step_aggregates.completed_steps, 0) = COALESCE(step_aggregates.total_steps, 0) AND COALESCE(step_aggregates.total_steps, 0) > 0 THEN 'finalize_task'
     ELSE 'wait_for_dependencies'
   END as recommended_action,
 
   -- Progress Metrics
   CASE
-    WHEN step_aggregates.total_steps = 0 THEN 0.0
-    ELSE ROUND((step_aggregates.completed_steps::decimal / step_aggregates.total_steps::decimal) * 100, 2)
+    WHEN COALESCE(step_aggregates.total_steps, 0) = 0 THEN 0.0
+    ELSE ROUND((COALESCE(step_aggregates.completed_steps, 0)::decimal / COALESCE(step_aggregates.total_steps, 1)::decimal) * 100, 2)
   END as completion_percentage,
 
   -- Health Indicators
   CASE
-    WHEN step_aggregates.failed_steps = 0 THEN 'healthy'
-    WHEN step_aggregates.failed_steps > 0 AND step_aggregates.ready_steps > 0 THEN 'recovering'
-    WHEN step_aggregates.failed_steps > 0 AND step_aggregates.ready_steps = 0 THEN 'blocked'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) = 0 THEN 'healthy'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'recovering'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'blocked'
     ELSE 'unknown'
   END as health_status
 
@@ -71,8 +71,8 @@ LEFT JOIN tasker_task_transitions task_state
   ON task_state.task_id = t.task_id
   AND task_state.most_recent = true
 
--- OPTIMIZED: Join with pre-aggregated step statistics for active tasks only
-JOIN active_step_aggregates step_aggregates ON step_aggregates.task_id = t.task_id
+-- OPTIMIZED: Left join with pre-aggregated step statistics to handle tasks without steps
+LEFT JOIN active_step_aggregates step_aggregates ON step_aggregates.task_id = t.task_id
 
 -- PERFORMANCE OPTIMIZATION: Only process incomplete tasks
 WHERE t.complete = false OR t.complete IS NULL

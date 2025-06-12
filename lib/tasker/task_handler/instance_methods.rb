@@ -196,54 +196,6 @@ module Tasker
         @reenqueuer_strategy || Tasker::Orchestration::TaskReenqueuer
       end
 
-      # ================================================================
-      # ASPIRATIONAL/FUTURE ENHANCEMENT METHODS
-      #
-      # These methods implement TaskWorkflowSummary-based intelligent
-      # workflow processing. They are kept for future enhancement but
-      # not currently used in core processing flows due to complexity
-      # vs. value considerations.
-      # ================================================================
-
-      # FUTURE: Handle steps based on TaskWorkflowSummary recommendations
-      #
-      # This method uses the TaskWorkflowSummary view to intelligently process steps
-      # with optimal processing strategies, eliminating the need for viable step discovery.
-      #
-      # @param summary [Tasker::TaskWorkflowSummary] The workflow summary with processing recommendations
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def handle_steps_via_summary(summary)
-        # Get the recommended step IDs for processing
-        step_ids = summary.next_steps_for_processing
-        return [] if step_ids.empty?
-
-        # Load steps with associations for processing
-        steps = Tasker::WorkflowStep.where(workflow_step_id: step_ids)
-        return [] if steps.empty?
-
-        # Log processing strategy for observability
-        Rails.logger.debug do
-          "TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy"
-        end
-
-        # Execute steps using the recommended strategy
-        task = summary.task
-        sequence = get_sequence(task)
-        execute_steps_with_strategy(task, sequence, steps, summary.processing_strategy)
-      end
-
-      # FUTURE: Execute steps using the processing strategy recommended by TaskWorkflowSummary
-      #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param strategy [String] Processing strategy ('batch_parallel', 'small_parallel', 'sequential')
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_with_strategy(task, sequence, steps, _strategy)
-        # DELEGATE: Use the StepExecutor to handle all step execution logic
-        # The strategy is informational - StepExecutor will use task handler settings for actual execution mode
-        step_executor.execute_steps(task, sequence, steps)
-      end
 
       # Find steps that are ready for execution
       #

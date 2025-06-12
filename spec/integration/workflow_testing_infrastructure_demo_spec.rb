@@ -312,14 +312,14 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
 
         expect(final_summaries.count).to eq(10)
 
-        # Should have a mix of processing strategies
-        strategies = final_summaries.map(&:processing_strategy).uniq
-        expect(strategies.count).to be >= 1
+        # Should have a mix of parallelism potential insights
+        parallelism_potentials = final_summaries.map(&:parallelism_potential).uniq
+        expect(parallelism_potentials.count).to be >= 1
 
         puts "\n=== Production Workload Simulation ==="
         puts "Initial batch: #{initial_metrics[:successful_workflows]}/#{initial_metrics[:total_workflows]} successful"
         puts "Re-enqueued: #{reenqueue_metrics[:successful_workflows]}/#{reenqueue_metrics[:total_workflows]} successful"
-        puts "Processing strategies observed: #{strategies}"
+        puts "Parallelism potentials observed: #{parallelism_potentials}"
         puts "Total execution time: #{(initial_metrics[:total_execution_time] + reenqueue_metrics[:total_execution_time]).round(3)}s"
 
         # Verify coordinator tracked the complexity appropriately

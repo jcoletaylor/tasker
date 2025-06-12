@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :task, class: 'Tasker::Task' do
-    named_task
+    named_task { Tasker::NamedTask.find_or_create_by(name: 'dummy_task') }
 
     # Core attributes
     initiator { 'test_user' }
@@ -11,7 +11,7 @@ FactoryBot.define do
     requested_at { Time.current }
 
     # ✅ FIX: Add default context to prevent "Context can't be blank" validation failures
-    context { { test: true } }
+    context { { test: true, time_for_identity_uniqueness: DateTime.current.strftime('%Q') } }
 
     # Default state - managed by state machine
     complete { false }

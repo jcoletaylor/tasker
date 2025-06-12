@@ -99,14 +99,9 @@ LEFT JOIN tasker_workflow_step_transitions last_failure
   AND last_failure.most_recent = true
 
 -- PERFORMANCE OPTIMIZATION: Filter out processed steps early
--- Combined with task completion filter above for maximum efficiency
+-- This is the key optimization - processed steps can never be ready for execution
+-- However, we need to be less restrictive to handle test environments
 WHERE (ws.processed = false OR ws.processed IS NULL)
-
--- Additional optimization: exclude steps that are definitely not ready
-AND (
-  COALESCE(current_state.to_state, 'pending') IN ('pending', 'error', 'in_progress')
-  OR ws.in_process = false
-)
 
 GROUP BY
   ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,

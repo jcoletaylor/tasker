@@ -67,22 +67,22 @@ RSpec.describe 'Database Views Performance with Large Datasets' do
       summaries.each do |summary|
         case summary.ready_steps
         when 0
-          expect(summary.processing_strategy).to eq('waiting')
+          expect(summary.parallelism_potential).to eq('no_ready_work')
         when 1
-          expect(summary.processing_strategy).to eq('sequential')
+          expect(summary.parallelism_potential).to eq('sequential_only')
         when 2..5
-          expect(summary.processing_strategy).to eq('small_parallel')
+          expect(summary.parallelism_potential).to eq('moderate_parallelism')
         else
-          expect(summary.processing_strategy).to eq('batch_parallel')
+          expect(summary.parallelism_potential).to eq('high_parallelism')
         end
       end
     end
 
-    it 'provides actionable next_executable_step_ids for workflow orchestration' do
+    it 'provides actionable ready_step_ids for workflow orchestration' do
       summaries = Tasker::TaskWorkflowSummary.where('ready_steps > 0')
 
       summaries.each do |summary|
-        step_ids = summary.next_executable_step_ids
+        step_ids = summary.ready_step_ids
         expect(step_ids).to be_an(Array)
         expect(step_ids.size).to eq(summary.ready_steps)
 
@@ -265,9 +265,9 @@ RSpec.describe 'Database Views Performance with Large Datasets' do
       expect(step_counts.min).to be >= 6
       expect(step_counts.max).to be <= 12
 
-      # Verify processing strategies are distributed
-      strategies = summaries.map(&:processing_strategy).uniq
-      expect(strategies).to include('sequential', 'small_parallel')
+      # Verify parallelism potential insights are distributed
+      parallelism_potentials = summaries.map(&:parallelism_potential).uniq
+      expect(parallelism_potentials).to include('sequential_only', 'moderate_parallelism')
     end
   end
 

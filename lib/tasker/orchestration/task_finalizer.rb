@@ -200,7 +200,9 @@ module Tasker
           # @return [Boolean] True if task is blocked by errors
           def blocked_by_errors?(task)
             context = ContextManager.get_task_execution_context(task.task_id)
-            is_blocked = context.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
+            return use_fallback_logic(task) unless context
+
+            is_blocked = context&.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
 
             if is_blocked
               Rails.logger.debug do
@@ -244,9 +246,17 @@ module Tasker
         class << self
           # Get TaskExecutionContext with fallback handling
           #
+          # For operational queries during task processing, use the active scope for better performance.
+          # Falls back to the full view if not found in active scope.
+          #
           # @param task_id [Integer] The task ID
           # @return [Tasker::TaskExecutionContext, nil] The execution context or nil
           def get_task_execution_context(task_id)
+            # First try the active scope for operational queries (faster)
+            context = Tasker::TaskExecutionContext.active.for_task(task_id)
+            return context if context
+
+            # Fallback to full view for completed tasks or edge cases
             Tasker::TaskExecutionContext.find(task_id)
           rescue ActiveRecord::RecordNotFound
             Rails.logger.warn("TaskFinalizer: TaskExecutionContext not found for task #{task_id}")
@@ -292,6 +302,13 @@ module Tasker
           # @param finalizer [TaskFinalizer] The finalizer instance for callbacks
           def make_finalization_decision(task, context, synchronous, finalizer)
             log_message("TaskFinalizer: Making decision for task #{task.task_id} with execution_status: #{context&.execution_status}")
+
+            # Handle nil context case
+            unless context
+              log_message("TaskFinalizer: Task #{task.task_id} - no context available, handling as unclear state")
+              UnclearStateHandler.handle(task, context, finalizer)
+              return
+            end
 
             case context.execution_status
             when Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE

@@ -12,6 +12,7 @@ module Tasker
     belongs_to :task, class_name: 'Tasker::Task', foreign_key: 'task_id'
 
     # Scopes for common query patterns - using view-calculated fields
+    scope :ready, -> { where(ready_for_execution: true) }
     scope :ready_for_execution, -> { where(ready_for_execution: true) }
     scope :pending, -> { where(current_state: 'pending') }
     scope :in_progress, -> { where(current_state: 'in_progress') }

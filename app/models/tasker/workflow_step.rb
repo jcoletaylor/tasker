@@ -274,7 +274,7 @@ module Tasker
       step_ids = sequence.steps.map(&:workflow_step_id)
 
       # Single query to get all readiness information via scenic view
-      ready_statuses = StepReadinessStatus.ready.where(workflow_step_id: step_ids)
+      ready_statuses = StepReadinessStatus.ready_for_execution.where(workflow_step_id: step_ids)
 
       # Return WorkflowStep objects for ready steps
       WorkflowStep.where(workflow_step_id: ready_statuses.pluck(:workflow_step_id))

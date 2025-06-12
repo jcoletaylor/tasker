@@ -25,9 +25,10 @@ RSpec.describe Tasker::TaskWorkflowSummary do
       expect(summary.execution_status).to be_present
       expect(summary.recommended_action).to be_present
 
-      # Check TaskWorkflowSummary-specific fields
-      expect(summary.next_executable_step_ids).to be_a(Array)
-      expect(summary.processing_strategy).to be_present
+      # Check TaskWorkflowSummary-specific fields (new view structure)
+      expect(summary.ready_step_ids).to be_a(Array)
+      expect(summary.workflow_efficiency).to be_present
+      expect(summary.parallelism_potential).to be_present
       expect(summary.root_step_ids).to be_a(Array)
       expect(summary.root_step_count).to be >= 0
     end
@@ -38,9 +39,9 @@ RSpec.describe Tasker::TaskWorkflowSummary do
 
       summary = described_class.find_by(task_id: task.task_id)
 
-      # For a new workflow, should have at least two executable steps (step-one and step-two)
-      expect(summary.next_executable_step_ids).not_to be_empty
-      expect(summary.next_steps_for_processing).to be_a(Array)
+      # For a new workflow, should have ready steps available
+      expect(summary.ready_step_ids).not_to be_empty
+      expect(summary.ready_steps).to be > 0
 
       # Should identify root steps correctly (step-one and step-two are independent)
       expect(summary.root_step_ids).not_to be_empty
@@ -54,12 +55,14 @@ RSpec.describe Tasker::TaskWorkflowSummary do
 
       summary = described_class.find_by(task_id: task.task_id)
 
-      # Verify processing strategies are assigned
-      # With 2 ready steps, should recommend 'small_parallel'
-      expect(summary.processing_strategy).to be_in(%w[small_parallel sequential waiting])
+      # Verify workflow insights are provided (new descriptive approach)
+      # With 2 ready steps, should show parallelism potential
+      expect(summary.workflow_efficiency).to be_in(%w[optimal recovering processing blocked waiting])
+      expect(summary.parallelism_potential).to be_in(%w[high_parallelism moderate_parallelism sequential_only no_ready_work])
 
-      # Verify helper methods work
-      expect([true, false]).to include(summary.has_work_to_do?)
+      # Verify the new view structure provides meaningful insights
+      expect(summary.workflow_efficiency).to be_present
+      expect(summary.parallelism_potential).to be_present
     end
 
     it 'maintains read-only model behavior' do

@@ -318,39 +318,39 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_12_000003) do
    SELECT t.task_id,
       t.named_task_id,
       COALESCE(task_state.to_state, 'pending'::character varying) AS status,
-      step_aggregates.total_steps,
-      step_aggregates.pending_steps,
-      step_aggregates.in_progress_steps,
-      step_aggregates.completed_steps,
-      step_aggregates.failed_steps,
-      step_aggregates.ready_steps,
+      COALESCE(step_aggregates.total_steps, (0)::bigint) AS total_steps,
+      COALESCE(step_aggregates.pending_steps, (0)::bigint) AS pending_steps,
+      COALESCE(step_aggregates.in_progress_steps, (0)::bigint) AS in_progress_steps,
+      COALESCE(step_aggregates.completed_steps, (0)::bigint) AS completed_steps,
+      COALESCE(step_aggregates.failed_steps, (0)::bigint) AS failed_steps,
+      COALESCE(step_aggregates.ready_steps, (0)::bigint) AS ready_steps,
           CASE
-              WHEN (step_aggregates.ready_steps > 0) THEN 'has_ready_steps'::text
-              WHEN (step_aggregates.in_progress_steps > 0) THEN 'processing'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked_by_failures'::text
-              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'all_complete'::text
+              WHEN (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0) THEN 'has_ready_steps'::text
+              WHEN (COALESCE(step_aggregates.in_progress_steps, (0)::bigint) > 0) THEN 'processing'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'blocked_by_failures'::text
+              WHEN ((COALESCE(step_aggregates.completed_steps, (0)::bigint) = COALESCE(step_aggregates.total_steps, (0)::bigint)) AND (COALESCE(step_aggregates.total_steps, (0)::bigint) > 0)) THEN 'all_complete'::text
               ELSE 'waiting_for_dependencies'::text
           END AS execution_status,
           CASE
-              WHEN (step_aggregates.ready_steps > 0) THEN 'execute_ready_steps'::text
-              WHEN (step_aggregates.in_progress_steps > 0) THEN 'wait_for_completion'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'handle_failures'::text
-              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'finalize_task'::text
+              WHEN (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0) THEN 'execute_ready_steps'::text
+              WHEN (COALESCE(step_aggregates.in_progress_steps, (0)::bigint) > 0) THEN 'wait_for_completion'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'handle_failures'::text
+              WHEN ((COALESCE(step_aggregates.completed_steps, (0)::bigint) = COALESCE(step_aggregates.total_steps, (0)::bigint)) AND (COALESCE(step_aggregates.total_steps, (0)::bigint) > 0)) THEN 'finalize_task'::text
               ELSE 'wait_for_dependencies'::text
           END AS recommended_action,
           CASE
-              WHEN (step_aggregates.total_steps = 0) THEN 0.0
-              ELSE round((((step_aggregates.completed_steps)::numeric / (step_aggregates.total_steps)::numeric) * (100)::numeric), 2)
+              WHEN (COALESCE(step_aggregates.total_steps, (0)::bigint) = 0) THEN 0.0
+              ELSE round((((COALESCE(step_aggregates.completed_steps, (0)::bigint))::numeric / (COALESCE(step_aggregates.total_steps, (1)::bigint))::numeric) * (100)::numeric), 2)
           END AS completion_percentage,
           CASE
-              WHEN (step_aggregates.failed_steps = 0) THEN 'healthy'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps > 0)) THEN 'recovering'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked'::text
+              WHEN (COALESCE(step_aggregates.failed_steps, (0)::bigint) = 0) THEN 'healthy'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0)) THEN 'recovering'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'blocked'::text
               ELSE 'unknown'::text
           END AS health_status
      FROM ((tasker_tasks t
        LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
-       JOIN step_aggregates ON ((step_aggregates.task_id = t.task_id)));
+       LEFT JOIN step_aggregates ON ((step_aggregates.task_id = t.task_id)));
   SQL
   create_view "tasker_step_dag_relationships", sql_definition: <<-SQL
       SELECT ws.workflow_step_id,
@@ -456,7 +456,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_12_000003) do
        LEFT JOIN tasker_workflow_step_edges dep_edges ON ((dep_edges.to_step_id = ws.workflow_step_id)))
        LEFT JOIN tasker_workflow_step_transitions parent_states ON (((parent_states.workflow_step_id = dep_edges.from_step_id) AND (parent_states.most_recent = true))))
        LEFT JOIN tasker_workflow_step_transitions last_failure ON (((last_failure.workflow_step_id = ws.workflow_step_id) AND ((last_failure.to_state)::text = 'error'::text) AND (last_failure.most_recent = true))))
-    WHERE (((ws.processed = false) OR (ws.processed IS NULL)) AND (((COALESCE(current_state.to_state, 'pending'::character varying))::text = ANY ((ARRAY['pending'::character varying, 'error'::character varying, 'in_progress'::character varying])::text[])) OR (ws.in_process = false)))
+    WHERE ((ws.processed = false) OR (ws.processed IS NULL))
     GROUP BY ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name, current_state.to_state, last_failure.created_at, ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at, ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id;
   SQL
   create_view "tasker_active_task_execution_contexts", sql_definition: <<-SQL
@@ -496,39 +496,39 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_12_000003) do
    SELECT t.task_id,
       t.named_task_id,
       COALESCE(task_state.to_state, 'pending'::character varying) AS status,
-      step_aggregates.total_steps,
-      step_aggregates.pending_steps,
-      step_aggregates.in_progress_steps,
-      step_aggregates.completed_steps,
-      step_aggregates.failed_steps,
-      step_aggregates.ready_steps,
+      COALESCE(step_aggregates.total_steps, (0)::bigint) AS total_steps,
+      COALESCE(step_aggregates.pending_steps, (0)::bigint) AS pending_steps,
+      COALESCE(step_aggregates.in_progress_steps, (0)::bigint) AS in_progress_steps,
+      COALESCE(step_aggregates.completed_steps, (0)::bigint) AS completed_steps,
+      COALESCE(step_aggregates.failed_steps, (0)::bigint) AS failed_steps,
+      COALESCE(step_aggregates.ready_steps, (0)::bigint) AS ready_steps,
           CASE
-              WHEN (step_aggregates.ready_steps > 0) THEN 'has_ready_steps'::text
-              WHEN (step_aggregates.in_progress_steps > 0) THEN 'processing'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked_by_failures'::text
-              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'all_complete'::text
+              WHEN (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0) THEN 'has_ready_steps'::text
+              WHEN (COALESCE(step_aggregates.in_progress_steps, (0)::bigint) > 0) THEN 'processing'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'blocked_by_failures'::text
+              WHEN ((COALESCE(step_aggregates.completed_steps, (0)::bigint) = COALESCE(step_aggregates.total_steps, (0)::bigint)) AND (COALESCE(step_aggregates.total_steps, (0)::bigint) > 0)) THEN 'all_complete'::text
               ELSE 'waiting_for_dependencies'::text
           END AS execution_status,
           CASE
-              WHEN (step_aggregates.ready_steps > 0) THEN 'execute_ready_steps'::text
-              WHEN (step_aggregates.in_progress_steps > 0) THEN 'wait_for_completion'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'handle_failures'::text
-              WHEN (step_aggregates.completed_steps = step_aggregates.total_steps) THEN 'finalize_task'::text
+              WHEN (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0) THEN 'execute_ready_steps'::text
+              WHEN (COALESCE(step_aggregates.in_progress_steps, (0)::bigint) > 0) THEN 'wait_for_completion'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'handle_failures'::text
+              WHEN ((COALESCE(step_aggregates.completed_steps, (0)::bigint) = COALESCE(step_aggregates.total_steps, (0)::bigint)) AND (COALESCE(step_aggregates.total_steps, (0)::bigint) > 0)) THEN 'finalize_task'::text
               ELSE 'wait_for_dependencies'::text
           END AS recommended_action,
           CASE
-              WHEN (step_aggregates.total_steps = 0) THEN 0.0
-              ELSE round((((step_aggregates.completed_steps)::numeric / (step_aggregates.total_steps)::numeric) * (100)::numeric), 2)
+              WHEN (COALESCE(step_aggregates.total_steps, (0)::bigint) = 0) THEN 0.0
+              ELSE round((((COALESCE(step_aggregates.completed_steps, (0)::bigint))::numeric / (COALESCE(step_aggregates.total_steps, (1)::bigint))::numeric) * (100)::numeric), 2)
           END AS completion_percentage,
           CASE
-              WHEN (step_aggregates.failed_steps = 0) THEN 'healthy'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps > 0)) THEN 'recovering'::text
-              WHEN ((step_aggregates.failed_steps > 0) AND (step_aggregates.ready_steps = 0)) THEN 'blocked'::text
+              WHEN (COALESCE(step_aggregates.failed_steps, (0)::bigint) = 0) THEN 'healthy'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) > 0)) THEN 'recovering'::text
+              WHEN ((COALESCE(step_aggregates.failed_steps, (0)::bigint) > 0) AND (COALESCE(step_aggregates.ready_steps, (0)::bigint) = 0)) THEN 'blocked'::text
               ELSE 'unknown'::text
           END AS health_status
      FROM ((tasker_tasks t
        LEFT JOIN tasker_task_transitions task_state ON (((task_state.task_id = t.task_id) AND (task_state.most_recent = true))))
-       JOIN active_step_aggregates step_aggregates ON ((step_aggregates.task_id = t.task_id)))
+       LEFT JOIN active_step_aggregates step_aggregates ON ((step_aggregates.task_id = t.task_id)))
     WHERE ((t.complete = false) OR (t.complete IS NULL));
   SQL
   create_view "tasker_task_workflow_summaries", sql_definition: <<-SQL

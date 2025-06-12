@@ -16,6 +16,7 @@ module Tasker
 
     # Scopes for common queries
     scope :ready, -> { where(ready_for_execution: true) }
+    scope :ready_for_execution, -> { where(ready_for_execution: true) }
     scope :blocked_by_dependencies, -> { where(dependencies_satisfied: false) }
     scope :blocked_by_retry, -> { where(retry_eligible: false) }
     scope :for_task, ->(task_id) { where(task_id: task_id) }
