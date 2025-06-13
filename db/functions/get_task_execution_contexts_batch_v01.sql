@@ -3,17 +3,17 @@
 -- Input: Array of task_ids
 -- Output: Multiple rows with task execution context data
 
-CREATE OR REPLACE FUNCTION get_task_execution_contexts_batch(input_task_ids INTEGER[])
+CREATE OR REPLACE FUNCTION get_task_execution_contexts_batch(input_task_ids BIGINT[])
 RETURNS TABLE(
-  task_id INTEGER,
+  task_id BIGINT,
   named_task_id INTEGER,
   status TEXT,
-  total_steps INTEGER,
-  pending_steps INTEGER,
-  in_progress_steps INTEGER,
-  completed_steps INTEGER,
-  failed_steps INTEGER,
-  ready_steps INTEGER,
+  total_steps BIGINT,
+  pending_steps BIGINT,
+  in_progress_steps BIGINT,
+  completed_steps BIGINT,
+  failed_steps BIGINT,
+  ready_steps BIGINT,
   execution_status TEXT,
   recommended_action TEXT,
   completion_percentage DECIMAL,
@@ -29,7 +29,7 @@ BEGIN
     SELECT
       t.task_id,
       t.named_task_id,
-      COALESCE(task_state.to_state, 'pending') as current_status
+      COALESCE(task_state.to_state, 'pending')::TEXT as current_status
     FROM unnest(input_task_ids) AS task_list(task_id)
     JOIN tasker_tasks t ON t.task_id = task_list.task_id
     LEFT JOIN tasker_task_transitions task_state

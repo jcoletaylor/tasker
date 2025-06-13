@@ -3,10 +3,10 @@
 -- Input: Array of task_ids (gets all steps for each task)
 -- Output: Multiple rows with step readiness data, properly grouped by task
 
-CREATE OR REPLACE FUNCTION get_step_readiness_status_batch(input_task_ids INTEGER[])
+CREATE OR REPLACE FUNCTION get_step_readiness_status_batch(input_task_ids BIGINT[])
 RETURNS TABLE(
-  workflow_step_id INTEGER,
-  task_id INTEGER,
+  workflow_step_id BIGINT,
+  task_id BIGINT,
   named_step_id INTEGER,
   name TEXT,
   current_state TEXT,
@@ -28,10 +28,10 @@ BEGIN
     ws.workflow_step_id,
     ws.task_id,
     ws.named_step_id,
-    ns.name,
+    ns.name::TEXT,
 
     -- Current State Information (optimized using most_recent flag)
-    COALESCE(current_state.to_state, 'pending') as current_state,
+    COALESCE(current_state.to_state, 'pending')::TEXT as current_state,
 
     -- Dependency Analysis (calculated from direct joins)
     CASE
@@ -85,8 +85,8 @@ BEGIN
     END as next_retry_at,
 
     -- Dependency Context (calculated from joins)
-    COALESCE(COUNT(dep_edges.from_step_id), 0) as total_parents,
-    COALESCE(COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END), 0) as completed_parents,
+    COALESCE(COUNT(dep_edges.from_step_id), 0)::INTEGER as total_parents,
+    COALESCE(COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END), 0)::INTEGER as completed_parents,
 
     -- Retry Context
     ws.attempts,

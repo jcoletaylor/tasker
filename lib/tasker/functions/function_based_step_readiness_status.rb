@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require_relative 'function_wrapper'
+
 module Tasker
-  module Views
+  module Functions
     # Function-based implementation of StepReadinessStatus
     # Maintains the same interface as the view-based model but uses SQL functions for performance
     class FunctionBasedStepReadinessStatus < FunctionWrapper
@@ -25,9 +27,9 @@ module Tasker
 
       # Class methods that use SQL functions
       def self.for_task(task_id, step_ids = nil)
-        sql = "SELECT * FROM get_step_readiness_status($1, $2)"
+        sql = 'SELECT * FROM get_step_readiness_status($1::BIGINT, $2::BIGINT[])'
         binds = [task_id, step_ids]
-        from_sql_function(sql, binds, "StepReadinessStatus Load")
+        from_sql_function(sql, binds, 'StepReadinessStatus Load')
       end
 
       def self.for_steps(task_id, step_ids)
@@ -38,23 +40,13 @@ module Tasker
         return [] if task_ids.empty?
 
         # Use the batch function to get steps for multiple tasks efficiently
-        sql = "SELECT * FROM get_step_readiness_status_batch($1)"
+        sql = 'SELECT * FROM get_step_readiness_status_batch($1::BIGINT[])'
         binds = [task_ids]
-        from_sql_function(sql, binds, "StepReadinessStatus Batch Load")
+        from_sql_function(sql, binds, 'StepReadinessStatus Batch Load')
       end
 
       def self.ready_for_task(task_id)
         for_task(task_id).select(&:ready_for_execution)
-      end
-
-      def self.ready
-        # This would need to be implemented differently since we need task_id
-        # For now, raise an error to identify usage patterns
-        raise NotImplementedError, "Use ready_for_task(task_id) instead for better performance"
-      end
-
-      def self.ready_for_execution
-        ready
       end
 
       def self.blocked_by_dependencies_for_task(task_id)
@@ -78,7 +70,7 @@ module Tasker
       end
 
       def self.complete_for_task(task_id)
-        for_task(task_id).select { |s| s.current_state.in?(['complete', 'resolved_manually']) }
+        for_task(task_id).select { |s| s.current_state.in?(%w[complete resolved_manually]) }
       end
 
       # Instance methods (same as original model)

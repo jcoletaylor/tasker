@@ -7,13 +7,14 @@ RSpec.describe 'SQL Functions Integration', type: :model do
     let(:task) { create(:task, :with_workflow_steps) }
 
     before do
-      # Ensure we have some test data
-      task.workflow_steps.first.update!(current_state: 'pending')
+      # Ensure we have some test data with proper state transitions
+      step = task.workflow_steps.first
+      step.transition_to!('pending') if step.respond_to?(:transition_to!)
     end
 
     describe 'FunctionBasedStepReadinessStatus' do
       it 'loads step readiness data using SQL function' do
-        results = Tasker::Views::FunctionBasedStepReadinessStatus.for_task(task.task_id)
+        results = Tasker::Functions::FunctionBasedStepReadinessStatus.for_task(task.task_id)
 
         expect(results).not_to be_empty
         expect(results.first).to respond_to(:workflow_step_id)
@@ -23,7 +24,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
       end
 
       it 'provides the same interface as the original model' do
-        result = Tasker::Views::FunctionBasedStepReadinessStatus.for_task(task.task_id).first
+        result = Tasker::Functions::FunctionBasedStepReadinessStatus.for_task(task.task_id).first
 
         expect(result).to respond_to(:can_execute_now?)
         expect(result).to respond_to(:blocking_reason)
@@ -36,7 +37,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
         task3 = create(:task, :with_workflow_steps)
 
         task_ids = [task.task_id, task2.task_id, task3.task_id]
-        results = Tasker::Views::FunctionBasedStepReadinessStatus.for_tasks(task_ids)
+        results = Tasker::Functions::FunctionBasedStepReadinessStatus.for_tasks(task_ids)
 
         expect(results).not_to be_empty
 
@@ -57,14 +58,14 @@ RSpec.describe 'SQL Functions Integration', type: :model do
       end
 
       it 'handles empty task_ids array gracefully for batch step readiness' do
-        results = Tasker::Views::FunctionBasedStepReadinessStatus.for_tasks([])
+        results = Tasker::Functions::FunctionBasedStepReadinessStatus.for_tasks([])
         expect(results).to eq([])
       end
     end
 
     describe 'FunctionBasedTaskExecutionContext' do
       it 'loads task execution context using SQL function' do
-        result = Tasker::Views::FunctionBasedTaskExecutionContext.find(task.task_id)
+        result = Tasker::Functions::FunctionBasedTaskExecutionContext.find(task.task_id)
 
         expect(result).not_to be_nil
         expect(result.task_id).to eq(task.task_id)
@@ -74,7 +75,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
       end
 
       it 'provides the same interface as the original model' do
-        result = Tasker::Views::FunctionBasedTaskExecutionContext.find(task.task_id)
+        result = Tasker::Functions::FunctionBasedTaskExecutionContext.find(task.task_id)
 
         expect(result).to respond_to(:has_work_to_do?)
         expect(result).to respond_to(:is_blocked?)
@@ -83,7 +84,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
       end
 
       it 'returns nil for non-existent tasks' do
-        result = Tasker::Views::FunctionBasedTaskExecutionContext.find(99999)
+        result = Tasker::Functions::FunctionBasedTaskExecutionContext.find(99_999)
         expect(result).to be_nil
       end
 
@@ -92,7 +93,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
         task3 = create(:task, :with_workflow_steps)
 
         task_ids = [task.task_id, task2.task_id, task3.task_id]
-        results = Tasker::Views::FunctionBasedTaskExecutionContext.for_tasks(task_ids)
+        results = Tasker::Functions::FunctionBasedTaskExecutionContext.for_tasks(task_ids)
 
         expect(results.length).to eq(3)
         expect(results.map(&:task_id)).to match_array(task_ids)
@@ -106,7 +107,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
       end
 
       it 'handles empty task_ids array gracefully' do
-        results = Tasker::Views::FunctionBasedTaskExecutionContext.for_tasks([])
+        results = Tasker::Functions::FunctionBasedTaskExecutionContext.for_tasks([])
         expect(results).to eq([])
       end
     end
@@ -117,7 +118,7 @@ RSpec.describe 'SQL Functions Integration', type: :model do
         # would require larger datasets and proper benchmarking
 
         function_time = Benchmark.realtime do
-          Tasker::Views::FunctionBasedStepReadinessStatus.for_task(task.task_id)
+          Tasker::Functions::FunctionBasedStepReadinessStatus.for_task(task.task_id)
         end
 
         view_time = Benchmark.realtime do

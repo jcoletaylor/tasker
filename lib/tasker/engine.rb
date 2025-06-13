@@ -45,7 +45,6 @@ module Tasker
       # Load core components that need explicit initialization
       require 'tasker/constants'
       require 'tasker/configuration'
-      # Legacy instrumentation removed - using TelemetrySubscriber instead
       require 'tasker/types'
       require 'tasker/handler_factory'
       require 'tasker/identity_strategy'
@@ -58,6 +57,7 @@ module Tasker
       require 'tasker/events/catalog'
       require 'tasker/events/subscribers/base_subscriber'
       require 'tasker/events/subscribers/telemetry_subscriber'
+      require 'tasker/functions'
 
       # Configure Statesman for state machine support
       Tasker::StateMachine.configure_statesman

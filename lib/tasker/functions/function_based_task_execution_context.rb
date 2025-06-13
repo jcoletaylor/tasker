@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require_relative 'function_wrapper'
+
 module Tasker
-  module Views
+  module Functions
     # Function-based implementation of TaskExecutionContext
     # Maintains the same interface as the view-based model but uses SQL functions for performance
     class FunctionBasedTaskExecutionContext < FunctionWrapper
@@ -22,44 +24,44 @@ module Tasker
 
       # Class methods that use SQL functions
       def self.find(task_id)
-        sql = "SELECT * FROM get_task_execution_context($1)"
+        sql = 'SELECT * FROM get_task_execution_context($1::BIGINT)'
         binds = [task_id]
-        single_from_sql_function(sql, binds, "TaskExecutionContext Load")
+        single_from_sql_function(sql, binds, 'TaskExecutionContext Load')
       end
 
       def self.for_tasks(task_ids)
         return [] if task_ids.empty?
 
         # Use the batch function to avoid N+1 queries
-        sql = "SELECT * FROM get_task_execution_contexts_batch($1)"
+        sql = 'SELECT * FROM get_task_execution_contexts_batch($1::BIGINT[])'
         binds = [task_ids]
-        from_sql_function(sql, binds, "TaskExecutionContext Batch Load")
+        from_sql_function(sql, binds, 'TaskExecutionContext Batch Load')
       end
 
       # Scopes implemented as class methods
       def self.with_ready_steps
         # This would need task_ids to be efficient
-        raise NotImplementedError, "Use find(task_id) and check ready_steps > 0 instead"
+        raise NotImplementedError, 'Use find(task_id) and check ready_steps > 0 instead'
       end
 
       def self.blocked
-        raise NotImplementedError, "Use find(task_id) and check execution_status instead"
+        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
       end
 
       def self.complete
-        raise NotImplementedError, "Use find(task_id) and check execution_status instead"
+        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
       end
 
       def self.healthy
-        raise NotImplementedError, "Use find(task_id) and check health_status instead"
+        raise NotImplementedError, 'Use find(task_id) and check health_status instead'
       end
 
       def self.in_progress
-        raise NotImplementedError, "Use find(task_id) and check execution_status instead"
+        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
       end
 
       def self.needs_attention
-        raise NotImplementedError, "Use find(task_id) and check health_status instead"
+        raise NotImplementedError, 'Use find(task_id) and check health_status instead'
       end
 
       # Helper methods for workflow decision making (same as original model)

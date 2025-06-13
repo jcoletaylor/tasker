@@ -4,6 +4,7 @@ require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/event_publisher'
 require_relative '../task_handler/step_group'
 require_relative 'task_reenqueuer'
+require_relative '../functions/function_based_task_execution_context'
 
 module Tasker
   module Orchestration
@@ -59,71 +60,44 @@ module Tasker
 
       # Service method exposed for FinalizationDecisionMaker
       def complete_task(task, context)
-        # Ensure task is in in_progress state before transitioning to complete
-        current_state = task.state_machine.current_state
-        current_state = Constants::TaskStatuses::PENDING if current_state.blank?
-
-        if Rails.env.test?
-          Rails.logger.debug do
-            "TaskFinalizer: complete_task called for task #{task.task_id}, current_state: #{current_state}"
-          end
-        end
-
-        # Handle task in error state - must go through pending first
-        if current_state == Constants::TaskStatuses::ERROR
-          if Rails.env.test?
-            Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} in error state, transitioning to pending" }
-          end
-          unless safe_transition_to(task, Constants::TaskStatuses::PENDING)
-            if Rails.env.test?
-              Rails.logger.debug { "TaskFinalizer: FAILED to transition task #{task.task_id} from error to pending" }
-            end
-            return
-          end
-          current_state = Constants::TaskStatuses::PENDING
-        end
-
-        # Only transition to in_progress if not already there or beyond
-        unless [
-          Constants::TaskStatuses::IN_PROGRESS,
-          Constants::TaskStatuses::COMPLETE
-        ].include?(current_state)
-          if Rails.env.test?
-            Rails.logger.debug do
-              "TaskFinalizer: Task #{task.task_id} transitioning from #{current_state} to in_progress"
-            end
-          end
-          unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
-            if Rails.env.test?
-              Rails.logger.debug do
-                "TaskFinalizer: FAILED to transition task #{task.task_id} from #{current_state} to in_progress"
-              end
-            end
-            return
-          end
-        end
-
-        # Now transition to complete (only if not already complete)
-        unless current_state == Constants::TaskStatuses::COMPLETE
-          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
-          unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
-            if Rails.env.test?
-              Rails.logger.debug do
-                "TaskFinalizer: FAILED to transition task #{task.task_id} to complete"
-              end
-            end
-            return
-          end
-        end
-
-        publish_task_completed(
-          task,
+        payload = {
+          task: task,
           completed_at: Time.current,
           completion_percentage: context&.completion_percentage,
           total_steps: context&.total_steps,
           health_status: context&.health_status
-        )
+        }
 
+        # Ensure task is in in_progress state before transitioning to complete
+        current_state = task.state_machine.current_state || Constants::TaskStatuses::PENDING
+
+        Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} current state is #{current_state}" }
+        # If task is already complete, just publish the event
+        if current_state == Constants::TaskStatuses::COMPLETE
+          publish_task_completed(**payload)
+          return
+        end
+
+        # Handle task in error state - must go through pending first
+        if current_state == Constants::TaskStatuses::ERROR
+          return unless safe_transition_to(task, Constants::TaskStatuses::PENDING)
+
+          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning from error to pending" }
+          # Reset current state to pending for next transition
+          # This is necessary because the state machine might not allow direct transition from error to complete
+          # without going through pending first
+          current_state = Constants::TaskStatuses::PENDING
+        end
+        # Only transition to in_progress if not already there or beyond
+        return unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
+
+        # Now transition to complete (only if not already complete)
+        unless current_state == Constants::TaskStatuses::COMPLETE
+          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
+          return unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+        end
+
+        publish_task_completed(**payload)
         Rails.logger.info("TaskFinalizer: Task #{task.task_id} completed successfully (#{context&.total_steps} steps, #{context&.completion_percentage}% complete)")
       end
 
@@ -197,7 +171,7 @@ module Tasker
       end
 
       # Service class to check task blockage by errors
-      # Reduces complexity by organizing error checking logic
+      # Uses function-based implementation for reliable performance
       class BlockageChecker
         class << self
           # Check if the task is blocked by errors
@@ -206,9 +180,12 @@ module Tasker
           # @return [Boolean] True if task is blocked by errors
           def blocked_by_errors?(task)
             context = ContextManager.get_task_execution_context(task.task_id)
-            return use_fallback_logic(task) unless context
 
-            is_blocked = context&.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
+            # If no context is available, the task has no steps or doesn't exist
+            # In either case, it's not blocked by errors
+            return false unless context
+
+            is_blocked = context.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
 
             if is_blocked
               Rails.logger.debug do
@@ -219,62 +196,21 @@ module Tasker
             end
 
             is_blocked
-          rescue ActiveRecord::RecordNotFound
-            use_fallback_logic(task)
-          end
-
-          private
-
-          # Fallback logic when context is not available
-          #
-          # @param task [Tasker::Task] The task to check
-          # @return [Boolean] True if task is blocked by errors
-          def use_fallback_logic(task)
-            Rails.logger.warn("TaskFinalizer: TaskExecutionContext not found for task #{task.task_id}, using fallback logic")
-            error_steps = task.workflow_steps.failed
-
-            if error_steps.exists?
-              Rails.logger.debug do
-                "TaskFinalizer: Task #{task.task_id} is blocked by #{error_steps.count} error steps (fallback)"
-              end
-              Rails.logger.info("TaskFinalizer: Task #{task.task_id} blocked by #{error_steps.count} error steps: #{error_steps.joins(:named_step).pluck('tasker_named_steps.name')}")
-              true
-            else
-              false
-            end
           end
         end
       end
 
       # Service class to manage task execution context
-      # Reduces complexity by organizing context management logic
+      # Uses the new function-based implementations for reliable performance
       class ContextManager
         class << self
-          # Get TaskExecutionContext with fallback handling
-          #
-          # For operational queries during task processing, use the active scope for better performance.
-          # Falls back to the full view if not found in active scope.
+          # Get TaskExecutionContext using function-based implementation
           #
           # @param task_id [Integer] The task ID
-          # @return [Tasker::TaskExecutionContext, nil] The execution context or nil
+          # @return [Tasker::Functions::FunctionBasedTaskExecutionContext, nil] The execution context or nil
           def get_task_execution_context(task_id)
-            # TEMPORARY FIX: Always use the full view to avoid timing issues with active view
-            # The active view might filter out tasks at different points in the workflow
-            context = Tasker::TaskExecutionContext.find(task_id)
-
-            # DEBUG: Log what we actually found
-            if Rails.env.test?
-              Rails.logger.debug("TaskFinalizer: Found context for task #{task_id}: execution_status=#{context.execution_status}, ready_steps=#{context.ready_steps}, total_steps=#{context.total_steps}")
-
-              # Also check the raw step readiness data
-              ready_count = Tasker::StepReadinessStatus.ready_for_execution.where(task_id: task_id).count
-              Rails.logger.debug("TaskFinalizer: Raw StepReadinessStatus ready count for task #{task_id}: #{ready_count}")
-            end
-
-            context
-          rescue ActiveRecord::RecordNotFound
-            Rails.logger.warn("TaskFinalizer: TaskExecutionContext not found for task #{task_id}")
-            nil
+            # Use our new function-based implementation - it should always return data or nil
+            Tasker::Functions::FunctionBasedTaskExecutionContext.find(task_id)
           end
         end
       end
@@ -385,7 +321,8 @@ module Tasker
               log_message("TaskFinalizer: Task #{task.task_id} ready for synchronous step execution")
             else
               # In asynchronous mode, reenqueue immediately for step execution
-              finalizer.reenqueue_task_with_context(task, context, reason: Constants::TaskFinalization::ReenqueueReasons::READY_STEPS_AVAILABLE)
+              finalizer.reenqueue_task_with_context(task, context,
+                                                    reason: Constants::TaskFinalization::ReenqueueReasons::READY_STEPS_AVAILABLE)
             end
           end
 
@@ -397,9 +334,11 @@ module Tasker
           # @param finalizer [TaskFinalizer] The finalizer instance
           def handle_waiting_state(task, context, synchronous, finalizer)
             if synchronous
-              finalizer.pending_task(task, context, reason: Constants::TaskFinalization::PendingReasons::WAITING_FOR_DEPENDENCIES)
+              finalizer.pending_task(task, context,
+                                     reason: Constants::TaskFinalization::PendingReasons::WAITING_FOR_DEPENDENCIES)
             else
-              finalizer.reenqueue_task_with_context(task, context, reason: Constants::TaskFinalization::ReenqueueReasons::AWAITING_DEPENDENCIES)
+              finalizer.reenqueue_task_with_context(task, context,
+                                                    reason: Constants::TaskFinalization::ReenqueueReasons::AWAITING_DEPENDENCIES)
             end
           end
 

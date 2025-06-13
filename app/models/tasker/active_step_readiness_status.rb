@@ -12,7 +12,6 @@ module Tasker
     belongs_to :task, class_name: 'Tasker::Task'
 
     # Scopes for common query patterns - using view-calculated fields
-    scope :ready, -> { where(ready_for_execution: true) }
     scope :ready_for_execution, -> { where(ready_for_execution: true) }
     scope :pending, -> { where(current_state: 'pending') }
     scope :in_progress, -> { where(current_state: 'in_progress') }
@@ -27,29 +26,23 @@ module Tasker
     # Scopes for task-level filtering
     scope :for_task, ->(task_id) { where(task_id: task_id) }
     scope :for_tasks, ->(task_ids) { where(task_id: task_ids) }
-
-    # Class methods for common operations
-    class << self
-      # Get all ready steps across all active tasks
-      def all_ready_steps
-        ready_for_execution.includes(:workflow_step, :task)
-      end
-
-      # Get ready steps for a specific task
-      def ready_steps_for_task(task_id)
-        for_task(task_id).ready_for_execution
-      end
-
-      # Get steps blocked by dependencies
-      def blocked_by_dependencies
-        pending.where(dependencies_satisfied: false)
-      end
-
-      # Performance monitoring - get steps with many retries
-      def high_retry_steps(threshold = 3)
-        where(attempts: threshold..)
-      end
-    end
+    scope :all_steps_ready, -> { ready_for_execution.includes(:task, :workflow_step) }
+    scope :blocked_by_dependencies, -> { pending.where(dependencies_satisfied: false) }
+    scope :with_retry_limit, ->(limit) { where('retry_limit > ?', limit) }
+    scope :with_backoff, -> { where.not(backoff_request_seconds: nil) }
+    scope :with_last_attempted, -> { where.not(last_attempted_at: nil) }
+    scope :ready_steps_for_task, lambda { |task_id|
+      for_task(task_id).ready_for_execution.includes(:task, :workflow_step)
+    }
+    scope :high_attempts, lambda { |threshold = 3|
+      where(attempts: threshold..)
+    }
+    scope :has_dependencies, lambda {
+      where('total_parents > 0')
+    }
+    scope :dependencies_met, lambda {
+      where('total_parents = completed_parents')
+    }
 
     # Instance methods - delegate to view-calculated fields
     def ready_to_execute?
