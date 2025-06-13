@@ -49,19 +49,26 @@ BEGIN
       ELSE true
     END as retry_eligible,
 
-    -- Optimized Final Readiness Calculation
+    -- Simplified Final Readiness Calculation
     CASE
       WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
       AND (dep_edges.to_step_id IS NULL OR
            COUNT(dep_edges.from_step_id) = 0 OR
            COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
       AND (ws.attempts < COALESCE(ws.retry_limit, 3))
-      AND (ws.in_process = false)
+      AND (ws.retryable = true OR ws.retryable IS NULL)
+      AND (ws.in_process = false OR ws.in_process IS NULL)
       AND (
-        (ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL AND
-         ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()) OR
-        (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NULL) OR
-        (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NOT NULL AND
+        -- Check explicit backoff timing (most restrictive)
+        -- If backoff is set, the backoff period must have expired
+        CASE
+          WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
+            ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()
+          ELSE true  -- No explicit backoff set
+        END
+        AND
+        -- Then check failure-based backoff
+        (last_failure.created_at IS NULL OR
          last_failure.created_at + (LEAST(power(2, COALESCE(ws.attempts, 1)) * interval '1 second', interval '30 seconds')) <= NOW())
       )
       THEN true
@@ -118,7 +125,8 @@ BEGIN
     ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,
     current_state.to_state, last_failure.created_at,
     ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at,
-    ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id;
+    ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id,
+    current_state.workflow_step_id, last_failure.workflow_step_id;
 END;
 $$;
 
