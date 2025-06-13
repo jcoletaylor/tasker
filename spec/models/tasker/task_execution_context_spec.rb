@@ -12,7 +12,7 @@ RSpec.describe Tasker::TaskExecutionContext do
       task = create_dummy_task_for_orchestration
 
       # The view should return a single record for the task
-      context = described_class.find_by(task_id: task.task_id)
+      context = described_class.find(task.task_id)
 
       expect(context).to be_present
       expect(context.task_id).to eq(task.task_id)
@@ -32,7 +32,7 @@ RSpec.describe Tasker::TaskExecutionContext do
       # Test the statistics are reasonable for our dummy workflow structure
       task = create_dummy_task_for_orchestration
 
-      context = described_class.find_by(task_id: task.task_id)
+      context = described_class.find(task.task_id)
 
       # Basic sanity checks on counts (using correct column names)
       expect(context.total_steps).to eq(4)
@@ -57,7 +57,7 @@ RSpec.describe Tasker::TaskExecutionContext do
     it 'provides meaningful execution status and recommendations' do
       task = create_dummy_task_for_orchestration
 
-      context = described_class.find_by(task_id: task.task_id)
+      context = described_class.find(task.task_id)
 
       # Execution status should be one of the valid enum values
       expect(Tasker::Constants::VALID_TASK_EXECUTION_STATUSES).to include(context.execution_status)

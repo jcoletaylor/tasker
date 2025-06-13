@@ -147,13 +147,18 @@ module WorkflowTestingHelpers
 
     start_time = Time.current
 
-    workflows.each do |workflow|
+    workflows.each_with_index do |workflow, index|
+      puts "[DEBUG] Processing workflow #{index + 1}/#{workflows.count}: #{workflow.name} (ID: #{workflow.task_id})"
+
       # Bypass backoff timing for test environment to enable immediate retries
       TestOrchestration::TestCoordinator.bypass_backoff_for_testing([workflow])
 
       # Get the task handler for this workflow using base name extraction
       handler_name = extract_base_handler_name(workflow.name)
+      puts "[DEBUG] Handler name: #{handler_name}"
+
       handler = Tasker::HandlerFactory.instance.get(handler_name)
+      puts "[DEBUG] Handler found: #{handler.class.name}"
 
       # Configure the handler to use test strategies
       handler.workflow_coordinator_strategy = TestOrchestration::TestWorkflowCoordinator
@@ -165,7 +170,37 @@ module WorkflowTestingHelpers
         max_retry_attempts: 5
       )
 
+      puts "[DEBUG] Starting workflow execution..."
+
+      # Debug SQL function directly before execution
+      puts "[DEBUG] Checking SQL function output for task #{workflow.task_id}:"
+      step_statuses = Tasker::StepReadinessStatus.for_task(workflow.task_id)
+      step_statuses.each do |status|
+        puts "[DEBUG]   SQL Function - Step #{status.name}: state=#{status.current_state}, retry_eligible=#{status.retry_eligible}, attempts=#{status.attempts}/#{status.retry_limit}, ready=#{status.ready_for_execution}"
+      end
+
+      # Also check the raw database state
+      puts "[DEBUG] Raw database state for task #{workflow.task_id}:"
+      workflow.workflow_steps.each do |step|
+        puts "[DEBUG]   DB - Step #{step.name}: attempts=#{step.attempts}, retry_limit=#{step.retry_limit}, retryable=#{step.retryable}, in_process=#{step.in_process}, processed=#{step.processed}"
+
+        # Check transitions
+        latest_transition = step.workflow_step_transitions.where(most_recent: true).first
+        puts "[DEBUG]     Latest transition: #{latest_transition&.to_state} at #{latest_transition&.created_at}"
+      end
+
       success = test_coordinator.execute_workflow_with_retries(workflow, handler)
+      puts "[DEBUG] Workflow execution result: #{success ? 'SUCCESS' : 'FAILED'}"
+
+      # Check final workflow state
+      workflow.reload
+      puts "[DEBUG] Final workflow status: #{workflow.status}"
+      puts "[DEBUG] Steps processed: #{workflow.workflow_steps.count(&:processed)}/#{workflow.workflow_steps.count}"
+
+      # Debug step states
+      workflow.workflow_steps.each do |step|
+        puts "[DEBUG]   Step #{step.name}: status=#{step.status}, processed=#{step.processed}, attempts=#{step.attempts}"
+      end
 
       if success
         results[:successful_workflows] += 1
@@ -174,93 +209,193 @@ module WorkflowTestingHelpers
       end
 
       # Count processed steps
-      workflow.reload
       results[:total_steps_processed] += workflow.workflow_steps.count(&:processed)
+      puts "[DEBUG] ---"
     end
 
     results[:total_execution_time] = Time.current - start_time
     results[:average_execution_time] = results[:total_execution_time] / workflows.count if workflows.count > 0
+
+    puts "[DEBUG] FINAL RESULTS: #{results[:successful_workflows]} successful, #{results[:failed_workflows]} failed"
     results
   end
 
-  # Test database view performance with large datasets
+  # Test SQL function performance with realistic data distributions
+  #
+  # This method focuses on validating that our SQL functions:
+  # 1. Scale linearly with task count (not exponentially)
+  # 2. Batch operations are significantly faster than individual calls
+  # 3. Handle complex dependency graphs efficiently
+  # 4. Maintain consistent performance across different workflow patterns
   #
   # @param task_count [Integer] Number of tasks to test with
-  # @param workflows [Array<Tasker::Task>] Optional pre-created workflows to use instead of creating new ones
-  # @return [Hash] Performance metrics for each view
-  def benchmark_database_views(task_count: 50, workflows: nil)
+  # @param workflows [Array<Tasker::Task>] Optional pre-created workflows to use
+  # @return [Hash] Performance metrics proving function scalability
+  def benchmark_function_performance(task_count: 50, workflows: nil)
     # Use provided workflows or create diverse dataset
     workflows ||= create_diverse_workflow_dataset(count: task_count)
+    all_task_ids = workflows.map(&:task_id)
 
-    # Partially complete some workflows to create realistic state distribution
-    workflows.sample(task_count / 3).each do |workflow|
-      # Get steps in dependency order (topological sort) to avoid guard failures
-      steps_in_order = get_steps_in_dependency_order(workflow)
+    # Create realistic data distribution by directly updating database
+    # This simulates production-like state without complex state machine logic
+    create_realistic_workflow_states(workflows)
 
-      # Complete a random number of steps from the beginning of the dependency chain
-      steps_to_complete_count = rand(1..3).clamp(1, steps_in_order.length)
-      steps_to_complete = steps_in_order.first(steps_to_complete_count)
+    function_benchmarks = {}
 
-      steps_to_complete.each do |step|
-        # Complete dependencies first to ensure state machine guards pass
-        complete_step_dependencies_safely(step)
+    # Test 1: Individual function calls - should scale linearly
+    start_time = Time.current
+    individual_readiness_results = all_task_ids.map { |task_id|
+      Tasker::StepReadinessStatus.for_task(task_id)
+    }.flatten
+    individual_time = Time.current - start_time
 
-        # Use proper state machine transitions to avoid invalid transitions
-        current_state = step.state_machine.current_state
-        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+    function_benchmarks[:individual_step_readiness] = {
+      execution_time: individual_time,
+      record_count: individual_readiness_results.count,
+      tasks_queried: all_task_ids.count,
+      avg_time_per_task: individual_time / all_task_ids.count,
+      query_type: 'Individual SQL function calls',
+      scalability_metric: individual_time / task_count # Should be roughly constant
+    }
 
-        # Only transition if not already complete
-        completion_states = [
-          Tasker::Constants::WorkflowStepStatuses::COMPLETE,
-          Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-        ]
+    # Test 2: Batch function calls - should be significantly faster
+    start_time = Time.current
+    batch_readiness_results = Tasker::StepReadinessStatus.for_tasks(all_task_ids)
+    batch_time = Time.current - start_time
 
-        next if completion_states.include?(current_state)
+    function_benchmarks[:batch_step_readiness] = {
+      execution_time: batch_time,
+      record_count: batch_readiness_results.count,
+      tasks_queried: all_task_ids.count,
+      avg_time_per_task: batch_time / all_task_ids.count,
+      query_type: 'Batch SQL function',
+      scalability_metric: batch_time / task_count,
+      performance_improvement: individual_time / batch_time # Should be > 2x
+    }
 
-        # Transition to in_progress first if not already there
-        unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-          step.state_machine.transition_to!(:in_progress)
-        end
+    # Test 3: TaskExecutionContext aggregation performance
+    start_time = Time.current
+    individual_context_results = all_task_ids.map { |task_id|
+      Tasker::TaskExecutionContext.find(task_id)
+    }.compact
+    individual_context_time = Time.current - start_time
 
-        # Then transition to complete
-        step.state_machine.transition_to!(:complete)
-        step.update_columns(processed: true, processed_at: Time.current)
+    start_time = Time.current
+    batch_context_results = Tasker::TaskExecutionContext.for_tasks(all_task_ids)
+    batch_context_time = Time.current - start_time
+
+    function_benchmarks[:task_execution_context_comparison] = {
+      individual_time: individual_context_time,
+      batch_time: batch_context_time,
+      record_count: batch_context_results.count,
+      tasks_queried: all_task_ids.count,
+      performance_improvement: individual_context_time / batch_context_time,
+      query_type: 'Aggregation function comparison'
+    }
+
+    # Test 4: Complex dependency analysis (what we're really testing)
+    start_time = Time.current
+    complex_workflows = workflows.select { |w| w.workflow_steps.count > 5 }
+    complex_task_ids = complex_workflows.map(&:task_id)
+
+    if complex_task_ids.any?
+      complex_readiness = Tasker::StepReadinessStatus.for_tasks(complex_task_ids)
+      complex_time = Time.current - start_time
+
+      function_benchmarks[:complex_dependency_analysis] = {
+        execution_time: complex_time,
+        record_count: complex_readiness.count,
+        tasks_queried: complex_task_ids.count,
+        avg_steps_per_task: complex_readiness.count.to_f / complex_task_ids.count,
+        query_type: 'Complex dependency graph analysis',
+        complexity_handling: complex_time / complex_readiness.count # Time per dependency calculation
+      }
+    end
+
+    # Test 5: Validate our core hypothesis - functions outperform views
+    start_time = Time.current
+    dag_relationships = Tasker::StepDagRelationship.all.to_a
+    view_time = Time.current - start_time
+
+    function_benchmarks[:view_comparison] = {
+      view_execution_time: view_time,
+      function_execution_time: batch_time,
+      view_record_count: dag_relationships.count,
+      function_record_count: batch_readiness_results.count,
+      performance_advantage: view_time / batch_time, # Functions should be faster
+      query_type: 'Function vs View performance comparison'
+    }
+
+    function_benchmarks
+  end
+
+  # Create realistic workflow state distribution for performance testing
+  # This directly updates the database to simulate production-like conditions
+  # without the overhead of state machine transitions
+  def create_realistic_workflow_states(workflows)
+    # Distribute workflows across realistic states:
+    # 60% pending/in_progress, 30% complete, 10% error
+
+    completed_count = (workflows.count * 0.3).to_i
+    error_count = (workflows.count * 0.1).to_i
+
+    # Complete some workflows (and their steps)
+    workflows.first(completed_count).each do |workflow|
+      # Add task completion transition
+      workflow.task_transitions.create!(
+        to_state: Tasker::Constants::TaskStatuses::COMPLETE,
+        sort_key: 1,
+        most_recent: true,
+        metadata: { completed_by: 'performance_test_setup' }
+      )
+
+      # Mark all steps as complete
+      workflow.workflow_steps.update_all(
+        processed: true,
+        processed_at: Time.current,
+        updated_at: Time.current
+      )
+
+      # Add completion transitions for steps
+      workflow.workflow_steps.each do |step|
+        step.workflow_step_transitions.create!(
+          to_state: Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+          sort_key: 1,
+          most_recent: true,
+          metadata: { completed_by: 'performance_test_setup' }
+        )
       end
     end
 
-    # Benchmark each view
-    view_benchmarks = {}
+    # Set some workflows to error state
+    error_workflows = workflows[completed_count, error_count]
+    error_workflows.each do |workflow|
+      # Add task error transition
+      workflow.task_transitions.create!(
+        to_state: Tasker::Constants::TaskStatuses::ERROR,
+        sort_key: 1,
+        most_recent: true,
+        metadata: { error_message: 'Simulated failure for performance testing' }
+      )
 
-    # TaskWorkflowSummary performance
-    start_time = Time.current
-    summaries = Tasker::TaskWorkflowSummary.all.to_a
-    view_benchmarks[:task_workflow_summary] = {
-      execution_time: Time.current - start_time,
-      record_count: summaries.count,
-      query_complexity: 'HIGH - multiple aggregations and joins'
-    }
+      # Mark some steps as failed
+      failed_steps = workflow.workflow_steps.sample([workflow.workflow_steps.count / 2, 1].max)
+      failed_steps.each do |step|
+        step.workflow_step_transitions.create!(
+          to_state: Tasker::Constants::WorkflowStepStatuses::ERROR,
+          sort_key: 1,
+          most_recent: true,
+          metadata: { error_message: 'Simulated failure for performance testing' }
+        )
+      end
+    end
 
-    # StepReadinessStatus performance
-    start_time = Time.current
-    readiness_statuses = Tasker::StepReadinessStatus.all.to_a
-    view_benchmarks[:step_readiness_status] = {
-      execution_time: Time.current - start_time,
-      record_count: readiness_statuses.count,
-      query_complexity: 'MEDIUM - dependency calculations'
-    }
-
-    # StepDagRelationship performance
-    start_time = Time.current
-    dag_relationships = Tasker::StepDagRelationship.all.to_a
-    view_benchmarks[:step_dag_relationships] = {
-      execution_time: Time.current - start_time,
-      record_count: dag_relationships.count,
-      query_complexity: 'HIGH - recursive depth calculations'
-    }
-
-    view_benchmarks
+    # Remaining workflows stay in pending/in_progress (default state)
+    # They already have the default pending state from creation
+    Rails.logger.info "Performance test setup: #{completed_count} complete, #{error_count} error, #{workflows.count - completed_count - error_count} pending"
   end
 
+  ##############################################################################
   # Create and execute idempotency test scenarios
   #
   # @param re_execution_count [Integer] Number of times to re-execute
@@ -453,10 +588,10 @@ module WorkflowTestingHelpers
     setup_test_coordination
 
     begin
-      # 1. Database view performance testing
+      # 1. Function performance testing
       if options[:include_performance]
-        Rails.logger.info 'Running database view performance tests...'
-        report[:results][:database_view_performance] = benchmark_database_views(
+        Rails.logger.info 'Running function performance tests...'
+        report[:results][:function_performance] = benchmark_function_performance(
           task_count: options[:dataset_size]
         )
       end

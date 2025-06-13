@@ -16,8 +16,8 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
     Tasker::Task.destroy_all
   end
 
-  describe 'Large Dataset Creation and Database View Testing' do
-    it 'creates complex workflows with various DAG patterns and tests database views' do
+  describe 'Large Dataset Creation and SQL Function Performance Testing' do
+    it 'creates complex workflows with various DAG patterns and tests SQL function performance' do
       # Create a diverse dataset of 30 workflows with different patterns
       workflows = create_diverse_workflow_dataset(count: 30)
 
@@ -26,32 +26,42 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
       patterns = workflows.map { |w| w.context['pattern'] }.uniq
       expect(patterns.count).to be >= 4 # Should have multiple different patterns
 
-      # Test that database views handle the large dataset correctly
-      view_performance = benchmark_database_views(task_count: workflows.count, workflows: workflows)
+      # Test that SQL functions handle the large dataset correctly and efficiently
+      function_performance = benchmark_function_performance(task_count: workflows.count, workflows: workflows)
 
-      # Verify reasonable performance (adjust thresholds as needed)
-      expect(view_performance[:task_workflow_summary][:execution_time]).to be < 3.seconds
-      expect(view_performance[:step_readiness_status][:execution_time]).to be < 3.seconds
-      expect(view_performance[:step_dag_relationships][:execution_time]).to be < 3.seconds
+      # Verify reasonable performance - functions should be fast
+      expect(function_performance[:individual_step_readiness][:execution_time]).to be < 3.seconds
+      expect(function_performance[:batch_step_readiness][:execution_time]).to be < 1.second
+
+      # Verify batch operations are faster than individual calls
+      individual_time = function_performance[:individual_step_readiness][:execution_time]
+      batch_time = function_performance[:batch_step_readiness][:execution_time]
+      expect(batch_time).to be < individual_time
 
       # Verify correct record counts
-      expect(view_performance[:task_workflow_summary][:record_count]).to eq(30)
-      expect(view_performance[:step_readiness_status][:record_count]).to be > 150 # ~6+ steps per task
-      expect(view_performance[:step_dag_relationships][:record_count]).to be > 150
+      expect(function_performance[:individual_step_readiness][:record_count]).to be > 150 # ~6+ steps per task
+      expect(function_performance[:batch_step_readiness][:record_count]).to be > 150
 
-      puts "\n=== Database View Performance Results ==="
-      view_performance.each do |view_name, metrics|
-        puts "#{view_name}: #{metrics[:execution_time].round(3)}s, #{metrics[:record_count]} records"
+      puts "\n=== SQL Function Performance Results ==="
+      function_performance.each do |test_name, metrics|
+        case test_name
+        when :individual_step_readiness, :batch_step_readiness
+          puts "#{test_name}: #{metrics[:execution_time].round(3)}s, #{metrics[:record_count]} records"
+        when :task_execution_context_comparison
+          puts "#{test_name}: individual=#{metrics[:individual_time].round(3)}s, batch=#{metrics[:batch_time].round(3)}s"
+        when :view_comparison
+          puts "#{test_name}: functions=#{metrics[:function_execution_time].round(3)}s, views=#{metrics[:view_execution_time].round(3)}s"
+        end
       end
     end
 
-    it 'verifies database view accuracy with complex DAG relationships' do
+    it 'verifies SQL function accuracy with complex DAG relationships' do
       # Create specific workflows with known structures
       diamond_task = create(:diamond_workflow_task)
       tree_task = create(:tree_workflow_task)
       mixed_task = create(:mixed_workflow_task)
 
-      # Test DAG relationship view accuracy
+      # Test DAG relationship view accuracy (still using view for DAG analysis)
       diamond_dag = Tasker::StepDagRelationship.where(task_id: diamond_task.task_id)
 
       # Diamond workflow should have exactly 1 root step
@@ -62,11 +72,11 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
       leaf_steps = diamond_dag.where(is_leaf_step: true)
       expect(leaf_steps.count).to be >= 1
 
-      # Test readiness calculation
-      readiness_statuses = Tasker::StepReadinessStatus.where(task_id: diamond_task.task_id)
+      # Test SQL function readiness calculation accuracy
+      readiness_statuses = Tasker::StepReadinessStatus.for_task(diamond_task.task_id)
 
       # Root steps should be ready (no dependencies)
-      root_ready = readiness_statuses.where(total_parents: 0)
+      root_ready = readiness_statuses.select { |s| s.total_parents == 0 }
       expect(root_ready.all?(&:ready_for_execution)).to be true
 
       puts "\n=== DAG Structure Analysis ==="
@@ -216,23 +226,29 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
       results = report[:results]
 
       # Verify all test categories were included
-      expect(results[:database_view_performance]).to be_present
+      expect(results[:function_performance]).to be_present
       expect(results[:orchestration_performance]).to be_present
       expect(results[:failure_scenario_performance]).to be_present
       expect(results[:idempotency_analysis]).to be_present
       expect(results[:summary]).to be_present
 
       # Verify meaningful data in each category
-      expect(results[:database_view_performance]).to have_key(:task_workflow_summary)
       expect(results[:orchestration_performance][:total_workflows]).to eq(15)
       expect(results[:idempotency_analysis][:total_executions]).to be >= 3
 
       puts "\n=== COMPREHENSIVE WORKFLOW TESTING REPORT ==="
       puts "Test timestamp: #{report[:test_timestamp]}"
       puts "Dataset size: #{report[:test_configuration][:dataset_size]}"
-      puts "\n--- Database View Performance ---"
-      results[:database_view_performance].each do |view, metrics|
-        puts "  #{view}: #{metrics[:execution_time].round(3)}s (#{metrics[:record_count]} records)"
+      puts "\n--- SQL Function Performance ---"
+      results[:function_performance].each do |function_test, metrics|
+        case function_test
+        when :individual_step_readiness, :batch_step_readiness
+          puts "  #{function_test}: #{metrics[:execution_time].round(3)}s (#{metrics[:record_count]} records)"
+        when :task_execution_context_comparison
+          puts "  #{function_test}: individual=#{metrics[:individual_time].round(3)}s, batch=#{metrics[:batch_time].round(3)}s"
+        when :view_comparison
+          puts "  #{function_test}: functions=#{metrics[:function_execution_time].round(3)}s, views=#{metrics[:view_execution_time].round(3)}s"
+        end
       end
 
       puts "\n--- Orchestration Performance ---"
@@ -306,17 +322,6 @@ RSpec.describe 'Workflow Testing Infrastructure Demo', :integration do
         # Verify production-like behavior
         total_successful = initial_metrics[:successful_workflows] + reenqueue_metrics[:successful_workflows]
         expect(total_successful).to be >= 10 # Most should succeed
-
-        # Verify database views handle the mixed states correctly
-        final_summaries = Tasker::TaskWorkflowSummary.where(
-          task_id: production_workflows.map(&:task_id)
-        )
-
-        expect(final_summaries.count).to eq(10)
-
-        # Should have a mix of parallelism potential insights
-        parallelism_potentials = final_summaries.map(&:parallelism_potential).uniq
-        expect(parallelism_potentials.count).to be >= 1
 
         puts "\n=== Production Workload Simulation ==="
         puts "Initial batch: #{initial_metrics[:successful_workflows]}/#{initial_metrics[:total_workflows]} successful"

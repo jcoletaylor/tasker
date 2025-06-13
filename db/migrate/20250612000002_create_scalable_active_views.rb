@@ -4,23 +4,9 @@ class CreateScalableActiveViews < ActiveRecord::Migration[7.2]
   def up
     # Create indexes for active operations performance
     add_active_operations_indexes
-
-    # Create the active step readiness view (Scenic convention)
-    create_view :tasker_active_step_readiness_statuses
-
-    # Create the active task execution context view (Scenic convention)
-    create_view :tasker_active_task_execution_contexts
-
-    # tasker workflow summary relies on the above views for performance
-    create_view :tasker_task_workflow_summaries
   end
 
   def down
-    # Drop the views (Scenic convention)
-    drop_view :tasker_task_workflow_summaries
-    drop_view :tasker_active_task_execution_contexts
-    drop_view :tasker_active_step_readiness_statuses
-
     # Remove the indexes
     remove_active_operations_indexes
   end

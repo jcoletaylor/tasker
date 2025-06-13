@@ -15,26 +15,24 @@ RSpec.describe Tasker::StepReadinessStatus do
       expect(task).to be_persisted, 'Task should be persisted'
       expect(task.workflow_steps.count).to eq(4), 'Task should have 4 workflow steps'
 
-      # The view should return records for all steps (4 steps in dummy workflow)
-      readiness_statuses = described_class.where(task_id: task.task_id)
+      # Use the function-based approach to get readiness data
+      readiness_statuses = described_class.for_task(task.task_id)
 
       if readiness_statuses.count == 0
-        # Debugging: Check if view has any data at all
-        total_view_records = described_class.count
+        # Debugging: Check if function has any data at all
         all_tasks = Tasker::Task.count
         all_steps = Tasker::WorkflowStep.count
 
         raise <<~DEBUG
-          StepReadinessStatus view returned 0 records for task #{task.task_id}.
+          StepReadinessStatus function returned 0 records for task #{task.task_id}.
 
           Debug info:
-          - Total view records: #{total_view_records}
           - Total tasks in DB: #{all_tasks}
           - Total steps in DB: #{all_steps}
           - Task workflow_steps count: #{task.workflow_steps.count}
           - First step ID: #{task.workflow_steps.first&.workflow_step_id || 'none'}
 
-          This suggests the view query isn't working or the factory isn't creating the expected data.
+          This suggests the function query isn't working or the factory isn't creating the expected data.
         DEBUG
       end
 
@@ -58,17 +56,18 @@ RSpec.describe Tasker::StepReadinessStatus do
       # step-one, step-two (independent), step-three (depends on step-two), step-four (depends on step-three)
       task = create_dummy_task_for_orchestration
 
-      readiness_statuses = described_class.where(task_id: task.task_id)
+      # Use function-based approach to get readiness data
+      readiness_statuses = described_class.for_task(task.task_id)
 
-      # Skip this test if no view data is available (as it requires complex dependency analysis)
-      skip 'StepReadinessStatus view has no data for dependency analysis' if readiness_statuses.count == 0
+      # Skip this test if no function data is available (as it requires complex dependency analysis)
+      skip 'StepReadinessStatus function has no data for dependency analysis' if readiness_statuses.count == 0
 
-      # The root steps (no dependencies) should be ready for execution
-      root_steps = readiness_statuses.where(total_parents: 0)
+      # The root steps (no dependencies) should be ready for execution - use Ruby array methods
+      root_steps = readiness_statuses.select { |status| status.total_parents == 0 }
 
       if root_steps.count != 2
         # Debugging: Show actual parent counts
-        parent_counts = readiness_statuses.pluck(:total_parents)
+        parent_counts = readiness_statuses.map(&:total_parents)
         raise "Expected 2 root steps (total_parents = 0), got #{root_steps.count}. All parent counts: #{parent_counts}"
       end
 
@@ -77,8 +76,8 @@ RSpec.describe Tasker::StepReadinessStatus do
         expect(root_step.ready_for_execution).to be true
       end
 
-      # The dependent steps should not be ready yet
-      dependent_steps = readiness_statuses.where('total_parents > 0')
+      # The dependent steps should not be ready yet - use Ruby array methods
+      dependent_steps = readiness_statuses.select { |status| status.total_parents > 0 }
       expect(dependent_steps.count).to eq(2) # step-three and step-four have dependencies
       dependent_steps.each do |dependent_step|
         expect(dependent_step.ready_for_execution).to be false

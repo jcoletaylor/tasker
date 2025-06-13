@@ -46,7 +46,6 @@ module Tasker
       Tasker::Functions::FunctionBasedStepReadinessStatus.complete_for_task(task_id)
     end
 
-
     # For backward compatibility, maintain the active method but point to function-based implementation
     def self.active
       Tasker::Functions::FunctionBasedStepReadinessStatus

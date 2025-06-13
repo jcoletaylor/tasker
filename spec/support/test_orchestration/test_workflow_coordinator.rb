@@ -55,8 +55,10 @@ module TestOrchestration
         end
 
         # Check if task has ready steps that can be executed
-        ready_steps = Tasker::StepReadinessStatus.where(task_id: task.task_id, ready_for_execution: true)
-        all_steps = Tasker::StepReadinessStatus.where(task_id: task.task_id)
+        # Use function-based approach with Ruby array filtering
+        all_step_statuses = Tasker::StepReadinessStatus.for_task(task.task_id)
+        ready_steps = all_step_statuses.select(&:ready_for_execution)
+        all_steps = all_step_statuses  # Use the same data for logging
 
         log_execution("Task #{task.task_id} step readiness analysis:")
         all_steps.each do |step_status|
