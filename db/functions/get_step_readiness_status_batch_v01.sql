@@ -44,7 +44,7 @@ BEGIN
     -- Simplified Retry & Backoff Analysis
     CASE
       WHEN ws.attempts >= COALESCE(ws.retry_limit, 3) THEN false
-      WHEN ws.attempts > 0 AND ws.retryable = false THEN false
+      WHEN ws.attempts > 0 AND COALESCE(ws.retryable, true) = false THEN false
       WHEN last_failure.created_at IS NULL THEN true
       WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
         ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()
@@ -55,19 +55,27 @@ BEGIN
       ELSE true
     END as retry_eligible,
 
-    -- Optimized Final Readiness Calculation
+    -- Simplified Final Readiness Calculation
     CASE
       WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
+      AND (ws.processed = false OR ws.processed IS NULL)  -- CRITICAL: Only unprocessed steps can be ready
       AND (dep_edges.to_step_id IS NULL OR
            COUNT(dep_edges.from_step_id) = 0 OR
            COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
       AND (ws.attempts < COALESCE(ws.retry_limit, 3))
-      AND (ws.in_process = false)
+      AND (COALESCE(ws.retryable, true) = true)
+      AND (ws.in_process = false OR ws.in_process IS NULL)
       AND (
-        (ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL AND
-         ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()) OR
-        (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NULL) OR
-        (ws.backoff_request_seconds IS NULL AND last_failure.created_at IS NOT NULL AND
+        -- Check explicit backoff timing (most restrictive)
+        -- If backoff is set, the backoff period must have expired
+        CASE
+          WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
+            ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()
+          ELSE true  -- No explicit backoff set
+        END
+        AND
+        -- Then check failure-based backoff
+        (last_failure.created_at IS NULL OR
          last_failure.created_at + (LEAST(power(2, COALESCE(ws.attempts, 1)) * interval '1 second', interval '30 seconds')) <= NOW())
       )
       THEN true
@@ -116,8 +124,9 @@ BEGIN
     AND last_failure.most_recent = true
 
   -- KEY PERFORMANCE IMPROVEMENT: Filter by multiple tasks at once
+  -- CRITICAL FIX: Include ALL steps for task execution context calculation
+  -- Only filter by processed status when specifically querying for ready steps
   WHERE ws.task_id = ANY(input_task_ids)
-    AND (ws.processed = false OR ws.processed IS NULL)
 
   GROUP BY
     ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,

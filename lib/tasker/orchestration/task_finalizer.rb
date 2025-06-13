@@ -88,16 +88,16 @@ module Tasker
           # without going through pending first
           current_state = Constants::TaskStatuses::PENDING
         end
-        # Only transition to in_progress if not already there or beyond
-        return unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
-
-        # Now transition to complete (only if not already complete)
-        unless current_state == Constants::TaskStatuses::COMPLETE
-          Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
-          return unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+        # Ensure task is in in_progress state (transition only if not already there)
+        unless current_state == Constants::TaskStatuses::IN_PROGRESS
+          return unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
         end
 
-        publish_task_completed(**payload)
+        # Now transition to complete - always attempt this transition
+        Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
+        return unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+
+        publish_task_completed(task, **payload)
         Rails.logger.info("TaskFinalizer: Task #{task.task_id} completed successfully (#{context&.total_steps} steps, #{context&.completion_percentage}% complete)")
       end
 
