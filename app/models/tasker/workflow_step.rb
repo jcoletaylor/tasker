@@ -33,7 +33,7 @@ module Tasker
     delegate :name, to: :named_step
 
     has_one :step_dag_relationship, class_name: 'Tasker::StepDagRelationship', primary_key: :workflow_step_id
-    # Note: step_readiness_status is now accessed via function-based approach, not ActiveRecord association
+    # NOTE: step_readiness_status is now accessed via function-based approach, not ActiveRecord association
 
     # Optimized scopes for efficient querying using state machine transitions
     scope :completed, lambda {

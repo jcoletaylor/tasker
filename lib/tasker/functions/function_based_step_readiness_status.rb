@@ -135,6 +135,28 @@ module Tasker
         end
       end
 
+      def to_h
+        {
+          workflow_step_id: workflow_step_id,
+          task_id: task_id,
+          named_step_id: named_step_id,
+          name: name,
+          current_state: current_state,
+          dependencies_satisfied: dependencies_satisfied,
+          retry_eligible: retry_eligible,
+          ready_for_execution: ready_for_execution,
+          last_failure_at: last_failure_at,
+          next_retry_at: next_retry_at,
+          total_parents: total_parents,
+          completed_parents: completed_parents,
+          attempts: attempts,
+          retry_limit: retry_limit,
+          backoff_request_seconds: backoff_request_seconds,
+          last_attempted_at: last_attempted_at,
+          detailed_status: detailed_status
+        }
+      end
+
       def detailed_status
         {
           ready: ready_for_execution,

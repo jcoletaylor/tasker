@@ -50,5 +50,10 @@ module Tasker
     def self.active
       Tasker::Functions::FunctionBasedStepReadinessStatus
     end
+
+    def self.all_steps_complete_for_task?(task)
+      complete = Tasker::Functions::FunctionBasedStepReadinessStatus.complete_for_task(task.task_id)
+      complete.length == task.workflow_steps.count
+    end
   end
 end

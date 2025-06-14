@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 # Debug script to investigate workflow execution issues
 ENV['RAILS_ENV'] = 'test'
@@ -14,7 +15,7 @@ end
 # Reload to pick up all factories
 FactoryBot.reload
 
-puts "=== Debugging Workflow Execution Issue ==="
+puts '=== Debugging Workflow Execution Issue ==='
 
 # Create a simple task to debug
 task = FactoryBot.create(:task, :with_steps, name: 'dummy_task')
@@ -53,7 +54,7 @@ if context
   puts "Completed steps: #{context.completed_steps}"
   puts "Failed steps: #{context.failed_steps}"
 else
-  puts "No task execution context found"
+  puts 'No task execution context found'
 end
 
 # Check viable steps using the WorkflowStep method

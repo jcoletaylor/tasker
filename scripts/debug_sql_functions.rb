@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Debug script to examine SQL function behavior
 # Run this in Rails console
 
@@ -5,7 +7,7 @@
 require 'factory_bot_rails'
 include FactoryBot::Syntax::Methods
 
-puts "=== SQL Function Debug ==="
+puts '=== SQL Function Debug ==='
 
 # Create a dummy task using the same factory as the failing test
 task = create(:dummy_task_workflow, :for_orchestration, with_dependencies: true)
@@ -16,7 +18,7 @@ puts "Task Status: #{task.status}"
 puts "Number of steps: #{task.workflow_steps.count}"
 
 puts "\n=== Step Information ==="
-task.workflow_steps.includes(:named_step, :workflow_step_transitions).each do |step|
+task.workflow_steps.includes(:named_step, :workflow_step_transitions).find_each do |step|
   puts "Step: #{step.named_step.name} (ID: #{step.workflow_step_id})"
   puts "  - processed: #{step.processed}"
   puts "  - in_process: #{step.in_process}"
@@ -29,13 +31,13 @@ task.workflow_steps.includes(:named_step, :workflow_step_transitions).each do |s
     latest = step.workflow_step_transitions.order(:sort_key).last
     puts "  - latest transition: #{latest.to_state} (most_recent: #{latest.most_recent})"
   else
-    puts "  - NO TRANSITIONS"
+    puts '  - NO TRANSITIONS'
   end
   puts
 end
 
 puts "\n=== Dependencies ==="
-task.workflow_steps.includes(:named_step).each do |step|
+task.workflow_steps.includes(:named_step).find_each do |step|
   parents = step.parents
   puts "Step: #{step.named_step.name}"
   puts "  - Parents: #{parents.map { |p| p.named_step.name }.join(', ')}"
@@ -61,7 +63,7 @@ begin
     puts "  - attempts: #{row['attempts']}"
     puts
   end
-rescue => e
+rescue StandardError => e
   puts "ERROR calling SQL function: #{e.message}"
   puts e.backtrace.first(5)
 end
@@ -81,7 +83,7 @@ begin
     puts "  - completed_parents: #{status.completed_parents}"
     puts
   end
-rescue => e
+rescue StandardError => e
   puts "ERROR with Ruby model: #{e.message}"
   puts e.backtrace.first(5)
 end
@@ -89,21 +91,21 @@ end
 puts "\n=== Task Finalizer Test ==="
 begin
   # Test what TaskFinalizer sees
-  finalizer = Tasker::Orchestration::TaskFinalizer.new
+  Tasker::Orchestration::TaskFinalizer.new
 
   # Get task execution context
   context = Tasker::TaskExecutionContext.for_task(task.task_id).first
   if context
-    puts "Task Execution Context:"
+    puts 'Task Execution Context:'
     puts "  - ready_steps: #{context.ready_steps}"
     puts "  - in_progress_steps: #{context.in_progress_steps}"
     puts "  - completed_steps: #{context.completed_steps}"
     puts "  - failed_steps: #{context.failed_steps}"
     puts "  - total_steps: #{context.total_steps}"
   else
-    puts "NO TASK EXECUTION CONTEXT FOUND"
+    puts 'NO TASK EXECUTION CONTEXT FOUND'
   end
-rescue => e
+rescue StandardError => e
   puts "ERROR with TaskFinalizer test: #{e.message}"
   puts e.backtrace.first(5)
 end

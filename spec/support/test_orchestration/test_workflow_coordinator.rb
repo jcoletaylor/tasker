@@ -58,7 +58,7 @@ module TestOrchestration
         # Use function-based approach with Ruby array filtering
         all_step_statuses = Tasker::StepReadinessStatus.for_task(task.task_id)
         ready_steps = all_step_statuses.select(&:ready_for_execution)
-        all_steps = all_step_statuses  # Use the same data for logging
+        all_steps = all_step_statuses # Use the same data for logging
 
         log_execution("Task #{task.task_id} step readiness analysis:")
         all_steps.each do |step_status|
@@ -176,7 +176,7 @@ module TestOrchestration
         thread_id: Thread.current.object_id
       }
 
-      Rails.logger.info("[TestWorkflowCoordinator] #{message}")
+      Rails.logger.debug { "[TestWorkflowCoordinator] #{message}" }
     end
   end
 end

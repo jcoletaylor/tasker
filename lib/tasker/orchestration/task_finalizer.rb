@@ -74,6 +74,8 @@ module Tasker
         Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} current state is #{current_state}" }
         # If task is already complete, just publish the event
         if current_state == Constants::TaskStatuses::COMPLETE
+          return unless task.update({ complete: true })
+
           publish_task_completed(**payload)
           return
         end
@@ -88,17 +90,24 @@ module Tasker
           # without going through pending first
           current_state = Constants::TaskStatuses::PENDING
         end
+
         # Ensure task is in in_progress state (transition only if not already there)
-        unless current_state == Constants::TaskStatuses::IN_PROGRESS
-          return unless safe_transition_to(task, Constants::TaskStatuses::IN_PROGRESS)
+        if current_state != Constants::TaskStatuses::IN_PROGRESS && !safe_transition_to(task,
+                                                                                        Constants::TaskStatuses::IN_PROGRESS)
+          return
         end
 
         # Now transition to complete - always attempt this transition
-        Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" } if Rails.env.test?
-        return unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
-
+        Rails.logger.debug { "TaskFinalizer: Task #{task.task_id} transitioning to complete" }
+        ActiveRecord::Base.transaction do
+          task.update!({ complete: true })
+          unless safe_transition_to(task, Constants::TaskStatuses::COMPLETE)
+            raise ActiveRecord::Rollback, "Failed to transition task #{task.task_id} to complete state"
+          end
+        end
         publish_task_completed(task, **payload)
-        Rails.logger.info("TaskFinalizer: Task #{task.task_id} completed successfully (#{context&.total_steps} steps, #{context&.completion_percentage}% complete)")
+        Rails.logger.info("TaskFinalizer: Task #{task.task_id} completed successfully (#{context&.total_steps} steps,
+                            #{context&.completion_percentage}% complete)")
       end
 
       # Service method exposed for FinalizationDecisionMaker
@@ -185,17 +194,7 @@ module Tasker
             # In either case, it's not blocked by errors
             return false unless context
 
-            is_blocked = context.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
-
-            if is_blocked
-              Rails.logger.debug do
-                "TaskFinalizer: Task #{task.task_id} is blocked - #{context.failed_steps} failed steps, #{context.ready_steps} ready steps"
-              end
-
-              Rails.logger.info("TaskFinalizer: Task #{task.task_id} blocked by #{context.failed_steps} failed steps (#{context.health_status} health)")
-            end
-
-            is_blocked
+            context.execution_status == Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
           end
         end
       end
@@ -251,48 +250,39 @@ module Tasker
           # @param synchronous [Boolean] Whether this is synchronous processing
           # @param finalizer [TaskFinalizer] The finalizer instance for callbacks
           def make_finalization_decision(task, context, synchronous, finalizer)
-            log_message("TaskFinalizer: Making decision for task #{task.task_id} with execution_status: #{context&.execution_status}")
+            Rails.logger.info("TaskFinalizer: Making decision for task #{task.task_id} with execution_status: #{context&.execution_status}")
 
             # DEBUG: Log detailed context information
             if context
-              log_message("TaskFinalizer: Task #{task.task_id} context details - ready_steps: #{context.ready_steps}, total_steps: #{context.total_steps}, pending_steps: #{context.pending_steps}, in_progress_steps: #{context.in_progress_steps}, completed_steps: #{context.completed_steps}, failed_steps: #{context.failed_steps}")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} context details - ready_steps: #{context.ready_steps}, total_steps: #{context.total_steps}, pending_steps: #{context.pending_steps}, in_progress_steps: #{context.in_progress_steps}, completed_steps: #{context.completed_steps}, failed_steps: #{context.failed_steps}")
             end
 
             # Handle nil context case
             unless context
-              log_message("TaskFinalizer: Task #{task.task_id} - no context available, handling as unclear state")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - no context available, handling as unclear state")
               UnclearStateHandler.handle(task, context, finalizer)
               return
             end
 
             case context.execution_status
             when Constants::TaskExecution::ExecutionStatus::ALL_COMPLETE
-              log_message("TaskFinalizer: Task #{task.task_id} - calling complete_task")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - calling complete_task")
               finalizer.complete_task(task, context)
             when Constants::TaskExecution::ExecutionStatus::BLOCKED_BY_FAILURES
-              log_message("TaskFinalizer: Task #{task.task_id} - calling error_task")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - calling error_task")
               finalizer.error_task(task, context)
             when Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS
-              log_message("TaskFinalizer: Task #{task.task_id} - has ready steps, should execute them")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - has ready steps, should execute them")
               handle_ready_steps_state(task, context, synchronous, finalizer)
             when Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
-              log_message("TaskFinalizer: Task #{task.task_id} - waiting for dependencies")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - waiting for dependencies")
               handle_waiting_state(task, context, synchronous, finalizer)
             when Constants::TaskExecution::ExecutionStatus::PROCESSING
-              log_message("TaskFinalizer: Task #{task.task_id} - handling processing state")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - handling processing state")
               handle_processing_state(task, context, synchronous, finalizer)
             else
-              log_message("TaskFinalizer: Task #{task.task_id} - handling unclear state")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} - handling unclear state")
               UnclearStateHandler.handle(task, context, finalizer)
-            end
-          end
-
-          # Helper method to log messages that work in test environment
-          def log_message(message)
-            if Rails.env.test?
-              Rails.logger.debug message
-            else
-              Rails.logger.info(message)
             end
           end
 
@@ -307,7 +297,7 @@ module Tasker
           def handle_ready_steps_state(task, context, synchronous, finalizer)
             # When we have ready steps, we should execute them, not just wait
             # For now, transition task to in_progress and reenqueue for step execution
-            log_message("TaskFinalizer: Task #{task.task_id} has #{context.ready_steps} ready steps - transitioning to in_progress")
+            Rails.logger.info("TaskFinalizer: Task #{task.task_id} has #{context.ready_steps} ready steps - transitioning to in_progress")
 
             # Transition task to in_progress to indicate work is happening
             current_state = task.state_machine.current_state
@@ -318,7 +308,7 @@ module Tasker
             if synchronous
               # In synchronous mode, we can't actually execute steps here
               # The calling code should handle step execution
-              log_message("TaskFinalizer: Task #{task.task_id} ready for synchronous step execution")
+              Rails.logger.info("TaskFinalizer: Task #{task.task_id} ready for synchronous step execution")
             else
               # In asynchronous mode, reenqueue immediately for step execution
               finalizer.reenqueue_task_with_context(task, context,

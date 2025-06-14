@@ -38,32 +38,6 @@ module Tasker
         from_sql_function(sql, binds, 'TaskExecutionContext Batch Load')
       end
 
-      # Scopes implemented as class methods
-      def self.with_ready_steps
-        # This would need task_ids to be efficient
-        raise NotImplementedError, 'Use find(task_id) and check ready_steps > 0 instead'
-      end
-
-      def self.blocked
-        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
-      end
-
-      def self.complete
-        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
-      end
-
-      def self.healthy
-        raise NotImplementedError, 'Use find(task_id) and check health_status instead'
-      end
-
-      def self.in_progress
-        raise NotImplementedError, 'Use find(task_id) and check execution_status instead'
-      end
-
-      def self.needs_attention
-        raise NotImplementedError, 'Use find(task_id) and check health_status instead'
-      end
-
       # Helper methods for workflow decision making (same as original model)
       def has_work_to_do?
         Constants::ACTIONABLE_TASK_EXECUTION_STATUSES.include?(execution_status) ||
@@ -110,7 +84,8 @@ module Tasker
           completion_percentage: completion_percentage,
           status: execution_status,
           health: health_status,
-          recommended_action: recommended_action
+          recommended_action: recommended_action,
+          progress_details: progress_details
         }
       end
 

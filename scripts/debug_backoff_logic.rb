@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 # Test script to verify backoff logic in SQL function
 # Run this in Rails console or with rails runner
 
 require 'factory_bot_rails'
 include FactoryBot::Syntax::Methods
 
-puts "=== Testing Backoff Logic in SQL Function ==="
+puts '=== Testing Backoff Logic in SQL Function ==='
 
 # Create a task with two steps
 task = create(:dummy_task_workflow, :for_orchestration, with_dependencies: true)
@@ -51,5 +53,5 @@ results.each do |row|
 end
 
 puts "\n=== Expected Result ==="
-puts "step-one should have ready_for_execution: false (due to backoff)"
-puts "step-two should have ready_for_execution: true (no backoff)"
+puts 'step-one should have ready_for_execution: false (due to backoff)'
+puts 'step-two should have ready_for_execution: true (no backoff)'

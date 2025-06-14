@@ -17,5 +17,13 @@ module Tasker
     def self.active
       Tasker::Functions::FunctionBasedTaskExecutionContext
     end
+
+    def initialize(task_id)
+      @task_id = task_id
+    end
+
+    def workflow_summary
+      @workflow_summary ||= Tasker::Functions::FunctionBasedTaskExecutionContext.find(@task_id).workflow_summary
+    end
   end
 end

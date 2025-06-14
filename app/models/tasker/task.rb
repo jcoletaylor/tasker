@@ -65,8 +65,7 @@ module Tasker
 
     delegate :name, to: :named_task
     delegate :to_mermaid, to: :diagram
-
-    has_one :task_execution_context, class_name: 'Tasker::TaskExecutionContext', primary_key: :task_id
+    delegate :workflow_summary, to: :task_execution_context
 
     # State machine integration
     def state_machine
@@ -130,6 +129,7 @@ module Tasker
       includes(:named_task)
         .includes(workflow_steps: %i[named_step parents children])
         .includes(task_annotations: %i[annotation_type])
+        .includes(:task_transitions)
     }
 
     # Creates a task with default values from a task request and saves it to the database
@@ -206,6 +206,23 @@ module Tasker
     # @return [Tasker::TaskDiagram] The diagram representation of this task
     def diagram(base_url = nil)
       @diagram ||= Tasker::TaskDiagram.new(self, base_url)
+    end
+
+    # Checks if all steps in the task are complete
+    #
+    # @return [Boolean] True if all steps are complete, false otherwise
+    def all_steps_complete?
+      Tasker::StepReadinessStatus.all_steps_complete_for_task?(self)
+    end
+
+    def task_execution_context
+      @task_execution_context ||= Tasker::TaskExecutionContext.new(task_id)
+    end
+
+    def reload
+      super
+      @task_execution_context = nil
+      @diagram = nil
     end
 
     private

@@ -130,6 +130,14 @@ module WorkflowTestingHelpers
     Tasker::Testing::ConfigurableFailureHandler.clear_attempt_registry!
   end
 
+  def allow_debug?
+    @allow_debug ||= ENV['TASKER_DEBUG'] == 'true'
+  end
+
+  def debug_log(message)
+    puts "[DEBUG] #{message}" if allow_debug?
+  end
+
   # Process workflows synchronously and gather performance metrics
   #
   # @param workflows [Array<Tasker::Task>] Workflows to process
@@ -148,17 +156,17 @@ module WorkflowTestingHelpers
     start_time = Time.current
 
     workflows.each_with_index do |workflow, index|
-      puts "[DEBUG] Processing workflow #{index + 1}/#{workflows.count}: #{workflow.name} (ID: #{workflow.task_id})"
+      debug_log "Processing workflow #{index + 1}/#{workflows.count}: #{workflow.name} (ID: #{workflow.task_id})"
 
       # Bypass backoff timing for test environment to enable immediate retries
       TestOrchestration::TestCoordinator.bypass_backoff_for_testing([workflow])
 
       # Get the task handler for this workflow using base name extraction
       handler_name = extract_base_handler_name(workflow.name)
-      puts "[DEBUG] Handler name: #{handler_name}"
+      debug_log "Handler name: #{handler_name}"
 
       handler = Tasker::HandlerFactory.instance.get(handler_name)
-      puts "[DEBUG] Handler found: #{handler.class.name}"
+      debug_log "Handler found: #{handler.class.name}"
 
       # Configure the handler to use test strategies
       handler.workflow_coordinator_strategy = TestOrchestration::TestWorkflowCoordinator
@@ -170,36 +178,36 @@ module WorkflowTestingHelpers
         max_retry_attempts: 5
       )
 
-      puts "[DEBUG] Starting workflow execution..."
+      debug_log 'Starting workflow execution...'
 
       # Debug SQL function directly before execution
-      puts "[DEBUG] Checking SQL function output for task #{workflow.task_id}:"
+      debug_log "Checking SQL function output for task #{workflow.task_id}:"
       step_statuses = Tasker::StepReadinessStatus.for_task(workflow.task_id)
       step_statuses.each do |status|
-        puts "[DEBUG]   SQL Function - Step #{status.name}: state=#{status.current_state}, retry_eligible=#{status.retry_eligible}, attempts=#{status.attempts}/#{status.retry_limit}, ready=#{status.ready_for_execution}"
+        debug_log "  SQL Function - Step #{status.name}: state=#{status.current_state}, retry_eligible=#{status.retry_eligible}, attempts=#{status.attempts}/#{status.retry_limit}, ready=#{status.ready_for_execution}"
       end
 
       # Also check the raw database state
-      puts "[DEBUG] Raw database state for task #{workflow.task_id}:"
+      debug_log "Raw database state for task #{workflow.task_id}:"
       workflow.workflow_steps.each do |step|
-        puts "[DEBUG]   DB - Step #{step.name}: attempts=#{step.attempts}, retry_limit=#{step.retry_limit}, retryable=#{step.retryable}, in_process=#{step.in_process}, processed=#{step.processed}"
+        debug_log "  DB - Step #{step.name}: attempts=#{step.attempts}, retry_limit=#{step.retry_limit}, retryable=#{step.retryable}, in_process=#{step.in_process}, processed=#{step.processed}"
 
         # Check transitions
         latest_transition = step.workflow_step_transitions.where(most_recent: true).first
-        puts "[DEBUG]     Latest transition: #{latest_transition&.to_state} at #{latest_transition&.created_at}"
+        debug_log "    Latest transition: #{latest_transition&.to_state} at #{latest_transition&.created_at}"
       end
 
       success = test_coordinator.execute_workflow_with_retries(workflow, handler)
-      puts "[DEBUG] Workflow execution result: #{success ? 'SUCCESS' : 'FAILED'}"
+      debug_log "Workflow execution result: #{success ? 'SUCCESS' : 'FAILED'}"
 
       # Check final workflow state
       workflow.reload
-      puts "[DEBUG] Final workflow status: #{workflow.status}"
-      puts "[DEBUG] Steps processed: #{workflow.workflow_steps.count(&:processed)}/#{workflow.workflow_steps.count}"
+      debug_log "Final workflow status: #{workflow.status}"
+      debug_log "Steps processed: #{workflow.workflow_steps.count(&:processed)}/#{workflow.workflow_steps.count}"
 
       # Debug step states
       workflow.workflow_steps.each do |step|
-        puts "[DEBUG]   Step #{step.name}: status=#{step.status}, processed=#{step.processed}, attempts=#{step.attempts}"
+        debug_log "  Step #{step.name}: status=#{step.status}, processed=#{step.processed}, attempts=#{step.attempts}"
       end
 
       if success
@@ -210,13 +218,12 @@ module WorkflowTestingHelpers
 
       # Count processed steps
       results[:total_steps_processed] += workflow.workflow_steps.count(&:processed)
-      puts "[DEBUG] ---"
     end
 
     results[:total_execution_time] = Time.current - start_time
     results[:average_execution_time] = results[:total_execution_time] / workflows.count if workflows.count > 0
 
-    puts "[DEBUG] FINAL RESULTS: #{results[:successful_workflows]} successful, #{results[:failed_workflows]} failed"
+    debug_log "FINAL RESULTS: #{results[:successful_workflows]} successful, #{results[:failed_workflows]} failed"
     results
   end
 
@@ -244,9 +251,9 @@ module WorkflowTestingHelpers
 
     # Test 1: Individual function calls - should scale linearly
     start_time = Time.current
-    individual_readiness_results = all_task_ids.map { |task_id|
+    individual_readiness_results = all_task_ids.map do |task_id|
       Tasker::StepReadinessStatus.for_task(task_id)
-    }.flatten
+    end.flatten
     individual_time = Time.current - start_time
 
     function_benchmarks[:individual_step_readiness] = {
@@ -275,9 +282,9 @@ module WorkflowTestingHelpers
 
     # Test 3: TaskExecutionContext aggregation performance
     start_time = Time.current
-    individual_context_results = all_task_ids.map { |task_id|
+    all_task_ids.filter_map do |task_id|
       Tasker::TaskExecutionContext.find(task_id)
-    }.compact
+    end
     individual_context_time = Time.current - start_time
 
     start_time = Time.current

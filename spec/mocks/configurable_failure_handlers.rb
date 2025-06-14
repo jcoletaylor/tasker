@@ -5,8 +5,13 @@ require_relative '../../lib/tasker/step_handler/base'
 module Tasker
   module Testing
     # Debug logging helper - can be controlled via environment variable
+
+    def self.allow_debug?
+      @allow_debug ||= ENV['TASKER_DEBUG'] == 'true'
+    end
+
     def self.debug_log(message)
-      puts "[DEBUG] #{message}" if ENV['TASKER_DEBUG'] == 'true'
+      puts "[DEBUG] #{message}" if allow_debug?
     end
 
     # ConfigurableFailureHandler - A step handler that can be configured to fail

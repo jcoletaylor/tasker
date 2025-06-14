@@ -168,50 +168,6 @@ RSpec.describe Tasker::StateMachine::TaskStateMachine do
   end
 
   describe 'class methods' do
-    describe '.task_has_incomplete_steps?' do
-      context 'with incomplete steps' do
-        let(:task_with_steps) { create(:task, :with_steps) }
-
-        it 'returns true when task has pending steps' do
-          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
-        end
-
-        it 'returns true when task has in_progress steps' do
-          task_with_steps.workflow_steps.first.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
-        end
-
-        it 'returns true when task has error steps' do
-          step = task_with_steps.workflow_steps.first
-          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-          step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::ERROR)
-          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be true
-        end
-      end
-
-      context 'with complete steps' do
-        let(:task_with_steps) { create(:task, :with_steps) }
-
-        before do
-          # Complete all steps
-          task_with_steps.workflow_steps.each do |step|
-            step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-            step.state_machine.transition_to!(Tasker::Constants::WorkflowStepStatuses::COMPLETE)
-          end
-        end
-
-        it 'returns false when all steps are complete' do
-          expect(described_class.task_has_incomplete_steps?(task_with_steps)).to be false
-        end
-      end
-
-      context 'with no steps' do
-        it 'returns false when task has no steps' do
-          expect(described_class.task_has_incomplete_steps?(task)).to be false
-        end
-      end
-    end
-
     describe '.safe_fire_event' do
       it 'handles event firing without errors' do
         expect { described_class.safe_fire_event('test.event', { test: 'data' }) }.not_to raise_error

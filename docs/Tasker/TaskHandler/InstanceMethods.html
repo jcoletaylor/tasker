@@ -326,6 +326,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#reenqueuer_strategy=-instance_method" title="#reenqueuer_strategy= (instance method)">#<strong>reenqueuer_strategy=</strong>(strategy)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Set the reenqueuer strategy (for testing).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#start_task-instance_method" title="#start_task (instance method)">#<strong>start_task</strong>(task)  &#x21d2; Boolean </a>
     
 
@@ -366,6 +390,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Update annotations based on processed steps.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#workflow_coordinator_strategy=-instance_method" title="#workflow_coordinator_strategy= (instance method)">#<strong>workflow_coordinator_strategy=</strong>(strategy)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Set the workflow coordinator strategy (for testing).</p>
 </div></span>
   
 </li>
@@ -456,10 +504,10 @@
       <pre class="lines">
 
 
-101</pre>
+89</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 101</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 89</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_establish_step_dependencies_and_defaults'>establish_step_dependencies_and_defaults</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_steps'>steps</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
     </td>
@@ -533,13 +581,13 @@
       <pre class="lines">
 
 
-48
 49
 50
-51</pre>
+51
+52</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 48</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 49</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_sequence'>get_sequence</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
   <span class='comment'># Delegate to orchestration system for implementation + events
@@ -634,19 +682,19 @@
       <pre class="lines">
 
 
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130</pre>
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 121</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 109</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_step_handler'>get_step_handler</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No registered class for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_step_handler_class_map'>step_handler_class_map</span><span class='lbracket'>[</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rbracket'>]</span>
@@ -677,7 +725,7 @@
     <p class="note returns_void">This method returns an undefined value.</p>
 <p>Handle a task’s execution</p>
 
-<p>This is the main entry point for processing a task. Uses proven orchestration delegation patterns for reliable workflow execution.</p>
+<p>This is the main entry point for processing a task. Delegates to WorkflowCoordinator for the execution loop to enable strategy composition.</p>
 
 
   </div>
@@ -711,49 +759,23 @@
       <pre class="lines">
 
 
-72
 73
 74
 75
 76
 77
 78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91</pre>
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 72</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_start_task'>start_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
 
-  <span class='comment'># PROVEN APPROACH: Process steps iteratively until completion or error
-</span>  <span class='id identifier rubyid_all_processed_steps'>all_processed_steps</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
-
-  <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_reload'>reload</span>
-    <span class='id identifier rubyid_sequence'>sequence</span> <span class='op'>=</span> <span class='id identifier rubyid_get_sequence'>get_sequence</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_viable_steps'>viable_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_find_viable_steps'>find_viable_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='rparen'>)</span>
-    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
-
-    <span class='id identifier rubyid_processed_steps'>processed_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_handle_viable_steps'>handle_viable_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_all_processed_steps'>all_processed_steps</span><span class='period'>.</span><span class='id identifier rubyid_concat'>concat</span><span class='lparen'>(</span><span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='rparen'>)</span>
-    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_blocked_by_errors?'>blocked_by_errors?</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-
-  <span class='comment'># DELEGATE: Finalize via TaskFinalizer (fires events internally)
-</span>  <span class='id identifier rubyid_finalize'>finalize</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_get_sequence'>get_sequence</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_all_processed_steps'>all_processed_steps</span><span class='rparen'>)</span>
+  <span class='comment'># DELEGATE: Use WorkflowCoordinator for execution loop
+</span>  <span class='comment'># This enables strategy pattern composition for testing
+</span>  <span class='id identifier rubyid_workflow_coordinator'>workflow_coordinator</span><span class='period'>.</span><span class='id identifier rubyid_execute_workflow'>execute_workflow</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -858,12 +880,12 @@
       <pre class="lines">
 
 
-141
-142
-143</pre>
+129
+130
+131</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 141</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 129</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_one_step'>handle_one_step</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_step_executor'>step_executor</span><span class='period'>.</span><span class='id identifier rubyid_execute_single_step'>execute_single_step</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span>
@@ -939,18 +961,81 @@
       <pre class="lines">
 
 
-36
 37
 38
-39</pre>
+39
+40</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 37</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='comment'># Delegate to orchestration system
 </span>  <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Orchestration/TaskInitializer.html" title="Tasker::Orchestration::TaskInitializer (class)">TaskInitializer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'><span class='object_link'><a href="../Orchestration/TaskInitializer.html#initialize_task!-class_method" title="Tasker::Orchestration::TaskInitializer.initialize_task! (method)">initialize_task!</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="reenqueuer_strategy=-instance_method">
+  
+    #<strong>reenqueuer_strategy=</strong>(strategy)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Set the reenqueuer strategy (for testing)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>strategy</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The reenqueuer strategy class</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+183
+184
+185
+186</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 183</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_reenqueuer_strategy='>reenqueuer_strategy=</span><span class='lparen'>(</span><span class='id identifier rubyid_strategy'>strategy</span><span class='rparen'>)</span>
+  <span class='ivar'>@reenqueuer_strategy</span> <span class='op'>=</span> <span class='id identifier rubyid_strategy'>strategy</span>
+  <span class='ivar'>@workflow_coordinator</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='comment'># Reset memoized instance
+</span><span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1040,13 +1125,13 @@
       <pre class="lines">
 
 
-60
 61
 62
-63</pre>
+63
+64</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 60</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 61</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_task'>start_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
   <span class='comment'># Delegate to orchestration system
@@ -1137,12 +1222,75 @@
       <pre class="lines">
 
 
-112</pre>
+100</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 112</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 100</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update_annotations'>update_annotations</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_steps'>steps</span><span class='rparen'>)</span><span class='semicolon'>;</span> <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="workflow_coordinator_strategy=-instance_method">
+  
+    #<strong>workflow_coordinator_strategy=</strong>(strategy)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Set the workflow coordinator strategy (for testing)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>strategy</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The workflow coordinator strategy class</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+175
+176
+177
+178</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/task_handler/instance_methods.rb', line 175</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_workflow_coordinator_strategy='>workflow_coordinator_strategy=</span><span class='lparen'>(</span><span class='id identifier rubyid_strategy'>strategy</span><span class='rparen'>)</span>
+  <span class='ivar'>@workflow_coordinator_strategy</span> <span class='op'>=</span> <span class='id identifier rubyid_strategy'>strategy</span>
+  <span class='ivar'>@workflow_coordinator</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='comment'># Reset memoized instance
+</span><span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1153,9 +1301,9 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  8 15:37:56 2025 by
+  Generated on Fri Jun 13 21:16:23 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.37 (ruby-3.2.4).
+  0.9.37 (ruby-3.4.2).
 </div>
 
     </div>

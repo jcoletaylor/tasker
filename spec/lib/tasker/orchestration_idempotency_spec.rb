@@ -123,7 +123,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
     it 'handles step failures with proper retry logic' do
       # Create task with configurable failure handlers
       task_handler = Tasker::HandlerFactory.instance.get(ConfigurableFailureTask::TASK_NAME)
-      task = task_handler.initialize_task!(failure_task_request)
+      task = Tasker::Task.create_with_defaults!(failure_task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       # Process task - should handle retries automatically
       result = TestOrchestration::TestCoordinator.process_task_synchronously(task)
@@ -154,7 +155,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       )
 
       task_handler = Tasker::HandlerFactory.instance.get(ConfigurableFailureTask::TASK_NAME)
-      task = task_handler.initialize_task!(failure_task_request)
+      task = Tasker::Task.create_with_defaults!(failure_task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       # Process task - should fail due to retry limit
       result = TestOrchestration::TestCoordinator.process_task_synchronously(task, max_attempts: 3)
@@ -177,7 +179,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
       )
 
       task_handler = Tasker::HandlerFactory.instance.get(ConfigurableFailureTask::TASK_NAME)
-      task = task_handler.initialize_task!(failure_task_request)
+      task = Tasker::Task.create_with_defaults!(failure_task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       TestOrchestration::TestCoordinator.process_task_synchronously(task)
 
@@ -199,7 +202,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
 
     it 'produces identical results on re-execution (idempotent behavior)' do
       task_handler = Tasker::HandlerFactory.instance.get(ConfigurableFailureTask::TASK_NAME)
-      task = task_handler.initialize_task!(idempotent_task_request)
+      task = Tasker::Task.create_with_defaults!(idempotent_task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       # First execution
       result1 = TestOrchestration::TestCoordinator.process_task_synchronously(task)
@@ -245,7 +249,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
 
     it 'tracks execution counts correctly across re-executions' do
       task_handler = Tasker::HandlerFactory.instance.get(ConfigurableFailureTask::TASK_NAME)
-      task = task_handler.initialize_task!(idempotent_task_request)
+      task = Tasker::Task.create_with_defaults!(idempotent_task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       # Execute multiple times
       3.times do
@@ -373,7 +378,8 @@ RSpec.describe 'Orchestration and Idempotency Testing' do
         reason: 'testing_error_handling'
       )
 
-      task = task_handler.initialize_task!(task_request)
+      task = Tasker::Task.create_with_defaults!(task_request)
+      Tasker::Orchestration::StepSequenceFactory.create_sequence_for_task!(task, task_handler)
 
       # Ensure task was created properly
       expect(task).to be_present

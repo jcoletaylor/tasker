@@ -83,34 +83,6 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
                                      Tasker::Constants::TaskStatuses::COMPLETE
                                    ])
     end
-
-    it 'demonstrates the declarative vs imperative approach' do
-      # OLD WAY (Imperative) - what we're replacing:
-      # loop do
-      #   task.reload
-      #   sequence = get_sequence(task)
-      #   viable_steps = find_viable_steps(task, sequence)
-      #   break if viable_steps.empty?
-      #   processed_steps = handle_viable_steps(task, sequence, viable_steps)
-      #   break if blocked_by_errors?(task, sequence, processed_steps)
-      # end
-      # finalize(task, final_sequence, all_processed_steps)
-
-      # NEW WAY (Event-Driven) - what we're implementing:
-      # Just trigger the initial state transition:
-      initial_status = task.status
-
-      # The declarative approach: just change state and let events handle the rest
-      expect do
-        task.state_machine.transition_to!(Tasker::Constants::TaskStatuses::IN_PROGRESS)
-      end.to change { task.reload.status }.from(initial_status)
-
-      # The rest happens automatically via events:
-      # 1. Publisher publishes workflow events
-      # 2. ViableStepDiscovery finds steps, publishes via publisher
-      # 3. StepExecutor executes steps, publishes completion via publisher
-      # 4. Events cascade until TaskFinalizer completes the task
-    end
   end
 
   describe 'Component Responsibilities' do
