@@ -214,6 +214,143 @@ module OrderProcess
 end
 ```
 
+### API Step Handler Implementation
+
+**The `process` Method - Your Extension Point**:
+
+API step handlers use the `process` method as the developer extension point. The framework handles all orchestration, error handling, retries, and event publishing automatically:
+
+```ruby
+module OrderProcess
+  module StepHandler
+    class FetchUserProfileHandler < Tasker::StepHandler::Api
+      include OrderProcess::ApiUtils
+
+      def process(task, sequence, step)
+        # Simply implement your HTTP request logic
+        # Framework handles retries, timeouts, and error handling automatically
+        user_id = task.context['user_id']
+        connection.get("/users/#{user_id}/profile")
+      end
+    end
+  end
+end
+```
+
+**Making Different Types of API Requests**:
+
+```ruby
+module OrderProcess
+  module StepHandler
+    # GET request example
+    class FetchOrderHandler < Tasker::StepHandler::Api
+      def process(task, sequence, step)
+        order_id = task.context['order_id']
+        connection.get("/orders/#{order_id}")
+      end
+    end
+
+    # POST request example
+    class CreatePaymentHandler < Tasker::StepHandler::Api
+      def process(task, sequence, step)
+        payment_data = {
+          amount: task.context['amount'],
+          currency: task.context['currency'],
+          customer_id: task.context['customer_id']
+        }
+        connection.post('/payments', payment_data)
+      end
+    end
+
+    # PUT request with data from previous steps
+    class UpdateInventoryHandler < Tasker::StepHandler::Api
+      def process(task, sequence, step)
+        # Get data from previous steps
+        order_items = get_previous_step_data(sequence, 'fetch_order', 'items')
+
+        inventory_updates = order_items.map do |item|
+          { product_id: item['product_id'], quantity: -item['quantity'] }
+        end
+
+        connection.put('/inventory/bulk-update', { updates: inventory_updates })
+      end
+    end
+  end
+end
+```
+
+**Custom Response Processing**:
+
+Override the `process_results` method to customize how API responses are processed and stored:
+
+```ruby
+module OrderProcess
+  module StepHandler
+    class FetchUserDataHandler < Tasker::StepHandler::Api
+      def process(task, sequence, step)
+        user_id = task.context['user_id']
+        connection.get("/users/#{user_id}/profile")
+      end
+
+      # Override to customize response processing
+      def process_results(step, process_output, initial_results)
+        # process_output is the Faraday::Response from your process method
+        if process_output.status == 200
+          data = JSON.parse(process_output.body)
+          step.results = {
+            profile: data['user_profile'],
+            preferences: data['preferences'],
+            last_login: data['last_login_at'],
+            api_response_time: process_output.headers['x-response-time']
+          }
+        else
+          # Let framework handle error - this will trigger retries if configured
+          raise "API error: #{process_output.status} - #{process_output.body}"
+        end
+      end
+    end
+  end
+end
+```
+
+**Setting Results Directly in `process`**:
+
+You can also set `step.results` directly in your `process` method if you prefer:
+
+```ruby
+module OrderProcess
+  module StepHandler
+    class ProcessOrderHandler < Tasker::StepHandler::Api
+      def process(task, sequence, step)
+        response = connection.post('/orders', task.context)
+
+        # Set results directly - framework will respect this
+        if response.status == 201
+          order_data = JSON.parse(response.body)
+          step.results = {
+            order_id: order_data['id'],
+            status: order_data['status'],
+            created_at: order_data['created_at']
+          }
+        end
+
+        response  # Return response for framework processing
+      end
+    end
+  end
+end
+```
+
+**Key API Step Handler Principles**:
+
+1. **Implement `process` method** - This is your extension point for HTTP request logic
+2. **Use the `connection` object** - Pre-configured Faraday connection with retry/timeout handling
+3. **Return the response** - Let the framework handle response processing and error detection
+4. **Override `process_results` for custom processing** - Transform responses while preserving framework behavior
+5. **Set `step.results` for custom data** - Either in `process` or `process_results`
+6. **Raise exceptions for failures** - Framework handles error states and retry orchestration
+7. **Never override `handle`** - This is framework-only coordination code
+
 ### Step Handler Features
 
 - **Automatic Result Storage**: Return values automatically stored in `step.results`
@@ -682,6 +819,264 @@ bundle exec rails db:migrate
 - **Backup Strategy**: Implement coordinated backup strategies if data consistency across databases is required
 - **Network Latency**: Consider network latency if databases are on different servers
 
+## Extensibility & Advanced Patterns
+
+### Custom Step Handler Types
+
+Beyond the built-in `Base` and `Api` step handlers, you can create specialized step handler types for common patterns in your application:
+
+```ruby
+# Base class for database-heavy operations
+module YourApp
+  module StepHandler
+    class DatabaseBase < Tasker::StepHandler::Base
+      protected
+
+      def with_transaction(&block)
+        ActiveRecord::Base.transaction(&block)
+      rescue ActiveRecord::StatementInvalid => e
+        # Transform database errors for consistent handling
+        raise Tasker::RetryableError, "Database operation failed: #{e.message}"
+      end
+
+      def bulk_insert(model_class, records, batch_size: 1000)
+        records.each_slice(batch_size) do |batch|
+          model_class.insert_all(batch)
+        end
+      end
+    end
+  end
+end
+
+# Usage in your step handlers
+class ProcessBulkOrdersHandler < YourApp::StepHandler::DatabaseBase
+  def process(task, sequence, step)
+    orders_data = get_previous_step_data(sequence, 'fetch_orders', 'orders')
+
+    with_transaction do
+      bulk_insert(Order, orders_data, batch_size: 500)
+    end
+
+    { processed_count: orders_data.size }
+  end
+end
+```
+
+### Custom Event Publishing Patterns
+
+Create reusable event publishing patterns for consistent observability:
+
+```ruby
+# Mixin for consistent business event publishing
+module BusinessEventPublisher
+  extend ActiveSupport::Concern
+
+  def publish_business_event(domain, action, entity_id, data = {})
+    event_name = "#{domain}.#{action}"
+    event_data = {
+      entity_id: entity_id,
+      domain: domain,
+      action: action,
+      timestamp: Time.current.iso8601,
+      **data
+    }
+
+    publish_custom_event(event_name, event_data)
+  end
+end
+
+# Usage in step handlers
+class ProcessOrderHandler < Tasker::StepHandler::Base
+  include BusinessEventPublisher
+
+  def process(task, sequence, step)
+    order = Order.find(task.context['order_id'])
+
+    # Process order logic here...
+    order.update!(status: 'processed')
+
+    # Publish consistent business event
+    publish_business_event('order', 'processed', order.id, {
+      customer_id: order.customer_id,
+      total_amount: order.total,
+      processing_duration: Time.current - order.created_at
+    })
+
+    { order_id: order.id, status: 'processed' }
+  end
+end
+```
+
+### Advanced Configuration Patterns
+
+**Environment-Specific Step Configuration**:
+```yaml
+# config/tasker/tasks/order_process.yaml
+step_templates:
+  - name: send_notification
+    handler_class: OrderProcess::SendNotificationHandler
+    handler_config:
+      <% if Rails.env.production? %>
+      notification_service: sms_gateway
+      priority: high
+      <% else %>
+      notification_service: email_only
+      priority: low
+      <% end %>
+```
+
+**Dynamic Step Generation**:
+```ruby
+# Support for dynamically generated workflows
+class DynamicOrderProcess < Tasker::TaskHandler::Base
+  def self.generate_step_templates(product_types)
+    base_steps = [
+      { name: 'validate_order', handler_class: 'OrderProcess::ValidateOrderHandler' }
+    ]
+
+    # Generate product-specific steps
+    product_steps = product_types.map do |type|
+      {
+        name: "process_#{type}",
+        depends_on_step: 'validate_order',
+        handler_class: "OrderProcess::Process#{type.camelize}Handler"
+      }
+    end
+
+    merge_step = {
+      name: 'finalize_order',
+      depends_on_steps: product_steps.map { |step| step[:name] },
+      handler_class: 'OrderProcess::FinalizeOrderHandler'
+    }
+
+    base_steps + product_steps + [merge_step]
+  end
+end
+```
+
+### Custom Workflow Coordination
+
+**Priority-Based Step Execution**:
+```ruby
+module PriorityWorkflow
+  class Coordinator < Tasker::Orchestration::Coordinator
+    private
+
+    def prioritize_ready_steps(ready_steps)
+      # Custom sorting based on step configuration
+      ready_steps.sort_by do |step|
+        priority = step.handler_config['priority'] || 'normal'
+        case priority
+        when 'critical' then 0
+        when 'high' then 1
+        when 'normal' then 2
+        when 'low' then 3
+        else 2
+        end
+      end
+    end
+  end
+end
+
+# Configure in initializer
+Tasker.configuration do |config|
+  config.orchestration.coordinator_class = 'PriorityWorkflow::Coordinator'
+end
+```
+
+**Resource-Aware Execution**:
+```ruby
+class ResourceAwareStepHandler < Tasker::StepHandler::Base
+  def process(task, sequence, step)
+    # Check system resources before proceeding
+    if system_under_load?
+      # Delay execution by raising a retryable error
+      raise Tasker::RetryableError, "System under load, retrying later"
+    end
+
+    # Normal processing
+    perform_resource_intensive_operation
+  end
+
+  private
+
+  def system_under_load?
+    # Check CPU, memory, or external service health
+    cpu_usage > 80 || memory_usage > 90 || external_service_degraded?
+  end
+end
+```
+
+### Custom Result Processing
+
+**Structured Result Schemas**:
+```ruby
+class SchemaValidatedStepHandler < Tasker::StepHandler::Base
+  RESULT_SCHEMA = {
+    type: 'object',
+    required: ['status', 'data'],
+    properties: {
+      status: { type: 'string', enum: ['success', 'partial', 'warning'] },
+      data: { type: 'object' },
+      metadata: { type: 'object' }
+    }
+  }.freeze
+
+  def process(task, sequence, step)
+    result = perform_business_logic
+
+    # Validate result structure
+    validate_result_schema(result)
+
+    result
+  end
+
+  private
+
+  def validate_result_schema(result)
+    errors = JSON::Validator.fully_validate(RESULT_SCHEMA, result)
+    raise ArgumentError, "Invalid result schema: #{errors.join(', ')}" if errors.any?
+  end
+end
+```
+
+**Result Transformation Pipelines**:
+```ruby
+module ResultTransformers
+  class SensitiveDataFilter
+    def self.transform(results)
+      # Remove sensitive data from results before storage
+      results.except('password', 'api_key', 'secret_token')
+    end
+  end
+
+  class MetricsExtractor
+    def self.transform(results)
+      # Extract metrics for monitoring
+      {
+        **results,
+        performance_metrics: {
+          execution_time: results['duration'],
+          memory_used: results['memory_peak'],
+          records_processed: results['record_count']
+        }
+      }
+    end
+  end
+end
+
+class TransformingStepHandler < Tasker::StepHandler::Base
+  def process_results(step, process_output, initial_results)
+    # Apply transformation pipeline
+    transformed = process_output
+    transformed = ResultTransformers::SensitiveDataFilter.transform(transformed)
+    transformed = ResultTransformers::MetricsExtractor.transform(transformed)
+
+    step.results = transformed
+  end
+end
+```
+
 ## Best Practices
 
 ### Task Handler Design
@@ -691,6 +1086,7 @@ bundle exec rails db:migrate
 3. **Proper Dependencies**: Define clear step dependencies that reflect business logic
 4. **Error Handling**: Configure appropriate retry limits based on operation reliability
 5. **Context Design**: Include all necessary data in task context for step execution
+6. **Extensibility**: Design task handlers to support configuration-driven customization
 
 ### Step Handler Implementation
 

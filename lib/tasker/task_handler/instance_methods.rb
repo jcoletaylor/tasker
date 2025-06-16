@@ -7,6 +7,7 @@ require 'tasker/types/step_sequence'
 require 'tasker/events/event_payload_builder'
 require_relative '../concerns/event_publisher'
 require_relative '../orchestration/workflow_coordinator'
+require_relative '../analysis/template_graph_analyzer'
 
 module Tasker
   module TaskHandler
@@ -128,6 +129,24 @@ module Tasker
       # @return [Tasker::WorkflowStep] The processed step
       def handle_one_step(task, sequence, step)
         step_executor.execute_single_step(task, sequence, step, self)
+      end
+
+      # Get dependency graph analysis for this task handler's step templates
+      #
+      # Provides comprehensive analysis of step dependencies, including cycle detection,
+      # topological ordering, and dependency visualization. Useful for troubleshooting
+      # and understanding workflow structure.
+      #
+      # @return [Hash] Comprehensive dependency analysis containing:
+      #   - :nodes - Array of step information with dependencies
+      #   - :edges - Array of dependency relationships
+      #   - :topology - Topologically sorted step names
+      #   - :cycles - Array of detected circular dependencies
+      #   - :levels - Hash mapping steps to their dependency depth levels
+      #   - :roots - Array of steps with no dependencies
+      #   - :leaves - Array of steps with no dependents
+      def dependency_graph
+        template_analyzer.analyze
       end
 
       private
@@ -261,6 +280,13 @@ module Tasker
 
         data = context.to_hash.deep_symbolize_keys
         JSON::Validator.fully_validate(schema, data, strict: true, insert_defaults: true)
+      end
+
+      # Get the template graph analyzer for this handler
+      #
+      # @return [Tasker::Analysis::TemplateGraphAnalyzer] The template analyzer
+      def template_analyzer
+        @template_analyzer ||= Tasker::Analysis::TemplateGraphAnalyzer.new(step_templates)
       end
     end
   end

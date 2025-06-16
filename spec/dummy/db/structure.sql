@@ -10,6 +10,49 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: calculate_dependency_levels(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.calculate_dependency_levels(input_task_id bigint) RETURNS TABLE(workflow_step_id bigint, dependency_level integer)
+    LANGUAGE plpgsql STABLE
+    AS $$
+BEGIN
+  RETURN QUERY
+  WITH RECURSIVE dependency_levels AS (
+    -- Base case: Find root nodes (steps with no dependencies)
+    SELECT
+      ws.workflow_step_id,
+      0 as level
+    FROM tasker_workflow_steps ws
+    WHERE ws.task_id = input_task_id
+      AND NOT EXISTS (
+        SELECT 1
+        FROM tasker_workflow_step_edges wse
+        WHERE wse.to_step_id = ws.workflow_step_id
+      )
+
+    UNION ALL
+
+    -- Recursive case: Find children of current level nodes
+    SELECT
+      wse.to_step_id as workflow_step_id,
+      dl.level + 1 as level
+    FROM dependency_levels dl
+    JOIN tasker_workflow_step_edges wse ON wse.from_step_id = dl.workflow_step_id
+    JOIN tasker_workflow_steps ws ON ws.workflow_step_id = wse.to_step_id
+    WHERE ws.task_id = input_task_id
+  )
+  SELECT
+    dl.workflow_step_id,
+    MAX(dl.level) as dependency_level  -- Use MAX to handle multiple paths to same node
+  FROM dependency_levels dl
+  GROUP BY dl.workflow_step_id
+  ORDER BY dependency_level, workflow_step_id;
+END;
+$$;
+
+
+--
 -- Name: get_step_readiness_status(bigint, bigint[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1803,6 +1846,7 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250616222419'),
 ('20250612000007'),
 ('20250612000006'),
 ('20250612000005'),

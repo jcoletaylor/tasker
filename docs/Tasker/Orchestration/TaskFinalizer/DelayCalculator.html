@@ -135,8 +135,8 @@
         </dt>
         <dd><pre class="code"><span class='lbrace'>{</span>
   <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#HAS_READY_STEPS-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS (constant)">HAS_READY_STEPS</a></span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span> <span class='comment'># Steps ready - immediate processing
-</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span> <span class='op'>=&gt;</span> <span class='int'>300</span><span class='comma'>,</span> <span class='comment'># Waiting for deps - 5 minutes
-</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#PROCESSING-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::PROCESSING (constant)">PROCESSING</a></span></span> <span class='op'>=&gt;</span> <span class='int'>30</span> <span class='comment'># Processing - moderate delay
+</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span> <span class='op'>=&gt;</span> <span class='int'>45</span><span class='comma'>,</span> <span class='comment'># Waiting for deps - 45 seconds
+</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#PROCESSING-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::PROCESSING (constant)">PROCESSING</a></span></span> <span class='op'>=&gt;</span> <span class='int'>10</span> <span class='comment'># Processing - moderate delay
 </span><span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
       
         <dt id="DEFAULT_DELAY-constant" class="">DEFAULT_DELAY =
@@ -153,7 +153,23 @@
 
 </div>
         </dt>
-        <dd><pre class="code"><span class='int'>60</span></pre></dd>
+        <dd><pre class="code"><span class='int'>30</span></pre></dd>
+      
+        <dt id="MAXIMUM_DELAY-constant" class="">MAXIMUM_DELAY =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>five minutes</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='int'>300</span></pre></dd>
       
     </dl>
   
@@ -271,8 +287,6 @@
       <pre class="lines">
 
 
-455
-456
 457
 458
 459
@@ -281,10 +295,12 @@
 462
 463
 464
-465</pre>
+465
+466
+467</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 455</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 457</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_calculate_reenqueue_delay'>calculate_reenqueue_delay</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="#DEFAULT_DELAY-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DEFAULT_DELAY (constant)">DEFAULT_DELAY</a></span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span>
@@ -307,7 +323,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 16 15:17:58 2025 by
+  Generated on Mon Jun 16 19:20:41 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -210,6 +210,18 @@ module Tasker
       @diagram ||= Tasker::TaskDiagram.new(self, base_url)
     end
 
+    def runtime_analyzer
+      @runtime_analyzer ||= Tasker::Analysis::RuntimeGraphAnalyzer.new(task: self)
+    end
+
+    # Provides runtime dependency graph analysis
+    # Delegates to RuntimeGraphAnalyzer for graph-based analysis
+    #
+    # @return [Hash] Runtime dependency graph analysis
+    def dependency_graph
+      runtime_analyzer.analyze
+    end
+
     # Checks if all steps in the task are complete
     #
     # @return [Boolean] True if all steps are complete, false otherwise

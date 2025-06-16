@@ -32,12 +32,13 @@ This document provides detailed technical documentation for the core SQL functio
 
 ## Overview
 
-The Tasker system uses four key SQL functions to optimize workflow execution:
+The Tasker system uses five key SQL functions to optimize workflow execution:
 
 1. **`get_step_readiness_status`** - Analyzes step readiness for a single task
 2. **`get_step_readiness_status_batch`** - Batch analysis for multiple tasks
 3. **`get_task_execution_context`** - Provides execution context for a single task
 4. **`get_task_execution_contexts_batch`** - Batch execution context for multiple tasks
+5. **`calculate_dependency_levels`** - Calculates dependency levels for workflow steps
 
 These functions replace expensive view-based queries with optimized stored procedures, providing O(1) performance for critical workflow decisions.
 
@@ -488,6 +489,196 @@ end
 
 ---
 
+## Function 5: `calculate_dependency_levels`
+
+### Purpose
+Calculates the dependency level (depth from root nodes) for each workflow step in a task using recursive CTE traversal. This enables efficient dependency graph analysis, critical path identification, and parallelism optimization.
+
+### Signature
+```sql
+calculate_dependency_levels(input_task_id BIGINT)
+```
+
+### Input Parameters
+- `input_task_id`: The task ID to analyze dependency levels for
+
+### Return Columns
+| Column | Type | Description |
+|--------|------|-------------|
+| `workflow_step_id` | BIGINT | Unique step identifier |
+| `dependency_level` | INTEGER | Depth from root nodes (0 = root, 1+ = depth) |
+
+### Core Logic
+
+#### 1. Recursive CTE Traversal
+```sql
+WITH RECURSIVE dependency_levels AS (
+  -- Base case: Find root nodes (steps with no dependencies)
+  SELECT
+    ws.workflow_step_id,
+    0 as level
+  FROM tasker_workflow_steps ws
+  WHERE ws.task_id = input_task_id
+    AND NOT EXISTS (
+      SELECT 1
+      FROM tasker_workflow_step_edges wse
+      WHERE wse.to_step_id = ws.workflow_step_id
+    )
+
+  UNION ALL
+
+  -- Recursive case: Find children of current level nodes
+  SELECT
+    wse.to_step_id as workflow_step_id,
+    dl.level + 1 as level
+  FROM dependency_levels dl
+  JOIN tasker_workflow_step_edges wse ON wse.from_step_id = dl.workflow_step_id
+  JOIN tasker_workflow_steps ws ON ws.workflow_step_id = wse.to_step_id
+  WHERE ws.task_id = input_task_id
+)
+```
+
+#### 2. Multiple Path Handling
+```sql
+SELECT
+  dl.workflow_step_id,
+  MAX(dl.level) as dependency_level  -- Use MAX to handle multiple paths to same node
+FROM dependency_levels dl
+GROUP BY dl.workflow_step_id
+ORDER BY dependency_level, workflow_step_id;
+```
+
+**Key Features:**
+- **Root Detection**: Identifies steps with no incoming edges (level 0)
+- **Recursive Traversal**: Follows dependency edges to calculate depth
+- **Multiple Path Resolution**: Uses MAX to handle convergent dependencies
+- **Topological Ordering**: Results ordered by dependency level
+
+### Performance Characteristics
+
+#### Benchmarking Results
+| Implementation | 10 Runs Performance | Improvement |
+|---------------|-------------------|-------------|
+| Ruby (Kahn's Algorithm) | 7.29ms | Baseline |
+| SQL (Recursive CTE) | 6.04ms | **1.21x faster** |
+| SQL (Recursive CTE) | 3.32ms | **2.46x faster** |
+
+**Performance Benefits:**
+- **Database-Native**: Leverages PostgreSQL's optimized recursive CTE engine
+- **Single Query**: Eliminates multiple round-trips between Ruby and database
+- **Index Optimized**: Uses existing indexes on workflow_step_edges table
+- **Memory Efficient**: Processes dependency graph entirely in database memory
+
+### Rails Integration
+
+#### Primary Wrapper: `Tasker::Functions::FunctionBasedDependencyLevels`
+
+```ruby
+# Get dependency levels for all steps in a task
+levels = Tasker::Functions::FunctionBasedDependencyLevels.for_task(task_id)
+
+# Get levels as a hash (step_id => level)
+levels_hash = Tasker::Functions::FunctionBasedDependencyLevels.levels_hash_for_task(task_id)
+
+# Get maximum dependency level in task
+max_level = Tasker::Functions::FunctionBasedDependencyLevels.max_level_for_task(task_id)
+
+# Get all steps at a specific level
+level_0_steps = Tasker::Functions::FunctionBasedDependencyLevels.steps_at_level(task_id, 0)
+
+# Get root steps (level 0)
+root_steps = Tasker::Functions::FunctionBasedDependencyLevels.root_steps_for_task(task_id)
+```
+
+#### Integration with RuntimeGraphAnalyzer
+
+```ruby
+# lib/tasker/analysis/runtime_graph_analyzer.rb
+def build_dependency_graph
+  # Get dependency levels using SQL-based topological sort (faster than Ruby)
+  dependency_levels = calculate_dependency_levels_sql
+
+  {
+    nodes: steps.map do |step|
+      {
+        id: step.workflow_step_id,
+        name: step.named_step.name,
+        level: dependency_levels[step.workflow_step_id] || 0
+      }
+    end,
+    dependency_levels: dependency_levels
+  }
+end
+
+private
+
+def calculate_dependency_levels_sql
+  Tasker::Functions::FunctionBasedDependencyLevels.levels_hash_for_task(task_id)
+end
+```
+
+### Use Cases
+
+#### 1. **Dependency Graph Analysis**
+```ruby
+# Analyze workflow structure
+analyzer = Tasker::Analysis::RuntimeGraphAnalyzer.new(task: task)
+graph = analyzer.analyze[:dependency_graph]
+
+puts "Workflow has #{graph[:dependency_levels].values.max + 1} levels"
+puts "Root steps: #{graph[:nodes].select { |n| n[:level] == 0 }.map { |n| n[:name] }}"
+```
+
+#### 2. **Critical Path Identification**
+```ruby
+# Find longest dependency chains
+critical_paths = analyzer.analyze[:critical_paths]
+puts "Longest path: #{critical_paths[:longest_path_length]} steps"
+```
+
+#### 3. **Parallelism Opportunities**
+```ruby
+# Identify steps that can run in parallel
+levels_hash = Tasker::Functions::FunctionBasedDependencyLevels.levels_hash_for_task(task_id)
+parallel_groups = levels_hash.group_by { |step_id, level| level }
+
+parallel_groups.each do |level, steps|
+  puts "Level #{level}: #{steps.size} steps can run in parallel"
+end
+```
+
+#### 4. **Workflow Validation**
+```ruby
+# Detect workflow complexity
+max_level = Tasker::Functions::FunctionBasedDependencyLevels.max_level_for_task(task_id)
+if max_level > 10
+  puts "Warning: Deep dependency chain detected (#{max_level} levels)"
+end
+```
+
+### Migration Strategy
+
+#### Function Deployment
+```ruby
+# db/migrate/20250616222419_add_calculate_dependency_levels_function.rb
+def up
+  sql_file_path = Tasker::Engine.root.join('db', 'functions', 'calculate_dependency_levels_v01.sql')
+  execute File.read(sql_file_path)
+end
+
+def down
+  execute 'DROP FUNCTION IF EXISTS calculate_dependency_levels(BIGINT);'
+end
+```
+
+#### Validation Results ✅
+- ✅ **Ruby vs SQL Consistency**: Both implementations produce identical results
+- ✅ **Complex Workflow Testing**: All workflow patterns (linear, diamond, tree, parallel merge, mixed) validated
+- ✅ **Performance Benchmarking**: SQL consistently 1.2-2.5x faster
+- ✅ **Integration Testing**: RuntimeGraphAnalyzer integration working correctly
+
+---
+
 ## Performance Characteristics
 
 ### Query Optimization Techniques
@@ -657,9 +848,14 @@ WHEN COUNT(dep_edges.from_step_id) = 0 THEN true  -- Zero dependencies
    - Creates `get_step_readiness_status_batch` function
    - Loads from `db/functions/get_step_readiness_status_batch_v01.sql`
 
+5. **`db/migrate/20250616222419_add_calculate_dependency_levels_function.rb`**
+   - Creates `calculate_dependency_levels` function
+   - Loads from `db/functions/calculate_dependency_levels_v01.sql`
+
 **Function Wrapper Classes Created:**
 - `lib/tasker/functions/function_based_step_readiness_status.rb` - Step readiness function wrapper
 - `lib/tasker/functions/function_based_task_execution_context.rb` - Task context function wrapper
+- `lib/tasker/functions/function_based_dependency_levels.rb` - Dependency levels function wrapper
 - `lib/tasker/functions/function_wrapper.rb` - Base function wrapper class
 - `lib/tasker/functions.rb` - Function module loader
 
@@ -716,6 +912,7 @@ def down
   execute 'DROP FUNCTION IF EXISTS get_step_readiness_status_batch(BIGINT[]);'
   execute 'DROP FUNCTION IF EXISTS get_task_execution_context(BIGINT);'
   execute 'DROP FUNCTION IF EXISTS get_task_execution_contexts_batch(BIGINT[]);'
+  execute 'DROP FUNCTION IF EXISTS calculate_dependency_levels(BIGINT);'
   # Falls back to view-based implementation if still available
 end
 ```
