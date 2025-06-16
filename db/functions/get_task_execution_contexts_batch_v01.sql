@@ -21,7 +21,7 @@ RETURNS TABLE(
 ) LANGUAGE plpgsql STABLE AS $$
 BEGIN
   RETURN QUERY
-  WITH task_step_data AS (
+  WITH step_data AS (
     -- Get step readiness data for all tasks at once using batch function
     SELECT * FROM get_step_readiness_status_batch(input_task_ids)
   ),
@@ -38,15 +38,18 @@ BEGIN
   ),
   aggregated_stats AS (
     SELECT
-      tsd.task_id,
+      sd.task_id,
       COUNT(*) as total_steps,
-      COUNT(CASE WHEN tsd.current_state = 'pending' THEN 1 END) as pending_steps,
-      COUNT(CASE WHEN tsd.current_state = 'in_progress' THEN 1 END) as in_progress_steps,
-      COUNT(CASE WHEN tsd.current_state IN ('complete', 'resolved_manually') THEN 1 END) as completed_steps,
-      COUNT(CASE WHEN tsd.current_state = 'error' THEN 1 END) as failed_steps,
-      COUNT(CASE WHEN tsd.ready_for_execution = true THEN 1 END) as ready_steps
-    FROM task_step_data tsd
-    GROUP BY tsd.task_id
+      COUNT(CASE WHEN sd.current_state = 'pending' THEN 1 END) as pending_steps,
+      COUNT(CASE WHEN sd.current_state = 'in_progress' THEN 1 END) as in_progress_steps,
+      COUNT(CASE WHEN sd.current_state IN ('complete', 'resolved_manually') THEN 1 END) as completed_steps,
+      COUNT(CASE WHEN sd.current_state = 'error' THEN 1 END) as failed_steps,
+      COUNT(CASE WHEN sd.ready_for_execution = true THEN 1 END) as ready_steps,
+      -- Count PERMANENTLY blocked failures (exhausted retries)
+      COUNT(CASE WHEN sd.current_state = 'error'
+                  AND (sd.attempts >= sd.retry_limit) THEN 1 END) as permanently_blocked_steps
+    FROM step_data sd
+    GROUP BY sd.task_id
   )
   SELECT
     ti.task_id,
@@ -65,7 +68,7 @@ BEGIN
     CASE
       WHEN COALESCE(ast.ready_steps, 0) > 0 THEN 'has_ready_steps'
       WHEN COALESCE(ast.in_progress_steps, 0) > 0 THEN 'processing'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked_by_failures'
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked_by_failures'
       WHEN COALESCE(ast.completed_steps, 0) = COALESCE(ast.total_steps, 0) AND COALESCE(ast.total_steps, 0) > 0 THEN 'all_complete'
       ELSE 'waiting_for_dependencies'
     END as execution_status,
@@ -74,7 +77,7 @@ BEGIN
     CASE
       WHEN COALESCE(ast.ready_steps, 0) > 0 THEN 'execute_ready_steps'
       WHEN COALESCE(ast.in_progress_steps, 0) > 0 THEN 'wait_for_completion'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'handle_failures'
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'handle_failures'
       WHEN COALESCE(ast.completed_steps, 0) = COALESCE(ast.total_steps, 0) AND COALESCE(ast.total_steps, 0) > 0 THEN 'finalize_task'
       ELSE 'wait_for_dependencies'
     END as recommended_action,
@@ -89,11 +92,13 @@ BEGIN
     CASE
       WHEN COALESCE(ast.failed_steps, 0) = 0 THEN 'healthy'
       WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) > 0 THEN 'recovering'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked'
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked'
+      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.permanently_blocked_steps, 0) = 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'recovering'
       ELSE 'unknown'
     END as health_status
 
   FROM task_info ti
-  LEFT JOIN aggregated_stats ast ON ast.task_id = ti.task_id;
+  LEFT JOIN aggregated_stats ast ON ast.task_id = ti.task_id
+  ORDER BY ti.task_id;
 END;
 $$;

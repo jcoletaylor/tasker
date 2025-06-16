@@ -445,14 +445,59 @@ module Tasker
         DEFAULT_DELAY = 60 # Default delay for unclear states or no context
 
         class << self
-          # Calculate intelligent re-enqueue delay based on execution context
+          # Calculate intelligent re-enqueue delay based on execution context and step backoff timing
+          #
+          # This method considers the actual backoff timing of failed steps to avoid
+          # reenqueuing tasks before any steps are ready for retry.
           #
           # @param context [Tasker::TaskExecutionContext] The execution context
           # @return [Integer] Delay in seconds
           def calculate_reenqueue_delay(context)
             return DEFAULT_DELAY unless context
 
+            # For waiting_for_dependencies status, check if we have failed steps with backoff timing
+            if context.execution_status == Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
+              optimal_delay = calculate_optimal_backoff_delay(context.task_id)
+              return optimal_delay if optimal_delay.positive?
+            end
+
             DELAY_MAP.fetch(context.execution_status, DEFAULT_DELAY)
+          end
+
+          private
+
+          # Calculate optimal delay based on step backoff timing
+          #
+          # Finds the step with the longest remaining backoff time and schedules
+          # the task to be reenqueued when that step becomes ready for retry.
+          #
+          # @param task_id [Integer] The task ID
+          # @return [Integer] Optimal delay in seconds, or 0 if no backoff needed
+          def calculate_optimal_backoff_delay(task_id)
+            # Get step readiness status for all steps in the task
+            step_statuses = Tasker::StepReadinessStatus.for_task(task_id)
+
+            # Find failed steps that have backoff timing, regardless of retry_eligible status
+            # This is because retry_eligible can be false due to timing, but we still want
+            # to schedule based on when the step will become retry-eligible
+            failed_steps_with_backoff = step_statuses.select do |step_status|
+              step_status.current_state == 'error' &&
+                !step_status.ready_for_execution &&
+                step_status.next_retry_at.present?
+            end
+
+            return 0 if failed_steps_with_backoff.empty?
+
+            # Find the step with the longest remaining backoff time
+            now = Time.current
+            max_delay = failed_steps_with_backoff.map do |step_status|
+              next_retry_time = step_status.next_retry_at
+              next_retry_time > now ? (next_retry_time - now).to_i : 0
+            end.max
+
+            # Add a small buffer (5 seconds) to ensure the step is definitely ready
+            # Cap the maximum delay at 30 minutes to prevent excessive delays
+            [(max_delay || 0) + 5, 1800].min
           end
         end
       end

@@ -21,6 +21,160 @@
                         └─────────────────┘
 ```
 
+## Production Workflow Lifecycle
+
+### Complete End-to-End Flow
+
+```mermaid
+graph TD
+    A[Task Creation] --> B[Step Creation]
+    B --> C[Initial State Setup]
+    C --> D[TaskRunnerJob Enqueue]
+    D --> E[Main Execution Loop]
+
+    E --> F[SQL Function: Find Viable Steps]
+    F --> G{Steps Available?}
+    G -->|No| H[Task Finalization]
+    G -->|Yes| I[StepExecutor: Execute Steps]
+
+    I --> J{Step Success?}
+    J -->|Success| K[processed=true, complete state]
+    J -->|Failure| L[processed=false, error state, attempts++]
+
+    K --> M{Blocked by Errors?}
+    L --> M
+    M -->|No| E
+    M -->|Yes| H
+
+    H --> N{Finalization Decision}
+    N -->|ALL_COMPLETE| O[Task COMPLETE]
+    N -->|BLOCKED_BY_FAILURES| P[Task ERROR]
+    N -->|HAS_READY_STEPS| Q[TaskReenqueuer: Immediate]
+    N -->|WAITING_FOR_DEPENDENCIES| R[TaskReenqueuer: Delayed]
+    N -->|PROCESSING| S[TaskReenqueuer: Continue]
+
+    Q --> D
+    R --> D
+    S --> D
+```
+
+### Phase-by-Phase Breakdown
+
+#### Phase 1: Task Initialization
+```ruby
+# 1. Task Creation
+task_request = Tasker::Types::TaskRequest.new(name: 'order_process', context: { order_id: 123 })
+
+# 2. Task and Step Creation
+handler = Tasker::HandlerFactory.instance.get('order_process')
+task = handler.initialize_task!(task_request)
+
+# 3. Initial State Setup
+# Task: PENDING state
+# Steps: PENDING state, processed = false, attempts = 0
+
+# 4. Enqueue for Processing
+Tasker::TaskRunnerJob.perform_later(task.task_id)
+```
+
+#### Phase 2: Main Execution Loop (WorkflowCoordinator)
+```ruby
+# CRITICAL: This is the core production logic
+loop do
+  task.reload
+  sequence = get_sequence(task)
+
+  # SQL Function Query - THE HEART OF THE SYSTEM
+  viable_steps = find_viable_steps(task, sequence)
+  break if viable_steps.empty?
+
+  # Step Execution
+  processed_steps = execute_steps(viable_steps)
+  all_processed_steps.concat(processed_steps)
+
+  # Error Check
+  break if blocked_by_errors?(task)
+end
+
+# Finalization Decision
+finalize_task(task, all_processed_steps)
+```
+
+#### Phase 3: Step Discovery & Retry Eligibility (SQL Function)
+**The `get_step_readiness_status()` function is the authoritative source for step readiness:**
+
+```sql
+-- CRITICAL CONDITIONS for ready_for_execution = true:
+CASE
+  WHEN current_state IN ('pending', 'error')           -- Must be pending or failed
+  AND (processed = false OR processed IS NULL)         -- Never re-execute processed steps
+  AND dependencies_satisfied = true                    -- All parents complete
+  AND attempts < retry_limit                           -- Haven't exhausted retries
+  AND COALESCE(retryable, true) = true                 -- Step is retryable
+  AND (in_process = false OR in_process IS NULL)       -- Not currently processing
+  AND backoff_period_expired = true                    -- Exponential backoff satisfied
+  THEN true
+  ELSE false
+END
+```
+
+**Key Retry Eligibility Logic:**
+- **Exponential Backoff**: `2^attempts * 1 second` (max 30 seconds)
+- **Manual Backoff Override**: `last_attempted_at + backoff_request_seconds`
+- **Retry Limits**: Default 3 attempts, configurable per step
+- **Retryability Flag**: `COALESCE(retryable, true)` - retryable by default
+
+#### Phase 4: Step Execution (StepExecutor)
+```ruby
+# For each viable step:
+def execute_single_step(task, sequence, step, task_handler)
+  # 1. State Transition
+  transition_to_in_progress(step)  # pending → in_progress
+
+  # 2. Execute Handler
+  step_handler = task_handler.get_step_handler(step)
+  step_handler.handle(task, sequence, step)
+
+  # 3. Success Path
+  step.update!(processed: true)
+  transition_to_complete(step)     # in_progress → complete
+
+  # 4. Failure Path (if exception raised)
+  step.update!(processed: false, attempts: attempts + 1)
+  transition_to_error(step)        # in_progress → error
+  store_error_data(step, exception)
+end
+```
+
+#### Phase 5: Task Finalization & Reenqueuing
+```ruby
+# TaskFinalizer analyzes TaskExecutionContext
+context = get_task_execution_context(task_id)
+
+case context.execution_status
+when 'all_complete'
+  task.transition_to('complete')  # DONE
+when 'blocked_by_failures'
+  task.transition_to('error')     # DONE
+when 'has_ready_steps'
+  reenqueue_immediately(task)     # Continue processing
+when 'waiting_for_dependencies'
+  reenqueue_with_delay(task)      # Wait for backoff/dependencies
+when 'processing'
+  reenqueue_for_continuation(task) # Continue next iteration
+end
+```
+
+#### Phase 6: Production Retry Mechanism
+**Step-Level Retry Flow:**
+1. **Step Fails**: `error` state, `processed = false`, `attempts++`
+2. **Task Continues**: TaskFinalizer determines task should continue
+3. **Reenqueuing**: `TaskReenqueuer` → `TaskRunnerJob.perform_later(task_id)`
+4. **Next Loop**: SQL function finds failed step as `viable` (if retry eligible)
+5. **Step Retry**: Same execution process, new attempt number
+
+**CRITICAL**: This is **step-level retry via reenqueuing**, not task-level retry loops.
+
 ## Key Design Patterns
 
 ### 1. Strategy Pattern - Orchestration Components
@@ -66,6 +220,19 @@ publish_step_completed(step, execution_duration: duration)
 publish_task_finalization_started(task, context: context)
 ```
 
+### 5. Reenqueuing-Based Retry Pattern
+**Problem**: Need reliable step retry mechanism with backoff and limits
+**Solution**: Failed steps become viable again through reenqueuing + SQL function
+
+```ruby
+# Production Flow:
+failed_step  # error state, processed = false, attempts++
+→ TaskFinalizer  # determines continuation needed
+→ TaskReenqueuer  # TaskRunnerJob.perform_later(task_id)
+→ New Execution Loop  # SQL function finds failed step as viable
+→ Step Retry  # same execution process, new attempt
+```
+
 ## Critical Implementation Paths
 
 ### Step Readiness Calculation
@@ -101,6 +268,14 @@ finalize_task(task, all_processed_steps)
 3. **Backoff Override**: Manual backoff periods for specific scenarios
 4. **State Coordination**: Failed steps marked as `processed=false` for retry eligibility
 
+### Reenqueuing Decision Logic
+**TaskFinalizer Business Rules**
+- **All Complete**: Task done, no reenqueuing
+- **Blocked by Failures**: Task failed, no reenqueuing
+- **Has Ready Steps**: Immediate reenqueuing for step execution
+- **Waiting**: Delayed reenqueuing based on earliest retry time
+- **Processing**: Continuation reenqueuing for next iteration
+
 ## Component Relationships
 
 ### Task Handler → Orchestration
@@ -122,6 +297,11 @@ finalize_task(task, all_processed_steps)
 - All major workflow events published to event bus
 - Telemetry subscribers collect metrics and logs
 - Loose coupling allows adding new observers without code changes
+
+### TaskReenqueuer → ActiveJob
+- Reenqueuer translates continuation decisions into job enqueuing
+- ActiveJob handles actual background processing
+- Strategy pattern allows testing without actual job queuing
 
 ## Error Handling Patterns
 
@@ -156,3 +336,25 @@ finalize_task(task, all_processed_steps)
 - Synchronous test coordinators bypass ActiveJob overhead
 - Configurable failure handlers for deterministic test scenarios
 - Backoff bypass mechanisms for rapid test execution
+
+## Anti-Patterns and Common Mistakes
+
+### ❌ Task-Level Retry Loops
+**Wrong**: Implementing retry logic at the task level with manual loops
+**Right**: Step-level retries through reenqueuing + SQL function eligibility
+
+### ❌ Bypassing SQL Function Logic
+**Wrong**: Using ActiveRecord queries to determine step readiness in tests
+**Right**: Testing the actual SQL function behavior for retry eligibility
+
+### ❌ Manual State Manipulation
+**Wrong**: Directly updating step states without using state machine
+**Right**: Using `safe_transition_to` for all state changes
+
+### ❌ Ignoring `processed` Flag
+**Wrong**: Re-executing steps that have `processed = true`
+**Right**: Only executing steps with `processed = false`
+
+### ❌ Incomplete Strategy Pattern
+**Wrong**: Test strategies that don't replicate production behavior
+**Right**: Test strategies that follow the same reenqueuing path as production

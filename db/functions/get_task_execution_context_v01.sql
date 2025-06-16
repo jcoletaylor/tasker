@@ -44,7 +44,10 @@ BEGIN
       COUNT(CASE WHEN sd.current_state = 'in_progress' THEN 1 END) as in_progress_steps,
       COUNT(CASE WHEN sd.current_state IN ('complete', 'resolved_manually') THEN 1 END) as completed_steps,
       COUNT(CASE WHEN sd.current_state = 'error' THEN 1 END) as failed_steps,
-      COUNT(CASE WHEN sd.ready_for_execution = true THEN 1 END) as ready_steps
+      COUNT(CASE WHEN sd.ready_for_execution = true THEN 1 END) as ready_steps,
+      -- Count PERMANENTLY blocked failures (exhausted retries OR explicitly marked as not retryable)
+      COUNT(CASE WHEN sd.current_state = 'error'
+                  AND (sd.attempts >= sd.retry_limit) THEN 1 END) as permanently_blocked_steps
     FROM step_data sd
   )
   SELECT
@@ -60,20 +63,24 @@ BEGIN
     COALESCE(ast.failed_steps, 0) as failed_steps,
     COALESCE(ast.ready_steps, 0) as ready_steps,
 
-    -- Execution State Logic
+    -- FIXED: Execution State Logic
     CASE
       WHEN COALESCE(ast.ready_steps, 0) > 0 THEN 'has_ready_steps'
       WHEN COALESCE(ast.in_progress_steps, 0) > 0 THEN 'processing'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked_by_failures'
+      -- OLD BUG: WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked_by_failures'
+      -- NEW FIX: Only blocked if failed steps are NOT retry-eligible
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked_by_failures'
       WHEN COALESCE(ast.completed_steps, 0) = COALESCE(ast.total_steps, 0) AND COALESCE(ast.total_steps, 0) > 0 THEN 'all_complete'
       ELSE 'waiting_for_dependencies'
     END as execution_status,
 
-    -- Recommended Action Logic
+    -- FIXED: Recommended Action Logic
     CASE
       WHEN COALESCE(ast.ready_steps, 0) > 0 THEN 'execute_ready_steps'
       WHEN COALESCE(ast.in_progress_steps, 0) > 0 THEN 'wait_for_completion'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'handle_failures'
+      -- OLD BUG: WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'handle_failures'
+      -- NEW FIX: Only handle failures if they're truly blocked
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'handle_failures'
       WHEN COALESCE(ast.completed_steps, 0) = COALESCE(ast.total_steps, 0) AND COALESCE(ast.total_steps, 0) > 0 THEN 'finalize_task'
       ELSE 'wait_for_dependencies'
     END as recommended_action,
@@ -84,11 +91,14 @@ BEGIN
       ELSE ROUND((COALESCE(ast.completed_steps, 0)::decimal / COALESCE(ast.total_steps, 1)::decimal) * 100, 2)
     END as completion_percentage,
 
-    -- Health Status Logic
+    -- FIXED: Health Status Logic
     CASE
       WHEN COALESCE(ast.failed_steps, 0) = 0 THEN 'healthy'
       WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) > 0 THEN 'recovering'
-      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked'
+      -- NEW FIX: Only blocked if failures are truly not retry-eligible
+      WHEN COALESCE(ast.permanently_blocked_steps, 0) > 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'blocked'
+      -- NEW: Waiting state for retry-eligible failures with backoff
+      WHEN COALESCE(ast.failed_steps, 0) > 0 AND COALESCE(ast.permanently_blocked_steps, 0) = 0 AND COALESCE(ast.ready_steps, 0) = 0 THEN 'recovering'
       ELSE 'unknown'
     END as health_status
 
