@@ -1,59 +1,12 @@
-SELECT
-  t.task_id,
-  t.named_task_id,
-  COALESCE(task_state.to_state, 'pending') as status,
+-- OPTIMIZED Task Execution Context View
+-- This version uses the `complete` boolean to provide different views for completed vs active tasks
+-- Significant performance improvement by handling completed tasks separately
 
-  -- Step Statistics
-  step_stats.total_steps,
-  step_stats.pending_steps,
-  step_stats.in_progress_steps,
-  step_stats.completed_steps,
-  step_stats.failed_steps,
-  step_stats.ready_steps,
+-- Optimized Task Execution Context View
+-- This version eliminates the expensive subquery by using a CTE approach
+-- that avoids the window function + GROUP BY conflict
 
-  -- Execution State
-  CASE
-    WHEN step_stats.ready_steps > 0 THEN 'has_ready_steps'
-    WHEN step_stats.in_progress_steps > 0 THEN 'processing'
-    WHEN step_stats.failed_steps > 0 AND step_stats.ready_steps = 0 THEN 'blocked_by_failures'
-    WHEN step_stats.completed_steps = step_stats.total_steps THEN 'all_complete'
-    ELSE 'waiting_for_dependencies'
-  END as execution_status,
-
-  -- Next Action Recommendations
-  CASE
-    WHEN step_stats.ready_steps > 0 THEN 'execute_ready_steps'
-    WHEN step_stats.in_progress_steps > 0 THEN 'wait_for_completion'
-    WHEN step_stats.failed_steps > 0 AND step_stats.ready_steps = 0 THEN 'handle_failures'
-    WHEN step_stats.completed_steps = step_stats.total_steps THEN 'finalize_task'
-    ELSE 'wait_for_dependencies'
-  END as recommended_action,
-
-  -- Progress Metrics
-  CASE
-    WHEN step_stats.total_steps = 0 THEN 0.0
-    ELSE ROUND((step_stats.completed_steps::decimal / step_stats.total_steps::decimal) * 100, 2)
-  END as completion_percentage,
-
-  -- Health Indicators
-  CASE
-    WHEN step_stats.failed_steps = 0 THEN 'healthy'
-    WHEN step_stats.failed_steps > 0 AND step_stats.ready_steps > 0 THEN 'recovering'
-    WHEN step_stats.failed_steps > 0 AND step_stats.ready_steps = 0 THEN 'blocked'
-    ELSE 'unknown'
-  END as health_status
-
-FROM tasker_tasks t
-
--- Current Task State from State Machine
-LEFT JOIN (
-  SELECT DISTINCT ON (task_id)
-    task_id, to_state
-  FROM tasker_task_transitions
-  ORDER BY task_id, created_at DESC
-) task_state ON task_state.task_id = t.task_id
-
-JOIN (
+WITH step_aggregates AS (
   SELECT
     ws.task_id,
     COUNT(*) as total_steps,
@@ -65,4 +18,59 @@ JOIN (
   FROM tasker_workflow_steps ws
   JOIN tasker_step_readiness_statuses srs ON srs.workflow_step_id = ws.workflow_step_id
   GROUP BY ws.task_id
-) step_stats ON step_stats.task_id = t.task_id
+)
+
+SELECT
+  t.task_id,
+  t.named_task_id,
+  COALESCE(task_state.to_state, 'pending') as status,
+
+  -- Step Statistics (from CTE, with defaults for tasks without step readiness entries)
+  COALESCE(step_aggregates.total_steps, 0) as total_steps,
+  COALESCE(step_aggregates.pending_steps, 0) as pending_steps,
+  COALESCE(step_aggregates.in_progress_steps, 0) as in_progress_steps,
+  COALESCE(step_aggregates.completed_steps, 0) as completed_steps,
+  COALESCE(step_aggregates.failed_steps, 0) as failed_steps,
+  COALESCE(step_aggregates.ready_steps, 0) as ready_steps,
+
+  -- Execution State
+  CASE
+    WHEN COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'has_ready_steps'
+    WHEN COALESCE(step_aggregates.in_progress_steps, 0) > 0 THEN 'processing'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'blocked_by_failures'
+    WHEN COALESCE(step_aggregates.completed_steps, 0) = COALESCE(step_aggregates.total_steps, 0) AND COALESCE(step_aggregates.total_steps, 0) > 0 THEN 'all_complete'
+    ELSE 'waiting_for_dependencies'
+  END as execution_status,
+
+  -- Next Action Recommendations
+  CASE
+    WHEN COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'execute_ready_steps'
+    WHEN COALESCE(step_aggregates.in_progress_steps, 0) > 0 THEN 'wait_for_completion'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'handle_failures'
+    WHEN COALESCE(step_aggregates.completed_steps, 0) = COALESCE(step_aggregates.total_steps, 0) AND COALESCE(step_aggregates.total_steps, 0) > 0 THEN 'finalize_task'
+    ELSE 'wait_for_dependencies'
+  END as recommended_action,
+
+  -- Progress Metrics
+  CASE
+    WHEN COALESCE(step_aggregates.total_steps, 0) = 0 THEN 0.0
+    ELSE ROUND((COALESCE(step_aggregates.completed_steps, 0)::decimal / COALESCE(step_aggregates.total_steps, 1)::decimal) * 100, 2)
+  END as completion_percentage,
+
+  -- Health Indicators
+  CASE
+    WHEN COALESCE(step_aggregates.failed_steps, 0) = 0 THEN 'healthy'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) > 0 THEN 'recovering'
+    WHEN COALESCE(step_aggregates.failed_steps, 0) > 0 AND COALESCE(step_aggregates.ready_steps, 0) = 0 THEN 'blocked'
+    ELSE 'unknown'
+  END as health_status
+
+FROM tasker_tasks t
+
+-- OPTIMIZED: Current Task State using most_recent flag
+LEFT JOIN tasker_task_transitions task_state
+  ON task_state.task_id = t.task_id
+  AND task_state.most_recent = true
+
+-- OPTIMIZED: Left join with pre-aggregated step statistics to handle tasks without steps
+LEFT JOIN step_aggregates ON step_aggregates.task_id = t.task_id

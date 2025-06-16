@@ -5,6 +5,7 @@ FactoryBot.define do
     sequence(:name) { |n| "test_task_#{n}" }
     description { "Test task: #{name}" }
 
+    # Use consistent names for traits that need handler factory integration
     trait :api_integration do
       name { 'api_integration_task' }
       description { 'API integration workflow task' }

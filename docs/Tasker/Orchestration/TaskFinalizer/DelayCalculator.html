@@ -190,7 +190,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Calculate intelligent re-enqueue delay based on execution context.</p>
+<p>Calculate intelligent re-enqueue delay based on execution context and step backoff timing.</p>
 </div></span>
   
 </li>
@@ -217,7 +217,9 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Calculate intelligent re-enqueue delay based on execution context</p>
+<p>Calculate intelligent re-enqueue delay based on execution context and step backoff timing</p>
+
+<p>This method considers the actual backoff timing of failed steps to avoid reenqueuing tasks before any steps are ready for retry.</p>
 
 
   </div>
@@ -269,17 +271,29 @@
       <pre class="lines">
 
 
-393
-394
-395
-396
-397</pre>
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 393</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 455</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_calculate_reenqueue_delay'>calculate_reenqueue_delay</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="#DEFAULT_DELAY-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DEFAULT_DELAY (constant)">DEFAULT_DELAY</a></span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span>
+
+  <span class='comment'># For waiting_for_dependencies status, check if we have failed steps with backoff timing
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span>
+    <span class='id identifier rubyid_optimal_delay'>optimal_delay</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_optimal_backoff_delay'>calculate_optimal_backoff_delay</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_optimal_delay'>optimal_delay</span> <span class='kw'>if</span> <span class='id identifier rubyid_optimal_delay'>optimal_delay</span><span class='period'>.</span><span class='id identifier rubyid_positive?'>positive?</span>
+  <span class='kw'>end</span>
 
   <span class='const'><span class='object_link'><a href="#DELAY_MAP-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DELAY_MAP (constant)">DELAY_MAP</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#DEFAULT_DELAY-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DEFAULT_DELAY (constant)">DEFAULT_DELAY</a></span></span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
@@ -293,7 +307,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun  8 15:37:58 2025 by
+  Generated on Mon Jun 16 15:17:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -6,6 +6,7 @@ require 'tasker/constants'
 require 'tasker/types/step_sequence'
 require 'tasker/events/event_payload_builder'
 require_relative '../concerns/event_publisher'
+require_relative '../orchestration/workflow_coordinator'
 
 module Tasker
   module TaskHandler
@@ -64,30 +65,17 @@ module Tasker
 
       # Handle a task's execution
       #
-      # This is the main entry point for processing a task. Uses proven
-      # orchestration delegation patterns for reliable workflow execution.
+      # This is the main entry point for processing a task. Delegates to
+      # WorkflowCoordinator for the execution loop to enable strategy composition.
       #
       # @param task [Tasker::Task] The task to handle
       # @return [void]
       def handle(task)
         start_task(task)
 
-        # PROVEN APPROACH: Process steps iteratively until completion or error
-        all_processed_steps = []
-
-        loop do
-          task.reload
-          sequence = get_sequence(task)
-          viable_steps = find_viable_steps(task, sequence)
-          break if viable_steps.empty?
-
-          processed_steps = handle_viable_steps(task, sequence, viable_steps)
-          all_processed_steps.concat(processed_steps)
-          break if blocked_by_errors?(task, sequence, processed_steps)
-        end
-
-        # DELEGATE: Finalize via TaskFinalizer (fires events internally)
-        finalize(task, get_sequence(task), all_processed_steps)
+        # DELEGATE: Use WorkflowCoordinator for execution loop
+        # This enables strategy pattern composition for testing
+        workflow_coordinator.execute_workflow(task, self)
       end
 
       # Establish step dependencies and defaults
@@ -158,53 +146,54 @@ module Tasker
         @task_finalizer ||= Tasker::Orchestration::TaskFinalizer.new
       end
 
-      # ================================================================
-      # ASPIRATIONAL/FUTURE ENHANCEMENT METHODS
+      # Memoized workflow coordinator for consistent reuse
       #
-      # These methods implement TaskWorkflowSummary-based intelligent
-      # workflow processing. They are kept for future enhancement but
-      # not currently used in core processing flows due to complexity
-      # vs. value considerations.
-      # ================================================================
-
-      # FUTURE: Handle steps based on TaskWorkflowSummary recommendations
+      # Uses strategy pattern to allow composition of different coordinators
+      # and reenqueuer strategies for testing vs production.
       #
-      # This method uses the TaskWorkflowSummary view to intelligently process steps
-      # with optimal processing strategies, eliminating the need for viable step discovery.
-      #
-      # @param summary [Tasker::TaskWorkflowSummary] The workflow summary with processing recommendations
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def handle_steps_via_summary(summary)
-        # Get the recommended step IDs for processing
-        step_ids = summary.next_steps_for_processing
-        return [] if step_ids.empty?
-
-        # Load steps with associations for processing
-        steps = Tasker::WorkflowStep.where(workflow_step_id: step_ids)
-        return [] if steps.empty?
-
-        # Log processing strategy for observability
-        Rails.logger.debug do
-          "TaskHandler: Processing #{steps.count} steps using #{summary.processing_strategy} strategy"
-        end
-
-        # Execute steps using the recommended strategy
-        task = summary.task
-        sequence = get_sequence(task)
-        execute_steps_with_strategy(task, sequence, steps, summary.processing_strategy)
+      # @return [Tasker::Orchestration::WorkflowCoordinator] The workflow coordinator instance
+      def workflow_coordinator
+        @workflow_coordinator ||= workflow_coordinator_strategy.new(
+          reenqueuer_strategy: reenqueuer_strategy.new
+        )
       end
 
-      # FUTURE: Execute steps using the processing strategy recommended by TaskWorkflowSummary
+      # Get the workflow coordinator strategy class
       #
-      # @param task [Tasker::Task] The task being processed
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param strategy [String] Processing strategy ('batch_parallel', 'small_parallel', 'sequential')
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_with_strategy(task, sequence, steps, _strategy)
-        # DELEGATE: Use the StepExecutor to handle all step execution logic
-        # The strategy is informational - StepExecutor will use task handler settings for actual execution mode
-        step_executor.execute_steps(task, sequence, steps)
+      # Can be overridden for testing to inject TestWorkflowCoordinator
+      #
+      # @return [Class] The workflow coordinator strategy class
+      def workflow_coordinator_strategy
+        @workflow_coordinator_strategy || Tasker::Orchestration::WorkflowCoordinator
+      end
+
+      public
+
+      # Set the workflow coordinator strategy (for testing)
+      #
+      # @param strategy [Class] The workflow coordinator strategy class
+      def workflow_coordinator_strategy=(strategy)
+        @workflow_coordinator_strategy = strategy
+        @workflow_coordinator = nil # Reset memoized instance
+      end
+
+      # Set the reenqueuer strategy (for testing)
+      #
+      # @param strategy [Class] The reenqueuer strategy class
+      def reenqueuer_strategy=(strategy)
+        @reenqueuer_strategy = strategy
+        @workflow_coordinator = nil # Reset memoized instance
+      end
+
+      private
+
+      # Get the reenqueuer strategy class
+      #
+      # Can be overridden for testing to inject TestReenqueuer
+      #
+      # @return [Class] The reenqueuer strategy class
+      def reenqueuer_strategy
+        @reenqueuer_strategy || Tasker::Orchestration::TaskReenqueuer
       end
 
       # Find steps that are ready for execution

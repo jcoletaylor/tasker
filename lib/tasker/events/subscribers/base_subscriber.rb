@@ -193,7 +193,7 @@ module Tasker
 
         # Instance-level event filtering (override in subclasses)
         #
-        # @param event_constant [String] The event constant
+        # @param _event_constant [String] The event constant (unused in base implementation)
         # @return [Boolean] Whether to handle this event
         def should_process_event?(_event_constant)
           true # Process all events by default

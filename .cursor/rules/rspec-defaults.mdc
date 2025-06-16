@@ -1,6 +1,6 @@
 ---
 description:
-globs: spec/**/*_spec.rb
+globs:
 alwaysApply: false
 ---
 When we run rspec tests, the command line switch `-v` does not mean verbose, it means

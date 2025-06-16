@@ -1,76 +1,91 @@
+-- Task Workflow Summary View - Redesigned for Scalable Architecture
+-- This view provides enhanced workflow analysis for active tasks only
+-- Built on top of optimized active views for maximum performance
+
 SELECT
-  t.task_id,
+  atec.task_id,
+  atec.named_task_id,
+  atec.status,
 
-  -- Include all existing TaskExecutionContext fields
-  tec.total_steps,
-  tec.pending_steps,
-  tec.in_progress_steps,
-  tec.completed_steps,
-  tec.failed_steps,
-  tec.ready_steps,
-  tec.execution_status,
-  tec.recommended_action,
-  tec.completion_percentage,
-  tec.health_status,
+  -- Core execution metrics (from active task execution context)
+  atec.total_steps,
+  atec.pending_steps,
+  atec.in_progress_steps,
+  atec.completed_steps,
+  atec.failed_steps,
+  atec.ready_steps,
+  atec.execution_status,
+  atec.recommended_action,
+  atec.completion_percentage,
+  atec.health_status,
 
-  -- Enhanced processing context
-  root_steps.root_step_ids,
-  root_steps.root_step_count,
+  -- Enhanced workflow analysis using active step data
+  workflow_analysis.root_step_ids,
+  workflow_analysis.root_step_count,
+  workflow_analysis.ready_step_ids,
+  workflow_analysis.blocked_step_ids,
+  workflow_analysis.blocking_reasons,
 
-  -- Blocking analysis with specific step identification
-  blocking_info.blocked_step_ids,
-  blocking_info.blocking_reasons,
+  -- Workflow complexity metrics
+  workflow_analysis.max_dependency_depth,
+  workflow_analysis.parallel_branches,
 
-  -- Next processing recommendation with actionable step IDs
+  -- Workflow insights (descriptive, not prescriptive)
   CASE
-    WHEN tec.ready_steps > 0 THEN ready_steps.ready_step_ids
-    ELSE NULL
-  END as next_executable_step_ids,
-
-  -- Processing strategy recommendation based on ready step count
-  CASE
-    WHEN tec.ready_steps > 5 THEN 'batch_parallel'
-    WHEN tec.ready_steps > 1 THEN 'small_parallel'
-    WHEN tec.ready_steps = 1 THEN 'sequential'
+    WHEN atec.ready_steps > 0 AND atec.failed_steps = 0 THEN 'optimal'
+    WHEN atec.ready_steps > 0 AND atec.failed_steps > 0 THEN 'recovering'
+    WHEN atec.ready_steps = 0 AND atec.in_progress_steps > 0 THEN 'processing'
+    WHEN atec.ready_steps = 0 AND atec.failed_steps > 0 THEN 'blocked'
     ELSE 'waiting'
-  END as processing_strategy
+  END as workflow_efficiency,
 
-FROM tasker_tasks t
-JOIN tasker_task_execution_contexts tec ON tec.task_id = t.task_id
+  -- Parallelism potential (insight, not directive)
+  CASE
+    WHEN atec.ready_steps > 5 THEN 'high_parallelism'
+    WHEN atec.ready_steps > 1 THEN 'moderate_parallelism'
+    WHEN atec.ready_steps = 1 THEN 'sequential_only'
+    ELSE 'no_ready_work'
+  END as parallelism_potential
 
+FROM tasker_active_task_execution_contexts atec
+
+-- PERFORMANCE OPTIMIZATION: Single CTE for all step analysis on active data only
 LEFT JOIN (
   SELECT
-    task_id,
-    jsonb_agg(workflow_step_id ORDER BY workflow_step_id) as root_step_ids,
-    count(*) as root_step_count
-  FROM tasker_step_readiness_statuses srs
-  WHERE srs.total_parents = 0
-  GROUP BY task_id
-) root_steps ON root_steps.task_id = t.task_id
+    asrs.task_id,
 
-LEFT JOIN (
-  SELECT
-    task_id,
-    jsonb_agg(workflow_step_id ORDER BY workflow_step_id) as ready_step_ids
-  FROM tasker_step_readiness_statuses srs
-  WHERE srs.ready_for_execution = true
-  GROUP BY task_id
-) ready_steps ON ready_steps.task_id = t.task_id
-
-LEFT JOIN (
-  SELECT
-    task_id,
-    jsonb_agg(workflow_step_id ORDER BY workflow_step_id) as blocked_step_ids,
+    -- Root steps analysis
     jsonb_agg(
-      CASE
-        WHEN srs.dependencies_satisfied = false THEN 'dependencies_not_satisfied'
-        WHEN srs.retry_eligible = false THEN 'retry_not_eligible'
-        WHEN srs.current_state NOT IN ('pending', 'failed') THEN 'invalid_state'
-        ELSE 'unknown'
-      END ORDER BY workflow_step_id
-    ) as blocking_reasons
-  FROM tasker_step_readiness_statuses srs
-  WHERE srs.ready_for_execution = false
-    AND srs.current_state IN ('pending', 'failed')
-  GROUP BY task_id
-) blocking_info ON blocking_info.task_id = t.task_id
+      CASE WHEN asrs.total_parents = 0 THEN asrs.workflow_step_id END
+    ) FILTER (WHERE asrs.total_parents = 0) as root_step_ids,
+    COUNT(*) FILTER (WHERE asrs.total_parents = 0) as root_step_count,
+
+    -- Ready steps analysis
+    jsonb_agg(
+      CASE WHEN asrs.ready_for_execution = true THEN asrs.workflow_step_id END
+    ) FILTER (WHERE asrs.ready_for_execution = true) as ready_step_ids,
+
+    -- Blocked steps analysis
+    jsonb_agg(
+      CASE WHEN asrs.ready_for_execution = false AND asrs.current_state IN ('pending', 'error')
+           THEN asrs.workflow_step_id END
+    ) FILTER (WHERE asrs.ready_for_execution = false AND asrs.current_state IN ('pending', 'error')) as blocked_step_ids,
+
+    jsonb_agg(
+      CASE WHEN asrs.ready_for_execution = false AND asrs.current_state IN ('pending', 'error') THEN
+        CASE
+          WHEN asrs.dependencies_satisfied = false THEN 'dependencies_not_satisfied'
+          WHEN asrs.retry_eligible = false THEN 'retry_not_eligible'
+          WHEN asrs.current_state NOT IN ('pending', 'error') THEN 'invalid_state'
+          ELSE 'unknown'
+        END
+      END
+    ) FILTER (WHERE asrs.ready_for_execution = false AND asrs.current_state IN ('pending', 'error')) as blocking_reasons,
+
+    -- Workflow complexity metrics
+    MAX(asrs.total_parents) as max_dependency_depth,
+    COUNT(DISTINCT asrs.total_parents) as parallel_branches
+
+  FROM tasker_active_step_readiness_statuses asrs
+  GROUP BY asrs.task_id
+) workflow_analysis ON workflow_analysis.task_id = atec.task_id

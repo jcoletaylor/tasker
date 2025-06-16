@@ -18,11 +18,13 @@ module Tasker
 
       # Get the appropriate task handler and process the task
       handler = handler_factory.get(task.name)
-      result = handler.handle(task)
+      handler.handle(task)
 
-      unless result
-        Rails.logger.error "TaskRunnerJob: Task processing failed for task #{task_id}"
-        raise "Task processing failed for task #{task_id}"
+      # Check if task completed successfully
+      task.reload
+      unless task.status == Tasker::Constants::TaskStatuses::COMPLETE
+        Rails.logger.error "TaskRunnerJob: Task did not complete successfully for task #{task_id}, status: #{task.status}"
+        raise "Task processing failed for task #{task_id} - final status: #{task.status}"
       end
 
       Rails.logger.info "TaskRunnerJob: Completed execution for task #{task_id}"

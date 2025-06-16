@@ -378,5 +378,40 @@ module Tasker
       TaskFinalization::PendingReasons::READY_FOR_PROCESSING,
       TaskFinalization::PendingReasons::WORKFLOW_PAUSED
     ].freeze
+
+    # Task Transition Event Map
+    TASK_TRANSITION_EVENT_MAP = {
+      # Initial state transitions (from nil/initial)
+      [nil, TaskStatuses::PENDING] => TaskEvents::INITIALIZE_REQUESTED,
+      [nil, TaskStatuses::IN_PROGRESS] => TaskEvents::START_REQUESTED,
+      [nil, TaskStatuses::COMPLETE] => TaskEvents::COMPLETED,
+      [nil, TaskStatuses::ERROR] => TaskEvents::FAILED,
+      [nil, TaskStatuses::CANCELLED] => TaskEvents::CANCELLED,
+      [nil, TaskStatuses::RESOLVED_MANUALLY] => TaskEvents::RESOLVED_MANUALLY,
+
+      # Normal state transitions
+      [TaskStatuses::PENDING,
+       TaskStatuses::IN_PROGRESS] => TaskEvents::START_REQUESTED,
+      [TaskStatuses::PENDING, TaskStatuses::CANCELLED] => TaskEvents::CANCELLED,
+      [TaskStatuses::PENDING, TaskStatuses::ERROR] => TaskEvents::FAILED,
+
+      [TaskStatuses::IN_PROGRESS,
+       TaskStatuses::PENDING] => TaskEvents::INITIALIZE_REQUESTED,
+      [TaskStatuses::IN_PROGRESS,
+       TaskStatuses::COMPLETE] => TaskEvents::COMPLETED,
+      [TaskStatuses::IN_PROGRESS, TaskStatuses::ERROR] => TaskEvents::FAILED,
+      [TaskStatuses::IN_PROGRESS,
+       TaskStatuses::CANCELLED] => TaskEvents::CANCELLED,
+
+      [TaskStatuses::ERROR,
+       TaskStatuses::PENDING] => TaskEvents::RETRY_REQUESTED,
+      [TaskStatuses::ERROR,
+       TaskStatuses::RESOLVED_MANUALLY] => TaskEvents::RESOLVED_MANUALLY,
+
+      # New transitions for admin override scenarios
+      [TaskStatuses::COMPLETE, TaskStatuses::CANCELLED] => TaskEvents::CANCELLED,
+      [TaskStatuses::RESOLVED_MANUALLY,
+       TaskStatuses::CANCELLED] => TaskEvents::CANCELLED
+    }.freeze
   end
 end

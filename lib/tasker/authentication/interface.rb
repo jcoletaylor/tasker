@@ -26,7 +26,7 @@ module Tasker
       end
 
       # Optional: Configuration validation for the authenticator
-      # @param options [Hash] Configuration options
+      # @param _options [Hash] Configuration options (unused in default implementation)
       # @return [Array<String>] Array of validation error messages, empty if valid
       def validate_configuration(_options = {})
         []

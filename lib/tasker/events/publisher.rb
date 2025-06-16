@@ -21,6 +21,7 @@ module Tasker
     #   publish_step_completed(step, additional_context: {...})
     #   publish_task_failed(task, error_message: "...")
     class Publisher
+      # @!visibility private
       include Dry::Events::Publisher[:tasker]
       include Tasker::Concerns::IdempotentStateTransitions
       include Singleton

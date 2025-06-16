@@ -2,20 +2,19 @@
 ![GitHub](https://img.shields.io/github/license/jcoletaylor/tasker)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&sort=semver)
 
-# Tasker: Queable Multi-Step Tasks Made Easy-ish
-
-Designed to make developing queuable multi-step tasks easier to reason about
+# Tasker: Production-Ready Workflow Orchestration Engine
 
 ## Getting Started with Tasker
 
-This guide will walk you through the fundamentals of using Tasker to build complex task workflows with retries, error handling, and concurrency.
+This guide will walk you through the fundamentals of using Tasker to build complex, production-ready task workflows with automatic retries, intelligent error handling, and sophisticated concurrency patterns.
 
 ## Table of Contents
 
-- [Tasker: Queable Multi-Step Tasks Made Easy-ish](#tasker-queable-multi-step-tasks-made-easy-ish)
+- [Tasker: Production-Ready Workflow Orchestration Engine](#tasker-production-ready-workflow-orchestration-engine)
   - [Getting Started with Tasker](#getting-started-with-tasker)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
+    - [🚀 Core Capabilities](#-core-capabilities)
   - [Installation](#installation)
   - [Core Concepts](#core-concepts)
   - [Creating Task Handlers](#creating-task-handlers)
@@ -60,13 +59,23 @@ This guide will walk you through the fundamentals of using Tasker to build compl
 
 ## Introduction
 
-Tasker is a Rails engine that makes it easier to build complex workflows by organizing them into discrete steps that can be executed, retried, and tracked. It's designed for processes that:
+Tasker is a **production-ready Rails engine** that makes it easier to build complex, resilient workflows by organizing them into discrete steps that can be executed, retried, and tracked with sophisticated orchestration capabilities.
 
-- Involve multiple steps
-- May need retries with exponential backoff
-- Have dependencies between steps
-- Should be queued and processed asynchronously
-- Need visibility into progress and errors
+### 🚀 Core Capabilities
+- **Complex Workflow Patterns**: Linear, diamond, tree, and parallel merge workflows
+- **Intelligent Retry Logic**: Exponential backoff with configurable retry limits
+- **Dependency Management**: Sophisticated DAG-based step dependencies
+- **High-Performance Processing**: SQL-function based orchestration with 4x performance gains
+- **Production Resilience**: Automatic failure recovery and retry orchestration
+- **Complete Observability**: Event-driven architecture with comprehensive telemetry
+
+Perfect for processes that:
+- Involve multiple interdependent steps
+- Require automatic retries with exponential backoff
+- Have complex dependencies between steps
+- Need to be queued and processed asynchronously
+- Require visibility into progress, errors, and retry behavior
+- Must handle transient failures gracefully
 
 ## Installation
 
@@ -74,7 +83,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.1.0'
+  gem 'tasker', '~> 2.2.0'
 end
 ```
 
@@ -761,11 +770,12 @@ For complete documentation on telemetry features, configuration options, and bes
 - **[Telemetry & Observability](docs/TELEMETRY.md)** - OpenTelemetry integration and custom monitoring setup
 - **[System Overview](docs/OVERVIEW.md)** - Architecture overview and configuration examples
 - **[Workflow Execution](docs/FLOW_CHART.md)** - Visual guide to workflow execution and retry logic
+- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual representation of task workflows
+- **[SQL Functions](docs/SQL_FUNCTIONS.md)** - Performance optimization of SQL functions
 
 ### Additional Resources
 
 - **[Why Tasker](docs/WHY.md)** - Background and motivation for building Tasker
-- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual representation of task workflows
 
 ## Scheduling Tasks
 

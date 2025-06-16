@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
-        ruby-version: ['3.2.4']  # Use major.minor versions for latest patches
+        ruby-version: ['3.2']  # Use major.minor versions for latest patches
 
     services:
       postgres:
@@ -49,7 +49,7 @@ jobs:
       - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby-version }}
+          ruby-version: ${{ matrix.ruby-version }}  # Overrides .ruby-version for CI testing
           bundler-cache: true
 
       - name: Set up database schema

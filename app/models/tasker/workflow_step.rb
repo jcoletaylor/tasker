@@ -33,7 +33,7 @@ module Tasker
     delegate :name, to: :named_step
 
     has_one :step_dag_relationship, class_name: 'Tasker::StepDagRelationship', primary_key: :workflow_step_id
-    has_one :step_readiness_status, class_name: 'Tasker::StepReadinessStatus', primary_key: :workflow_step_id
+    # NOTE: step_readiness_status is now accessed via function-based approach, not ActiveRecord association
 
     # Optimized scopes for efficient querying using state machine transitions
     scope :completed, lambda {
@@ -260,20 +260,25 @@ module Tasker
       }
 
       step = new(step_attributes)
-
       step.save!
+
+      # Initialize the state machine with proper initial state
+      # This creates the initial transition to PENDING state
+      step.state_machine.initialize_state_machine!
+
       step
     end
 
-    def self.get_viable_steps(_task, sequence)
+    def self.get_viable_steps(task, sequence)
       # Get step IDs from sequence
       step_ids = sequence.steps.map(&:workflow_step_id)
 
-      # Single query to get all readiness information via scenic view
-      ready_statuses = StepReadinessStatus.ready.where(workflow_step_id: step_ids)
+      # Use function-based approach for high-performance readiness checking
+      ready_statuses = StepReadinessStatus.for_task(task.task_id, step_ids)
+      ready_step_ids = ready_statuses.select(&:ready_for_execution).map(&:workflow_step_id)
 
       # Return WorkflowStep objects for ready steps
-      WorkflowStep.where(workflow_step_id: ready_statuses.pluck(:workflow_step_id))
+      WorkflowStep.where(workflow_step_id: ready_step_ids)
                   .includes(:named_step)
     end
 
@@ -281,8 +286,13 @@ module Tasker
       outgoing_edges.create!(to_step: to_step, name: PROVIDES_EDGE_NAME)
     end
 
+    # Helper method to get step readiness status using function-based approach
+    def step_readiness_status
+      @step_readiness_status ||= StepReadinessStatus.for_task(task_id, [workflow_step_id]).first
+    end
+
     def complete?
-      # Use scenic view for consistent state checking
+      # Use function-based approach for consistent state checking
       step_readiness_status&.current_state&.in?([
                                                   Constants::WorkflowStepStatuses::COMPLETE,
                                                   Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
@@ -290,45 +300,45 @@ module Tasker
     end
 
     def in_progress?
-      # Use scenic view for consistent state checking
+      # Use function-based approach for consistent state checking
       step_readiness_status&.current_state == Constants::WorkflowStepStatuses::IN_PROGRESS
     end
 
     def pending?
-      # Use scenic view for consistent state checking
+      # Use function-based approach for consistent state checking
       step_readiness_status&.current_state == Constants::WorkflowStepStatuses::PENDING
     end
 
     def in_error?
-      # Use scenic view for consistent state checking
+      # Use function-based approach for consistent state checking
       step_readiness_status&.current_state == Constants::WorkflowStepStatuses::ERROR
     end
 
     def cancelled?
-      # Use scenic view for consistent state checking
+      # Use function-based approach for consistent state checking
       step_readiness_status&.current_state == Constants::WorkflowStepStatuses::CANCELLED
     end
 
     def ready_status?
-      # Use scenic view for efficient ready status checking
+      # Use function-based approach for efficient ready status checking
       Constants::UNREADY_WORKFLOW_STEP_STATUSES.exclude?(
         step_readiness_status&.current_state || Constants::WorkflowStepStatuses::PENDING
       )
     end
 
     def ready?
-      # Use scenic view's comprehensive readiness calculation
+      # Use function-based approach's comprehensive readiness calculation
       step_readiness_status&.ready_for_execution || false
     end
 
-    # New scenic view-powered predicate methods
+    # Function-based predicate methods
     def dependencies_satisfied?
-      # Use scenic view's pre-calculated dependency analysis
+      # Use function-based approach's pre-calculated dependency analysis
       step_readiness_status&.dependencies_satisfied || false
     end
 
     def retry_eligible?
-      # Use scenic view's retry/backoff calculation
+      # Use function-based approach's retry/backoff calculation
       step_readiness_status&.retry_eligible || false
     end
 
@@ -370,6 +380,13 @@ module Tasker
     def leaf_step?
       # Check if this is a leaf step using DAG relationship view
       step_dag_relationship&.child_count&.zero?
+    end
+
+    def reload
+      # Override reload to ensure step readiness status is refreshed
+      super.tap do
+        @step_readiness_status = nil # Reset cached readiness status
+      end
     end
 
     private

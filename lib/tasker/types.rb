@@ -25,6 +25,7 @@ module Tasker
   #     context: { id: 123 }
   #   )
   module Types
+    # @!visibility private
     include Dry::Types()
   end
 end

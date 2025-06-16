@@ -81,5 +81,7 @@ module Dummy
     # by default, and changes the default value of the
     # same_site option from nil to :lax
     config.action_dispatch.cookies_same_site_protection = :lax
+
+    config.active_record.schema_format = :sql
   end
 end
