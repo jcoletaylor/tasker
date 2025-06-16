@@ -89,6 +89,7 @@ module Tasker
 
     # Scopes a query to find tasks with a specific annotation value
     #
+    # @scope class
     # @param name [String] The annotation type name
     # @param key [String, Symbol] The key within the annotation to match
     # @param value [String] The value to match against
@@ -103,6 +104,7 @@ module Tasker
 
     # Scopes a query to find tasks by their current state using state machine transitions
     #
+    # @scope class
     # @param state [String, nil] The state to filter by. If nil, returns all tasks with current state information
     # @return [ActiveRecord::Relation] Tasks with current state, optionally filtered by specific state
     scope :by_current_state,

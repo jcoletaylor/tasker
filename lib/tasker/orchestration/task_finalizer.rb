@@ -20,8 +20,8 @@ module Tasker
       # Check if the task is blocked by errors
       #
       # @param task [Tasker::Task] The task to check
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param processed_steps [Array<Tasker::WorkflowStep>] Recently processed steps
+      # @param _sequence [Tasker::Types::StepSequence] The step sequence (unused)
+      # @param _processed_steps [Array<Tasker::WorkflowStep>] Recently processed steps (unused)
       # @return [Boolean] True if task is blocked by errors
       def blocked_by_errors?(task, _sequence, _processed_steps)
         BlockageChecker.blocked_by_errors?(task)
@@ -30,7 +30,7 @@ module Tasker
       # Finalize a task with processed steps
       #
       # @param task [Tasker::Task] The task to finalize
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param _sequence [Tasker::Types::StepSequence] The step sequence (unused)
       # @param processed_steps [Array<Tasker::WorkflowStep>] All processed steps
       def finalize_task_with_steps(task, _sequence, processed_steps)
         FinalizationProcessor.finalize_with_steps(task, processed_steps, self)

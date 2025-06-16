@@ -4,15 +4,6 @@
 
 # Tasker: Production-Ready Workflow Orchestration Engine
 
-🎉 **MAJOR BREAKTHROUGH**: Critical production bug **SUCCESSFULLY FIXED**! Tasker is now a **fully functional, production-ready** workflow orchestration engine designed to make developing complex, resilient multi-step tasks easy to reason about.
-
-## 🎯 Current Status: PRODUCTION READY ✅
-- ✅ **Critical TaskFinalizer Bug Fixed** - Proper retry orchestration now working
-- ✅ **All Workflow Patterns Validated** - Linear, diamond, tree, parallel merge all tested
-- ✅ **Complete Test Coverage** - 24/24 production workflow tests passing
-- ✅ **High-Performance SQL Functions** - 4x performance improvements achieved
-- ✅ **Resilient Architecture** - Exponential backoff and failure recovery working
-
 ## Getting Started with Tasker
 
 This guide will walk you through the fundamentals of using Tasker to build complex, production-ready task workflows with automatic retries, intelligent error handling, and sophisticated concurrency patterns.
@@ -20,7 +11,6 @@ This guide will walk you through the fundamentals of using Tasker to build compl
 ## Table of Contents
 
 - [Tasker: Production-Ready Workflow Orchestration Engine](#tasker-production-ready-workflow-orchestration-engine)
-  - [🎯 Current Status: PRODUCTION READY ✅](#-current-status-production-ready-)
   - [Getting Started with Tasker](#getting-started-with-tasker)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
@@ -93,7 +83,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.1.0'
+  gem 'tasker', '~> 2.2.0'
 end
 ```
 
@@ -780,11 +770,12 @@ For complete documentation on telemetry features, configuration options, and bes
 - **[Telemetry & Observability](docs/TELEMETRY.md)** - OpenTelemetry integration and custom monitoring setup
 - **[System Overview](docs/OVERVIEW.md)** - Architecture overview and configuration examples
 - **[Workflow Execution](docs/FLOW_CHART.md)** - Visual guide to workflow execution and retry logic
+- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual representation of task workflows
+- **[SQL Functions](docs/SQL_FUNCTIONS.md)** - Performance optimization of SQL functions
 
 ### Additional Resources
 
 - **[Why Tasker](docs/WHY.md)** - Background and motivation for building Tasker
-- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual representation of task workflows
 
 ## Scheduling Tasks
 

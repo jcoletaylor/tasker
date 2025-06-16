@@ -62,21 +62,6 @@
 
 <h1 id="label-Tasker-3A+Production-Ready+Workflow+Orchestration+Engine">Tasker: Production-Ready Workflow Orchestration Engine</h1>
 
-<p>🎉 <strong>MAJOR BREAKTHROUGH</strong>: Critical production bug <strong>SUCCESSFULLY FIXED</strong>! Tasker is now a <strong>fully functional, production-ready</strong> workflow orchestration engine designed to make developing complex, resilient multi-step tasks easy to reason about.</p>
-
-<h2 id="label-F0-9F-8E-AF+Current+Status-3A+PRODUCTION+READY+-E2-9C-85">🎯 Current Status: PRODUCTION READY ✅</h2>
-<ul><li>
-<p>✅ <strong>Critical TaskFinalizer Bug Fixed</strong> - Proper retry orchestration now working</p>
-</li><li>
-<p>✅ <strong>All Workflow Patterns Validated</strong> - Linear, diamond, tree, parallel merge all tested</p>
-</li><li>
-<p>✅ <strong>Complete Test Coverage</strong> - 24/24 production workflow tests passing</p>
-</li><li>
-<p>✅ <strong>High-Performance SQL Functions</strong> - 4x performance improvements achieved</p>
-</li><li>
-<p>✅ <strong>Resilient Architecture</strong> - Exponential backoff and failure recovery working</p>
-</li></ul>
-
 <h2 id="label-Getting+Started+with+Tasker">Getting Started with Tasker</h2>
 
 <p>This guide will walk you through the fundamentals of using Tasker to build complex, production-ready task workflows with automatic retries, intelligent error handling, and sophisticated concurrency patterns.</p>
@@ -84,8 +69,6 @@
 <h2 id="label-Table+of+Contents">Table of Contents</h2>
 <ul><li>
 <p><a href="#tasker-production-ready-workflow-orchestration-engine">Tasker: Production-Ready Workflow Orchestration Engine</a></p>
-</li><li>
-<p><a href="#-current-status-production-ready-">🎯 Current Status: PRODUCTION READY ✅</a></p>
 </li><li>
 <p><a href="#getting-started-with-tasker">Getting Started with Tasker</a></p>
 </li><li>
@@ -214,7 +197,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.1.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.0</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -935,13 +918,15 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 <p><strong>Overview[docs/OVERVIEW.md]</strong> - Architecture overview and configuration examples</p>
 </li><li>
 <p><strong>Execution[docs/FLOW_CHART.md]</strong> - Visual guide to workflow execution and retry logic</p>
+</li><li>
+<p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual representation of task workflows</p>
+</li><li>
+<p><strong>Functions[docs/SQL_FUNCTIONS.md]</strong> - Performance optimization of SQL functions</p>
 </li></ul>
 
 <h3 id="label-Additional+Resources">Additional Resources</h3>
 <ul><li>
 <p><strong>Tasker[docs/WHY.md]</strong> - Background and motivation for building Tasker</p>
-</li><li>
-<p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual representation of task workflows</p>
 </li></ul>
 
 <h2 id="label-Scheduling+Tasks">Scheduling Tasks</h2>
@@ -974,7 +959,7 @@ rails generate tasker:subscriber metrics --metrics --events task.completed task.
 </div></div>
 
       <div id="footer">
-  Generated on Mon Jun 16 14:53:02 2025 by
+  Generated on Mon Jun 16 15:17:55 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

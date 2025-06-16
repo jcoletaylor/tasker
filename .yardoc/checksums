@@ -1,13 +1,13 @@
 lib/tasker.rb 6592f8c87460cbc0cb4d9af82e1ffbf30af555a9
-lib/tasker/types.rb 3fbd9e620d6fabbacf747053d3e060d5174b5120
+lib/tasker/types.rb d253297d34650ce89ed0782ec7b68b8c59c0f703
 lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
 lib/tasker/errors.rb f69f032114647dc76a343ea7b7e78a8ff3f07715
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb b0ac91ef38720384619168d708726517de53a0cf
+lib/tasker/version.rb b36cd44562335e72cc95bf79514fab73bdcd3d7c
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 0b1415febc27d77e62aa80c18755c2fb2102009e
-app/models/tasker/task.rb f24ca19479b1d217c6d6db9632f9fc8d40d134cb
+app/models/tasker/task.rb 7e7f532901ac8a6c1692cf10b1bda3f2307b2af4
 lib/tasker/task_builder.rb 9ea38ed18b4bb0083d3355c27060a1c6572d73cf
 lib/tasker/task_handler.rb c31baf99fc9e6bef390c76391c478fc7e3db2e09
 lib/tasker/authorization.rb 0a297fc19c754fcf29b314cc2e1990bb82d5249b
@@ -16,7 +16,7 @@ lib/tasker/orchestration.rb 50ec3766937533ebabbb2734dbb94c747ce9c1a5
 lib/tasker/state_machine.rb a7dc3a11370a3e4ef474964f90ba7d047e0bc01d
 lib/tasker/events/catalog.rb 812346e16ade28ad27f89bda5d5a7bb6faa8247c
 lib/tasker/handler_factory.rb 99a458feab24ee4d9d36932bb5574c0573216631
-lib/tasker/events/publisher.rb 6f6699d66df2dceb0af8e4a5570ed5d30d0e8657
+lib/tasker/events/publisher.rb 88556a13d5eb477a344092746b6a16eb00aad229
 lib/tasker/step_handler/api.rb fb4cc91fd0803980659c72becb0a6666303c94bc
 app/models/tasker/named_step.rb bac1ecc18e88b425b63c8fb1e824c1bcebe72d6b
 app/models/tasker/named_task.rb 0f6b7c559019196c574385fa89642c190b4a220c
@@ -47,7 +47,7 @@ lib/tasker/task_handler/step_group.rb 7f974499f673b98f17a26fdad54acf3d8e9d0e58
 app/graphql/tasker/queries/one_step.rb f339f69c1ddee189b6fd0aa83f91540386375847
 app/graphql/tasker/queries/one_task.rb 17f1c1c756c6b513582e6a727a11816f9b5baae8
 app/models/tasker/diagram/flowchart.rb 611394c210e7dc43d2834906133c4e5f78f48044
-lib/tasker/authentication/interface.rb 1d7f1410a75645b009f39c1bc1079bb3021cff0f
+lib/tasker/authentication/interface.rb be1c69f8eb8a69145fdc85303f859d7b8d37c74c
 lib/tasker/concerns/authenticatable.rb 50c1b43875dc5c75f48757f2c0b1354ce3aeb39e
 lib/tasker/concerns/event_publisher.rb 4c9dc88eb99afd06cd783488cc48a4078159c588
 lib/tasker/events/definition_loader.rb 3e7c246d872186e4013b64d5b5e4c7f7bc1a0739
@@ -70,7 +70,7 @@ app/controllers/tasker/tasks_controller.rb 021896ba2f5f4f6c2c191c63f2cbfd2f50d56
 app/models/tasker/step_dag_relationship.rb c598a8a65e1592d28108b10d0626a888eeea7cff
 app/models/tasker/step_readiness_status.rb e38558775e17297c8a3f2e9619e2692e3194241a
 lib/tasker/events/event_payload_builder.rb 87ebfc358db5c5b15d89451d681aa2e1f9e728ea
-lib/tasker/orchestration/task_finalizer.rb 5b8d4926808f1e04357dfa098b26d851d2ede6ad
+lib/tasker/orchestration/task_finalizer.rb 69ac3497d1b0c82601d789fadcf41944fa11e47c
 app/graphql/tasker/mutations/cancel_step.rb d52cd7aef3a873b039942cf08087123702b9ecb5
 app/graphql/tasker/mutations/cancel_task.rb 6aa3924141d21821753029279aadb61bab7f7310
 app/graphql/tasker/mutations/create_task.rb 10085a7074f22831b0e013923eccfb59ce86eac8
@@ -81,7 +81,7 @@ app/models/tasker/task_execution_context.rb 7e5e63862ea9d9b5ba487561324840b1fb56
 lib/tasker/orchestration/task_reenqueuer.rb c7d5bb36563dcdce12ccf4fffb61de8bd80560b4
 lib/tasker/task_handler/instance_methods.rb 8259c076198a0b581aaf0da62ba995232997c3a9
 app/controllers/tasker/graphql_controller.rb d07031bdf92f63bdde613dcd048ed020a14cef91
-lib/tasker/authorization/base_coordinator.rb eea55d42e7555819f38ea0d01119a3fe16a7703a
+lib/tasker/authorization/base_coordinator.rb cff4a6836fd51fb2069efd27f77439d9a39289c3
 lib/tasker/orchestration/task_initializer.rb fc990b98b27176861f835cdc9838480e682bc153
 app/graphql/tasker/mutations/base_mutation.rb 6ed4a09d3ab6ba02fd592490bcfe66cfd81463a1
 app/graphql/tasker/queries/tasks_by_status.rb c80e8b485bcdccbd5ad7a899e8526001ccad6b35
@@ -111,7 +111,7 @@ app/graphql/tasker/graph_ql_types/base_object.rb f949553bbaa58ac68275262ca015ee6
 app/graphql/tasker/graph_ql_types/base_scalar.rb d5ac3d13681898cc287c64c1b8994db1e446010f
 app/models/tasker/dependent_system_object_map.rb d4e7053917d74153f7301d035346192a8215b706
 lib/generators/tasker/authenticator_generator.rb bc52b80e9e5e4cedb9d32cfc8da8e2d857311b54
-lib/tasker/events/subscribers/base_subscriber.rb 3f226e00c6d616af78304486d92d7529244f3375
+lib/tasker/events/subscribers/base_subscriber.rb 417b7cc2cc0b9ef956198a6a7bab79fa5d33c117
 lib/tasker/orchestration/workflow_coordinator.rb 49863c78d49b89259dada7baf56c1523daef23fa
 app/graphql/tasker/queries/tasks_by_annotation.rb 725723a34bb88aec69667f7e22b7a694fcc0c69e
 lib/tasker/orchestration/step_sequence_factory.rb 7ee316fdfcf370164a8c786efbac2ec1e11a098c

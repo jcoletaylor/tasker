@@ -86,9 +86,9 @@ module Tasker
       # their specific authorization logic. The default implementation
       # denies all access.
       #
-      # @param resource [String] The resource being accessed
-      # @param action [Symbol, String] The action being performed
-      # @param context [Hash] Additional context for authorization decisions
+      # @param _resource [String] The resource being accessed (unused in base implementation)
+      # @param _action [Symbol, String] The action being performed (unused in base implementation)
+      # @param _context [Hash] Additional context for authorization decisions (unused in base implementation)
       # @return [Boolean] True if the action should be authorized
       def authorized?(_resource, _action, _context = {})
         # Default implementation: deny all access

@@ -172,6 +172,54 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#by_annotation-class_method" title="by_annotation (class method)">.<strong>by_annotation</strong>  &#x21d2; ActiveRecord::Relation </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Scopes a query to find tasks with a specific annotation value.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#by_current_state-class_method" title="by_current_state (class method)">.<strong>by_current_state</strong>  &#x21d2; ActiveRecord::Relation </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Scopes a query to find tasks by their current state using state machine transitions.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#create_with_defaults!-class_method" title="create_with_defaults! (class method)">.<strong>create_with_defaults!</strong>(task_request)  &#x21d2; Tasker::Task </a>
     
 
@@ -293,54 +341,6 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Checks if all steps in the task are complete.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#by_annotation-instance_method" title="#by_annotation (instance method)">#<strong>by_annotation</strong>  &#x21d2; ActiveRecord::Relation </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Scopes a query to find tasks with a specific annotation value.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#by_current_state-instance_method" title="#by_current_state (instance method)">#<strong>by_current_state</strong>  &#x21d2; ActiveRecord::Relation </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Scopes a query to find tasks by their current state using state machine transitions.</p>
 </div></span>
   
 </li>
@@ -532,462 +532,9 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="create_with_defaults!-class_method">
+  <h3 class="signature first" id="by_annotation-class_method">
   
-    .<strong>create_with_defaults!</strong>(task_request)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Creates a task with default values from a task request and saves it to the database</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>task_request</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The task request containing task parameters</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The created and saved task</p>
-</div>
-      
-    </li>
-  
-</ul>
-<p class="tag_title">Raises:</p>
-<ul class="raise">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>ActiveRecord::RecordInvalid</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>If the task is invalid</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-140
-141
-142
-143
-144</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 140</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_with_defaults!'>create_with_defaults!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_save!'>save!</span>
-  <span class='id identifier rubyid_task'>task</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="from_task_request-class_method">
-  
-    .<strong>from_task_request</strong>(task_request)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Creates a new unsaved task instance from a task request</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>task_request</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The task request containing task parameters</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>A new unsaved task instance</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-150
-151
-152
-153
-154
-155
-156
-157
-158
-159
-160</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 150</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='comment'># Extract values from task_request, removing nils
-</span>  <span class='id identifier rubyid_request_values'>request_values</span> <span class='op'>=</span> <span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
-  <span class='comment'># Merge defaults with request values
-</span>  <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_request_values'>request_values</span><span class='rparen'>)</span>
-
-  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='id identifier rubyid_named_task'>named_task</span>
-  <span class='id identifier rubyid_task'>task</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="get_default_task_request_options-class_method">
-  
-    .<strong>get_default_task_request_options</strong>(named_task)  &#x21d2; <tt>Hash</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Provides default options for a task</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>named_task</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">Tasker::NamedTask</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The named task to associate with the task</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Hash</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>Hash of default task options</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-182
-183
-184
-185
-186
-187
-188
-189
-190
-191
-192
-193</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 182</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span>
-  <span class='lbrace'>{</span>
-    <span class='label'>initiator:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
-    <span class='label'>source_system:</span> <span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
-    <span class='label'>reason:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
-    <span class='label'>complete:</span> <span class='kw'>false</span><span class='comma'>,</span>
-    <span class='label'>tags:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
-    <span class='label'>bypass_steps:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
-    <span class='label'>requested_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_zone'>zone</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='comma'>,</span>
-    <span class='label'>named_task_id:</span> <span class='id identifier rubyid_named_task'>named_task</span><span class='period'>.</span><span class='id identifier rubyid_named_task_id'>named_task_id</span>
-  <span class='rbrace'>}</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="get_request_options-class_method">
-  
-    .<strong>get_request_options</strong>(task_request)  &#x21d2; <tt>Hash</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Extracts and compacts options from a task request</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>task_request</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The task request to extract options from</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Hash</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>Hash of non-nil task options from the request</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-166
-167
-168
-169
-170
-171
-172
-173
-174
-175
-176</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 166</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
-  <span class='lbrace'>{</span>
-    <span class='label'>initiator:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_initiator'>initiator</span><span class='comma'>,</span>
-    <span class='label'>source_system:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_source_system'>source_system</span><span class='comma'>,</span>
-    <span class='label'>reason:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
-    <span class='label'>tags:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_tags'>tags</span><span class='comma'>,</span>
-    <span class='label'>bypass_steps:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_bypass_steps'>bypass_steps</span><span class='comma'>,</span>
-    <span class='label'>requested_at:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_requested_at'>requested_at</span><span class='comma'>,</span>
-    <span class='label'>context:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span>
-  <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-  </div>
-
-  <div id="instance_method_details" class="method_details_list">
-    <h2>Instance Method Details</h2>
-
-    
-      <div class="method_details first">
-  <h3 class="signature first" id="all_steps_complete?-instance_method">
-  
-    #<strong>all_steps_complete?</strong>  &#x21d2; <tt>Boolean</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Checks if all steps in the task are complete</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Boolean</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>True if all steps are complete, false otherwise</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-214
-215
-216</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 214</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_all_steps_complete?'>all_steps_complete?</span>
-  <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepReadinessStatus.html" title="Tasker::StepReadinessStatus (class)">StepReadinessStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all_steps_complete_for_task?'><span class='object_link'><a href="StepReadinessStatus.html#all_steps_complete_for_task%3F-class_method" title="Tasker::StepReadinessStatus.all_steps_complete_for_task? (method)">all_steps_complete_for_task?</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="by_annotation-instance_method">
-  
-    #<strong>by_annotation</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
+    .<strong>by_annotation</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
   
 
   
@@ -1080,16 +627,16 @@
       <pre class="lines">
 
 
-96
 97
 98
 99
 100
 101
-102</pre>
+102
+103</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 96</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 97</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_annotation</span><span class='comma'>,</span>
 <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='op'>|</span>
@@ -1104,9 +651,9 @@
 </div>
     
       <div class="method_details ">
-  <h3 class="signature " id="by_current_state-instance_method">
+  <h3 class="signature " id="by_current_state-class_method">
   
-    #<strong>by_current_state</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
+    .<strong>by_current_state</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
   
 
   
@@ -1167,8 +714,6 @@
       <pre class="lines">
 
 
-108
-109
 110
 111
 112
@@ -1182,10 +727,12 @@
 120
 121
 122
-123</pre>
+123
+124
+125</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 108</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 110</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_current_state</span><span class='comma'>,</span>
 <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='op'>|</span>
@@ -1203,6 +750,459 @@
     <span class='id identifier rubyid_relation'>relation</span>
   <span class='kw'>end</span>
 <span class='rbrace'>}</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="create_with_defaults!-class_method">
+  
+    .<strong>create_with_defaults!</strong>(task_request)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Creates a task with default values from a task request and saves it to the database</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task_request</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task request containing task parameters</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The created and saved task</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ActiveRecord::RecordInvalid</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If the task is invalid</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+142
+143
+144
+145
+146</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 142</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_with_defaults!'>create_with_defaults!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_save!'>save!</span>
+  <span class='id identifier rubyid_task'>task</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="from_task_request-class_method">
+  
+    .<strong>from_task_request</strong>(task_request)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Creates a new unsaved task instance from a task request</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task_request</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task request containing task parameters</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>A new unsaved task instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 152</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='comment'># Extract values from task_request, removing nils
+</span>  <span class='id identifier rubyid_request_values'>request_values</span> <span class='op'>=</span> <span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+  <span class='comment'># Merge defaults with request values
+</span>  <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_request_values'>request_values</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='id identifier rubyid_named_task'>named_task</span>
+  <span class='id identifier rubyid_task'>task</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_default_task_request_options-class_method">
+  
+    .<strong>get_default_task_request_options</strong>(named_task)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Provides default options for a task</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>named_task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">Tasker::NamedTask</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The named task to associate with the task</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Hash of default task options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 184</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span>
+    <span class='label'>initiator:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
+    <span class='label'>source_system:</span> <span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html#UNKNOWN-constant" title="Tasker::Constants::UNKNOWN (constant)">UNKNOWN</a></span></span><span class='comma'>,</span>
+    <span class='label'>complete:</span> <span class='kw'>false</span><span class='comma'>,</span>
+    <span class='label'>tags:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>bypass_steps:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>requested_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_zone'>zone</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='comma'>,</span>
+    <span class='label'>named_task_id:</span> <span class='id identifier rubyid_named_task'>named_task</span><span class='period'>.</span><span class='id identifier rubyid_named_task_id'>named_task_id</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="get_request_options-class_method">
+  
+    .<strong>get_request_options</strong>(task_request)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Extracts and compacts options from a task request</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task_request</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">Tasker::Types::TaskRequest</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task request to extract options from</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Hash of non-nil task options from the request</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 168</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span>
+    <span class='label'>initiator:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_initiator'>initiator</span><span class='comma'>,</span>
+    <span class='label'>source_system:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_source_system'>source_system</span><span class='comma'>,</span>
+    <span class='label'>reason:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_reason'>reason</span><span class='comma'>,</span>
+    <span class='label'>tags:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_tags'>tags</span><span class='comma'>,</span>
+    <span class='label'>bypass_steps:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_bypass_steps'>bypass_steps</span><span class='comma'>,</span>
+    <span class='label'>requested_at:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_requested_at'>requested_at</span><span class='comma'>,</span>
+    <span class='label'>context:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span>
+  <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="all_steps_complete?-instance_method">
+  
+    #<strong>all_steps_complete?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Checks if all steps in the task are complete</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if all steps are complete, false otherwise</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+216
+217
+218</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 216</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_steps_complete?'>all_steps_complete?</span>
+  <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepReadinessStatus.html" title="Tasker::StepReadinessStatus (class)">StepReadinessStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all_steps_complete_for_task?'><span class='object_link'><a href="StepReadinessStatus.html#all_steps_complete_for_task%3F-class_method" title="Tasker::StepReadinessStatus.all_steps_complete_for_task? (method)">all_steps_complete_for_task?</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1274,12 +1274,12 @@
       <pre class="lines">
 
 
-207
-208
-209</pre>
+209
+210
+211</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 209</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagram'>diagram</span><span class='lparen'>(</span><span class='id identifier rubyid_base_url'>base_url</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@diagram</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskDiagram.html" title="Tasker::TaskDiagram (class)">TaskDiagram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskDiagram.html#initialize-instance_method" title="Tasker::TaskDiagram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_base_url'>base_url</span><span class='rparen'>)</span>
@@ -1353,12 +1353,12 @@
       <pre class="lines">
 
 
-199
-200
-201</pre>
+201
+202
+203</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 199</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 201</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_step_by_name'>get_step_by_name</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>named_step:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
@@ -1383,14 +1383,14 @@
       <pre class="lines">
 
 
-222
-223
 224
 225
-226</pre>
+226
+227
+228</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 222</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 224</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reload'>reload</span>
   <span class='kw'>super</span>
@@ -1519,12 +1519,12 @@
       <pre class="lines">
 
 
-218
-219
-220</pre>
+220
+221
+222</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 218</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 220</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_task_execution_context'>task_execution_context</span>
   <span class='ivar'>@task_execution_context</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskExecutionContext.html" title="Tasker::TaskExecutionContext (class)">TaskExecutionContext</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskExecutionContext.html#initialize-instance_method" title="Tasker::TaskExecutionContext#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
@@ -1578,15 +1578,15 @@
       <pre class="lines">
 
 
-128
-129
 130
 131
 132
-133</pre>
+133
+134
+135</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 128</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 130</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_all_associated</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span>
   <span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
@@ -1604,7 +1604,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 16 14:53:03 2025 by
+  Generated on Mon Jun 16 15:17:56 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
