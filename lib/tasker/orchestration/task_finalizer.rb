@@ -438,11 +438,13 @@ module Tasker
         # Frozen hash for O(1) delay lookups with descriptive comments
         DELAY_MAP = {
           Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS => 0, # Steps ready - immediate processing
-          Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES => 300, # Waiting for deps - 5 minutes
-          Constants::TaskExecution::ExecutionStatus::PROCESSING => 30 # Processing - moderate delay
+          Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES => 45, # Waiting for deps - 45 seconds
+          Constants::TaskExecution::ExecutionStatus::PROCESSING => 10 # Processing - moderate delay
         }.freeze
 
-        DEFAULT_DELAY = 60 # Default delay for unclear states or no context
+        DEFAULT_DELAY = 30 # Default delay for unclear states or no context
+
+        MAXIMUM_DELAY = 300 # five minutes
 
         class << self
           # Calculate intelligent re-enqueue delay based on execution context and step backoff timing
@@ -496,8 +498,8 @@ module Tasker
             end.max
 
             # Add a small buffer (5 seconds) to ensure the step is definitely ready
-            # Cap the maximum delay at 30 minutes to prevent excessive delays
-            [(max_delay || 0) + 5, 1800].min
+            # Cap the maximum delay at 5 minutes to prevent excessive delays
+            [(max_delay || 0) + 5, MAXIMUM_DELAY].min
           end
         end
       end
