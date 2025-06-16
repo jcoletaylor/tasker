@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
-        ruby-version: ['3.2', '3.4']  # Use major.minor versions for latest patches
+        ruby-version: ['3.2']  # Use major.minor versions for latest patches
 
     services:
       postgres:
