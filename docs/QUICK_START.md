@@ -2,7 +2,9 @@
 
 ## Goal: Working Workflow in 15 Minutes
 
-This guide will get you from zero to a working Tasker workflow in 15 minutes. You'll build a simple "Welcome Email" process that demonstrates core concepts like step dependencies, error handling, and result passing.
+This guide will get you from zero to a working Tasker workflow in 15 minutes. You'll build a simple "Welcome Email" process that demonstrates core concepts like step dependencies, error handling, and result passing. This guide is done as an example - you don't have to actually have a User model or a welcome email process.
+
+*Note*: This guide being an example, the step that gets a user from the database is unlikely to need to be retried - steps are generally best decomposed into units that need distinct idempotency and retryability guarantees.
 
 ## Prerequisites (2 minutes)
 
@@ -28,10 +30,16 @@ end
 bundle install
 bundle exec rails tasker:install:migrations
 bundle exec rails db:migrate
+```
 
-# Mount the engine
-echo "mount Tasker::Engine, at: '/tasker', as: 'tasker'" >> config/routes.rb
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  mount Tasker::Engine, at: '/tasker', as: 'tasker'
+end
+```
 
+```bash
 # Set up basic configuration
 bundle exec rails tasker:setup
 ```
@@ -54,22 +62,23 @@ Let's create a workflow that:
 ### 1. Generate the workflow structure
 
 ```bash
-rails generate tasker:task_handler WelcomeUser
+rails generate tasker:task_handler WelcomeHandler --module_namespace WelcomeUser
 ```
 
 This creates:
-- `app/tasks/welcome_user.rb` - Task handler class
-- `config/tasker/tasks/welcome_user.yaml` - Workflow configuration
-- `spec/tasks/welcome_user_spec.rb` - Test file
+- `app/tasks/welcome_user/welcome_handler.rb` - Task handler class
+- `config/tasker/tasks/welcome_user/welcome_handler.yaml` - Workflow configuration
+- `spec/tasks/welcome_user/welcome_handler_spec.rb` - Test file
 
 ### 2. Configure the workflow (YAML)
 
-Edit `config/tasker/tasks/welcome_user.yaml`:
+Edit `config/tasker/tasks/welcome_user/welcome_handler.yaml`:
 
 ```yaml
 ---
 name: welcome_user
-task_handler_class: WelcomeUser
+module_namespace: WelcomeUser
+task_handler_class: WelcomeHandler
 concurrent: true
 
 schema:
@@ -98,7 +107,22 @@ step_templates:
     default_retry_limit: 3
 ```
 
-### 3. Implement the step handlers
+### 3. Create the task handler class
+
+The main task handler from the generator, preset to read from the YAML configuration (`app/tasks/welcome_user/welcome_handler.rb`):
+
+```ruby
+# app/tasks/welcome_user/welcome_handler.rb
+module WelcomeUser
+  class WelcomeHandler < Tasker::ConfiguredTask
+    # sample code from the generator
+    # you can remove the sample code
+    # and add your own code as outlined below
+  end
+end
+```
+
+### 4. Implement the step handlers
 
 Create the directory structure:
 ```bash
@@ -112,6 +136,11 @@ module WelcomeUser
   module StepHandler
     class ValidateUserHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
+        # note that the task.context is the same as the context passed in the task request
+        # and that our schema defines user_id as required
+        # task-request objects created from an API call will have a context that matches
+        # the schema defined in the task handler and will be validated against the schema
+        # before the task is executed
         user_id = task.context['user_id']
 
         user = User.find_by(id: user_id)
@@ -257,6 +286,11 @@ task_request = Tasker::Types::TaskRequest.new(
   context: { user_id: user.id }
 )
 
+# note that the handler name is the same as the task name in the YAML configuration
+# this needs to be distinct across the tasks in the system, to be registered correctly
+# all task handlers will be automatically registered with the handler factory
+# and can be retrieved by name, which will happen in the API call to the tasker engine
+# where the task request would be initialized and queued for execution
 handler = Tasker::HandlerFactory.instance.get('welcome_user')
 task = handler.initialize_task!(task_request)
 
@@ -265,6 +299,17 @@ puts "Task status: #{task.state}"
 ```
 
 ### 3. Check the results
+
+For this to have automatically processed, you need to have a job backend running
+(Sidekiq, DelayedJob, etc.) and have the ActiveJob backend configured to use it.
+In development, you may need to process jobs manually.
+
+Immediately processing from the rails console (this is not recommended for production):
+
+```ruby
+# In Rails console
+handler.handle(task)
+```
 
 ```ruby
 # Wait a moment for processing, then check status
@@ -352,7 +397,7 @@ rails server
 
 **"Task stays in 'pending' state"**
 - Check your ActiveJob backend is running (Sidekiq, DelayedJob, etc.)
-- In development, you may need to process jobs manually
+- In development, you can process jobs manually if you want to see the results immediately (see above)
 
 ### Getting Help
 

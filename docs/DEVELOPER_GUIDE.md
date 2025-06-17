@@ -66,37 +66,68 @@ Task handlers define the overall workflow structure and coordinate step executio
 Use the generator to create a complete task handler structure:
 
 ```bash
-rails generate tasker:task_handler OrderProcess
+rails generate tasker:task_handler OrderHandler --module_namespace OrderProcess
 ```
 
 This creates:
-- **Handler Class**: `app/tasks/order_process.rb`
-- **YAML Configuration**: `config/tasker/tasks/order_process.yaml`
-- **Test File**: `spec/tasks/order_process_spec.rb`
+- **Handler Class**: `app/tasks/order_process/order_handler.rb`
+- **YAML Configuration**: `config/tasker/tasks/order_process/order_handler.yaml`
+- **Test File**: `spec/tasks/order_process/order_handler_spec.rb`
 
 ### Task Handler Class Structure
 
 ```ruby
-# app/tasks/order_process.rb
-class OrderProcess < Tasker::TaskHandler::Base
-  # The task handler class is primarily configuration-driven
-  # Most behavior is defined in the YAML file
+# app/tasks/order_process/order_handler.rb
+module OrderProcess
+  class OrderHandler < Tasker::ConfiguredTask
+    # The task handler class is primarily configuration-driven
+    # Most behavior is defined in the YAML file
 
-  # Optional: Custom initialization logic
-  def initialize_task_context(task_request)
-    super.merge(
-      # Add custom context initialization
-      processed_at: Time.current.iso8601,
-      environment: Rails.env
-    )
-  end
+    # Optional: Override the default task name (defaults to class name underscored)
+    def self.task_name
+      'custom_order_process'
+    end
 
-  # Optional: Custom validation beyond JSON schema
-  def validate_task_request(task_request)
-    super
+    # Optional: Override the default YAML path
+    def self.yaml_path
+      Rails.root.join('config/custom_tasks/order_handler.yaml')
+    end
 
-    # Custom business logic validation
-    raise ArgumentError, "Order must exist" unless Order.exists?(task_request.context['order_id'])
+    # Optional: Establish custom step dependencies beyond YAML configuration
+    def establish_step_dependencies_and_defaults(task, steps)
+      # Add runtime dependencies based on task context
+      if task.context['priority'] == 'expedited'
+        # Modify step configuration for expedited orders
+        payment_step = steps.find { |s| s.name == 'process_payment' }
+        payment_step&.update(retry_limit: 1) # Faster failure for expedited orders
+      end
+    end
+
+    # Optional: Update annotations after steps complete
+    def update_annotations(task, sequence, steps)
+      # Add custom annotations based on step results
+      total_amount = steps.find { |s| s.name == 'calculate_total' }&.results&.dig('amount')
+      if total_amount && total_amount > 1000
+        task.annotations.create!(
+          annotation_type: 'high_value_order',
+          content: { amount: total_amount, flagged_at: Time.current }
+        )
+      end
+    end
+
+    # Optional: Custom validation schema (beyond YAML schema)
+    def schema
+      # This overrides any schema defined in YAML
+      {
+        type: 'object',
+        required: ['order_id', 'customer_id'],
+        properties: {
+          order_id: { type: 'integer', minimum: 1 },
+          customer_id: { type: 'integer', minimum: 1 },
+          priority: { type: 'string', enum: ['standard', 'expedited', 'rush'] }
+        }
+      }
+    end
   end
 end
 ```
@@ -109,6 +140,18 @@ end
 - **Context Management**: Passes data between steps through task context
 - **Validation**: JSON schema validation plus custom business rules
 - **Event Publishing**: Automatic lifecycle event generation
+
+### Available Override Methods
+
+**ConfiguredTask Class Methods** (for customizing configuration):
+- `self.task_name` - Override the default task name (defaults to class name underscored)
+- `self.yaml_path` - Override the default YAML configuration file path
+- `self.config` - Override how configuration is loaded (defaults to YAML.load_file)
+
+**TaskHandler Instance Methods** (for customizing behavior):
+- `establish_step_dependencies_and_defaults(task, steps)` - Modify step configuration at runtime
+- `update_annotations(task, sequence, steps)` - Add custom annotations after step completion
+- `schema` - Define custom validation schema for task context (overrides YAML schema)
 
 ## 2. Step Handlers
 
@@ -531,11 +574,11 @@ YAML files provide declarative configuration for task handlers, defining workflo
 ### Task Handler YAML Structure
 
 ```yaml
-# config/tasker/tasks/order_process.yaml
+# config/tasker/tasks/order_process/order_handler.yaml
 ---
 name: order_process
 module_namespace: OrderProcess
-task_handler_class: OrderProcess
+task_handler_class: OrderHandler
 concurrent: true  # Enable parallel step execution
 
 # JSON Schema validation for task context
@@ -911,7 +954,7 @@ end
 
 **Environment-Specific Step Configuration**:
 ```yaml
-# config/tasker/tasks/order_process.yaml
+# config/tasker/tasks/order_process/order_handler.yaml
 step_templates:
   - name: send_notification
     handler_class: OrderProcess::SendNotificationHandler
@@ -1190,7 +1233,7 @@ end
 
 ### 2. Generate Task Handler
 ```bash
-rails generate tasker:task_handler OrderProcess --steps="validate_order,process_payment,ship_order"
+rails generate tasker:task_handler OrderHandler --module_namespace OrderProcess --steps="validate_order,process_payment,ship_order"
 ```
 
 ### 3. Implement Step Handlers
@@ -1213,7 +1256,7 @@ end
 
 ### 4. Configure Dependencies
 ```yaml
-# config/tasker/tasks/order_process.yaml
+# config/tasker/tasks/order_process/order_handler.yaml
 step_templates:
   - name: validate_order
     handler_class: OrderProcess::ValidateOrderHandler
@@ -1230,8 +1273,8 @@ step_templates:
 
 ### 5. Test Your Workflow
 ```ruby
-# spec/tasks/order_process_spec.rb
-RSpec.describe OrderProcess do
+# spec/tasks/order_process/order_handler_spec.rb
+RSpec.describe OrderProcess::OrderHandler do
   it 'processes orders successfully' do
     # Test implementation
   end
@@ -1247,7 +1290,7 @@ end
 
 ### Testing Task Handlers
 ```ruby
-RSpec.describe OrderProcess do
+RSpec.describe OrderProcess::OrderHandler do
   describe '#initialize_task!' do
     let(:task_request) do
       Tasker::Types::TaskRequest.new(
@@ -1315,7 +1358,7 @@ end
 ### Generators
 ```bash
 # Task handler with YAML and tests
-rails generate tasker:task_handler WorkflowName
+rails generate tasker:task_handler HandlerName --module_namespace WorkflowNamespace
 
 # Event subscriber with automatic method routing
 rails generate tasker:subscriber name --events event1 event2
