@@ -30,7 +30,7 @@ class <%= @coordinator_class_name %> < Tasker::Authorization::BaseCoordinator
       authorize_workflow_step(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
       authorize_task_diagram(action, context)
-    when Tasker::Authorization::ResourceConstants::RESOURCES::SYSTEM_STATUS
+    when Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS
       authorize_system_status(action, context)
     else
       # Deny access to unknown resources

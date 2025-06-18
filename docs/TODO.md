@@ -481,9 +481,9 @@ GET /tasker/steps/:id?include_readiness_status=true
 ## ✅ Recently Completed: System_Status.Read Authorization
 
 ### Health Check System - PRODUCTION READY ✅
-- [x] **System_Status Resource**: Added `SYSTEM_STATUS` resource constant and `READ` action
-- [x] **Resource Registry**: Registered `tasker.system_status` with `:read` action in authorization registry
-- [x] **Custom Authorization Logic**: Status endpoint uses `system_status.read` instead of standard controller mapping
+- [x] **System_Status Resource**: Added `HEALTH_STATUS` resource constant and `INDEX` action
+- [x] **Resource Registry**: Registered `tasker.health_status` with `:index` action in authorization registry
+- [x] **Custom Authorization Logic**: Status endpoint uses `health_status.index` instead of standard controller mapping
 - [x] **Proper Separation of Concerns**: Authentication uses health config, authorization uses auth config
 - [x] **Generator Support**: Updated authorization coordinator generator with system_status example
 - [x] **Test Coverage**: Comprehensive authorization scenarios with proper state isolation
