@@ -27,6 +27,18 @@ module Tasker
   module Types
     # @!visibility private
     include Dry::Types()
+
+    # Base configuration class that ensures immutability
+    #
+    # All Tasker configuration classes inherit from this base class
+    # to ensure they are frozen after creation, providing immutability
+    # and thread safety.
+    class BaseConfig < Dry::Struct
+      def initialize(*args)
+        super(*args)
+        freeze
+      end
+    end
   end
 end
 
@@ -34,3 +46,15 @@ end
 require 'tasker/types/step_template'
 require 'tasker/types/step_sequence'
 require 'tasker/types/task_request'
+
+# Configuration types
+require 'tasker/types/health_config'
+require 'tasker/types/auth_config'
+require 'tasker/types/database_config'
+require 'tasker/types/telemetry_config'
+require 'tasker/types/engine_config'
+require 'tasker/types/dependency_graph_config'
+require 'tasker/types/backoff_config'
+
+# Dependency graph types
+require 'tasker/types/dependency_graph'

@@ -205,8 +205,12 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
         allow(filter_double).to receive(:filter_param) do |key, value|
           key == 'password' ? '[FILTERED]' : value
         end
-        allow(Tasker.configuration.telemetry).to receive(:parameter_filter)
-          .and_return(filter_double)
+
+        # Create a test double for telemetry config instead of mocking the frozen object
+        telemetry_config_double = double('telemetry_config')
+        allow(telemetry_config_double).to receive(:parameter_filter).and_return(filter_double)
+        allow(telemetry_config_double).to receive(:service_name).and_return('tasker')
+        allow(Tasker.configuration).to receive(:telemetry).and_return(telemetry_config_double)
 
         attributes = { task_id: 'task-123', password: 'secret123' }
 

@@ -102,10 +102,12 @@ RSpec.configure do |config|
       # Reset to defaults if needed
       if needs_reset
         Tasker.configure do |config|
-          config.auth.authentication_enabled = false
-          config.auth.authenticator_class = nil
-          config.auth.authorization_enabled = false
-          config.auth.strategy = :none
+          config.auth do |auth|
+            auth.authentication_enabled = false
+            auth.authenticator_class = nil
+            auth.authorization_enabled = false
+            auth.strategy = :none
+          end
         end
         # Reset coordinator again after config change
         Tasker::Authentication::Coordinator.reset! if defined?(Tasker::Authentication::Coordinator)

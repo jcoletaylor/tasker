@@ -16,11 +16,11 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
 
   describe 'nested database configuration' do
     it 'provides access to database configuration block' do
-      expect(config.database).to be_a(Tasker::Configuration::DatabaseConfiguration)
+      expect(config.database).to be_a(Tasker::Types::DatabaseConfig)
     end
 
-    it 'yields database configuration in block' do
-      expect { |b| config.database(&b) }.to yield_with_args(Tasker::Configuration::DatabaseConfiguration)
+    it 'yields configuration proxy in block' do
+      expect { |b| config.database(&b) }.to yield_with_args(Tasker::Configuration::ConfigurationProxy)
     end
 
     it 'supports method chaining' do
@@ -28,7 +28,7 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
         db.name = :tasker_db
       end
 
-      expect(result).to be_a(Tasker::Configuration::DatabaseConfiguration)
+      expect(result).to be_a(Tasker::Types::DatabaseConfig)
       expect(result.name).to eq(:tasker_db)
     end
   end
@@ -42,13 +42,17 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
   end
 
   describe 'database configuration setters' do
-    it 'allows setting database name' do
-      config.database.name = :tasker_test
+    it 'allows setting database name using block configuration' do
+      config.database do |db|
+        db.name = :tasker_test
+      end
       expect(config.database.name).to eq(:tasker_test)
     end
 
-    it 'allows setting enable_secondary_database' do
-      config.database.enable_secondary_database = true
+    it 'allows setting enable_secondary_database using block configuration' do
+      config.database do |db|
+        db.enable_secondary_database = true
+      end
       expect(config.database.enable_secondary_database).to be(true)
     end
 
@@ -67,11 +71,11 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
     context 'with production multi-database setup' do
       it 'configures for secondary database' do
         config.database do |db|
-          db.name = :tasker_production
+          db.name = :global_tasker_db
           db.enable_secondary_database = true
         end
 
-        expect(config.database.name).to eq(:tasker_production)
+        expect(config.database.name).to eq(:global_tasker_db)
         expect(config.database.enable_secondary_database).to be(true)
       end
     end
@@ -90,12 +94,12 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
     context 'with test database setup' do
       it 'configures for test environment' do
         config.database do |db|
-          db.name = :tasker_test
-          db.enable_secondary_database = true
+          db.name = :test
+          db.enable_secondary_database = false
         end
 
-        expect(config.database.name).to eq(:tasker_test)
-        expect(config.database.enable_secondary_database).to be(true)
+        expect(config.database.name).to eq(:test)
+        expect(config.database.enable_secondary_database).to be(false)
       end
     end
   end
@@ -104,12 +108,12 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
     it 'works with Tasker.configuration' do
       Tasker.configuration do |config|
         config.database do |db|
-          db.name = :global_tasker_db
+          db.name = :global_db
           db.enable_secondary_database = true
         end
       end
 
-      expect(Tasker.configuration.database.name).to eq(:global_tasker_db)
+      expect(Tasker.configuration.database.name).to eq(:global_db)
       expect(Tasker.configuration.database.enable_secondary_database).to be(true)
     end
   end
