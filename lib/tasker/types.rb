@@ -33,6 +33,8 @@ module Tasker
     # All Tasker configuration classes inherit from this base class
     # to ensure they are frozen after creation, providing immutability
     # and thread safety.
+    #
+    # Also automatically handles deep symbolization of nested hash attributes.
     class BaseConfig < Dry::Struct
       def initialize(*args)
         super(*args)

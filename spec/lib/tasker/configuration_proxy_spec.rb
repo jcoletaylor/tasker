@@ -142,15 +142,15 @@ RSpec.describe Tasker::Configuration::ConfigurationProxy, 'Configuration Proxy I
       it 'works with ConfigurationProxy for block-based configuration' do
         config.dependency_graph do |graph|
           expect(graph).to be_a(described_class)
-          graph.weight_multipliers = { complexity: 2.0, priority: 3.0 }
-          graph.threshold_constants = { bottleneck_threshold: 0.9 }
+          graph.impact_multipliers = { downstream_weight: 10, blocked_weight: 20 }
+          graph.severity_thresholds = { critical: 150 }
         end
 
         graph_config = config.dependency_graph
         expect(graph_config).to be_a(Tasker::Types::DependencyGraphConfig)
-        expect(graph_config.weight_multipliers[:complexity]).to eq(2.0)
-        expect(graph_config.weight_multipliers[:priority]).to eq(3.0)
-        expect(graph_config.threshold_constants[:bottleneck_threshold]).to eq(0.9)
+        expect(graph_config.impact_multipliers[:downstream_weight]).to eq(10)
+        expect(graph_config.impact_multipliers[:blocked_weight]).to eq(20)
+        expect(graph_config.severity_thresholds[:critical]).to eq(150)
       end
     end
 
@@ -187,7 +187,10 @@ RSpec.describe Tasker::Configuration::ConfigurationProxy, 'Configuration Proxy I
         end
 
         global_config.dependency_graph do |graph|
-          graph.weight_multipliers = { complexity: 1.8, priority: 2.5 }
+          graph.impact_multipliers = {
+            downstream_weight: 10,
+            blocked_weight: 20
+          }
         end
 
         global_config.backoff do |backoff|
@@ -205,8 +208,8 @@ RSpec.describe Tasker::Configuration::ConfigurationProxy, 'Configuration Proxy I
       expect(global_config.database.name).to eq(:global_db)
       expect(global_config.database.enable_secondary_database).to be(true)
 
-      expect(global_config.dependency_graph.weight_multipliers[:complexity]).to eq(1.8)
-      expect(global_config.dependency_graph.weight_multipliers[:priority]).to eq(2.5)
+      expect(global_config.dependency_graph.impact_multipliers[:downstream_weight]).to eq(10)
+      expect(global_config.dependency_graph.impact_multipliers[:blocked_weight]).to eq(20)
 
       expect(global_config.backoff.max_backoff_seconds).to eq(900)
       expect(global_config.backoff.jitter_enabled).to be(true)

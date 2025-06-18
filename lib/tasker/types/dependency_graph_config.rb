@@ -9,82 +9,140 @@ module Tasker
     #
     # @example Basic usage
     #   config = DependencyGraphConfig.new(
-    #     weight_multipliers: { complexity: 1.5, priority: 2.0 }
+    #     impact_multipliers: { downstream_weight: 5, blocked_weight: 15 }
     #   )
     #
     # @example With all options
     #   config = DependencyGraphConfig.new(
-    #     weight_multipliers: {
-    #       complexity: 1.5,
-    #       priority: 2.0,
-    #       depth: 1.2,
-    #       fan_out: 0.8
+    #     impact_multipliers: {
+    #       downstream_weight: 5,
+    #       blocked_weight: 15,
+    #       path_length_weight: 10,
+    #       completed_penalty: 15,
+    #       blocked_penalty: 25,
+    #       error_penalty: 30,
+    #       retry_penalty: 10
     #     },
-    #     threshold_constants: {
-    #       bottleneck_threshold: 0.8,
-    #       critical_path_threshold: 0.9,
-    #       warning_threshold: 0.6
+    #     severity_multipliers: {
+    #       error_state: 2.0,
+    #       exhausted_retry_bonus: 0.5,
+    #       dependency_issue: 1.2
     #     },
-    #     calculation_limits: {
-    #       max_depth: 50,
-    #       max_nodes: 1000,
-    #       timeout_seconds: 30
+    #     penalty_constants: {
+    #       retry_instability: 3,
+    #       non_retryable: 10,
+    #       exhausted_retry: 20
+    #     },
+    #     severity_thresholds: {
+    #       critical: 100,
+    #       high: 50,
+    #       medium: 20
+    #     },
+    #     duration_estimates: {
+    #       base_step_seconds: 30,
+    #       error_penalty_seconds: 60,
+    #       retry_penalty_seconds: 30
     #     }
     #   )
     class DependencyGraphConfig < BaseConfig
       transform_keys(&:to_sym)
 
-      # Weight multipliers for different aspects of dependency calculations
+      # Impact multipliers for bottleneck scoring calculations
       #
       # These multipliers affect how different factors influence the final
-      # bottleneck impact scores and dependency analysis results.
+      # bottleneck impact scores in RuntimeGraphAnalyzer.
       #
-      # @!attribute [r] weight_multipliers
-      #   @return [Hash<Symbol, Float>] Weight multipliers for calculations
-      attribute :weight_multipliers, Types::Hash.schema(
-        complexity: Types::Float.default(1.5),
-        priority: Types::Float.default(2.0),
-        depth: Types::Float.default(1.2),
-        fan_out: Types::Float.default(0.8)
-      ).default({
-        complexity: 1.5,
-        priority: 2.0,
-        depth: 1.2,
-        fan_out: 0.8
+      # @!attribute [r] impact_multipliers
+      #   @return [Hash<Symbol, Integer>] Impact calculation multipliers
+      attribute :impact_multipliers, Types::Hash.schema(
+        downstream_weight: Types::Integer.default(5),
+        blocked_weight: Types::Integer.default(15),
+        path_length_weight: Types::Integer.default(10),
+        completed_penalty: Types::Integer.default(15),
+        blocked_penalty: Types::Integer.default(25),
+        error_penalty: Types::Integer.default(30),
+        retry_penalty: Types::Integer.default(10)
+      ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
+       .default({
+        downstream_weight: 5,
+        blocked_weight: 15,
+        path_length_weight: 10,
+        completed_penalty: 15,
+        blocked_penalty: 25,
+        error_penalty: 30,
+        retry_penalty: 10
       }.freeze)
 
-      # Threshold constants for various analysis decisions
+      # Severity multipliers for state-based calculations
       #
-      # These thresholds determine when steps or paths are considered
-      # critical, bottlenecks, or worthy of warnings.
+      # These multipliers adjust impact scores based on step states
+      # and execution conditions.
       #
-      # @!attribute [r] threshold_constants
-      #   @return [Hash<Symbol, Float>] Threshold values for analysis
-      attribute :threshold_constants, Types::Hash.schema(
-        bottleneck_threshold: Types::Float.default(0.8),
-        critical_path_threshold: Types::Float.default(0.9),
-        warning_threshold: Types::Float.default(0.6)
-      ).default({
-        bottleneck_threshold: 0.8,
-        critical_path_threshold: 0.9,
-        warning_threshold: 0.6
+      # @!attribute [r] severity_multipliers
+      #   @return [Hash<Symbol, Float>] State severity multipliers
+      attribute :severity_multipliers, Types::Hash.schema(
+        error_state: Types::Float.default(2.0),
+        exhausted_retry_bonus: Types::Float.default(0.5),
+        dependency_issue: Types::Float.default(1.2)
+      ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
+       .default({
+        error_state: 2.0,
+        exhausted_retry_bonus: 0.5,
+        dependency_issue: 1.2
       }.freeze)
 
-      # Calculation limits to prevent runaway computations
+      # Penalty constants for problematic step conditions
       #
-      # These limits ensure that dependency graph calculations remain
-      # performant even with very large or complex workflows.
+      # These constants add penalty points for retry instability,
+      # non-retryable issues, and exhausted retry attempts.
       #
-      # @!attribute [r] calculation_limits
-      #   @return [Hash<Symbol, Integer>] Limits for calculations
-      attribute :calculation_limits, Types::Hash.schema(
-        max_depth: Types::Integer.default(50),
-        max_nodes: Types::Integer.default(1000),
-        timeout_seconds: Types::Integer.default(30)
-      ).default({
-        max_depth: 50,
-        max_nodes: 1000,
-        timeout_seconds: 30
+      # @!attribute [r] penalty_constants
+      #   @return [Hash<Symbol, Integer>] Penalty calculation constants
+      attribute :penalty_constants, Types::Hash.schema(
+        retry_instability: Types::Integer.default(3),
+        non_retryable: Types::Integer.default(10),
+        exhausted_retry: Types::Integer.default(20)
+      ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
+       .default({
+        retry_instability: 3,
+        non_retryable: 10,
+        exhausted_retry: 20
+      }.freeze)
+
+      # Severity thresholds for impact score classification
+      #
+      # These thresholds determine when bottlenecks are classified as
+      # Critical, High, Medium, or Low severity.
+      #
+      # @!attribute [r] severity_thresholds
+      #   @return [Hash<Symbol, Integer>] Severity classification thresholds
+      attribute :severity_thresholds, Types::Hash.schema(
+        critical: Types::Integer.default(100),
+        high: Types::Integer.default(50),
+        medium: Types::Integer.default(20)
+      ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
+       .default({
+        critical: 100,
+        high: 50,
+        medium: 20
+      }.freeze)
+
+      # Duration estimation constants for path analysis
+      #
+      # These constants are used for estimating execution times
+      # and calculating path durations.
+      #
+      # @!attribute [r] duration_estimates
+      #   @return [Hash<Symbol, Integer>] Duration estimation constants in seconds
+      attribute :duration_estimates, Types::Hash.schema(
+        base_step_seconds: Types::Integer.default(30),
+        error_penalty_seconds: Types::Integer.default(60),
+        retry_penalty_seconds: Types::Integer.default(30)
+      ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
+       .default({
+        base_step_seconds: 30,
+        error_penalty_seconds: 60,
+        retry_penalty_seconds: 30
       }.freeze)
     end
   end

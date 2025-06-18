@@ -862,6 +862,262 @@ bundle exec rails db:migrate
 - **Backup Strategy**: Implement coordinated backup strategies if data consistency across databases is required
 - **Network Latency**: Consider network latency if databases are on different servers
 
+## 7. Dependency Graph & Bottleneck Analysis Configuration
+
+Tasker provides advanced dependency graph analysis and bottleneck detection capabilities that can be fine-tuned for your specific workflow patterns. The dependency graph configuration controls how Tasker analyzes workflow dependencies, identifies bottlenecks, and calculates impact scores for optimization recommendations.
+
+### Key Features
+
+- **Configurable Impact Scoring**: Customize how different factors influence bottleneck calculations
+- **Adaptive Severity Classification**: Define custom thresholds for Critical/High/Medium/Low priority bottlenecks
+- **Dynamic Duration Estimation**: Configure time estimates for path analysis and planning
+- **State-Based Multipliers**: Adjust scoring based on step states and execution conditions
+- **Retry Pattern Analysis**: Configure penalties for instability and failure patterns
+
+### Quick Configuration Example
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.dependency_graph do |graph|
+    # Prioritize blocked steps more heavily
+    graph.impact_multipliers = {
+      blocked_weight: 20,        # Increase from default 15
+      error_penalty: 40          # Increase from default 30
+    }
+
+    # Lower thresholds for faster bottleneck detection
+    graph.severity_thresholds = {
+      critical: 80,              # Decrease from default 100
+      high: 40,                  # Decrease from default 50
+      medium: 15                 # Decrease from default 20
+    }
+  end
+end
+```
+
+### Configuration Options
+
+#### Impact Multipliers
+
+Control how different factors contribute to the overall bottleneck impact score:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.impact_multipliers = {
+    downstream_weight: 5,      # Weight for downstream step count
+    blocked_weight: 15,        # Weight for blocked step count (most critical)
+    path_length_weight: 10,    # Weight for critical path length
+    completed_penalty: 15,     # Penalty to reduce priority of completed work
+    blocked_penalty: 25,       # Penalty to increase priority of blocked work
+    error_penalty: 30,         # Penalty for steps in error state (highest)
+    retry_penalty: 10          # Penalty for steps requiring retries
+  }
+end
+```
+
+**Impact Score Calculation:**
+```
+base_score = (downstream_count * downstream_weight) + (blocked_count * blocked_weight)
+path_score = path_length * path_length_weight
+penalties = (completed_steps * completed_penalty) + (blocked_steps * blocked_penalty) +
+            (error_steps * error_penalty) + (retry_steps * retry_penalty)
+final_score = (base_score + path_score + penalties) * severity_multiplier
+```
+
+#### Severity Multipliers
+
+Adjust impact scores based on step states and execution conditions:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.severity_multipliers = {
+    error_state: 2.0,          # Multiply score by 2.0 for steps in error state
+    exhausted_retry_bonus: 0.5, # Additional 0.5x multiplier for exhausted retries
+    dependency_issue: 1.2       # 1.2x multiplier for dependency-related issues
+  }
+end
+```
+
+**State-Based Scoring Examples:**
+- Normal step: `base_score * 1.0`
+- Error step: `base_score * 2.0`
+- Error step with exhausted retries: `base_score * (2.0 + 0.5) = base_score * 2.5`
+- Dependency blocked step: `base_score * 1.2`
+
+#### Penalty Constants
+
+Add fixed penalty points for specific problematic conditions:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.penalty_constants = {
+    retry_instability: 3,      # +3 points per retry attempt
+    non_retryable: 10,         # +10 points for non-retryable failures
+    exhausted_retry: 20        # +20 points for exhausted retry attempts
+  }
+end
+```
+
+**Penalty Application:**
+- Step with 2 retry attempts: `+6 penalty points`
+- Non-retryable failure: `+10 penalty points`
+- Exhausted retries (3+ attempts): `+20 penalty points`
+
+#### Severity Thresholds
+
+Define score ranges for bottleneck classification:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.severity_thresholds = {
+    critical: 100,             # Score >= 100: Requires immediate attention
+    high: 50,                  # Score >= 50: High priority for optimization
+    medium: 20                 # Score >= 20: Monitor and plan improvements
+  }                            # Score < 20: Low priority
+end
+```
+
+**Classification Examples:**
+- Score 150: **Critical** - Blocking multiple workflows, immediate intervention required
+- Score 75: **High** - Significant impact, should be addressed in current sprint
+- Score 35: **Medium** - Moderate impact, address in upcoming planning cycle
+- Score 10: **Low** - Minor impact, monitor for trends
+
+#### Duration Estimates
+
+Configure time estimates for path analysis and planning:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.duration_estimates = {
+    base_step_seconds: 30,     # Default time estimate per step
+    error_penalty_seconds: 60, # Additional time for error recovery
+    retry_penalty_seconds: 30  # Additional time per retry attempt
+  }
+end
+```
+
+**Duration Calculation:**
+```
+estimated_duration = (step_count * base_step_seconds) +
+                     (error_steps * error_penalty_seconds) +
+                     (total_retry_attempts * retry_penalty_seconds)
+```
+
+### Use Cases & Recommendations
+
+#### High-Volume Transaction Processing
+
+For workflows processing thousands of transactions per hour:
+
+```ruby
+config.dependency_graph do |graph|
+  # Emphasize blocking issues more heavily
+  graph.impact_multipliers = {
+    blocked_weight: 25,        # Increase sensitivity to blocked steps
+    error_penalty: 40          # Prioritize error resolution
+  }
+
+  # Lower thresholds for faster detection
+  graph.severity_thresholds = {
+    critical: 75,              # Faster escalation
+    high: 35,
+    medium: 15
+  }
+
+  # Faster execution estimates for high-volume patterns
+  graph.duration_estimates = {
+    base_step_seconds: 15,     # Optimized processes run faster
+    error_penalty_seconds: 45  # Reduced error recovery time
+  }
+end
+```
+
+#### Long-Running Batch Processes
+
+For workflows that run for hours or days:
+
+```ruby
+config.dependency_graph do |graph|
+  # Focus on path length and completion tracking
+  graph.impact_multipliers = {
+    path_length_weight: 20,    # Longer paths have higher impact
+    completed_penalty: 5       # Reduce penalty for completed work
+  }
+
+  # Higher thresholds due to expected longer execution
+  graph.severity_thresholds = {
+    critical: 200,
+    high: 100,
+    medium: 50
+  }
+
+  # Longer execution estimates
+  graph.duration_estimates = {
+    base_step_seconds: 120,    # Steps take longer in batch processes
+    error_penalty_seconds: 300 # Error recovery is more expensive
+  }
+end
+```
+
+#### Real-Time Processing Systems
+
+For workflows requiring sub-second response times:
+
+```ruby
+config.dependency_graph do |graph|
+  # Maximize sensitivity to any delays
+  graph.impact_multipliers = {
+    retry_penalty: 20,         # Retries are very costly
+    error_penalty: 50          # Errors must be resolved immediately
+  }
+
+  # Very low thresholds for immediate response
+  graph.severity_thresholds = {
+    critical: 30,
+    high: 15,
+    medium: 5
+  }
+
+  # Tight time estimates
+  graph.duration_estimates = {
+    base_step_seconds: 1,      # Sub-second execution expected
+    error_penalty_seconds: 10, # Errors add significant delay
+    retry_penalty_seconds: 5   # Each retry is expensive
+  }
+end
+```
+
+### Monitoring & Observability
+
+The dependency graph analysis integrates with Tasker's observability system to provide actionable insights:
+
+```ruby
+# Published events include bottleneck severity levels
+Tasker::Events.subscribe('task.bottleneck_detected') do |event|
+  severity = event.payload['severity']  # 'Critical', 'High', 'Medium', 'Low'
+  impact_score = event.payload['impact_score']
+
+  case severity
+  when 'Critical'
+    PagerDuty.alert("Critical workflow bottleneck detected: #{impact_score}")
+  when 'High'
+    Slack.notify("#ops", "High priority bottleneck: #{impact_score}")
+  end
+end
+```
+
+### Production Best Practices
+
+1. **Start with Defaults**: Begin with default values and adjust based on observed patterns
+2. **Monitor Thresholds**: Track how often each severity level is triggered
+3. **A/B Testing**: Test configuration changes on a subset of workflows first
+4. **Gradual Tuning**: Make small adjustments and measure impact over time
+5. **Documentation**: Document your configuration rationale for team knowledge
+
+The dependency graph configuration provides powerful tools for optimizing workflow performance while maintaining the flexibility to adapt to your specific operational requirements.
+
 ## Extensibility & Advanced Patterns
 
 ### Custom Step Handler Types

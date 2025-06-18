@@ -34,4 +34,53 @@ Tasker.configuration do |config|
   #   tel.filter_mask = '***REDACTED***'
   #   tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
   # end
+
+  # Dependency graph and bottleneck analysis configuration
+  # These settings control how Tasker analyzes workflow dependencies,
+  # identifies bottlenecks, and calculates impact scores for optimization.
+  # config.dependency_graph do |graph|
+  #   # Impact multipliers for bottleneck scoring calculations
+  #   # These affect how different factors influence bottleneck impact scores
+  #   graph.impact_multipliers = {
+  #     downstream_weight: 5,      # Weight for downstream step count (higher = more impact)
+  #     blocked_weight: 15,        # Weight for blocked step count (higher = more critical)
+  #     path_length_weight: 10,    # Weight for critical path length
+  #     completed_penalty: 15,     # Penalty for completed steps (reduce priority)
+  #     blocked_penalty: 25,       # Penalty for blocked steps (increase priority)
+  #     error_penalty: 30,         # Penalty for error steps (highest priority)
+  #     retry_penalty: 10          # Penalty for retry steps (moderate priority)
+  #   }
+  #
+  #   # Severity multipliers for state-based calculations
+  #   # These adjust impact scores based on step states and conditions
+  #   graph.severity_multipliers = {
+  #     error_state: 2.0,          # Multiplier for steps in error state
+  #     exhausted_retry_bonus: 0.5, # Additional multiplier for exhausted retries
+  #     dependency_issue: 1.2       # Multiplier for dependency-related issues
+  #   }
+  #
+  #   # Penalty constants for problematic step conditions
+  #   # These add penalty points for specific retry and failure conditions
+  #   graph.penalty_constants = {
+  #     retry_instability: 3,      # Points per retry attempt (instability indicator)
+  #     non_retryable: 10,         # Points for non-retryable failures
+  #     exhausted_retry: 20        # Points for exhausted retry attempts
+  #   }
+  #
+  #   # Severity thresholds for impact score classification
+  #   # These determine when bottlenecks are classified as Critical/High/Medium/Low
+  #   graph.severity_thresholds = {
+  #     critical: 100,             # Score >= 100: Critical bottleneck
+  #     high: 50,                  # Score >= 50: High priority bottleneck
+  #     medium: 20                 # Score >= 20: Medium priority bottleneck
+  #   }                            # Score < 20: Low priority
+  #
+  #   # Duration estimation constants for path analysis
+  #   # These are used for calculating estimated execution times
+  #   graph.duration_estimates = {
+  #     base_step_seconds: 30,     # Estimated time per step (default)
+  #     error_penalty_seconds: 60, # Additional time penalty for error steps
+  #     retry_penalty_seconds: 30  # Additional time penalty per retry attempt
+  #   }
+  # end
 end

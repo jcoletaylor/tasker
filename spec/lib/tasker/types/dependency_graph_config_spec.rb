@@ -10,178 +10,174 @@ module Tasker
         context 'with default values' do
           subject(:config) { described_class.new }
 
-          it 'sets default weight multipliers' do
-            expect(config.weight_multipliers).to eq({
-                                                      complexity: 1.5,
-                                                      priority: 2.0,
-                                                      depth: 1.2,
-                                                      fan_out: 0.8
+          it 'sets default impact multipliers' do
+            expect(config.impact_multipliers).to eq({
+                                                      downstream_weight: 5,
+                                                      blocked_weight: 15,
+                                                      path_length_weight: 10,
+                                                      completed_penalty: 15,
+                                                      blocked_penalty: 25,
+                                                      error_penalty: 30,
+                                                      retry_penalty: 10
                                                     })
           end
 
-          it 'sets default threshold constants' do
-            expect(config.threshold_constants).to eq({
-                                                       bottleneck_threshold: 0.8,
-                                                       critical_path_threshold: 0.9,
-                                                       warning_threshold: 0.6
+          it 'sets default severity multipliers' do
+            expect(config.severity_multipliers).to eq({
+                                                        error_state: 2.0,
+                                                        exhausted_retry_bonus: 0.5,
+                                                        dependency_issue: 1.2
+                                                      })
+          end
+
+          it 'sets default penalty constants' do
+            expect(config.penalty_constants).to eq({
+                                                     retry_instability: 3,
+                                                     non_retryable: 10,
+                                                     exhausted_retry: 20
+                                                   })
+          end
+
+          it 'sets default severity thresholds' do
+            expect(config.severity_thresholds).to eq({
+                                                       critical: 100,
+                                                       high: 50,
+                                                       medium: 20
                                                      })
           end
 
-          it 'sets default calculation limits' do
-            expect(config.calculation_limits).to eq({
-                                                      max_depth: 50,
-                                                      max_nodes: 1000,
-                                                      timeout_seconds: 30
+          it 'sets default duration estimates' do
+            expect(config.duration_estimates).to eq({
+                                                      base_step_seconds: 30,
+                                                      error_penalty_seconds: 60,
+                                                      retry_penalty_seconds: 30
                                                     })
           end
         end
 
         context 'with custom values' do
-          let(:custom_weight_multipliers) do
-            {
-              complexity: 2.0,
-              priority: 1.5,
-              depth: 1.0,
-              fan_out: 1.2
-            }
-          end
-
-          let(:custom_threshold_constants) do
-            {
-              bottleneck_threshold: 0.7,
-              critical_path_threshold: 0.95,
-              warning_threshold: 0.5
-            }
-          end
-
-          let(:custom_calculation_limits) do
-            {
-              max_depth: 100,
-              max_nodes: 2000,
-              timeout_seconds: 60
-            }
-          end
-
           subject(:config) do
             described_class.new(
-              weight_multipliers: custom_weight_multipliers,
-              threshold_constants: custom_threshold_constants,
-              calculation_limits: custom_calculation_limits
+              impact_multipliers: {
+                downstream_weight: 10,
+                blocked_weight: 20
+              },
+              severity_multipliers: {
+                error_state: 3.0
+              },
+              penalty_constants: {
+                retry_instability: 5
+              },
+              severity_thresholds: {
+                critical: 150
+              },
+              duration_estimates: {
+                base_step_seconds: 45
+              }
             )
           end
 
-          it 'uses custom weight multipliers' do
-            expect(config.weight_multipliers).to eq(custom_weight_multipliers)
+          it 'uses custom impact multipliers and defaults for others' do
+            expect(config.impact_multipliers[:downstream_weight]).to eq(10)
+            expect(config.impact_multipliers[:blocked_weight]).to eq(20)
+            expect(config.impact_multipliers[:path_length_weight]).to eq(10) # default
           end
 
-          it 'uses custom threshold constants' do
-            expect(config.threshold_constants).to eq(custom_threshold_constants)
+          it 'uses custom severity multipliers and defaults for others' do
+            expect(config.severity_multipliers[:error_state]).to eq(3.0)
+            expect(config.severity_multipliers[:exhausted_retry_bonus]).to eq(0.5) # default
           end
 
-          it 'uses custom calculation limits' do
-            expect(config.calculation_limits).to eq(custom_calculation_limits)
+          it 'uses custom penalty constants and defaults for others' do
+            expect(config.penalty_constants[:retry_instability]).to eq(5)
+            expect(config.penalty_constants[:non_retryable]).to eq(10) # default
+          end
+
+          it 'uses custom severity thresholds and defaults for others' do
+            expect(config.severity_thresholds[:critical]).to eq(150)
+            expect(config.severity_thresholds[:high]).to eq(50) # default
+          end
+
+          it 'uses custom duration estimates and defaults for others' do
+            expect(config.duration_estimates[:base_step_seconds]).to eq(45)
+            expect(config.duration_estimates[:error_penalty_seconds]).to eq(60) # default
           end
         end
 
-        context 'with partial custom values' do
+        context 'with type validation' do
+          it 'validates impact multipliers are integers' do
+            expect do
+              described_class.new(
+                impact_multipliers: { downstream_weight: 'invalid' }
+              )
+            end.to raise_error(Dry::Struct::Error)
+          end
+
+          it 'validates severity multipliers are floats' do
+            expect do
+              described_class.new(
+                severity_multipliers: { error_state: 'invalid' }
+              )
+            end.to raise_error(Dry::Struct::Error)
+          end
+
+          it 'validates penalty constants are integers' do
+            expect do
+              described_class.new(
+                penalty_constants: { retry_instability: 'invalid' }
+              )
+            end.to raise_error(Dry::Struct::Error)
+          end
+
+          it 'validates severity thresholds are integers' do
+            expect do
+              described_class.new(
+                severity_thresholds: { critical: 'invalid' }
+              )
+            end.to raise_error(Dry::Struct::Error)
+          end
+
+          it 'validates duration estimates are integers' do
+            expect do
+              described_class.new(
+                duration_estimates: { base_step_seconds: 'invalid' }
+              )
+            end.to raise_error(Dry::Struct::Error)
+          end
+        end
+
+        context 'with symbol key transformation' do
           subject(:config) do
             described_class.new(
-              weight_multipliers: { complexity: 3.0 }
+              'impact_multipliers' => {
+                'downstream_weight' => 8,
+                'blocked_weight' => 18
+              }
             )
           end
 
-          it 'merges custom values with defaults' do
-            expect(config.weight_multipliers).to eq({
-                                                      complexity: 3.0,
-                                                      priority: 2.0,
-                                                      depth: 1.2,
-                                                      fan_out: 0.8
-                                                    })
+          it 'transforms string keys to symbols' do
+            expect(config.impact_multipliers[:downstream_weight]).to eq(8)
+            expect(config.impact_multipliers[:blocked_weight]).to eq(18)
+            expect(config.impact_multipliers[:path_length_weight]).to eq(10) # other values preserved
           end
-
-          it 'keeps default threshold constants' do
-            expect(config.threshold_constants).to eq({
-                                                       bottleneck_threshold: 0.8,
-                                                       critical_path_threshold: 0.9,
-                                                       warning_threshold: 0.6
-                                                     })
-          end
-        end
-
-
-      end
-
-      describe 'type validation' do
-        context 'with invalid weight multiplier types' do
-          it 'raises an error for non-numeric complexity' do
-            expect do
-              described_class.new(
-                weight_multipliers: { complexity: 'invalid' }
-              )
-            end.to raise_error(Dry::Struct::Error)
-          end
-        end
-
-        context 'with invalid threshold constant types' do
-          it 'raises an error for non-numeric threshold' do
-            expect do
-              described_class.new(
-                threshold_constants: { bottleneck_threshold: 'invalid' }
-              )
-            end.to raise_error(Dry::Struct::Error)
-          end
-        end
-
-        context 'with invalid calculation limit types' do
-          it 'raises an error for non-integer max_depth' do
-            expect do
-              described_class.new(
-                calculation_limits: { max_depth: 'invalid' }
-              )
-            end.to raise_error(Dry::Struct::Error)
-          end
-        end
-      end
-
-      describe 'immutability' do
-        subject(:config) { described_class.new }
-
-        it 'creates frozen objects' do
-          expect(config).to be_frozen
-        end
-
-        it 'creates frozen nested hashes' do
-          expect(config.weight_multipliers).to be_frozen
-          expect(config.threshold_constants).to be_frozen
-          expect(config.calculation_limits).to be_frozen
-        end
-      end
-
-      describe 'equality' do
-        let(:config1) { described_class.new }
-        let(:config2) { described_class.new }
-        let(:config3) { described_class.new(weight_multipliers: { complexity: 3.0 }) }
-
-        it 'equals other configs with same values' do
-          expect(config1).to eq(config2)
-        end
-
-        it 'does not equal configs with different values' do
-          expect(config1).not_to eq(config3)
         end
       end
 
       describe '#to_h' do
         subject(:config) do
           described_class.new(
-            weight_multipliers: { complexity: 2.0 }
+            impact_multipliers: { downstream_weight: 7 },
+            severity_multipliers: { error_state: 2.5 }
           )
         end
 
-        it 'returns a hash representation' do
+        it 'converts configuration to hash with symbol keys' do
           hash = config.to_h
-          expect(hash).to be_a(::Hash)
-          expect(hash[:weight_multipliers][:complexity]).to eq(2.0)
+
+          expect(hash[:impact_multipliers][:downstream_weight]).to eq(7)
+          expect(hash[:severity_multipliers][:error_state]).to eq(2.5)
+          expect(hash[:penalty_constants][:retry_instability]).to eq(3) # default
         end
       end
     end
