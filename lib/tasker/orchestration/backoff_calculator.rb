@@ -46,6 +46,13 @@ module Tasker
 
       private
 
+      # Get backoff configuration with memoization
+      #
+      # @return [Tasker::Types::BackoffConfig] The backoff configuration
+      def backoff_config
+        @backoff_config ||= Tasker.configuration.backoff
+      end
+
       # Extract Retry-After header from response context
       #
       # @param context [Hash] Response context
@@ -62,8 +69,8 @@ module Tasker
       def apply_server_requested_backoff(step, retry_after)
         backoff_seconds = @retry_parser.parse_retry_after(retry_after)
 
-        # Apply reasonable cap for server-requested backoff
-        max_server_backoff = 3600 # 1 hour maximum
+        # Apply configurable cap for server-requested backoff
+        max_server_backoff = backoff_config.max_backoff_seconds
         backoff_seconds = [backoff_seconds, max_server_backoff].min
 
         # Update step with backoff information
@@ -88,16 +95,20 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The step to apply backoff to
       # @param context [Hash] Response context for event publishing
       def apply_exponential_backoff(step, context)
-        step.attempts ||= 1
+        # Ensure attempts is properly initialized
+        step.attempts ||= 0
 
-        backoff_seconds = calculate_exponential_delay(step)
+        # Convert 0-based attempts to 1-based for backoff calculation
+        # (step.attempts = 0 means first attempt, should get backoff[0])
+        attempt_for_calculation = step.attempts + 1
+        backoff_seconds = calculate_exponential_delay(attempt_for_calculation)
 
         # Update step with backoff information
         step.backoff_request_seconds = backoff_seconds
         step.last_attempted_at = Time.zone.now
 
         # Publish backoff event for observability
-        publish_exponential_backoff_event(step, backoff_seconds, context)
+        publish_exponential_backoff_event(step, backoff_seconds, context, attempt_for_calculation)
 
         Rails.logger.info(
           "BackoffCalculator: Applied exponential backoff of #{backoff_seconds} seconds " \
@@ -107,23 +118,15 @@ module Tasker
 
       # Calculate exponential delay with jitter
       #
-      # @param step [Tasker::WorkflowStep] The step with attempt information
+      # @param attempt_number [Integer] The 1-based attempt number
       # @return [Float] Calculated backoff delay in seconds
-      def calculate_exponential_delay(step)
-        min_exponent = 2
-        exponent = [step.attempts + 1, min_exponent].max
-        base_delay = retry_delay || 1.0
+      def calculate_exponential_delay(attempt_number)
+        # Use BackoffConfig's calculate_backoff_seconds method
+        backoff_seconds = backoff_config.calculate_backoff_seconds(attempt_number)
 
-        # Standard exponential backoff: base_delay * (2 ^ attempt)
-        max_delay = 30.0 # Cap maximum delay at 30 seconds
-        exponential_delay = [base_delay * (2**exponent), max_delay].min
-
-        # Apply jitter to prevent thundering herd
-        jitter_factor = jitter_factor_value
-        retry_delay = exponential_delay * jitter_factor
-
-        # Ensure minimum delay of at least half the base delay
-        [retry_delay, base_delay * 0.5].max
+        # Ensure minimum delay of at least half the first backoff value
+        min_delay = backoff_config.default_backoff_seconds.first * 0.5
+        [backoff_seconds, min_delay].max
       end
 
       # Publish exponential backoff event with detailed information
@@ -131,18 +134,18 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The step being backed off
       # @param backoff_seconds [Float] Calculated backoff delay
       # @param context [Hash] Response context
-      def publish_exponential_backoff_event(step, backoff_seconds, _context)
-        min_exponent = 2
-        exponent = [step.attempts + 1, min_exponent].max
-
+      # @param attempt_number [Integer] The 1-based attempt number
+      def publish_exponential_backoff_event(step, backoff_seconds, _context, attempt_number)
         publish_step_backoff(
           step,
           backoff_seconds: backoff_seconds,
           backoff_type: 'exponential',
           attempt: step.attempts,
-          exponent: exponent,
-          base_delay: retry_delay || 1.0,
-          jitter_factor: jitter_factor_value
+          calculated_attempt: attempt_number,
+          base_delay: backoff_config.default_backoff_seconds.first,
+          multiplier: backoff_config.backoff_multiplier,
+          jitter_enabled: backoff_config.jitter_enabled,
+          jitter_max_percentage: backoff_config.jitter_max_percentage
         )
       end
 
@@ -163,9 +166,9 @@ module Tasker
       #
       # @return [Float] Base retry delay in seconds
       def retry_delay
-        return 1.0 unless @config.respond_to?(:retry_delay)
+        return backoff_config.default_backoff_seconds.first.to_f unless @config.respond_to?(:retry_delay)
 
-        @config.retry_delay || 1.0
+        @config.retry_delay || backoff_config.default_backoff_seconds.first.to_f
       end
 
       # Get jitter factor from configuration

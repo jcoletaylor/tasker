@@ -303,6 +303,241 @@ finalize_task(task, all_processed_steps)
 - ActiveJob handles actual background processing
 - Strategy pattern allows testing without actual job queuing
 
+## Section 8: Backoff Configuration (Phase 2.4)
+
+### Overview
+The backoff configuration system provides comprehensive control over retry timing, exponential backoff calculations, and task reenqueue delays. This replaces hardcoded constants in `BackoffCalculator` and `TaskFinalizer` with configurable parameters.
+
+### BackoffConfig Type Schema
+```ruby
+class BackoffConfig < BaseConfig
+  # Backoff progression for retry attempts (seconds)
+  attribute :default_backoff_seconds, Types::Array.of(Types::Integer)
+                                                  .default([1, 2, 4, 8, 16, 32].freeze)
+
+  # Maximum backoff time cap (seconds)
+  attribute :max_backoff_seconds, Types::Integer.default(300)
+
+  # Exponential backoff multiplier
+  attribute :backoff_multiplier, Types::Float.default(2.0)
+
+  # Jitter configuration
+  attribute :jitter_enabled, Types::Bool.default(true)
+  attribute :jitter_max_percentage, Types::Float.default(0.1)
+
+  # Task reenqueue delays by execution status
+  attribute :reenqueue_delays, Types::Hash.schema(
+    has_ready_steps: Types::Integer.default { 0 },
+    waiting_for_dependencies: Types::Integer.default { 45 },
+    processing: Types::Integer.default { 10 }
+  )
+
+  # Default reenqueue delay and buffer time
+  attribute :default_reenqueue_delay, Types::Integer.default(30)
+  attribute :buffer_seconds, Types::Integer.default(5)
+end
+```
+
+### Backoff Calculation Logic
+**Step Retry Backoff (BackoffCalculator)**
+```ruby
+def calculate_backoff_seconds(attempt_number)
+  return 0 if attempt_number <= 0
+
+  # Use predefined progression if available
+  base_backoff = if attempt_number <= default_backoff_seconds.length
+                   default_backoff_seconds[attempt_number - 1]  # 0-based indexing
+                 else
+                   # Exponential: attempt^multiplier for attempts beyond array
+                   (attempt_number**backoff_multiplier).to_i
+                 end
+
+  # Apply maximum limit
+  backoff_time = [base_backoff, max_backoff_seconds].min
+
+  # Apply jitter if enabled (±jitter_max_percentage variation)
+  if jitter_enabled
+    jitter_range = (backoff_time * jitter_max_percentage).round
+    jitter = Random.rand(-jitter_range..jitter_range)
+    backoff_time = [backoff_time + jitter, 1].max  # Minimum 1 second
+  end
+
+  backoff_time
+end
+```
+
+**Attempt Number Mapping**
+- `step.attempts = 0` (first attempt) → `calculate_backoff_seconds(1)` → `backoff[0] = 1` second
+- `step.attempts = 1` (second attempt) → `calculate_backoff_seconds(2)` → `backoff[1] = 2` seconds
+- `step.attempts = 2` (third attempt) → `calculate_backoff_seconds(3)` → `backoff[2] = 4` seconds
+
+### Task Reenqueue Logic (TaskFinalizer)
+**Dynamic Delay Calculation**
+```ruby
+def calculate_buffer_time
+  backoff_config.buffer_seconds
+end
+
+def get_delay_for_status(status)
+  case status
+  when :has_ready_steps
+    backoff_config.reenqueue_delays[:has_ready_steps]
+  when :waiting_for_dependencies
+    backoff_config.reenqueue_delays[:waiting_for_dependencies]
+  when :processing
+    backoff_config.reenqueue_delays[:processing]
+  else
+    backoff_config.default_reenqueue_delay
+  end
+end
+```
+
+### HTTP Retry-After Header Integration
+**Server-Requested Backoff (Preserved)**
+```ruby
+def apply_server_requested_backoff(step, retry_after)
+  backoff_seconds = @retry_parser.parse_retry_after(retry_after)
+
+  # Apply configurable cap for server-requested backoff
+  max_server_backoff = backoff_config.max_backoff_seconds
+  backoff_seconds = [backoff_seconds, max_server_backoff].min
+
+  step.backoff_request_seconds = backoff_seconds
+end
+```
+
+**Priority Order**:
+1. HTTP Retry-After header (if present)
+2. Exponential backoff calculation (if enabled)
+3. No backoff (step fails without retry timing)
+
+### Configuration Usage Examples
+
+**Basic Configuration**
+```ruby
+Tasker.configuration do |config|
+  config.backoff do |backoff|
+    backoff.default_backoff_seconds = [1, 2, 4, 8, 16, 32]
+    backoff.max_backoff_seconds = 300
+    backoff.jitter_enabled = true
+  end
+end
+```
+
+**Advanced Reenqueue Tuning**
+```ruby
+config.backoff do |backoff|
+  # Aggressive immediate processing
+  backoff.reenqueue_delays = {
+    has_ready_steps: 0,              # Immediate
+    waiting_for_dependencies: 15,    # Quick retry
+    processing: 5                    # Fast continuation
+  }
+
+  # Longer buffer for safety
+  backoff.buffer_seconds = 10
+end
+```
+
+**Custom Exponential Progression**
+```ruby
+config.backoff do |backoff|
+  # Slower initial progression
+  backoff.default_backoff_seconds = [2, 5, 10, 20, 40, 80]
+  backoff.backoff_multiplier = 1.5  # Gentler exponential growth
+  backoff.max_backoff_seconds = 600  # 10 minute maximum
+end
+```
+
+### Mathematical Formulas
+
+**Exponential Backoff Formula**
+```
+For attempt > array.length:
+backoff_time = attempt_number ^ backoff_multiplier
+
+With jitter (when enabled):
+jitter_range = backoff_time * jitter_max_percentage
+final_time = backoff_time + random(-jitter_range, +jitter_range)
+final_time = max(final_time, 1)  // Minimum 1 second
+```
+
+**Reenqueue Timing Formula**
+```
+reenqueue_delay = base_delay + buffer_seconds
+
+Where base_delay depends on execution status:
+- has_ready_steps: immediate (0s)
+- waiting_for_dependencies: moderate delay (45s default)
+- processing: short delay (10s default)
+```
+
+### Integration Points
+
+**BackoffCalculator Integration**
+- Memoized `backoff_config` method provides O(1) configuration access
+- Replaces hardcoded constants: `max_server_backoff`, `min_exponent`, `base_delay`, `max_delay`
+- Maintains HTTP Retry-After header priority over exponential backoff
+
+**TaskFinalizer Integration**
+- Dynamic DelayCalculator methods replace hardcoded DELAY_MAP constants
+- Configurable reenqueue delays for different execution states
+- Buffer time calculation for optimal retry timing
+
+### Performance Characteristics
+- **Configuration Access**: O(1) via memoization
+- **Calculation Complexity**: O(1) for array lookups, O(log n) for exponential calculation
+- **Memory Usage**: Minimal - configuration objects are frozen and shared
+- **Jitter Impact**: Negligible performance cost, significant "thundering herd" prevention
+
+### Testing Considerations
+
+**Deterministic Testing**
+```ruby
+# Disable jitter for predictable test results
+config.backoff.jitter_enabled = false
+
+# Use fast progression for rapid testing
+config.backoff.default_backoff_seconds = [0.1, 0.2, 0.5]
+config.backoff.reenqueue_delays = { has_ready_steps: 0, waiting_for_dependencies: 0.1, processing: 0.1 }
+```
+
+**HTTP Header Simulation**
+```ruby
+# Test preserves HTTP Retry-After functionality
+stubs.get("/api") { [429, { 'Retry-After' => '30' }, ''] }
+expect(step.backoff_request_seconds).to eq(30)  # Server-requested timing honored
+```
+
+### Migration from Hardcoded Constants
+
+**Before (Hardcoded)**
+```ruby
+# BackoffCalculator
+max_server_backoff = 3600
+base_delay = 1.0
+max_delay = 30.0
+
+# TaskFinalizer::DelayCalculator
+DEFAULT_DELAY = 30
+MAXIMUM_DELAY = 300
+DELAY_MAP = { has_ready_steps: 0, waiting_for_dependencies: 45, processing: 10 }.freeze
+```
+
+**After (Configurable)**
+```ruby
+# BackoffCalculator
+max_server_backoff = backoff_config.max_backoff_seconds
+backoff_seconds = backoff_config.calculate_backoff_seconds(attempt)
+
+# TaskFinalizer::DelayCalculator
+default_delay = backoff_config.default_reenqueue_delay
+maximum_delay = backoff_config.max_backoff_seconds
+delay = backoff_config.reenqueue_delays[status] || backoff_config.default_reenqueue_delay
+```
+
+**Backward Compatibility**: All defaults match previous hardcoded values ensuring zero breaking changes.
+
 ## Error Handling Patterns
 
 ### Graceful Degradation

@@ -72,6 +72,44 @@ module Tasker
       #   @return [Float] Maximum jitter as a decimal percentage
       attribute :jitter_max_percentage, Types::Float.default(0.1)
 
+      # Task reenqueue delay configuration hash
+      #
+      # This hash defines delays for different task execution states
+      # when reenqueuing tasks for further processing.
+      # Keys correspond to TaskExecution::ExecutionStatus constants.
+      #
+      # @!attribute [r] reenqueue_delays
+      #   @return [Hash] Mapping of execution status to delay seconds
+      attribute :reenqueue_delays, Types::Hash.schema(
+        has_ready_steps: Types::Integer.default { 0 },              # Steps ready - immediate processing
+        waiting_for_dependencies: Types::Integer.default { 45 },    # Waiting for deps - moderate delay
+        processing: Types::Integer.default { 10 }                   # Processing - short delay
+      ).constructor { |value|
+        value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value
+      }.default({
+        has_ready_steps: 0,
+        waiting_for_dependencies: 45,
+        processing: 10
+      }.freeze)
+
+      # Default reenqueue delay for unclear states
+      #
+      # This value is used when the task execution status doesn't match
+      # any of the predefined states in reenqueue_delays.
+      #
+      # @!attribute [r] default_reenqueue_delay
+      #   @return [Integer] Default reenqueue delay in seconds
+      attribute :default_reenqueue_delay, Types::Integer.default(30)
+
+      # Buffer time for optimal backoff calculations
+      #
+      # This buffer is added to calculated backoff times to ensure
+      # steps are definitely ready for retry when tasks are reenqueued.
+      #
+      # @!attribute [r] buffer_seconds
+      #   @return [Integer] Buffer time in seconds
+      attribute :buffer_seconds, Types::Integer.default(5)
+
       # Calculate backoff time for a given attempt
       #
       # @param attempt_number [Integer] The retry attempt number (1-based)

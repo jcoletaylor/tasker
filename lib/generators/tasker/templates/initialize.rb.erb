@@ -83,4 +83,45 @@ Tasker.configuration do |config|
   #     retry_penalty_seconds: 30  # Additional time penalty per retry attempt
   #   }
   # end
+
+  # Backoff and retry configuration
+  # These settings control retry timing, exponential backoff calculations,
+  # and task reenqueue delays for optimal failure recovery.
+  # config.backoff do |backoff|
+  #   # Default backoff progression for retry attempts (in seconds)
+  #   # Each element represents the backoff time for that attempt number.
+  #   # For attempts beyond this array, exponential backoff calculation is used.
+  #   backoff.default_backoff_seconds = [1, 2, 4, 8, 16, 32]
+  #
+  #   # Maximum backoff time to cap exponential backoff calculations
+  #   # Prevents excessively long delays between retry attempts
+  #   backoff.max_backoff_seconds = 300  # 5 minutes maximum
+  #
+  #   # Multiplier for exponential backoff calculation
+  #   # Formula: backoff_time = attempt_number ^ backoff_multiplier * base_seconds
+  #   backoff.backoff_multiplier = 2.0
+  #
+  #   # Whether to apply jitter to backoff calculations
+  #   # Helps prevent "thundering herd" when many steps retry simultaneously
+  #   backoff.jitter_enabled = true
+  #
+  #   # Maximum jitter percentage for randomization
+  #   # E.g., 0.1 means ±10% variation in backoff times
+  #   backoff.jitter_max_percentage = 0.1
+  #
+  #   # Task reenqueue delays for different execution states
+  #   # Controls how long to wait before retrying tasks in different states
+  #   backoff.reenqueue_delays = {
+  #     has_ready_steps: 0,              # Steps ready - immediate processing
+  #     waiting_for_dependencies: 45,    # Waiting for dependencies - moderate delay
+  #     processing: 10                   # Steps processing - short delay
+  #   }
+  #
+  #   # Default reenqueue delay for unclear or unmatched states
+  #   backoff.default_reenqueue_delay = 30
+  #
+  #   # Buffer time added to optimal backoff calculations
+  #   # Ensures steps are definitely ready for retry when tasks are reenqueued
+  #   backoff.buffer_seconds = 5
+  # end
 end
