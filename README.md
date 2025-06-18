@@ -24,7 +24,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.2.0'
+  gem 'tasker', '~> 2.2.1'
 end
 ```
 
@@ -191,6 +191,38 @@ end
 
 Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible tools.
 
+### Health Monitoring & Production Readiness
+
+Tasker provides enterprise-grade health endpoints for production deployments:
+
+```ruby
+# Kubernetes readiness probe - checks database connectivity
+GET /tasker/health/ready
+
+# Kubernetes liveness probe - lightweight health check
+GET /tasker/health/live
+
+# Detailed status endpoint - comprehensive system metrics
+GET /tasker/health/status
+```
+
+**Optional Authentication & Authorization**:
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.health do |health|
+    health.status_requires_authentication = true  # Secure detailed status
+  end
+
+  config.auth do |auth|
+    auth.authorization_enabled = true
+    # Status endpoint requires tasker.health_status:index permission
+  end
+end
+```
+
+**Performance Optimized**: Uses SQL functions and 15-second caching for sub-100ms response times.
+
 ## Key Benefits
 
 ### For Developers
@@ -201,6 +233,7 @@ Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible to
 
 ### For Operations
 - **Production Ready**: Battle-tested retry logic and error handling
+- **Health Monitoring**: Enterprise-grade health endpoints for K8s and load balancers
 - **Observable**: Complete event system with telemetry integration
 - **Secure**: Enterprise-grade authentication and authorization
 - **Performant**: SQL-function based orchestration with proven performance
@@ -220,6 +253,7 @@ Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible to
 
 ### 🔧 Advanced Topics
 - **[Authentication & Authorization](docs/AUTH.md)** - Complete security system
+- **[Health Monitoring](docs/HEALTH.md)** - Production health endpoints and monitoring
 - **[Event System](docs/EVENT_SYSTEM.md)** - Observability and integrations
 - **[Telemetry](docs/TELEMETRY.md)** - OpenTelemetry setup and monitoring
 - **[Performance](docs/SQL_FUNCTIONS.md)** - High-performance SQL functions

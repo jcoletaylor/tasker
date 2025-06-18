@@ -88,7 +88,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.1</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -253,6 +253,37 @@ step_templates:
 
 <p>Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible tools.</p>
 
+<h3 id="label-Health+Monitoring+-26+Production+Readiness">Health Monitoring &amp; Production Readiness</h3>
+
+<p>Tasker provides enterprise-grade health endpoints for production deployments:</p>
+
+<pre class="code ruby"><code class="ruby"># Kubernetes readiness probe - checks database connectivity
+GET /tasker/health/ready
+
+# Kubernetes liveness probe - lightweight health check
+GET /tasker/health/live
+
+# Detailed status endpoint - comprehensive system metrics
+GET /tasker/health/status
+</code></pre>
+
+<p><strong>Optional Authentication &amp; Authorization</strong>:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_health'>health</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_health'>health</span><span class='op'>|</span>
+    <span class='id identifier rubyid_health'>health</span><span class='period'>.</span><span class='id identifier rubyid_status_requires_authentication'>status_requires_authentication</span> <span class='op'>=</span> <span class='kw'>true</span>  <span class='comment'># Secure detailed status
+</span>  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_auth'>auth</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_auth'>auth</span><span class='op'>|</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='comment'># Status endpoint requires tasker.health_status:index permission
+</span>  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p><strong>Performance Optimized</strong>: Uses SQL functions and 15-second caching for sub-100ms response times.</p>
+
 <h2 id="label-Key+Benefits">Key Benefits</h2>
 
 <h3 id="label-For+Developers">For Developers</h3>
@@ -269,6 +300,8 @@ step_templates:
 <h3 id="label-For+Operations">For Operations</h3>
 <ul><li>
 <p><strong>Production Ready</strong>: Battle-tested retry logic and error handling</p>
+</li><li>
+<p><strong>Health Monitoring</strong>: Enterprise-grade health endpoints for K8s and load balancers</p>
 </li><li>
 <p><strong>Observable</strong>: Complete event system with telemetry integration</p>
 </li><li>
@@ -302,6 +335,8 @@ step_templates:
 <h3 id="label-F0-9F-94-A7+Advanced+Topics">🔧 Advanced Topics</h3>
 <ul><li>
 <p><strong>&amp; Authorization[docs/AUTH.md]</strong> - Complete security system</p>
+</li><li>
+<p><strong>Monitoring[docs/HEALTH.md]</strong> - Production health endpoints and monitoring</p>
 </li><li>
 <p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Observability and integrations</p>
 </li><li>
@@ -356,7 +391,7 @@ bundle exec rubocop
 </div></div>
 
       <div id="footer">
-  Generated on Mon Jun 16 19:20:38 2025 by
+  Generated on Wed Jun 18 11:50:35 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

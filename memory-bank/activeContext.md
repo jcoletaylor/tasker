@@ -1,10 +1,129 @@
 # Active Context
 
-## Current Focus: v2.2.1 Code Quality & Enterprise Readiness 🎯
+## Current Focus: Health Check System Completion + REST API Enhancement 🎯
 
-**Status**: MAJOR REFACTORING COMPLETED + ENTERPRISE READINESS NEXT
+**Status**: HEALTH ENDPOINTS ✅ PRODUCTION READY + SYSTEM_STATUS.READ AUTHORIZATION ✅ COMPLETE + REST API DESIGN
 
-### New v2.2.1 Initiative: Documentation & Production Readiness
+### Phase 1.1: Health Check Endpoints ✅ SUCCESSFULLY COMPLETED
+
+#### Implementation Achievement Summary
+- **SQL Function Optimization**: Created `get_system_health_counts_v01()` for single-query performance
+- **Ruby Wrapper**: `FunctionBasedSystemHealthCounts` following established patterns
+- **Selective Authentication**: Health endpoints with configurable auth (ready/live no auth, status configurable)
+- **15-Second Caching**: Rails cache integration with configurable duration
+- **Configuration System**: Integrated HealthConfiguration into main Configuration class
+- **Enterprise Ready**: Production-ready health endpoints for K8s and load balancers
+
+#### Files Successfully Created
+1. **SQL Function & Migration**:
+   - `db/functions/get_system_health_counts_v01.sql` - High-performance single-query health counts
+   - `db/migrate/20250115000001_create_system_health_counts_function.rb` - Function creation migration
+
+2. **Ruby Implementation**:
+   - `lib/tasker/functions/function_based_system_health_counts.rb` - SQL function wrapper
+   - `lib/tasker/health/readiness_checker.rb` - Readiness probe with timeout
+   - `lib/tasker/health/status_checker.rb` - Status checker using SQL function
+   - `app/controllers/tasker/health_controller.rb` - Health endpoints controller
+
+3. **Configuration & Routes**:
+   - Updated `lib/tasker/configuration.rb` - Added HealthConfiguration class
+   - Updated `config/routes.rb` - Added health endpoint routes
+   - Updated `lib/tasker/functions.rb` - Added health counts wrapper
+
+#### Quality Assurance Results ✅
+- **781/781 Tests Passing**: Zero breaking changes, full backward compatibility
+- **Performance Optimized**: Single SQL query vs multiple COUNT operations
+- **Pattern Compliance**: Follows established SQL function and configuration patterns
+- **Enterprise Features**: Configurable authentication, caching, timeout protection
+
+#### Health Endpoints Delivered
+- **`GET /tasker/health/ready`** - No auth, readiness probe for load balancers/K8s
+- **`GET /tasker/health/live`** - No auth, simple liveness check
+- **`GET /tasker/health/status`** - Configurable auth, detailed system metrics with caching
+
+### Phase 1.2: Health Check Unit Test Completion ✅ SUCCESSFULLY COMPLETED
+
+#### Final Status ✅
+- **All Health Tests Passing**: 865 examples, 0 failures across entire test suite
+- **Health Controller Tests**: 24/24 passing - All endpoints working correctly
+- **SQL Function Tests**: 8/8 passing - Function accuracy validated
+- **ReadinessChecker Tests**: 17/17 passing - All timeout and error scenarios covered
+- **StatusChecker Tests**: 28/28 passing - All caching and data conversion scenarios covered
+- **Configuration Tests**: All boolean conversion and deep copying working correctly
+
+#### Issues Successfully Resolved ✅
+- **Configuration Boolean Conversion**: Fixed truthy/falsy value handling with proper setters
+- **Foreign Key Constraints**: Fixed database cleanup order in tests
+- **Cache Implementation**: Fixed caching with proper read/write operations instead of fetch
+- **Test Mocking**: Updated all mocks to use proper HealthMetrics objects instead of raw hashes
+- **Connection Utilization**: Fixed percentage calculation (was dividing by 100 twice)
+- **Deep Copying**: Implemented proper `dup` methods for all configuration classes
+
+### Phase 1.3: Health Check System_Status.Read Authorization ✅ SUCCESSFULLY COMPLETED
+
+#### Implementation Details ✅
+- **New Authorization Resource**: Added `HEALTH_STATUS` resource constant with `INDEX` action
+- **Resource Registry**: Added `tasker.health_status` with `:index` action to authorization registry
+- **Custom Authorization Logic**: Status endpoint uses `health_status.index` permission instead of standard controller mapping
+- **Proper Separation of Concerns**:
+  - Authentication: Uses `config.health.status_requires_authentication`
+  - Authorization: Uses `config.auth.authorization_enabled` + coordinator class
+- **Security-First Design**: Authorization only applies to authenticated users
+- **K8s Compatibility**: Ready/live endpoints always unauthenticated and unauthorized
+
+#### Architecture Benefits ✅
+- **Elegant Resource Model**: Uses existing `resource.action` pattern (`tasker.health_status:index`)
+- **Configuration Flexibility**: Can disable authentication OR authorization independently
+- **No Breaking Changes**: Existing authorization coordinators continue working
+- **Generator Support**: Updated authorization coordinator generator with health_status example
+- **Comprehensive Testing**: Full test coverage for all authorization scenarios
+
+#### Security Model ✅
+- **If authorization disabled**: Status endpoint accessible based on authentication settings
+- **If authorization enabled**: Requires `tasker.health_status:index` permission
+- **Admin users**: Always have access (via `user.tasker_admin?`)
+- **Regular users**: Need explicit permission grant
+- **No user authenticated**: Authorization skipped (authentication controls access)
+
+### Next Priority: REST API Enhancement
+
+#### Phase 2.1: Dependency Graph REST API
+- **Objective**: Add optional `?include=dependency_graph` parameter to `/tasks/:task_id`
+- **Benefits**: Enable clients to get task + dependency information in single request
+- **Implementation**: Create Dry::Struct types and integrate with existing serializers
+
+#### Phase 2.2: Task Filtering Enhancements
+- **Objective**: Add advanced filtering capabilities to task listing endpoints
+- **Benefits**: Improve API usability for complex task management scenarios
+- **Implementation**: Extend existing filtering with new parameters
+
+#### Phase 2.3: Pagination Improvements
+- **Objective**: Enhance pagination with cursor-based options for large datasets
+- **Benefits**: Better performance for high-volume task processing systems
+- **Implementation**: Add cursor pagination alongside existing offset pagination
+
+### Rolling Todo Items
+- **Enqueuing Strategy Enhancement**: Expose test enqueuer strategy pattern to developers for non-ActiveJob systems
+- **REST API Dependency Graph**: Add optional dependency graph inclusion to task endpoints
+- **Advanced Task Filtering**: Implement complex filtering capabilities for task management
+- **Cursor-Based Pagination**: Add high-performance pagination for large task datasets
+
+### Success Metrics
+- **Health System**: 100% test coverage, production-ready with optional authentication
+- **Authentication**: Secure by default, flexible configuration, K8s compatible
+- **Code Quality**: Consistent configuration patterns, proper error handling
+- **Documentation**: Clear security considerations and deployment guidance
+
+## Recently Completed Work ✅
+
+### Phase 1.1: Health Check Endpoints ✅ COMPLETE
+- **Enterprise-Grade Health Endpoints**: Production-ready monitoring for K8s and load balancers
+- **Single-Query Performance**: SQL function optimization for health metrics
+- **Configurable Authentication**: Flexible auth requirements for different deployment scenarios
+- **15-Second Caching**: Rails cache integration with configurable duration
+- **Zero Breaking Changes**: 781/781 tests passing with full backward compatibility
+
+### v2.2.1 Initiative: Documentation & Production Readiness ✅ COMPLETED
 
 #### Documentation Restructuring Project ✅ FULLY COMPLETED WITH ENHANCEMENT
 - **Problem Identified**: README.md too dense (802 lines), documentation hierarchy unclear
@@ -107,28 +226,78 @@
 **Target**: v2.2.1 with documentation excellence and dependency graph feature
 **Readiness**: READY FOR RELEASE - All deliverables completed
 
-## Next Steps: Enterprise Readiness Focus 🎯
+## Next Steps: Enterprise Readiness + System Enhancement Focus 🎯
 
-### Immediate Priority: Enterprise-Grade Features
+### Phase 1: Enterprise-Grade Features (Current Priority) 🎯
 1. **Health Check Endpoints**: `/tasker/health/ready`, `/tasker/health/live`, `/tasker/health/status`
    - **Purpose**: Production monitoring and load balancer integration
    - **Requirements**: < 100ms response time, comprehensive system validation
    - **Implementation**: Health controller with readiness/liveness checkers
 
-2. **Dashboard Endpoint**: `/tasker/dashboard` (Consideration Phase)
-   - **Purpose**: Real-time system overview and monitoring interface
-   - **Scope**: Task status overview, system health metrics, recent activity
-   - **Decision**: Evaluate need vs. complexity for v2.2.1
-
-3. **Structured Logging Enhancement**: JSON logging with correlation IDs
+2. **Structured Logging Enhancement**: JSON logging with correlation IDs
    - **Purpose**: Production observability and debugging
    - **Requirements**: < 5% performance overhead, consistent format
    - **Implementation**: Structured logging concern with correlation ID tracking
 
-4. **Enhanced Configuration Validation**: Production readiness checks
+3. **Enhanced Configuration Validation**: Production readiness checks
    - **Purpose**: Catch configuration issues at startup
    - **Requirements**: Validate database, security, performance settings
    - **Implementation**: Comprehensive validator with clear error messages
+
+### Phase 2: System Architecture & API Enhancement (New Priority) 🎯
+4. **Task Diagram Code Removal**: Remove unused/undocumented diagram feature
+   - **Purpose**: Simplify codebase by removing unused task diagram functionality
+   - **Requirements**: Safe removal without breaking existing functionality
+   - **Files**: Remove app/models/tasker/diagram/, related serializers, and references
+
+5. **Comprehensive Configuration System**: Holistic configuration documentation and validation
+   - **Purpose**: Document and validate all configuration parameters with dry-struct style
+   - **Requirements**: Complete parameter documentation, validation, and examples
+   - **Implementation**: Centralized configuration with dry-struct validations
+
+6. **Dependency Graph Configuration**: Expose calculation weights and constants
+   - **Purpose**: Make integer/float constants in dependency calculations configurable
+   - **Requirements**: Identify hardcoded constants, expose as config parameters
+   - **Implementation**: Configuration system for weights and thresholds
+
+7. **Backoff Configuration**: Make backoff seconds logic configurable
+   - **Purpose**: Allow customization of default backoff timing strategies
+   - **Requirements**: Expose backoff constants as configuration parameters
+   - **Implementation**: Configurable backoff calculator with sensible defaults
+
+### Phase 3: API Enhancement & Developer Experience (New Priority) 🎯
+8. **Template Dependency Graph API**: Expose template graphs as JSON over REST
+   - **Purpose**: Allow external systems to understand workflow structure before execution
+   - **Requirements**: New route for task handlers, dependency graph logic based on task name
+   - **Implementation**: New controller endpoint with JSON serialization
+
+9. **Handler Factory Namespacing**: Enhanced registration with dependent system support
+   - **Purpose**: Better organization and scoping of task handlers
+   - **Requirements**: Support for `optional_module.required_task_name` or `optional_dependent_system.optional_module.required_task_name`
+   - **Implementation**: Enhanced handler factory with namespace support and REST route reflection
+
+10. **GraphQL Utility Evaluation**: Assess GraphQL endpoints vs REST value proposition
+    - **Purpose**: Determine if GraphQL adds value over REST endpoints
+    - **Requirements**: Create evaluation plan for GraphQL use cases and benefits
+    - **Implementation**: Analysis and recommendation for GraphQL future
+
+11. **Runtime Dependency Graph API**: Expose execution context and step readiness in JSON responses
+    - **Purpose**: Provide dependency graph data for individual tasks and steps
+    - **Requirements**: URL param driven (`?include_dependencies=true`), optimized queries
+    - **Implementation**: Enhanced JSON responses with optional dependency data
+
+### Phase 4: Documentation Excellence (Existing Priority) 🎯
+12. **README.md Streamlining**: Reduce from 802 to ~300 lines
+    - Focus: "What and why" instead of "how"
+    - Migration: Move details to specialized docs
+
+13. **QUICK_START.md Creation**: 15-minute workflow experience
+    - Target: Simple 3-step "Welcome Email" workflow
+    - Success Metric: New developer working workflow in 15 minutes
+
+14. **TROUBLESHOOTING.md Enhancement**: Comprehensive troubleshooting guide
+    - Focus: Development & deployment issue resolution
+    - Content: Working solutions with verified examples
 
 ### Current Work Status
 - **Code Quality Enhancement**: ACHIEVED - RuntimeGraphAnalyzer fully refactored and optimized

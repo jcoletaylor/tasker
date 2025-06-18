@@ -58,6 +58,15 @@ module Tasker
     Configuration.configuration(&)
   end
 
+  # Configure Tasker with a block
+  #
+  # @yield [Configuration] The configuration instance for setting options
+  # @return [Tasker::Configuration] The current configuration
+  def self.configure
+    yield(configuration) if block_given?
+    configuration
+  end
+
   # Resets the configuration to default values
   #
   # Primarily used for testing to ensure a clean configuration state.

@@ -18,7 +18,8 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
         expect(all_resources).to contain_exactly(
           'tasker.task',
           'tasker.workflow_step',
-          'tasker.task_diagram'
+          'tasker.task_diagram',
+          'tasker.health_status'
         )
       end
     end

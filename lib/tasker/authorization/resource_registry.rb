@@ -54,6 +54,12 @@ module Tasker
             ResourceConstants::ACTIONS::SHOW
           ],
           description: 'Task workflow diagrams'
+        },
+        ResourceConstants::RESOURCES::HEALTH_STATUS => {
+          actions: [
+            ResourceConstants::ACTIONS::INDEX
+          ],
+          description: 'Health status endpoint information'
         }
       }.freeze
 

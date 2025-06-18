@@ -118,7 +118,7 @@
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span>, <span class='object_link'><a href="Configuration/DatabaseConfiguration.html" title="Tasker::Configuration::DatabaseConfiguration (class)">DatabaseConfiguration</a></span>, <span class='object_link'><a href="Configuration/EngineConfiguration.html" title="Tasker::Configuration::EngineConfiguration (class)">EngineConfiguration</a></span>, <span class='object_link'><a href="Configuration/TelemetryConfiguration.html" title="Tasker::Configuration::TelemetryConfiguration (class)">TelemetryConfiguration</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span>, <span class='object_link'><a href="Configuration/DatabaseConfiguration.html" title="Tasker::Configuration::DatabaseConfiguration (class)">DatabaseConfiguration</a></span>, <span class='object_link'><a href="Configuration/EngineConfiguration.html" title="Tasker::Configuration::EngineConfiguration (class)">EngineConfiguration</a></span>, <span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span>, <span class='object_link'><a href="Configuration/TelemetryConfiguration.html" title="Tasker::Configuration::TelemetryConfiguration (class)">TelemetryConfiguration</a></span>
     
   
 </p>
@@ -129,63 +129,6 @@
 
 
 
-  
-    <h2>
-      Class Method Summary
-      <small><a href="#" class="summary_toggle">collapse</a></small>
-    </h2>
-
-    <ul class="summary">
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#configuration-class_method" title="configuration (class method)">.<strong>configuration</strong> {|Configuration| ... } &#x21d2; Configuration </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Get or create the global configuration.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#reset_configuration!-class_method" title="reset_configuration! (class method)">.<strong>reset_configuration!</strong>  &#x21d2; Configuration </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Reset the configuration to default values.</p>
-</div></span>
-  
-</li>
-
-      
-    </ul>
   
     <h2>
       Instance Method Summary
@@ -221,6 +164,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#authentication-instance_method" title="#authentication (instance method)">#<strong>authentication</strong>  &#x21d2; AuthConfiguration </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Alias for auth configuration for backward compatibility.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#database-instance_method" title="#database (instance method)">#<strong>database</strong> {|DatabaseConfiguration| ... } &#x21d2; DatabaseConfiguration </a>
     
 
@@ -245,6 +212,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#dup-instance_method" title="#dup (instance method)">#<strong>dup</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Create a deep copy of the configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#engine-instance_method" title="#engine (instance method)">#<strong>engine</strong> {|EngineConfiguration| ... } &#x21d2; EngineConfiguration </a>
     
 
@@ -261,6 +252,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Configure core engine settings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#health-instance_method" title="#health (instance method)">#<strong>health</strong> {|HealthConfiguration| ... } &#x21d2; HealthConfiguration </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Configure health check settings.</p>
 </div></span>
   
 </li>
@@ -340,6 +355,30 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#validate_required_settings-instance_method" title="#validate_required_settings (instance method)">#<strong>validate_required_settings</strong>  &#x21d2; true </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Validate required configuration settings for system health Used by health check endpoints to ensure system is properly configured.</p>
+</div></span>
+  
+</li>
+
+      
     </ul>
   
 
@@ -372,16 +411,17 @@
       <pre class="lines">
 
 
-219
-220
-221
-222
-223
-224
-225</pre>
+351
+352
+353
+354
+355
+356
+357
+358</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 219</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 351</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='comment'># Initialize nested configurations
@@ -389,6 +429,7 @@
   <span class='ivar'>@database_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html" title="Tasker::Configuration::DatabaseConfiguration (class)">DatabaseConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html#initialize-instance_method" title="Tasker::Configuration::DatabaseConfiguration#initialize (method)">new</a></span></span>
   <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html" title="Tasker::Configuration::TelemetryConfiguration (class)">TelemetryConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html#initialize-instance_method" title="Tasker::Configuration::TelemetryConfiguration#initialize (method)">new</a></span></span>
   <span class='ivar'>@engine_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/EngineConfiguration.html" title="Tasker::Configuration::EngineConfiguration (class)">EngineConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/EngineConfiguration.html#initialize-instance_method" title="Tasker::Configuration::EngineConfiguration#initialize (method)">new</a></span></span>
+  <span class='ivar'>@health_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/HealthConfiguration.html#initialize-instance_method" title="Tasker::Configuration::HealthConfiguration#initialize (method)">new</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -397,158 +438,6 @@
   
 </div>
 
-
-  <div id="class_method_details" class="method_details_list">
-    <h2>Class Method Details</h2>
-
-    
-      <div class="method_details first">
-  <h3 class="signature first" id="configuration-class_method">
-  
-    .<strong>configuration</strong> {|Configuration| ... } &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Get or create the global configuration</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Yields:</p>
-<ul class="yield">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The configuration instance if a block is given</p>
-</div>
-      
-    </li>
-  
-</ul>
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>The configuration instance</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-275
-276
-277
-278
-279
-280
-281
-282</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 275</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
-  <span class='ivar'>@configuration</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
-
-  <span class='comment'># Yield if a block is given for backwards compatibility
-</span>  <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@configuration</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
-
-  <span class='ivar'>@configuration</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="reset_configuration!-class_method">
-  
-    .<strong>reset_configuration!</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Reset the configuration to default values</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'>
-<p>A new configuration instance</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-287
-288
-289</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 287</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_reset_configuration!'>reset_configuration!</span>
-  <span class='ivar'>@configuration</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Configuration#initialize (method)">new</a></span></span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-  </div>
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
@@ -616,16 +505,75 @@
       <pre class="lines">
 
 
-239
-240
-241
-242</pre>
+384
+385
+386
+387</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 239</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 384</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_auth'>auth</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@auth_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
+  <span class='ivar'>@auth_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="authentication-instance_method">
+  
+    #<strong>authentication</strong>  &#x21d2; <tt><span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Alias for auth configuration for backward compatibility</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The authentication configuration instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+391
+392
+393</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 391</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_authentication'>authentication</span>
   <span class='ivar'>@auth_config</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -695,17 +643,70 @@
       <pre class="lines">
 
 
-248
-249
-250
-251</pre>
+399
+400
+401
+402</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 248</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 399</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_database'>database</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@database_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
   <span class='ivar'>@database_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="dup-instance_method">
+  
+    #<strong>dup</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Create a deep copy of the configuration</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+370
+371
+372
+373
+374
+375
+376
+377
+378</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 370</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_dup'>dup</span>
+  <span class='id identifier rubyid_new_config'>new_config</span> <span class='op'>=</span> <span class='kw'>super</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@auth_config</span><span class='comma'>,</span> <span class='ivar'>@auth_config</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@database_config</span><span class='comma'>,</span> <span class='ivar'>@database_config</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@telemetry_config</span><span class='comma'>,</span> <span class='ivar'>@telemetry_config</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@engine_config</span><span class='comma'>,</span> <span class='ivar'>@engine_config</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@health_config</span><span class='comma'>,</span> <span class='ivar'>@health_config</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -774,17 +775,96 @@
       <pre class="lines">
 
 
-266
-267
-268
-269</pre>
+417
+418
+419
+420</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 266</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 417</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_engine'>engine</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@engine_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
   <span class='ivar'>@engine_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="health-instance_method">
+  
+    #<strong>health</strong> {|HealthConfiguration| ... } &#x21d2; <tt><span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Configure health check settings</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Yields:</p>
+<ul class="yield">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The health configuration instance if a block is given</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The health configuration instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+426
+427
+428
+429</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 426</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_health'>health</span>
+  <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@health_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
+  <span class='ivar'>@health_config</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -817,21 +897,23 @@
       <pre class="lines">
 
 
-228
-229
-230
-231
-232
-233</pre>
+361
+362
+363
+364
+365
+366
+367</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 228</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 361</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reset!'>reset!</span>
   <span class='ivar'>@auth_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/AuthConfiguration.html" title="Tasker::Configuration::AuthConfiguration (class)">AuthConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/AuthConfiguration.html#initialize-instance_method" title="Tasker::Configuration::AuthConfiguration#initialize (method)">new</a></span></span>
   <span class='ivar'>@database_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html" title="Tasker::Configuration::DatabaseConfiguration (class)">DatabaseConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/DatabaseConfiguration.html#initialize-instance_method" title="Tasker::Configuration::DatabaseConfiguration#initialize (method)">new</a></span></span>
   <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html" title="Tasker::Configuration::TelemetryConfiguration (class)">TelemetryConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/TelemetryConfiguration.html#initialize-instance_method" title="Tasker::Configuration::TelemetryConfiguration#initialize (method)">new</a></span></span>
   <span class='ivar'>@engine_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/EngineConfiguration.html" title="Tasker::Configuration::EngineConfiguration (class)">EngineConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/EngineConfiguration.html#initialize-instance_method" title="Tasker::Configuration::EngineConfiguration#initialize (method)">new</a></span></span>
+  <span class='ivar'>@health_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/HealthConfiguration.html" title="Tasker::Configuration::HealthConfiguration (class)">HealthConfiguration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/HealthConfiguration.html#initialize-instance_method" title="Tasker::Configuration::HealthConfiguration#initialize (method)">new</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -900,17 +982,124 @@
       <pre class="lines">
 
 
-257
-258
-259
-260</pre>
+408
+409
+410
+411</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 257</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 408</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry'>telemetry</span>
   <span class='kw'>yield</span><span class='lparen'>(</span><span class='ivar'>@telemetry_config</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
   <span class='ivar'>@telemetry_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="validate_required_settings-instance_method">
+  
+    #<strong>validate_required_settings</strong>  &#x21d2; <tt>true</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Validate required configuration settings for system health Used by health check endpoints to ensure system is properly configured</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if valid</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>StandardError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if invalid configuration found</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 435</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_validate_required_settings'>validate_required_settings</span>
+  <span class='id identifier rubyid_errors'>errors</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+
+  <span class='comment'># Database connectivity check
+</span>  <span class='id identifier rubyid_errors'>errors</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Database connection required</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_database_connected?'>database_connected?</span>
+
+  <span class='comment'># Authentication configuration validation (if enabled)
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authentication_enabled'>authentication_enabled</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authenticator_class'>authenticator_class</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span>
+    <span class='id identifier rubyid_errors'>errors</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Authentication enabled but no authenticator_class configured</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Health configuration validation
+</span>  <span class='ivar'>@health_config</span><span class='op'>&amp;.</span><span class='id identifier rubyid_validate!'>validate!</span>
+
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>StandardError</span><span class='comma'>,</span> <span class='id identifier rubyid_errors'>errors</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>, </span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_errors'>errors</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span>
+
+  <span class='kw'>true</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -922,7 +1111,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 16 19:20:39 2025 by
+  Generated on Wed Jun 18 11:50:36 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

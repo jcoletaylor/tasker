@@ -20,7 +20,7 @@ Before starting, ensure you have:
 ```ruby
 # Gemfile
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.2.0'
+  gem 'tasker', '~> 2.2.1'
 end
 ```
 

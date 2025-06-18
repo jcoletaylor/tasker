@@ -6,6 +6,88 @@ module Tasker
   # Handles global configuration options with nested configuration blocks
   # for better organization and discoverability.
   class Configuration
+    # Health configuration for Tasker health check endpoints
+    # Provides configurable settings for health check behavior and authentication requirements
+    class HealthConfiguration
+      attr_accessor :readiness_timeout_seconds, :cache_duration_seconds
+      attr_reader :status_endpoint_requires_auth, :ready_requires_authentication, :status_requires_authentication
+
+      def initialize
+        @status_endpoint_requires_auth = true  # Default: require auth for status endpoint
+        @ready_requires_authentication = false # Default: ready endpoint does not require auth (K8s probes)
+        @status_requires_authentication = true # Default: status endpoint requires auth
+        @readiness_timeout_seconds = 5.0       # Default: 5 second timeout for readiness checks
+        @cache_duration_seconds = 15           # Default: 15 second cache for status data
+      end
+
+      # Convert values to proper booleans for authentication settings
+      def status_endpoint_requires_auth=(value)
+        @status_endpoint_requires_auth = convert_to_boolean(value)
+      end
+
+      def ready_requires_authentication=(value)
+        @ready_requires_authentication = convert_to_boolean(value)
+      end
+
+      def status_requires_authentication=(value)
+        @status_requires_authentication = convert_to_boolean(value)
+      end
+
+      # Validate health configuration settings
+      def validate!
+        errors = []
+
+        unless [true, false].include?(@status_endpoint_requires_auth)
+          errors << 'status_endpoint_requires_auth must be true or false'
+        end
+
+        unless [true, false].include?(@ready_requires_authentication)
+          errors << 'ready_requires_authentication must be true or false'
+        end
+
+        unless [true, false].include?(@status_requires_authentication)
+          errors << 'status_requires_authentication must be true or false'
+        end
+
+        unless @readiness_timeout_seconds.is_a?(Numeric) && @readiness_timeout_seconds.positive?
+          errors << 'readiness_timeout_seconds must be a positive number'
+        end
+
+        unless @cache_duration_seconds.is_a?(Numeric) && @cache_duration_seconds.positive?
+          errors << 'cache_duration_seconds must be a positive number'
+        end
+
+        raise ConfigurationError, errors.join(', ') if errors.any?
+
+        true
+      end
+
+      # Create a deep copy of the health configuration
+      def dup
+        new_config = super
+        new_config.instance_variable_set(:@status_endpoint_requires_auth, @status_endpoint_requires_auth)
+        new_config.instance_variable_set(:@ready_requires_authentication, @ready_requires_authentication)
+        new_config.instance_variable_set(:@status_requires_authentication, @status_requires_authentication)
+        new_config.instance_variable_set(:@readiness_timeout_seconds, @readiness_timeout_seconds)
+        new_config.instance_variable_set(:@cache_duration_seconds, @cache_duration_seconds)
+        new_config
+      end
+
+      private
+
+      # Convert various truthy/falsy values to proper booleans
+      def convert_to_boolean(value)
+        case value
+        when true, 'true', 'yes', '1', 1
+          true
+        when false, 'false', 'no', '0', 0, nil, ''
+          false
+        else
+          !!value # Convert any other truthy value to true, falsy to false
+        end
+      end
+    end
+
     # Nested configuration class for authentication and authorization settings
     class AuthConfiguration
       # @!attribute [rw] authentication_enabled
@@ -22,8 +104,10 @@ module Tasker
       #   @return [String] Class name for the authorization coordinator
       # @!attribute [rw] user_class
       #   @return [String, nil] Class name for the authorizable user class
+      # @!attribute [rw] strategy
+      #   @return [Symbol] Authentication strategy (:none, :test, :custom, etc.)
       attr_accessor :authentication_enabled, :authenticator_class, :current_user_method, :authenticate_user_method,
-                    :authorization_enabled, :authorization_coordinator_class, :user_class
+                    :authorization_enabled, :authorization_coordinator_class, :user_class, :strategy
 
       def initialize
         # Authentication defaults (disabled by default)
@@ -31,11 +115,26 @@ module Tasker
         @authenticator_class = nil
         @current_user_method = :current_user
         @authenticate_user_method = :authenticate_user!
+        @strategy = :none
 
         # Authorization defaults (disabled by default)
         @authorization_enabled = false
         @authorization_coordinator_class = 'Tasker::Authorization::BaseCoordinator'
         @user_class = nil
+      end
+
+      # Create a deep copy of the auth configuration
+      def dup
+        new_config = super
+        new_config.instance_variable_set(:@authentication_enabled, @authentication_enabled)
+        new_config.instance_variable_set(:@authenticator_class, @authenticator_class)
+        new_config.instance_variable_set(:@current_user_method, @current_user_method)
+        new_config.instance_variable_set(:@authenticate_user_method, @authenticate_user_method)
+        new_config.instance_variable_set(:@strategy, @strategy)
+        new_config.instance_variable_set(:@authorization_enabled, @authorization_enabled)
+        new_config.instance_variable_set(:@authorization_coordinator_class, @authorization_coordinator_class)
+        new_config.instance_variable_set(:@user_class, @user_class)
+        new_config
       end
     end
 
@@ -50,6 +149,14 @@ module Tasker
       def initialize
         @name = nil
         @enable_secondary_database = false
+      end
+
+      # Create a deep copy of the database configuration
+      def dup
+        new_config = super
+        new_config.instance_variable_set(:@name, @name)
+        new_config.instance_variable_set(:@enable_secondary_database, @enable_secondary_database)
+        new_config
       end
     end
 
@@ -134,6 +241,19 @@ module Tasker
                                 ActiveSupport::ParameterFilter.new(filter_parameters, mask: filter_mask)
                               end
       end
+
+      # Create a deep copy of the telemetry configuration
+      def dup
+        new_config = super
+        new_config.instance_variable_set(:@enabled, @enabled)
+        new_config.instance_variable_set(:@service_name, @service_name)
+        new_config.instance_variable_set(:@service_version, @service_version)
+        new_config.instance_variable_set(:@filter_parameters, @filter_parameters.dup)
+        new_config.instance_variable_set(:@filter_mask, @filter_mask)
+        new_config.instance_variable_set(:@config, @config.dup)
+        new_config.instance_variable_set(:@parameter_filter, nil) # Reset memoized filter
+        new_config
+      end
     end
 
     # Nested configuration class for core engine settings
@@ -211,6 +331,18 @@ module Tasker
       def set_custom_events_directories(directories)
         @custom_events_directories = directories.flatten
       end
+
+      # Create a deep copy of the engine configuration
+      def dup
+        new_config = super
+        new_config.instance_variable_set(:@task_handler_directory, @task_handler_directory)
+        new_config.instance_variable_set(:@task_config_directory, @task_config_directory)
+        new_config.instance_variable_set(:@default_module_namespace, @default_module_namespace)
+        new_config.instance_variable_set(:@identity_strategy, @identity_strategy)
+        new_config.instance_variable_set(:@identity_strategy_class, @identity_strategy_class)
+        new_config.instance_variable_set(:@custom_events_directories, @custom_events_directories.dup)
+        new_config
+      end
     end
 
     # Initialize a new configuration with default values
@@ -222,6 +354,7 @@ module Tasker
       @database_config = DatabaseConfiguration.new
       @telemetry_config = TelemetryConfiguration.new
       @engine_config = EngineConfiguration.new
+      @health_config = HealthConfiguration.new
     end
 
     # Reset configuration to defaults (useful for testing)
@@ -230,6 +363,18 @@ module Tasker
       @database_config = DatabaseConfiguration.new
       @telemetry_config = TelemetryConfiguration.new
       @engine_config = EngineConfiguration.new
+      @health_config = HealthConfiguration.new
+    end
+
+    # Create a deep copy of the configuration
+    def dup
+      new_config = super
+      new_config.instance_variable_set(:@auth_config, @auth_config.dup)
+      new_config.instance_variable_set(:@database_config, @database_config.dup)
+      new_config.instance_variable_set(:@telemetry_config, @telemetry_config.dup)
+      new_config.instance_variable_set(:@engine_config, @engine_config.dup)
+      new_config.instance_variable_set(:@health_config, @health_config.dup)
+      new_config
     end
 
     # Configure authentication and authorization settings
@@ -238,6 +383,12 @@ module Tasker
     # @return [AuthConfiguration] The auth configuration instance
     def auth
       yield(@auth_config) if block_given?
+      @auth_config
+    end
+
+    # Alias for auth configuration for backward compatibility
+    # @return [AuthConfiguration] The authentication configuration instance
+    def authentication
       @auth_config
     end
 
@@ -266,6 +417,48 @@ module Tasker
     def engine
       yield(@engine_config) if block_given?
       @engine_config
+    end
+
+    # Configure health check settings
+    #
+    # @yield [HealthConfiguration] The health configuration instance if a block is given
+    # @return [HealthConfiguration] The health configuration instance
+    def health
+      yield(@health_config) if block_given?
+      @health_config
+    end
+
+    # Validate required configuration settings for system health
+    # Used by health check endpoints to ensure system is properly configured
+    # @return [true] if valid
+    # @raise [StandardError] if invalid configuration found
+    def validate_required_settings
+      errors = []
+
+      # Database connectivity check
+      errors << 'Database connection required' unless database_connected?
+
+      # Authentication configuration validation (if enabled)
+      if auth.authentication_enabled && auth.authenticator_class.blank?
+        errors << 'Authentication enabled but no authenticator_class configured'
+      end
+
+      # Health configuration validation
+      @health_config&.validate!
+
+      raise StandardError, errors.join(', ') if errors.any?
+
+      true
+    end
+
+    private
+
+    # Check if database is connected and available
+    # @return [Boolean] true if database is connected
+    def database_connected?
+      ActiveRecord::Base.connection.active?
+    rescue StandardError
+      false
     end
 
     # Get or create the global configuration
