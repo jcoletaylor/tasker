@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Analysis::RuntimeGraphAnalyzer
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Analysis::RuntimeGraphAnalyzer";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (R)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Analysis.html" title="Tasker::Analysis (module)">Analysis</a></span></span>
+     &raquo; 
+    <span class="title">RuntimeGraphAnalyzer</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Analysis::RuntimeGraphAnalyzer
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Analysis::RuntimeGraphAnalyzer</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/analysis/runtime_graph_analyzer.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Runtime Graph Analyzer for Workflow Dependencies</p>
+
+<p>Provides comprehensive analysis of workflow step dependencies, execution flow, and performance bottlenecks using database-backed graph analysis. Leverages existing SQL functions for optimal performance and consistency.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_analyzer'>analyzer</span> <span class='op'>=</span> <span class='const'>RuntimeGraphAnalyzer</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Analysis::RuntimeGraphAnalyzer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>task:</span> <span class='id identifier rubyid_my_task'>my_task</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_analysis'>analysis</span> <span class='op'>=</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_analyze'>analyze</span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_analysis'>analysis</span><span class='lbracket'>[</span><span class='symbol'>:critical_paths</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:longest_path_length</span><span class='rbracket'>]</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Analyzing bottlenecks</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_bottlenecks'>bottlenecks</span> <span class='op'>=</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:bottlenecks</span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_critical_bottlenecks'>critical_bottlenecks</span> <span class='op'>=</span> <span class='id identifier rubyid_bottlenecks'>bottlenecks</span><span class='lbracket'>[</span><span class='symbol'>:bottlenecks</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_b'>b</span><span class='op'>|</span> <span class='id identifier rubyid_b'>b</span><span class='lbracket'>[</span><span class='symbol'>:severity</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Critical</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#task-instance_method" title="#task (instance method)">#<strong>task</strong>  &#x21d2; Tasker::Task </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The task being analyzed.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#task_id-instance_method" title="#task_id (instance method)">#<strong>task_id</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The task ID for database queries.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#analyze-instance_method" title="#analyze (instance method)">#<strong>analyze</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Perform comprehensive workflow analysis.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#build_dependency_graph-instance_method" title="#build_dependency_graph (instance method)">#<strong>build_dependency_graph</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Build complete dependency graph structure.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clear_cache!-instance_method" title="#clear_cache! (instance method)">#<strong>clear_cache!</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Clear all cached analysis results.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(task:)  &#x21d2; RuntimeGraphAnalyzer </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Initialize the analyzer for a specific task.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(task:)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Analysis::RuntimeGraphAnalyzer (class)">RuntimeGraphAnalyzer</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Initialize the analyzer for a specific task</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task to analyze</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>if task is nil or invalid</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+34
+35
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 34</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>task:</span><span class='rparen'>)</span>
+  <span class='ivar'>@task</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span>
+  <span class='ivar'>@task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span>
+  <span class='ivar'>@cache</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="task-instance_method">
+  
+    #<strong>task</strong>  &#x21d2; <tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Tasker::Task</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The task being analyzed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task being analyzed</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+25
+26
+27</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 25</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_task'>task</span>
+  <span class='ivar'>@task</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="task_id-instance_method">
+  
+    #<strong>task_id</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The task ID for database queries.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task ID for database queries</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+28
+29
+30</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 28</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_task_id'>task_id</span>
+  <span class='ivar'>@task_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="analyze-instance_method">
+  
+    #<strong>analyze</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Perform comprehensive workflow analysis</p>
+
+<p>Returns a complete analysis of the workflow including dependency graphs, critical paths, parallelism opportunities, error chains, and bottlenecks. Results are cached for performance.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_analysis'>analysis</span> <span class='op'>=</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_analyze'>analyze</span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Longest path: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_analysis'>analysis</span><span class='lbracket'>[</span><span class='symbol'>:critical_paths</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:longest_path_length</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_content'> steps</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Critical bottlenecks: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_analysis'>analysis</span><span class='lbracket'>[</span><span class='symbol'>:bottlenecks</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='symbol'>:critical_bottlenecks</span><span class='rbracket'>]</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Complete analysis with the following keys: - :dependency_graph [Hash] Graph structure with nodes, edges, and adjacency lists - :critical_paths [Hash] Critical path analysis with longest paths and bottlenecks - :parallelism_opportunities [Hash] Analysis of parallel execution opportunities - :error_chains [Hash] Error propagation analysis and recovery strategies - :bottlenecks [Hash] Bottleneck identification with impact scoring</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+57
+58
+59
+60
+61
+62
+63
+64
+65</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 57</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_analyze'>analyze</span>
+  <span class='ivar'>@cache</span><span class='lbracket'>[</span><span class='symbol'>:analysis</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='lbrace'>{</span>
+    <span class='label'>dependency_graph:</span> <span class='id identifier rubyid_build_dependency_graph'>build_dependency_graph</span><span class='comma'>,</span>
+    <span class='label'>critical_paths:</span> <span class='id identifier rubyid_analyze_critical_paths'>analyze_critical_paths</span><span class='comma'>,</span>
+    <span class='label'>parallelism_opportunities:</span> <span class='id identifier rubyid_analyze_parallelism'>analyze_parallelism</span><span class='comma'>,</span>
+    <span class='label'>error_chains:</span> <span class='id identifier rubyid_analyze_error_chains'>analyze_error_chains</span><span class='comma'>,</span>
+    <span class='label'>bottlenecks:</span> <span class='id identifier rubyid_identify_bottlenecks'>identify_bottlenecks</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="build_dependency_graph-instance_method">
+  
+    #<strong>build_dependency_graph</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Build complete dependency graph structure</p>
+
+<p>Constructs a comprehensive graph representation of workflow step dependencies using database edges and SQL-based topological sorting for optimal performance.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_build_dependency_graph'>build_dependency_graph</span>
+<span class='id identifier rubyid_root_steps'>root_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_graph'>graph</span><span class='lbracket'>[</span><span class='symbol'>:nodes</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_n'>n</span><span class='op'>|</span> <span class='id identifier rubyid_n'>n</span><span class='lbracket'>[</span><span class='symbol'>:level</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='int'>0</span> <span class='rbrace'>}</span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Root steps: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_root_steps'>root_steps</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='id identifier rubyid_s'>s</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span> <span class='rbrace'>}</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Graph structure containing: - :nodes [Array&lt;Hash&gt;] Graph nodes with id, name, and dependency level - :edges [Array&lt;Hash&gt;] Graph edges with from/to IDs and step names - :adjacency_list [Hash] Forward adjacency list for graph traversal - :reverse_adjacency_list [Hash] Reverse adjacency list for dependency analysis - :dependency_levels [Hash] Step ID to dependency level mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 93</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_build_dependency_graph'>build_dependency_graph</span>
+  <span class='id identifier rubyid_steps'>steps</span> <span class='op'>=</span> <span class='id identifier rubyid_load_workflow_steps'>load_workflow_steps</span>
+  <span class='id identifier rubyid_step_map'>step_map</span> <span class='op'>=</span> <span class='id identifier rubyid_steps'>steps</span><span class='period'>.</span><span class='id identifier rubyid_index_by'>index_by</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_edges'>edges</span> <span class='op'>=</span> <span class='id identifier rubyid_load_workflow_edges'>load_workflow_edges</span>
+  <span class='id identifier rubyid_adjacency_lists'>adjacency_lists</span> <span class='op'>=</span> <span class='id identifier rubyid_build_adjacency_lists'>build_adjacency_lists</span><span class='lparen'>(</span><span class='id identifier rubyid_steps'>steps</span><span class='comma'>,</span> <span class='id identifier rubyid_edges'>edges</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_dependency_levels'>dependency_levels</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_dependency_levels_sql'>calculate_dependency_levels_sql</span>
+
+  <span class='lbrace'>{</span>
+    <span class='label'>nodes:</span> <span class='id identifier rubyid_build_graph_nodes'>build_graph_nodes</span><span class='lparen'>(</span><span class='id identifier rubyid_steps'>steps</span><span class='comma'>,</span> <span class='id identifier rubyid_dependency_levels'>dependency_levels</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='label'>edges:</span> <span class='id identifier rubyid_build_graph_edges'>build_graph_edges</span><span class='lparen'>(</span><span class='id identifier rubyid_edges'>edges</span><span class='comma'>,</span> <span class='id identifier rubyid_step_map'>step_map</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='label'>adjacency_list:</span> <span class='id identifier rubyid_adjacency_lists'>adjacency_lists</span><span class='lbracket'>[</span><span class='symbol'>:forward</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>reverse_adjacency_list:</span> <span class='id identifier rubyid_adjacency_lists'>adjacency_lists</span><span class='lbracket'>[</span><span class='symbol'>:reverse</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>dependency_levels:</span> <span class='id identifier rubyid_dependency_levels'>dependency_levels</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="clear_cache!-instance_method">
+  
+    #<strong>clear_cache!</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Clear all cached analysis results</p>
+
+<p>Forces fresh analysis on next call to <span class='object_link'><a href="#analyze-instance_method" title="Tasker::Analysis::RuntimeGraphAnalyzer#analyze (method)">#analyze</a></span>. Useful when task state has changed and you need updated analysis.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.1</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+73
+74
+75</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/runtime_graph_analyzer.rb', line 73</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clear_cache!'>clear_cache!</span>
+  <span class='ivar'>@cache</span><span class='period'>.</span><span class='id identifier rubyid_clear'>clear</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 18 11:50:39 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

@@ -45,6 +45,8 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_step_action(action, context)
     when RESOURCES::TASK_DIAGRAM
       authorize_diagram_action(action, context)
+    when RESOURCES::HEALTH_STATUS
+      authorize_health_status_action(action, context)
     else
       false
     end
@@ -111,6 +113,24 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when :index, :show
       # Diagram viewing: admin or explicit permissions
       user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::TASK_DIAGRAM}:#{action}")
+    else
+      false
+    end
+  end
+
+  # Authorization logic for health status operations
+  #
+  # Implements the following rules:
+  # - Admin users can always access health status
+  # - Regular users need explicit health_status.index permission
+  # - Health status is read-only (no create/update/delete operations)
+  def authorize_health_status_action(action, _context)
+    return false unless user.respond_to?(:has_tasker_permission?)
+
+    case action
+    when :index
+      # Health status reading: admin or explicit permission
+      user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::HEALTH_STATUS}:#{action}")
     else
       false
     end

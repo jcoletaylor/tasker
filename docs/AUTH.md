@@ -128,6 +128,8 @@ class YourAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_step_action(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
       authorize_diagram_action(action, context)
+    when Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS
+      authorize_health_status_action(action, context)
     else
       false
     end
@@ -168,6 +170,16 @@ class YourAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       false
     end
   end
+
+  def authorize_health_status_action(action, context)
+    case action
+    when :index
+      # Health status access: admin users or explicit permission
+      user.tasker_admin? || user.has_tasker_permission?("#{Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS}:#{action}")
+    else
+      false
+    end
+  end
 end
 ```
 
@@ -200,10 +212,92 @@ GET  /tasker/tasks           # Requires tasker.task:index permission
 POST /tasker/tasks           # Requires tasker.task:create permission
 GET  /tasker/tasks/123       # Requires tasker.task:show permission
 
+# Health endpoints with optional authorization
+GET  /tasker/health/ready    # Never requires authorization (K8s compatibility)
+GET  /tasker/health/live     # Never requires authorization (K8s compatibility)
+GET  /tasker/health/status   # Requires tasker.health_status:index permission (if enabled)
+
 # GraphQL operations are automatically mapped to permissions
 query { tasks { taskId } }                    # Requires tasker.task:index
 mutation { createTask(input: {...}) { ... } } # Requires tasker.task:create
 ```
+
+## Health Status Authorization
+
+Tasker provides optional authorization for health monitoring endpoints, designed for production security while maintaining Kubernetes compatibility:
+
+### Health Endpoint Security Model
+
+```ruby
+# Kubernetes-compatible endpoints (never require authorization)
+GET /tasker/health/ready     # Always accessible - K8s readiness probe
+GET /tasker/health/live      # Always accessible - K8s liveness probe
+
+# Status endpoint with optional authorization
+GET /tasker/health/status    # Requires tasker.health_status:index permission (if enabled)
+```
+
+### Configuration
+
+Enable health status authorization:
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.auth do |auth|
+    auth.authorization_enabled = true
+    auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
+  end
+
+  config.health do |health|
+    health.status_requires_authentication = true  # Optional authentication
+  end
+end
+```
+
+### Authorization Implementation
+
+Add health status authorization to your coordinator:
+
+```ruby
+class YourAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
+  include Tasker::Authorization::ResourceConstants
+
+  protected
+
+  def authorized?(resource, action, context = {})
+    case resource
+    when RESOURCES::HEALTH_STATUS
+      authorize_health_status_action(action, context)
+    # ... other resources
+    end
+  end
+
+  private
+
+  def authorize_health_status_action(action, context)
+    case action
+    when :index
+      # Admin users always have access
+      user.tasker_admin? ||
+        # Regular users need explicit permission
+        user.has_tasker_permission?("#{RESOURCES::HEALTH_STATUS}:#{action}")
+    else
+      false
+    end
+  end
+end
+```
+
+### Security Benefits
+
+- **K8s Compatibility**: Ready/live endpoints never require authorization
+- **Granular Control**: Status endpoint uses specific `health_status:index` permission
+- **Admin Override**: Admin users always have health status access
+- **Optional Authentication**: Can require authentication without authorization
+- **Production Ready**: Designed for enterprise security requirements
+
+For complete health monitoring documentation, see **[Health Monitoring Guide](HEALTH.md)**.
 
 ## GraphQL Authorization
 

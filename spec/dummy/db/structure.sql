@@ -10,6 +10,49 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: calculate_dependency_levels(bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.calculate_dependency_levels(input_task_id bigint) RETURNS TABLE(workflow_step_id bigint, dependency_level integer)
+    LANGUAGE plpgsql STABLE
+    AS $$
+BEGIN
+  RETURN QUERY
+  WITH RECURSIVE dependency_levels AS (
+    -- Base case: Find root nodes (steps with no dependencies)
+    SELECT
+      ws.workflow_step_id,
+      0 as level
+    FROM tasker_workflow_steps ws
+    WHERE ws.task_id = input_task_id
+      AND NOT EXISTS (
+        SELECT 1
+        FROM tasker_workflow_step_edges wse
+        WHERE wse.to_step_id = ws.workflow_step_id
+      )
+
+    UNION ALL
+
+    -- Recursive case: Find children of current level nodes
+    SELECT
+      wse.to_step_id as workflow_step_id,
+      dl.level + 1 as level
+    FROM dependency_levels dl
+    JOIN tasker_workflow_step_edges wse ON wse.from_step_id = dl.workflow_step_id
+    JOIN tasker_workflow_steps ws ON ws.workflow_step_id = wse.to_step_id
+    WHERE ws.task_id = input_task_id
+  )
+  SELECT
+    dl.workflow_step_id,
+    MAX(dl.level) as dependency_level  -- Use MAX to handle multiple paths to same node
+  FROM dependency_levels dl
+  GROUP BY dl.workflow_step_id
+  ORDER BY dependency_level, workflow_step_id;
+END;
+$$;
+
+
+--
 -- Name: get_step_readiness_status(bigint, bigint[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -254,6 +297,92 @@ BEGIN
 
   -- IMPORTANT: Order by task_id, then workflow_step_id for consistent grouping
   ORDER BY ws.task_id, ws.workflow_step_id;
+END;
+$$;
+
+
+--
+-- Name: get_system_health_counts_v01(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_system_health_counts_v01() RETURNS TABLE(total_tasks bigint, pending_tasks bigint, in_progress_tasks bigint, complete_tasks bigint, error_tasks bigint, cancelled_tasks bigint, total_steps bigint, pending_steps bigint, in_progress_steps bigint, complete_steps bigint, error_steps bigint, retryable_error_steps bigint, exhausted_retry_steps bigint, in_backoff_steps bigint, active_connections bigint, max_connections bigint)
+    LANGUAGE plpgsql STABLE
+    AS $$
+BEGIN
+    RETURN QUERY
+    WITH task_counts AS (
+        SELECT
+            COUNT(*) as total_tasks,
+            COUNT(*) FILTER (WHERE task_state.to_state = 'pending') as pending_tasks,
+            COUNT(*) FILTER (WHERE task_state.to_state = 'in_progress') as in_progress_tasks,
+            COUNT(*) FILTER (WHERE task_state.to_state = 'complete') as complete_tasks,
+            COUNT(*) FILTER (WHERE task_state.to_state = 'error') as error_tasks,
+            COUNT(*) FILTER (WHERE task_state.to_state = 'cancelled') as cancelled_tasks
+        FROM tasker_tasks t
+        LEFT JOIN tasker_task_transitions task_state ON task_state.task_id = t.task_id
+            AND task_state.most_recent = true
+    ),
+    step_counts AS (
+        SELECT
+            COUNT(*) as total_steps,
+            COUNT(*) FILTER (WHERE step_state.to_state = 'pending') as pending_steps,
+            COUNT(*) FILTER (WHERE step_state.to_state = 'in_progress') as in_progress_steps,
+            COUNT(*) FILTER (WHERE step_state.to_state = 'complete') as complete_steps,
+            COUNT(*) FILTER (WHERE step_state.to_state = 'error') as error_steps,
+
+            -- Retry-specific logic - retryable errors
+            COUNT(*) FILTER (
+                WHERE step_state.to_state = 'error'
+                AND ws.attempts < ws.retry_limit
+                AND COALESCE(ws.retryable, true) = true
+            ) as retryable_error_steps,
+
+            -- Exhausted retries
+            COUNT(*) FILTER (
+                WHERE step_state.to_state = 'error'
+                AND ws.attempts >= ws.retry_limit
+            ) as exhausted_retry_steps,
+
+            -- In backoff (error state but not exhausted retries and has last_attempted_at)
+            COUNT(*) FILTER (
+                WHERE step_state.to_state = 'error'
+                AND ws.attempts < ws.retry_limit
+                AND COALESCE(ws.retryable, true) = true
+                AND ws.last_attempted_at IS NOT NULL
+            ) as in_backoff_steps
+
+        FROM tasker_workflow_steps ws
+        LEFT JOIN tasker_workflow_step_transitions step_state ON step_state.workflow_step_id = ws.workflow_step_id
+            AND step_state.most_recent = true
+    ),
+    connection_info AS (
+        SELECT
+            COUNT(*) as active_connections,
+            COALESCE((SELECT setting::BIGINT FROM pg_settings WHERE name = 'max_connections'), 0) as max_connections
+        FROM pg_stat_activity
+        WHERE datname = current_database()
+            AND state = 'active'
+    )
+    SELECT
+        tc.total_tasks,
+        tc.pending_tasks,
+        tc.in_progress_tasks,
+        tc.complete_tasks,
+        tc.error_tasks,
+        tc.cancelled_tasks,
+        sc.total_steps,
+        sc.pending_steps,
+        sc.in_progress_steps,
+        sc.complete_steps,
+        sc.error_steps,
+        sc.retryable_error_steps,
+        sc.exhausted_retry_steps,
+        sc.in_backoff_steps,
+        ci.active_connections,
+        ci.max_connections
+    FROM task_counts tc
+    CROSS JOIN step_counts sc
+    CROSS JOIN connection_info ci;
 END;
 $$;
 
@@ -1803,6 +1932,7 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250616222419'),
 ('20250612000007'),
 ('20250612000006'),
 ('20250612000005'),
@@ -1819,5 +1949,6 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20250524233039'),
 ('20250413105135'),
 ('20250331125551'),
+('20250115000001'),
 ('20210826013425');
 

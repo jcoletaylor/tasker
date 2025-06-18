@@ -62,142 +62,33 @@
 
 <h1 id="label-Tasker-3A+Production-Ready+Workflow+Orchestration+Engine">Tasker: Production-Ready Workflow Orchestration Engine</h1>
 
-<h2 id="label-Getting+Started+with+Tasker">Getting Started with Tasker</h2>
+<h2 id="label-What+is+Tasker-3F">What is Tasker?</h2>
 
-<p>This guide will walk you through the fundamentals of using Tasker to build complex, production-ready task workflows with automatic retries, intelligent error handling, and sophisticated concurrency patterns.</p>
+<p>Tasker is a <strong>production-ready Rails engine</strong> that transforms complex, multi-step processes into reliable, observable workflows. It handles the orchestration complexity so you can focus on your business logic.</p>
 
-<h2 id="label-Table+of+Contents">Table of Contents</h2>
-<ul><li>
-<p><a href="#tasker-production-ready-workflow-orchestration-engine">Tasker: Production-Ready Workflow Orchestration Engine</a></p>
-</li><li>
-<p><a href="#getting-started-with-tasker">Getting Started with Tasker</a></p>
-</li><li>
-<p><a href="#table-of-contents">Table of Contents</a></p>
-</li><li>
-<p><a href="#introduction">Introduction</a></p>
-<ul><li>
-<p><a href="#-core-capabilities">🚀 Core Capabilities</a></p>
-</li></ul>
-</li><li>
-<p><a href="#installation">Installation</a></p>
-</li><li>
-<p><a href="#core-concepts">Core Concepts</a></p>
-</li><li>
-<p><a href="#creating-task-handlers">Creating Task Handlers</a></p>
-<ul><li>
-<p><a href="#task-handler-yaml-configuration">Task Handler YAML Configuration</a></p>
-</li><li>
-<p><a href="#using-the-task-handler">Using the Task Handler</a></p>
-</li></ul>
-</li><li>
-<p><a href="#step-handlers">Step Handlers</a></p>
-<ul><li>
-<p><a href="#key-methods">Key Methods</a></p>
-</li></ul>
-</li><li>
-<p><a href="#api-step-handlers">API Step Handlers</a></p>
-<ul><li>
-<p><a href="#api-step-handler-configuration">API Step Handler Configuration</a></p>
-</li></ul>
-</li><li>
-<p><a href="#defining-step-dependencies">Defining Step Dependencies</a></p>
-<ul><li>
-<p><a href="#how-dependencies-work">How Dependencies Work</a></p>
-</li></ul>
-</li><li>
-<p><a href="#customizing-behavior">Customizing Behavior</a></p>
-<ul><li>
-<p>API Calls with <code>process</code><a href="#separating-api-calls-with-process"></a></p>
-</li><li>
-<p><a href="#processing-results">Processing Results</a></p>
-</li><li>
-<p><a href="#customizing-result-processing">Customizing Result Processing</a></p>
-</li><li>
-<p><a href="#accessing-data-from-previous-steps">Accessing Data from Previous Steps</a></p>
-</li></ul>
-</li><li>
-<p><a href="#authentication--authorization">Authentication &amp; Authorization</a></p>
-<ul><li>
-<p><a href="#key-features">Key Features</a></p>
-</li><li>
-<p><a href="#quick-start">Quick Start</a></p>
-</li><li>
-<p><a href="#generators">Generators</a></p>
-</li><li>
-<p><a href="#graphql-security">GraphQL Security</a></p>
-</li><li>
-<p><a href="#complete-documentation">Complete Documentation</a></p>
-</li></ul>
-</li><li>
-<p><a href="#best-practices">Best Practices</a></p>
-</li><li>
-<p><a href="#event-system--custom-integrations">Event System &amp; Custom Integrations</a></p>
-<ul><li>
-<p><a href="#quick-start-with-event-subscribers">Quick Start with Event Subscribers</a></p>
-</li></ul>
-</li><li>
-<p><a href="#event-subscribers-vs-workflow-steps-architectural-distinction">Event Subscribers vs Workflow Steps: Architectural Distinction</a></p>
-<ul><li>
-<p><a href="#use-event-subscribers-for">Use Event Subscribers For:</a></p>
-</li><li>
-<p><a href="#use-workflow-steps-for">Use Workflow Steps For:</a></p>
-</li><li>
-<p><a href="#examples-of-proper-usage">Examples of Proper Usage</a></p>
-</li><li>
-<p><a href="#practical-examples">Practical Examples</a></p>
-</li><li>
-<p><a href="#example-custom-events-in-step-handlers">Example: Custom Events in Step Handlers</a></p>
-</li><li>
-<p><a href="#example-custom-subscriber">Example Custom Subscriber</a></p>
-</li></ul>
-</li><li>
-<p><a href="#telemetry-and-observability">Telemetry and Observability</a></p>
-</li><li>
-<p><a href="#documentation">Documentation</a></p>
-<ul><li>
-<p><a href="#developer-resources">Developer Resources</a></p>
-</li><li>
-<p><a href="#additional-resources">Additional Resources</a></p>
-</li></ul>
-</li><li>
-<p><a href="#scheduling-tasks">Scheduling Tasks</a></p>
-</li><li>
-<p><a href="#dependencies">Dependencies</a></p>
-</li><li>
-<p><a href="#development">Development</a></p>
-</li><li>
-<p><a href="#gratitude">Gratitude</a></p>
-</li><li>
-<p><a href="#license">License</a></p>
-</li></ul>
-
-<h2 id="label-Introduction">Introduction</h2>
-
-<p>Tasker is a <strong>production-ready Rails engine</strong> that makes it easier to build complex, resilient workflows by organizing them into discrete steps that can be executed, retried, and tracked with sophisticated orchestration capabilities.</p>
-
-<h3 id="label-F0-9F-9A-80+Core+Capabilities">🚀 Core Capabilities</h3>
+<h3 id="label-F0-9F-9A-80+Key+Capabilities">🚀 Key Capabilities</h3>
 <ul><li>
 <p><strong>Complex Workflow Patterns</strong>: Linear, diamond, tree, and parallel merge workflows</p>
 </li><li>
 <p><strong>Intelligent Retry Logic</strong>: Exponential backoff with configurable retry limits</p>
 </li><li>
-<p><strong>Dependency Management</strong>: Sophisticated DAG-based step dependencies</p>
-</li><li>
-<p><strong>High-Performance Processing</strong>: SQL-function based orchestration with 4x performance gains</p>
-</li><li>
 <p><strong>Production Resilience</strong>: Automatic failure recovery and retry orchestration</p>
 </li><li>
 <p><strong>Complete Observability</strong>: Event-driven architecture with comprehensive telemetry</p>
+</li><li>
+<p><strong>Enterprise Security</strong>: Authentication &amp; authorization with GraphQL operation-level permissions</p>
+</li><li>
+<p><strong>High Performance</strong>: SQL-function based orchestration with 4x performance gains</p>
 </li></ul>
 
-<p>Perfect for processes that: - Involve multiple interdependent steps - Require automatic retries with exponential backoff - Have complex dependencies between steps - Need to be queued and processed asynchronously - Require visibility into progress, errors, and retry behavior - Must handle transient failures gracefully</p>
+<p>Perfect for processes that involve multiple interdependent steps, require automatic retries, need visibility into progress and errors, and must handle transient failures gracefully.</p>
 
-<h2 id="label-Installation">Installation</h2>
+<h2 id="label-Quick+Installation">Quick Installation</h2>
 
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.1</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -207,7 +98,7 @@
 bundle exec rails db:migrate
 </code></pre>
 
-<p>Mount the engine in your routes:</p>
+<p>Mount the engine and set up configuration:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># config/routes.rb
 </span><span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_application'>application</span><span class='period'>.</span><span class='id identifier rubyid_routes'>routes</span><span class='period'>.</span><span class='id identifier rubyid_draw'>draw</span> <span class='kw'>do</span>
@@ -215,751 +106,292 @@ bundle exec rails db:migrate
 <span class='kw'>end</span>
 </code></pre>
 
-<p>Set up the initial configuration:</p>
-
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_bundle'>bundle</span> <span class='id identifier rubyid_exec'>exec</span> <span class='id identifier rubyid_rails'>rails</span> <span class='label'>tasker:</span><span class='id identifier rubyid_setup'>setup</span>
 </code></pre>
 
 <h2 id="label-Core+Concepts">Core Concepts</h2>
 
-<p>Tasker is built around a few key concepts:</p>
+<p>Tasker organizes workflows around these key concepts:</p>
 <ul><li>
 <p><strong>Tasks</strong>: The overall process to be executed</p>
 </li><li>
-<p><strong>TaskHandlers</strong>: Classes that define and coordinate the steps in a task</p>
+<p><strong>TaskHandlers</strong>: Classes that define and coordinate workflow steps</p>
 </li><li>
 <p><strong>Steps</strong>: Individual units of work within a task</p>
 </li><li>
 <p><strong>StepHandlers</strong>: Classes that implement the logic for each step</p>
 </li><li>
 <p><strong>Dependencies</strong>: Relationships between steps that determine execution order</p>
-</li><li>
-<p><strong>Retry Logic</strong>: Built-in mechanisms for retrying failed steps</p>
 </li></ul>
 
-<h2 id="label-Creating+Task+Handlers">Creating Task Handlers</h2>
+<h2 id="label-Simple+Example-3A+Order+Processing">Simple Example: Order Processing</h2>
 
-<p>Task handlers define the workflow for a specific type of task. The easiest way to create a task handler is using the built-in generator:</p>
+<p>Create a task handler for processing orders:</p>
 
 <pre class="code ruby"><code class="ruby">rails generate tasker:task_handler OrderProcess
 </code></pre>
 
-<p>This creates:</p>
-<ul><li>
-<p>A task handler class in <code>app/tasks/order_process.rb</code></p>
-</li><li>
-<p>A YAML configuration in <code>config/tasker/tasks/order_process.yaml</code></p>
-</li><li>
-<p>A spec file in <code>spec/tasks/order_process_spec.rb</code></p>
-</li></ul>
+<p>This creates a complete workflow structure:</p>
 
-<h3 id="label-Task+Handler+YAML+Configuration">Task Handler YAML Configuration</h3>
-
-<p>The YAML configuration defines the task handler, its steps, and their relationships:</p>
+<p><strong>YAML Configuration</strong> (<code>config/tasker/tasks/order_process.yaml</code>):</p>
 
 <pre class="code ruby"><code class="ruby">---
 name: order_process
-module_namespace: # Optional namespace
 task_handler_class: OrderProcess
-concurrent: true # Whether steps can run concurrently
-
-schema: # JSON Schema for validating task context
-  type: object
-  required:
-    - order_id
-  properties:
-    order_id:
-      type: integer
+concurrent: true
 
 step_templates:
-  - name: fetch_order
-    description: Fetch order details from database
-    handler_class: OrderProcess::StepHandler::FetchOrderHandler
-
-  - name: validate_items
-    description: Validate order items are available
-    depends_on_step: fetch_order
-    handler_class: OrderProcess::StepHandler::ValidateItemsHandler
+  - name: validate_order
+    description: Validate order details
+    handler_class: OrderProcess::StepHandler::ValidateOrderHandler
 
   - name: process_payment
     description: Process payment for the order
-    depends_on_step: validate_items
+    depends_on_step: validate_order
     handler_class: OrderProcess::StepHandler::ProcessPaymentHandler
-    # Retry configuration
     default_retryable: true
     default_retry_limit: 3
 
-  - name: update_inventory
-    description: Update inventory levels
-    depends_on_step: process_payment
-    handler_class: OrderProcess::StepHandler::UpdateInventoryHandler
-
   - name: send_confirmation
     description: Send confirmation email
-    depends_on_step: update_inventory
+    depends_on_step: process_payment
     handler_class: OrderProcess::StepHandler::SendConfirmationHandler
 </code></pre>
 
-<h3 id="label-Using+the+Task+Handler">Using the Task Handler</h3>
+<p><strong>Step Handler Implementation</strong>:</p>
 
-<pre class="code ruby"><code class="ruby"><span class='comment'># Create a task request
+<pre class="code ruby"><code class="ruby"><span class='kw'>module</span> <span class='const'>OrderProcess</span>
+  <span class='kw'>module</span> <span class='const'>StepHandler</span>
+    <span class='kw'>class</span> <span class='const'>ValidateOrderHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
+      <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
+        <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
+        <span class='id identifier rubyid_order'>order</span> <span class='op'>=</span> <span class='const'>Order</span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_order_id'>order_id</span><span class='rparen'>)</span>
+
+        <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Order not found</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_order'>order</span>
+        <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Order already processed</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_processed?'>processed?</span>
+
+        <span class='lbrace'>{</span> <span class='label'>order:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_as_json'>as_json</span><span class='comma'>,</span> <span class='label'>valid:</span> <span class='kw'>true</span> <span class='rbrace'>}</span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p><strong>Using Your Workflow</strong>:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Create and execute a task
 </span><span class='id identifier rubyid_task_request'>task_request</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">TaskRequest</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
   <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
   <span class='label'>context:</span> <span class='lbrace'>{</span> <span class='label'>order_id:</span> <span class='int'>12345</span> <span class='rbrace'>}</span>
 <span class='rparen'>)</span>
 
-<span class='comment'># Initialize the task
-</span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
 
-<span class='comment'># The task is now queued for processing
+<span class='comment'># Task is now queued for processing with automatic retry logic
 </span></code></pre>
 
-<h2 id="label-Step+Handlers">Step Handlers</h2>
+<h2 id="label-Advanced+Features">Advanced Features</h2>
 
-<p>Step handlers implement the actual logic for each step in a task. They must define a <code>process</code> method that performs the work and returns the results:</p>
+<h3 id="label-Authentication+-26+Authorization">Authentication &amp; Authorization</h3>
 
-<pre class="code ruby"><code class="ruby"><span class='kw'>module</span> <span class='const'>OrderProcess</span>
-  <span class='kw'>module</span> <span class='const'>StepHandler</span>
-    <span class='kw'>class</span> <span class='const'>FetchOrderHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
-      <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-        <span class='comment'># Get data from the task context
-</span>        <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-
-        <span class='comment'># Perform the work
-</span>        <span class='id identifier rubyid_order'>order</span> <span class='op'>=</span> <span class='const'>Order</span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_order_id'>order_id</span><span class='rparen'>)</span>
-
-        <span class='comment'># Return results - they will be stored in step.results automatically
-</span>        <span class='lbrace'>{</span> <span class='label'>order:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_as_json'>as_json</span> <span class='rbrace'>}</span>
-      <span class='kw'>end</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h3 id="label-Key+Methods">Key Methods</h3>
-<ul><li>
-<p><code>process(task, sequence, step)</code>: Required method that executes the step’s business logic and returns results</p>
-</li><li>
-<p><code>task</code>: The Tasker::Task instance being processed</p>
-</li><li>
-<p><code>sequence</code>: The Tasker::Types::StepSequence containing all steps</p>
-</li><li>
-<p><code>step</code>: The current Tasker::WorkflowStep being executed</p>
-</li><li>
-<p><strong>Return value</strong>: The results to be stored in <code>step.results</code> (handled automatically)</p>
-</li><li>
-<p><code>process_results(step, process_output, initial_results)</code>: Optional method to customize result storage</p>
-</li><li>
-<p><code>step</code>: The current Tasker::WorkflowStep being executed</p>
-</li><li>
-<p><code>process_output</code>: The return value from your <code>process()</code> method</p>
-</li><li>
-<p><code>initial_results</code>: The value of <code>step.results</code> before <code>process()</code> was called</p>
-</li><li>
-<p><strong>Override this</strong>: When you need to transform or format results before storing them</p>
-</li></ul>
-
-<p><strong>Important</strong>: Step lifecycle events are <strong>automatically published</strong> around your <code>process</code> method: - <code>step_started</code> event fired before your method executes - <code>step_completed</code> event fired after successful completion - <code>step_failed</code> event fired if an exception occurs</p>
-
-<p>Simply implement your business logic in <code>process()</code> and return your results - event publishing and result storage happen automatically!</p>
-
-<p>⚠️ <strong>Never override the <code>handle()</code> method</strong> - it’s framework-only code that coordinates event publishing and calls your <code>process()</code> method.</p>
-
-<h2 id="label-API+Step+Handlers">API Step Handlers</h2>
-
-<p>Tasker includes a special base class for API-based steps that provides:</p>
-<ul><li>
-<p>HTTP request handling via Faraday</p>
-</li><li>
-<p>Automatic retries with exponential backoff</p>
-</li><li>
-<p>Support for rate limiting and server-requested backoff</p>
-</li><li>
-<p>Response processing helpers</p>
-</li></ul>
-
-<p>To create an API step handler, inherit from <code>Tasker::StepHandler::Api</code> and implement the <code>process</code> method:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>FetchOrderStatusHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Api.html" title="Tasker::StepHandler::Api (class)">Api</a></span></span>
-  <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid__step'>_step</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-    <span class='comment'># Make the API call - returns Faraday::Response
-</span>    <span class='id identifier rubyid_connection'>connection</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/orders/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_order_id'>order_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>/status</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-
-  <span class='comment'># Override to customize how the API response is stored
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
-    <span class='comment'># Extract and transform the API response data
-</span>    <span class='kw'>if</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span> <span class='op'>==</span> <span class='int'>200</span>
-      <span class='id identifier rubyid_response_data'>response_data</span> <span class='op'>=</span> <span class='const'>JSON</span><span class='period'>.</span><span class='id identifier rubyid_parse'>parse</span><span class='lparen'>(</span><span class='id identifier rubyid_process_output'>process_output</span><span class='period'>.</span><span class='id identifier rubyid_body'>body</span><span class='rparen'>)</span>
-      <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-        <span class='label'>status:</span> <span class='id identifier rubyid_response_data'>response_data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>status</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
-        <span class='label'>last_updated:</span> <span class='id identifier rubyid_response_data'>response_data</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>updated_at</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
-        <span class='label'>success:</span> <span class='kw'>true</span>
-      <span class='rbrace'>}</span>
-    <span class='kw'>else</span>
-      <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-        <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span>
-        <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>API returned status </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_process_output'>process_output</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-      <span class='rbrace'>}</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<p><strong>Key Points:</strong> - ✅ <strong>Always implement <code>process()</code></strong> - This makes your HTTP request - ✅ <strong>Optionally override <code>process_results()</code></strong> - For custom response processing - ⚠️ <strong>Never override <code>handle()</code></strong> - Framework-only method for event publishing and coordination</p>
-
-<h3 id="label-API+Step+Handler+Configuration">API Step Handler Configuration</h3>
-
-<p>API Step Handlers can be configured in the YAML:</p>
-
-<pre class="code ruby"><code class="ruby">- name: fetch_order_status
-  handler_class: OrderProcess::StepHandler::FetchOrderStatusHandler
-  handler_config:
-    type: api
-    url: https://api.example.com
-    params:
-      api_key: ${API_KEY}
-    headers:
-      Accept: application/json
-    retry_delay: 1.0
-    enable_exponential_backoff: true
-</code></pre>
-
-<h2 id="label-Defining+Step+Dependencies">Defining Step Dependencies</h2>
-
-<p>Steps are executed in the order defined by their dependencies. There are two ways to define dependencies:</p>
-<ol><li>
-<p><code>depends_on_step</code>: Single dependency on another step</p>
-</li><li>
-<p><code>depends_on_steps</code>: Multiple dependencies on other steps</p>
-</li></ol>
-
-<pre class="code ruby"><code class="ruby">- name: send_notification
-  description: Send notification about processed order
-  # This step will only run after both payment and inventory steps complete
-  depends_on_steps:
-    - process_payment
-    - update_inventory
-  handler_class: OrderProcess::StepHandler::SendNotificationHandler
-</code></pre>
-
-<h3 id="label-How+Dependencies+Work">How Dependencies Work</h3>
-<ul><li>
-<p>Steps with no dependencies start first (root steps)</p>
-</li><li>
-<p>When a step completes, Tasker checks for steps that depend on it</p>
-</li><li>
-<p>When all dependencies for a step are complete, it becomes eligible for execution</p>
-</li><li>
-<p>If concurrent processing is enabled, eligible steps run in parallel</p>
-</li><li>
-<p>The task completes when all steps are processed</p>
-</li></ul>
-
-<h2 id="label-Customizing+Behavior">Customizing Behavior</h2>
-
-<p>There are several ways to customize Tasker’s behavior using the <code>process</code> method:</p>
-
-<h3 id="label-Separating+API+Calls+with+process">Separating API Calls with <code>process</code></h3>
-
-<p>For API step handlers, the <code>process</code> method is the developer extension point for making HTTP requests:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>CartFetchStepHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Api.html" title="Tasker::StepHandler::Api (class)">Api</a></span></span>
-  <span class='id identifier rubyid_include'>include</span> <span class='const'>ApiTask</span><span class='op'>::</span><span class='const'>ApiUtils</span>
-
-  <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid__sequence'>_sequence</span><span class='comma'>,</span> <span class='id identifier rubyid__step'>_step</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_cart_id'>cart_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>cart_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-    <span class='id identifier rubyid_connection'>connection</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/carts/</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_cart_id'>cart_id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-
-  <span class='comment'># Override process_results to do custom response processing
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
-    <span class='comment'># Extract and process the cart data from the API response
-</span>    <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_get_from_results'>get_from_results</span><span class='lparen'>(</span><span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>cart</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h3 id="label-Processing+Results">Processing Results</h3>
-
-<p>For regular step handlers, implement your business logic in the <code>process</code> method:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>module</span> <span class='const'>OrderProcess</span>
-  <span class='kw'>module</span> <span class='const'>StepHandler</span>
-    <span class='kw'>class</span> <span class='const'>FetchOrderHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
-      <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-        <span class='comment'># Get data from the task context
-</span>        <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-
-        <span class='comment'># Perform the work
-</span>        <span class='id identifier rubyid_order'>order</span> <span class='op'>=</span> <span class='const'>Order</span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_order_id'>order_id</span><span class='rparen'>)</span>
-
-        <span class='comment'># Return results - they will be stored in step.results automatically
-</span>        <span class='lbrace'>{</span> <span class='label'>order:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_as_json'>as_json</span> <span class='rbrace'>}</span>
-      <span class='kw'>end</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h3 id="label-Customizing+Result+Processing">Customizing Result Processing</h3>
-
-<p>If you need to customize how the return value from <code>process()</code> gets stored in <code>step.results</code>, you can override the <code>process_results()</code> method:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>DataTransformHandler</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
-  <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-    <span class='comment'># Your business logic that returns raw data
-</span>    <span class='id identifier rubyid_raw_data'>raw_data</span> <span class='op'>=</span> <span class='id identifier rubyid_fetch_external_data'>fetch_external_data</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_raw_data'>raw_data</span>  <span class='comment'># Return raw data
-</span>  <span class='kw'>end</span>
-
-  <span class='comment'># Override to customize how results are stored
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
-    <span class='comment'># Transform the raw output before storing
-</span>    <span class='id identifier rubyid_transformed_data'>transformed_data</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-      <span class='label'>processed_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
-      <span class='label'>data:</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='period'>.</span><span class='id identifier rubyid_transform_keys'>transform_keys</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:underscore</span><span class='rparen'>)</span><span class='comma'>,</span>
-      <span class='label'>record_count:</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
-    <span class='rbrace'>}</span>
-
-    <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='id identifier rubyid_transformed_data'>transformed_data</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<p><strong>Key Points:</strong> - The framework calls <code>process_results(step, process_output, initial_results)</code> after your <code>process()</code> method - <code>process_output</code> is the return value from your <code>process()</code> method - <code>initial_results</code> is the value of <code>step.results</code> before <code>process()</code> was called - If you manually set <code>step.results</code> in your <code>process()</code> method, <code>process_results()</code> respects that and won’t override it</p>
-
-<h3 id="label-Accessing+Data+from+Previous+Steps">Accessing Data from Previous Steps</h3>
-
-<p>Steps often need data from previous steps:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid__task'>_task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='comment'># Find a specific step by name
-</span>  <span class='id identifier rubyid_cart_step'>cart_step</span> <span class='op'>=</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='period'>.</span><span class='id identifier rubyid_find_step_by_name'>find_step_by_name</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>fetch_cart</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-
-  <span class='comment'># Access its results
-</span>  <span class='id identifier rubyid_cart_data'>cart_data</span> <span class='op'>=</span> <span class='id identifier rubyid_cart_step'>cart_step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>cart</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
-
-  <span class='comment'># Use the data
-</span>  <span class='id identifier rubyid_processed_cart'>processed_cart</span> <span class='op'>=</span> <span class='id identifier rubyid_process_cart'>process_cart</span><span class='lparen'>(</span><span class='id identifier rubyid_cart_data'>cart_data</span><span class='rparen'>)</span>
-
-  <span class='comment'># Return your results
-</span>  <span class='lbrace'>{</span> <span class='label'>processed:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>cart_data:</span> <span class='id identifier rubyid_processed_cart'>processed_cart</span> <span class='rbrace'>}</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h2 id="label-Authentication+-26+Authorization">Authentication &amp; Authorization</h2>
-
-<p>Tasker includes a complete, production-ready authentication and authorization system that provides enterprise-grade security for both REST APIs and GraphQL endpoints. The system is designed to work with any Rails authentication solution while maintaining flexibility and security.</p>
-
-<h3 id="label-Key+Features">Key Features</h3>
-<ul><li>
-<p><strong>🔐 Provider Agnostic</strong>: Works seamlessly with Devise, JWT, OmniAuth, custom authentication, or no authentication</p>
-</li><li>
-<p><strong>🛡️ Resource-Based Authorization</strong>: Granular permissions using resource:action patterns (<code>tasker.task:create</code>, <code>tasker.workflow_step:show</code>)</p>
-</li><li>
-<p><strong>⚡ GraphQL Operation-Level Authorization</strong>: Revolutionary security that automatically maps GraphQL operations to resource permissions</p>
-</li><li>
-<p><strong>🔄 Automatic Integration</strong>: Authentication and authorization work seamlessly across REST and GraphQL endpoints</p>
-</li><li>
-<p><strong>🚀 Production-Ready Generators</strong>: Create complete authenticators and authorization coordinators with one command</p>
-</li><li>
-<p><strong>✅ Zero Breaking Changes</strong>: All features are opt-in and maintain backward compatibility</p>
-</li></ul>
-
-<h3 id="label-Quick+Start">Quick Start</h3>
+<p>Tasker includes enterprise-grade security that works with any Rails authentication system:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
 </span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
   <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_auth'>auth</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_auth'>auth</span><span class='op'>|</span>
-    <span class='comment'># Enable authentication with your custom authenticator
-</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authentication_enabled'>authentication_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
-    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authenticator_class'>authenticator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourCustomAuthenticator</span><span class='tstring_end'>&#39;</span></span>
-
-    <span class='comment'># Enable resource-based authorization
-</span>    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authentication_enabled'>authentication_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authenticator_class'>authenticator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourAuthenticator</span><span class='tstring_end'>&#39;</span></span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
     <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_coordinator_class'>authorization_coordinator_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>YourAuthorizationCoordinator</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_user_class'>user_class</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>User</span><span class='tstring_end'>&#39;</span></span>
   <span class='kw'>end</span>
 <span class='kw'>end</span>
 </code></pre>
 
-<h3 id="label-Generators">Generators</h3>
-
-<p>Generate production-ready authenticators for popular authentication systems:</p>
-
-<pre class="code ruby"><code class="ruby"># JWT authenticator with comprehensive security features
-rails generate tasker:authenticator CompanyJWT --type=jwt
-
-# Devise integration with proper scope handling
-rails generate tasker:authenticator AdminAuth --type=devise --user-class=Admin
-
-# API token authenticator with header fallback
-rails generate tasker:authenticator ApiAuth --type=api_token
-
-# OmniAuth integration with session management
-rails generate tasker:authenticator SocialAuth --type=omniauth
-
-# Authorization coordinator with resource-based permissions
-rails generate tasker:authorization_coordinator CompanyAuth
-</code></pre>
-
-<h3 id="label-GraphQL+Security">GraphQL Security</h3>
-
-<p>The system provides revolutionary GraphQL authorization that automatically maps operations to permissions:</p>
+<p><strong>Automatic GraphQL Security</strong>: Operations are automatically mapped to permissions:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='comment'># GraphQL query automatically requires tasker.task:index permission
 </span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='id identifier rubyid_status'>status</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
 
 <span class='comment'># GraphQL mutation automatically requires tasker.task:create permission
 </span><span class='id identifier rubyid_mutation'>mutation</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_createTask'>createTask</span><span class='lparen'>(</span><span class='label'>input:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>New Task</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
-
-<span class='comment'># Mixed operations check all required permissions
-</span><span class='id identifier rubyid_query'>query</span> <span class='lbrace'>{</span>
-  <span class='id identifier rubyid_tasks'>tasks</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span>           <span class='comment'># Requires: tasker.task:index
-</span>  <span class='id identifier rubyid_workflowSteps'>workflowSteps</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_stepId'>stepId</span> <span class='rbrace'>}</span>   <span class='comment'># Requires: tasker.workflow_step:index
-</span><span class='rbrace'>}</span>
 </code></pre>
 
-<h3 id="label-Complete+Documentation">Complete Documentation</h3>
+<h3 id="label-Event+System+-26+Integrations">Event System &amp; Integrations</h3>
 
-<p>For comprehensive documentation including quick start guides, custom authenticator examples, authorization patterns, GraphQL security details, production best practices, and testing strategies:</p>
+<p>Tasker provides comprehensive event-driven observability for custom integrations:</p>
 
-<p><strong>📖 See &amp; Authorization Guide[docs/AUTH.md]</strong></p>
+<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>OrderEventsSubscriber</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers/BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
+  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.failed</span><span class='tstring_end'>&#39;</span></span>
 
-<h2 id="label-Best+Practices">Best Practices</h2>
-<ol><li>
-<p><strong>Keep steps focused</strong>: Each step should do one thing well</p>
-</li><li>
-<p><strong>Use meaningful step names</strong>: Names should clearly indicate what the step does</p>
-</li><li>
-<p><strong>Store useful data in step results</strong>: Include enough information for dependent steps</p>
-</li><li>
-<p><strong>Handle errors gracefully</strong>: Use begin/rescue and set appropriate error information</p>
-</li><li>
-<p><strong>Configure retries appropriately</strong>: Set retry limits based on the reliability of the operation</p>
-</li><li>
-<p><strong>Use API step handlers for external services</strong>: Take advantage of built-in retry and backoff</p>
-</li><li>
-<p><strong>Test with mocked dependencies</strong>: Create tests that verify step behavior in isolation</p>
-</li><li>
-<p><strong>Document step dependencies</strong>: Make it clear why steps depend on each other</p>
-</li></ol>
-
-<pre class="code ruby"><code class="ruby"><span class='comment'># Example 1: Let exceptions bubble up (Recommended)
-</span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='comment'># Attempt the operation - let exceptions propagate naturally
-</span>  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
-
-  <span class='comment'># Framework automatically handles exceptions:
-</span>  <span class='comment'># - Publishes step_failed event with error details
-</span>  <span class='comment'># - Stores error information in step.results
-</span>  <span class='comment'># - Transitions step to error state
-</span>  <span class='comment'># - Triggers retry logic if configured
-</span><span class='kw'>end</span>
-
-<span class='comment'># Example 2: Catch, record error details, then re-raise
-</span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='kw'>begin</span>
-    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-    <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
-  <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-    <span class='comment'># Add custom error context to step.results
-</span>    <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbrace'>{</span>
-      <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
-      <span class='label'>error_type:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
-      <span class='label'>custom_context:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Additional business context</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-      <span class='label'>retry_recommended:</span> <span class='id identifier rubyid_should_retry?'>should_retry?</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
-    <span class='rbrace'>}</span>
-    <span class='comment'># Re-raise so framework knows this step failed
-</span>    <span class='id identifier rubyid_raise'>raise</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-
-<span class='comment'># Example 3: Treat handled exceptions as success
-</span><span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='kw'>begin</span>
-    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_perform_complex_operation'>perform_complex_operation</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-    <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
-  <span class='kw'>rescue</span> <span class='const'>RecoverableError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-    <span class='comment'># This exception is handled and considered a success case
-</span>    <span class='comment'># Step will be marked as COMPLETED, not failed
-</span>    <span class='lbrace'>{</span>
-      <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span>
-      <span class='label'>data:</span> <span class='id identifier rubyid_get_fallback_data'>get_fallback_data</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span><span class='comma'>,</span>
-      <span class='label'>recovered_from_error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
-      <span class='label'>used_fallback:</span> <span class='kw'>true</span>
-    <span class='rbrace'>}</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h2 id="label-Event+System+-26+Custom+Integrations">Event System &amp; Custom Integrations</h2>
-
-<p>Tasker features a comprehensive event-driven architecture that provides deep insights into task execution and enables powerful integrations. The event system includes:</p>
-<ul><li>
-<p><strong>Complete Event Catalog</strong> - Discover all available events with <code>Tasker::Events.catalog</code> and <code>Tasker::Events.complete_catalog</code></p>
-</li><li>
-<p><strong>Custom Business Events</strong> - Define and publish custom events from step handlers for business logic observability</p>
-</li><li>
-<p><strong>Custom Event Subscribers</strong> - Create integrations with external services (Sentry, PagerDuty, Slack)</p>
-</li><li>
-<p><strong>Subscriber Generator</strong> - <code>rails generate tasker:subscriber</code> creates subscribers with automatic method routing</p>
-</li><li>
-<p><strong>Event Discovery</strong> - Search and filter events by namespace, name, or description</p>
-</li><li>
-<p><strong>Production-Ready Observability</strong> - OpenTelemetry integration with comprehensive telemetry</p>
-</li><li>
-<p><strong>Living Documentation</strong> - Real-world integration examples with comprehensive test coverage</p>
-</li></ul>
-
-<h3 id="label-Quick+Start+with+Event+Subscribers">Quick Start with Event Subscribers</h3>
-
-<pre class="code ruby"><code class="ruby"># Generate a subscriber for critical alerts
-rails generate tasker:subscriber pager_duty --events task.failed step.failed
-
-# Generate a notification subscriber
-rails generate tasker:subscriber notification --events task.completed task.failed
-
-# Generate a specialized metrics subscriber with helper methods
-rails generate tasker:subscriber metrics --metrics --events task.completed task.failed step.completed step.failed
-</code></pre>
-
-<h2 id="label-Event+Subscribers+vs+Workflow+Steps-3A+Architectural+Distinction">Event Subscribers vs Workflow Steps: Architectural Distinction</h2>
-
-<p><strong>Critical Design Principle</strong>: Event subscribers should handle <strong>“collateral” or “secondary” logic</strong> - operations that support observability, monitoring, and alerting but are not core business requirements.</p>
-
-<h3 id="label-Use+Event+Subscribers+For-3A">Use Event Subscribers For:</h3>
-<ul><li>
-<p><strong>Operational Observability</strong>: Logging, metrics, telemetry, traces</p>
-</li><li>
-<p><strong>Alerting &amp; Monitoring</strong>: Sentry errors, PagerDuty alerts, Slack notifications</p>
-</li><li>
-<p><strong>Analytics</strong>: Business intelligence, usage tracking, performance monitoring</p>
-</li><li>
-<p><strong>External Integrations</strong>: Non-critical third-party service notifications</p>
-</li></ul>
-
-<h3 id="label-Use+Workflow+Steps+For-3A">Use Workflow Steps For:</h3>
-<ul><li>
-<p><strong>Business-Critical Operations</strong>: Actions that must succeed for the workflow to be considered complete</p>
-</li><li>
-<p><strong>Operations Requiring</strong>:</p>
-</li><li>
-<p><strong>Idempotency</strong>: Can be safely retried without side effects</p>
-</li><li>
-<p><strong>Retryability</strong>: Built-in retry logic with exponential backoff</p>
-</li><li>
-<p><strong>Explicit Lifecycle Tracking</strong>: Success/failure states that matter to the business</p>
-</li><li>
-<p><strong>Transactional Integrity</strong>: Operations that need to be rolled back on failure</p>
-</li></ul>
-
-<h3 id="label-Examples+of+Proper+Usage">Examples of Proper Usage</h3>
-
-<p><strong>✅ Event Subscriber (Collateral Concerns)</strong>:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>ObservabilitySubscriber</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers/BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
-  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span>
-
-  <span class='kw'>def</span> <span class='id identifier rubyid_handle_order_fulfilled'>handle_order_fulfilled</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-    <span class='comment'># Operational logging and analytics - if these fail, the order is still fulfilled
-</span>    <span class='const'>AnalyticsService</span><span class='period'>.</span><span class='id identifier rubyid_track_fulfillment'>track_fulfillment</span><span class='lparen'>(</span><span class='label'>order_id:</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:order_id</span><span class='rparen'>)</span><span class='rparen'>)</span>
-    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Order </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:order_id</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> fulfilled</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<p><strong>✅ Workflow Step (Business Logic)</strong>:</p>
-
-<pre class="code ruby"><code class="ruby"># config/tasker/tasks/order_process.yaml
-- name: send_confirmation_email
-  description: Send order confirmation email to customer
-  depends_on_step: process_payment
-  handler_class: OrderProcess::StepHandler::SendConfirmationEmailHandler
-  default_retryable: true
-  default_retry_limit: 3
-</code></pre>
-
-<p><strong>❌ Wrong - Business Logic in Event Subscriber</strong>:</p>
-
-<pre class="code ruby"><code class="ruby"><span class='comment'># DON&#39;T DO THIS - Critical email sending belongs in a workflow step
-</span><span class='kw'>def</span> <span class='id identifier rubyid_handle_order_fulfilled'>handle_order_fulfilled</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-  <span class='const'>CustomerService</span><span class='period'>.</span><span class='id identifier rubyid_send_confirmation_email'>send_confirmation_email</span><span class='lparen'>(</span><span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:order_id</span><span class='rparen'>)</span><span class='rparen'>)</span>  <span class='comment'># Critical business action!
-</span><span class='kw'>end</span>
-</code></pre>
-
-<h3 id="label-Practical+Examples">Practical Examples</h3>
-
-<p><strong>Sending Customer Emails</strong>: - ✅ <strong>Workflow Step</strong>: Order confirmation email (customer expects this, must be delivered) - ✅ <strong>Event Subscriber</strong>: Internal team notification about order (operational awareness)</p>
-
-<p><strong>External API Calls</strong>: - ✅ <strong>Workflow Step</strong>: Charging payment gateway (business transaction must succeed) - ✅ <strong>Event Subscriber</strong>: Sending metrics to DataDog (operational monitoring)</p>
-
-<p><strong>Database Operations</strong>: - ✅ <strong>Workflow Step</strong>: Updating inventory levels (business state change) - ✅ <strong>Event Subscriber</strong>: Logging order details for analytics (operational insight)</p>
-
-<p><strong>Message Queues</strong>: - ✅ <strong>Workflow Step</strong>: Publishing order to fulfillment queue (business requirement) - ✅ <strong>Event Subscriber</strong>: Publishing metrics to monitoring queue (operational data)</p>
-
-<h3 id="label-Example-3A+Custom+Events+in+Step+Handlers">Example: Custom Events in Step Handlers</h3>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>OrderFulfillmentStep</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler.html" title="Tasker::StepHandler (module)">StepHandler</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/StepHandler/Base.html" title="Tasker::StepHandler::Base (class)">Base</a></span></span>
-  <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_custom_event_configuration'>custom_event_configuration</span>
-    <span class='lbracket'>[</span>
-      <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Order has been fulfilled and shipped</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
-    <span class='rbracket'>]</span>
-  <span class='kw'>end</span>
-
-  <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_order'>order</span> <span class='op'>=</span> <span class='id identifier rubyid_fulfill_order'>fulfill_order</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_id</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
-
-    <span class='comment'># Publish custom business event for collateral systems to observe
-</span>    <span class='id identifier rubyid_publish_custom_event'>publish_custom_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span>
-      <span class='label'>order_id:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='comma'>,</span>
-      <span class='label'>customer_id:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_customer_id'>customer_id</span><span class='comma'>,</span>
-      <span class='label'>total_amount:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_total'>total</span>
-    <span class='rbrace'>}</span><span class='rparen'>)</span>
-
-    <span class='lbrace'>{</span> <span class='label'>order_id:</span> <span class='id identifier rubyid_order'>order</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='comma'>,</span> <span class='label'>fulfillment_date:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='rbrace'>}</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span>
-</code></pre>
-
-<h3 id="label-Example+Custom+Subscriber">Example Custom Subscriber</h3>
-
-<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>ObservabilitySubscriber</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events.html" title="Tasker::Events (module)">Events</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Events/Subscribers/BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
-  <span class='comment'># Subscribe to system and custom events for observability/alerting purposes
-</span>  <span class='id identifier rubyid_subscribe_to'>subscribe_to</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order.fulfilled</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>payment.risk_flagged</span><span class='tstring_end'>&#39;</span></span>
-
-  <span class='comment'># Log task completion for operational visibility
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_completed'>handle_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_completed'>handle_task_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_id</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_task_name'>task_name</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_name</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_execution_duration'>execution_duration</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:execution_duration</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span>
-
-    <span class='comment'># Operational logging and metrics (collateral concerns)
-</span>    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Task completed: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task_name'>task_name</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>) in </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_execution_duration'>execution_duration</span><span class='embexpr_end'>}</span><span class='tstring_content'>s</span><span class='tstring_end'>&quot;</span></span>
-    <span class='const'>StatsD</span><span class='period'>.</span><span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker.task.duration</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_execution_duration'>execution_duration</span><span class='comma'>,</span> <span class='label'>tags:</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>task:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task_name'>task_name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+    <span class='const'>NotificationService</span><span class='period'>.</span><span class='id identifier rubyid_send_success_email'>send_success_email</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 
-  <span class='comment'># Alert on task failures for operational response
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_failed'>handle_task_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_handle_task_failed'>handle_task_failed</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:task_id</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Unknown error</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-
-    <span class='comment'># Send alerts to operational tools (collateral concerns)
-</span>    <span class='const'>Sentry</span><span class='period'>.</span><span class='id identifier rubyid_capture_message'>capture_message</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Task failed: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_task_id'>task_id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>level:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>error</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>extra:</span> <span class='lbrace'>{</span> <span class='label'>error:</span> <span class='id identifier rubyid_error_message'>error_message</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
-    <span class='const'>PagerDutyService</span><span class='period'>.</span><span class='id identifier rubyid_trigger_alert'>trigger_alert</span><span class='lparen'>(</span>
-      <span class='label'>summary:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tasker workflow failed</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-      <span class='label'>severity:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>error</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
-      <span class='label'>details:</span> <span class='lbrace'>{</span> <span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_error_message'>error_message</span> <span class='rbrace'>}</span>
-    <span class='rparen'>)</span>
-  <span class='kw'>end</span>
-
-  <span class='comment'># Monitor business events for analytics/alerting
-</span>  <span class='kw'>def</span> <span class='id identifier rubyid_handle_order_fulfilled'>handle_order_fulfilled</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_order_id'>order_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:order_id</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_customer_id'>customer_id</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:customer_id</span><span class='rparen'>)</span>
-
-    <span class='comment'># Analytics and operational monitoring (collateral concerns)
-</span>    <span class='const'>AnalyticsService</span><span class='period'>.</span><span class='id identifier rubyid_track_order_fulfillment'>track_order_fulfillment</span><span class='lparen'>(</span><span class='id identifier rubyid_order_id'>order_id</span><span class='comma'>,</span> <span class='id identifier rubyid_customer_id'>customer_id</span><span class='rparen'>)</span>
-    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Order fulfilled: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_order_id'>order_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> for customer </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_customer_id'>customer_id</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
-  <span class='kw'>end</span>
-
-  <span class='kw'>def</span> <span class='id identifier rubyid_handle_payment_risk_flagged'>handle_payment_risk_flagged</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_risk_score'>risk_score</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:risk_score</span><span class='comma'>,</span> <span class='int'>0</span><span class='rparen'>)</span>
-
-    <span class='comment'># Alert on high-risk payments for operational response
-</span>    <span class='kw'>if</span> <span class='id identifier rubyid_risk_score'>risk_score</span> <span class='op'>&gt;</span> <span class='float'>0.8</span>
-      <span class='const'>PagerDutyService</span><span class='period'>.</span><span class='id identifier rubyid_trigger_alert'>trigger_alert</span><span class='lparen'>(</span>
-        <span class='label'>summary:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>High-risk payment detected</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-        <span class='label'>severity:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>warning</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
-        <span class='label'>details:</span> <span class='id identifier rubyid_event'>event</span>
-      <span class='rparen'>)</span>
-    <span class='kw'>end</span>
+    <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='id identifier rubyid_safe_get'>safe_get</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='comma'>,</span> <span class='symbol'>:error_message</span><span class='rparen'>)</span>
+    <span class='const'>AlertService</span><span class='period'>.</span><span class='id identifier rubyid_send_failure_alert'>send_failure_alert</span><span class='lparen'>(</span><span class='label'>task_id:</span> <span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_error_message'>error_message</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span>
 </code></pre>
 
-<p>For complete documentation on the event system, subscriber creation, and integration examples, see <a href="docs/EVENT_SYSTEM_md.html">docs/EVENT_SYSTEM.md</a>.</p>
+<h3 id="label-Telemetry+-26+Observability">Telemetry &amp; Observability</h3>
 
-<h2 id="label-Telemetry+and+Observability">Telemetry and Observability</h2>
+<p>Built-in OpenTelemetry integration provides complete observability:</p>
 
-<p>Tasker includes comprehensive telemetry capabilities to provide insights into task execution flow and performance:</p>
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tel'>tel</span><span class='op'>|</span>
+    <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_enabled'>enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>my-app-workflows</span><span class='tstring_end'>&#39;</span></span>
+    <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_service_version'>service_version</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible tools.</p>
+
+<h3 id="label-Health+Monitoring+-26+Production+Readiness">Health Monitoring &amp; Production Readiness</h3>
+
+<p>Tasker provides enterprise-grade health endpoints for production deployments:</p>
+
+<pre class="code ruby"><code class="ruby"># Kubernetes readiness probe - checks database connectivity
+GET /tasker/health/ready
+
+# Kubernetes liveness probe - lightweight health check
+GET /tasker/health/live
+
+# Detailed status endpoint - comprehensive system metrics
+GET /tasker/health/status
+</code></pre>
+
+<p><strong>Optional Authentication &amp; Authorization</strong>:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># config/initializers/tasker.rb
+</span><span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_health'>health</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_health'>health</span><span class='op'>|</span>
+    <span class='id identifier rubyid_health'>health</span><span class='period'>.</span><span class='id identifier rubyid_status_requires_authentication'>status_requires_authentication</span> <span class='op'>=</span> <span class='kw'>true</span>  <span class='comment'># Secure detailed status
+</span>  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_auth'>auth</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_auth'>auth</span><span class='op'>|</span>
+    <span class='id identifier rubyid_auth'>auth</span><span class='period'>.</span><span class='id identifier rubyid_authorization_enabled'>authorization_enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='comment'># Status endpoint requires tasker.health_status:index permission
+</span>  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p><strong>Performance Optimized</strong>: Uses SQL functions and 15-second caching for sub-100ms response times.</p>
+
+<h2 id="label-Key+Benefits">Key Benefits</h2>
+
+<h3 id="label-For+Developers">For Developers</h3>
 <ul><li>
-<p><strong>Built-in OpenTelemetry integration</strong> for compatibility with tools like Jaeger, Zipkin, and Honeycomb</p>
+<p><strong>Quick Setup</strong>: Working workflows in minutes with generators</p>
 </li><li>
-<p><strong>Standardized event naming</strong> for consistent observability across task and step operations</p>
+<p><strong>Clear Structure</strong>: YAML configuration with Ruby implementation</p>
 </li><li>
-<p><strong>Automatic span creation</strong> with proper parent-child relationships for complex workflows</p>
+<p><strong>Comprehensive Testing</strong>: Built-in test infrastructure and patterns</p>
 </li><li>
-<p><strong>Sensitive data filtering</strong> to ensure security and privacy of telemetry data</p>
-</li><li>
-<p><strong>Configurable service naming</strong> to customize how traces appear in your observability tools</p>
-</li><li>
-<p><strong>Detailed event lifecycle tracking</strong> with standard events for all task and step operations</p>
+<p><strong>Rich Documentation</strong>: Extensive guides and examples</p>
 </li></ul>
 
-<p>For complete documentation on telemetry features, configuration options, and best practices, see <a href="docs/TELEMETRY_md.html">docs/TELEMETRY.md</a>.</p>
-
-<h2 id="label-Documentation">Documentation</h2>
-
-<h3 id="label-Developer+Resources">Developer Resources</h3>
+<h3 id="label-For+Operations">For Operations</h3>
 <ul><li>
-<p><strong>Guide[docs/DEVELOPER_GUIDE.md]</strong> - Comprehensive guide covering task handlers, step handlers, event subscribers, and YAML configuration</p>
+<p><strong>Production Ready</strong>: Battle-tested retry logic and error handling</p>
 </li><li>
-<p><strong>Guide[docs/AUTH.md]</strong> - Complete authentication system documentation with JWT, Devise, and custom authenticator examples</p>
+<p><strong>Health Monitoring</strong>: Enterprise-grade health endpoints for K8s and load balancers</p>
 </li><li>
-<p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Complete event system documentation with integration examples</p>
+<p><strong>Observable</strong>: Complete event system with telemetry integration</p>
 </li><li>
-<p><strong>&amp; Observability[docs/TELEMETRY.md]</strong> - OpenTelemetry integration and custom monitoring setup</p>
+<p><strong>Secure</strong>: Enterprise-grade authentication and authorization</p>
 </li><li>
-<p><strong>Overview[docs/OVERVIEW.md]</strong> - Architecture overview and configuration examples</p>
-</li><li>
-<p><strong>Execution[docs/FLOW_CHART.md]</strong> - Visual guide to workflow execution and retry logic</p>
-</li><li>
-<p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual representation of task workflows</p>
-</li><li>
-<p><strong>Functions[docs/SQL_FUNCTIONS.md]</strong> - Performance optimization of SQL functions</p>
+<p><strong>Performant</strong>: SQL-function based orchestration with proven performance</p>
 </li></ul>
 
-<h3 id="label-Additional+Resources">Additional Resources</h3>
+<h3 id="label-For+Business">For Business</h3>
 <ul><li>
-<p><strong>Tasker[docs/WHY.md]</strong> - Background and motivation for building Tasker</p>
+<p><strong>Reliable</strong>: Automatic retry with exponential backoff</p>
+</li><li>
+<p><strong>Scalable</strong>: Handles complex workflows with multiple dependencies</p>
+</li><li>
+<p><strong>Maintainable</strong>: Clear separation of concerns and documented patterns</p>
+</li><li>
+<p><strong>Extensible</strong>: Event system enables custom integrations</p>
 </li></ul>
 
-<h2 id="label-Scheduling+Tasks">Scheduling Tasks</h2>
+<h2 id="label-What-27s+Next-3F">What’s Next?</h2>
 
-<p>Tasker does not directly manage scheduling recurring tasks. There are a variety of strategies that already exist in the Rails ecosystem for accomplishing this. <a href="https://github.com/javan/whenever">Javan’s Whenever gem</a> is one of the most popular, and is very battle-tested.</p>
-
-<h2 id="label-Dependencies">Dependencies</h2>
+<h3 id="label-F0-9F-9A-80+Get+Started+Quickly">🚀 Get Started Quickly</h3>
 <ul><li>
-<p>Ruby version - 3.2.2</p>
+<p><strong>Start Guide[docs/QUICK_START.md]</strong> - Build your first workflow in 15 minutes</p>
 </li><li>
-<p>System dependencies - Postgres, Redis, and Sidekiq (in development and test environments)</p>
+<p><strong>Guide[docs/DEVELOPER_GUIDE.md]</strong> - Comprehensive implementation guide</p>
+</li><li>
+<p><strong>Examples[spec/examples/]</strong> - Real-world workflow patterns and implementations</p>
 </li></ul>
 
-<h2 id="label-Development">Development</h2>
+<h3 id="label-F0-9F-94-A7+Advanced+Topics">🔧 Advanced Topics</h3>
 <ul><li>
-<p>Database - <code>bundle exec rake db:schema:load</code></p>
+<p><strong>&amp; Authorization[docs/AUTH.md]</strong> - Complete security system</p>
 </li><li>
-<p>How to run the test suite - <code>bundle exec rspec spec</code></p>
+<p><strong>Monitoring[docs/HEALTH.md]</strong> - Production health endpoints and monitoring</p>
 </li><li>
-<p>Lint: <code>bundle exec rubocop</code></p>
+<p><strong>System[docs/EVENT_SYSTEM.md]</strong> - Observability and integrations</p>
+</li><li>
+<p><strong>Telemetry[docs/TELEMETRY.md]</strong> - OpenTelemetry setup and monitoring</p>
+</li><li>
+<p><strong>Performance[docs/SQL_FUNCTIONS.md]</strong> - High-performance SQL functions</p>
 </li></ul>
 
-<h2 id="label-Gratitude">Gratitude</h2>
+<h3 id="label-F0-9F-93-9A+Additional+Resources">📚 Additional Resources</h3>
+<ul><li>
+<p><strong>Overview[docs/OVERVIEW.md]</strong> - Architecture and configuration</p>
+</li><li>
+<p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual workflow representation</p>
+</li><li>
+<p><strong>Troubleshooting[docs/TROUBLESHOOTING.md]</strong> - Common issues and solutions</p>
+</li></ul>
 
-<p>Flowchart PNG by <a href="https://www.flaticon.com/authors/xnimrodx">xnimrodx</a> from <a href="https://www.flaticon.com/">Flaticon</a></p>
+<h2 id="label-Requirements+-26+Dependencies">Requirements &amp; Dependencies</h2>
+<ul><li>
+<p><strong>Ruby</strong>: 3.2+</p>
+</li><li>
+<p><strong>Rails</strong>: 7.2+</p>
+</li><li>
+<p><strong>Database</strong>: PostgreSQL (required for SQL functions)</p>
+</li><li>
+<p><strong>Background Jobs</strong>: Compatible with ActiveJob (Sidekiq recommended)</p>
+</li></ul>
+
+<h2 id="label-Development+-26+Testing">Development &amp; Testing</h2>
+
+<pre class="code ruby"><code class="ruby"># Set up development environment
+bundle install
+bundle exec rake db:schema:load
+
+# Run tests
+bundle exec rspec spec
+
+# Run linter
+bundle exec rubocop
+</code></pre>
+
+<h2 id="label-Contributing">Contributing</h2>
+
+<p>We welcome contributions! Please see our <a href="docs/DEVELOPER_GUIDE_md.html">development guidelines</a> for information on setting up your development environment and our coding standards.</p>
 
 <h2 id="label-License">License</h2>
 
-<p>The gem is available as open source under the terms of the <a href="https://opensource.org/licenses/MIT">MIT License</a>.</p>
+<p>The gem is available as open source under the terms of the <a href="./LICENSE">MIT License</a>.</p>
+<hr>
+
+<p><strong>Tasker</strong> transforms complex workflows into reliable, observable processes. Focus on your business logic while Tasker handles the orchestration complexity.</p>
 </div></div>
 
       <div id="footer">
-  Generated on Mon Jun 16 15:17:55 2025 by
+  Generated on Wed Jun 18 11:50:35 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

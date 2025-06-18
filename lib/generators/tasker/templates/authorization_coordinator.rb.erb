@@ -30,6 +30,8 @@ class <%= @coordinator_class_name %> < Tasker::Authorization::BaseCoordinator
       authorize_workflow_step(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
       authorize_task_diagram(action, context)
+    when Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS
+      authorize_system_status(action, context)
     else
       # Deny access to unknown resources
       false
@@ -74,6 +76,18 @@ class <%= @coordinator_class_name %> < Tasker::Authorization::BaseCoordinator
     when :index, :show
       # TODO: Implement your diagram access logic
       user.has_tasker_permission?("tasker.task_diagram:#{action}")
+    else
+      false
+    end
+  end
+
+  # Authorize system status operations
+  def authorize_system_status(action, context)
+    case action
+    when :read
+      # TODO: Implement your system status access logic
+      # Example: Admin users or users with explicit permission
+      user.tasker_admin? || user.has_tasker_permission?("tasker.system_status:#{action}")
     else
       false
     end

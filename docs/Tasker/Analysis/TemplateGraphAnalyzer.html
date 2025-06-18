@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Analysis::TemplateGraphAnalyzer
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Analysis::TemplateGraphAnalyzer";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Analysis.html" title="Tasker::Analysis (module)">Analysis</a></span></span>
+     &raquo; 
+    <span class="title">TemplateGraphAnalyzer</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Analysis::TemplateGraphAnalyzer
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Analysis::TemplateGraphAnalyzer</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/analysis/template_graph_analyzer.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Analyzes step template dependencies for workflow design validation</p>
+
+<p>This class provides comprehensive analysis of step template dependencies, including cycle detection, topological sorting, and dependency visualization. It’s designed to help with workflow design validation and troubleshooting.</p>
+
+<p>The analyzer performs static analysis on step templates to identify potential issues before workflow execution, including circular dependencies, dependency depth analysis, and parallel execution opportunities.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_analyzer'>analyzer</span> <span class='op'>=</span> <span class='const'>TemplateGraphAnalyzer</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Analysis::TemplateGraphAnalyzer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_step_templates'>step_templates</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_graph'>graph</span> <span class='op'>=</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_analyze'>analyze</span>
+<span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cycles detected: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_graph'>graph</span><span class='lbracket'>[</span><span class='symbol'>:cycles</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Checking for specific issues</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_analyzer'>analyzer</span> <span class='op'>=</span> <span class='const'>TemplateGraphAnalyzer</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Analysis::TemplateGraphAnalyzer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_templates'>templates</span><span class='rparen'>)</span>
+<span class='kw'>if</span> <span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_has_cycles?'>has_cycles?</span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Circular dependencies found: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_analyzer'>analyzer</span><span class='period'>.</span><span class='id identifier rubyid_cycles'>cycles</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#templates-instance_method" title="#templates (instance method)">#<strong>templates</strong>  &#x21d2; Array&lt;Tasker::Types::StepTemplate&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>The step templates being analyzed.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#analyze-instance_method" title="#analyze (instance method)">#<strong>analyze</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Perform comprehensive dependency analysis.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clear_cache!-instance_method" title="#clear_cache! (instance method)">#<strong>clear_cache!</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Clear analysis cache (useful if templates change).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cycles-instance_method" title="#cycles (instance method)">#<strong>cycles</strong>  &#x21d2; Array&lt;Array&lt;String&gt;&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get detected circular dependencies.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#has_cycles%3F-instance_method" title="#has_cycles? (instance method)">#<strong>has_cycles?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if the workflow has circular dependencies.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(templates)  &#x21d2; TemplateGraphAnalyzer </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Initialize the analyzer with step templates.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#leaves-instance_method" title="#leaves (instance method)">#<strong>leaves</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get steps with no dependents (workflow exit points).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#levels-instance_method" title="#levels (instance method)">#<strong>levels</strong>  &#x21d2; Hash&lt;String, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get dependency levels for all steps.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#roots-instance_method" title="#roots (instance method)">#<strong>roots</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get steps with no dependencies (workflow entry points).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#topology-instance_method" title="#topology (instance method)">#<strong>topology</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get topological ordering of steps.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(templates)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Analysis::TemplateGraphAnalyzer (class)">TemplateGraphAnalyzer</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Initialize the analyzer with step templates</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>templates</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="../Types/StepTemplate.html" title="Tasker::Types::StepTemplate (class)">Tasker::Types::StepTemplate</a></span>&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Step templates to analyze</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+34
+35
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 34</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_templates'>templates</span><span class='rparen'>)</span>
+  <span class='ivar'>@templates</span> <span class='op'>=</span> <span class='id identifier rubyid_templates'>templates</span>
+  <span class='ivar'>@dependency_map</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@analysis_cache</span> <span class='op'>=</span> <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="templates-instance_method">
+  
+    #<strong>templates</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="../Types/StepTemplate.html" title="Tasker::Types::StepTemplate (class)">Tasker::Types::StepTemplate</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns The step templates being analyzed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="../Types/StepTemplate.html" title="Tasker::Types::StepTemplate (class)">Tasker::Types::StepTemplate</a></span>&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The step templates being analyzed</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+29
+30
+31</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 29</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_templates'>templates</span>
+  <span class='ivar'>@templates</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="analyze-instance_method">
+  
+    #<strong>analyze</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Perform comprehensive dependency analysis</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Comprehensive dependency analysis containing: - :nodes - Array of step information with dependencies - :edges - Array of dependency relationships - :topology - Topologically sorted step names - :cycles - Array of detected circular dependencies - :levels - Hash mapping steps to their dependency depth levels - :roots - Array of steps with no dependencies - :leaves - Array of steps with no dependents - :summary - Summary statistics</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 51</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_analyze'>analyze</span>
+  <span class='kw'>return</span> <span class='ivar'>@analysis_cache</span> <span class='kw'>if</span> <span class='ivar'>@analysis_cache</span>
+
+  <span class='id identifier rubyid_nodes'>nodes</span> <span class='op'>=</span> <span class='id identifier rubyid_build_nodes'>build_nodes</span>
+  <span class='id identifier rubyid_edges'>edges</span> <span class='op'>=</span> <span class='id identifier rubyid_build_edges'>build_edges</span>
+  <span class='id identifier rubyid_dependency_map'>dependency_map</span> <span class='op'>=</span> <span class='id identifier rubyid_build_dependency_map'>build_dependency_map</span>
+  <span class='id identifier rubyid_cycles'>cycles</span> <span class='op'>=</span> <span class='id identifier rubyid_detect_cycles'>detect_cycles</span><span class='lparen'>(</span><span class='id identifier rubyid_dependency_map'>dependency_map</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_topology'>topology</span> <span class='op'>=</span> <span class='id identifier rubyid_cycles'>cycles</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='id identifier rubyid_topological_sort'>topological_sort</span><span class='lparen'>(</span><span class='id identifier rubyid_dependency_map'>dependency_map</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_levels'>levels</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_dependency_levels'>calculate_dependency_levels</span><span class='lparen'>(</span><span class='id identifier rubyid_dependency_map'>dependency_map</span><span class='comma'>,</span> <span class='id identifier rubyid_topology'>topology</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_roots'>roots</span> <span class='op'>=</span> <span class='id identifier rubyid_find_root_steps'>find_root_steps</span>
+  <span class='id identifier rubyid_leaves'>leaves</span> <span class='op'>=</span> <span class='id identifier rubyid_find_leaf_steps'>find_leaf_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_edges'>edges</span><span class='rparen'>)</span>
+
+  <span class='ivar'>@analysis_cache</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>nodes:</span> <span class='id identifier rubyid_nodes'>nodes</span><span class='comma'>,</span>
+    <span class='label'>edges:</span> <span class='id identifier rubyid_edges'>edges</span><span class='comma'>,</span>
+    <span class='label'>topology:</span> <span class='id identifier rubyid_topology'>topology</span><span class='comma'>,</span>
+    <span class='label'>cycles:</span> <span class='id identifier rubyid_cycles'>cycles</span><span class='comma'>,</span>
+    <span class='label'>levels:</span> <span class='id identifier rubyid_levels'>levels</span><span class='comma'>,</span>
+    <span class='label'>roots:</span> <span class='id identifier rubyid_roots'>roots</span><span class='comma'>,</span>
+    <span class='label'>leaves:</span> <span class='id identifier rubyid_leaves'>leaves</span><span class='comma'>,</span>
+    <span class='label'>summary:</span> <span class='id identifier rubyid_build_summary'>build_summary</span><span class='lparen'>(</span><span class='id identifier rubyid_cycles'>cycles</span><span class='comma'>,</span> <span class='id identifier rubyid_levels'>levels</span><span class='comma'>,</span> <span class='id identifier rubyid_edges'>edges</span><span class='rparen'>)</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="clear_cache!-instance_method">
+  
+    #<strong>clear_cache!</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Clear analysis cache (useful if templates change)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+120
+121
+122
+123</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 120</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clear_cache!'>clear_cache!</span>
+  <span class='ivar'>@analysis_cache</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='ivar'>@dependency_map</span> <span class='op'>=</span> <span class='kw'>nil</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="cycles-instance_method">
+  
+    #<strong>cycles</strong>  &#x21d2; <tt>Array&lt;Array&lt;String&gt;&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get detected circular dependencies</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;Array&lt;String&gt;&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Array of detected cycles</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+85
+86
+87</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 85</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cycles'>cycles</span>
+  <span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:cycles</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="has_cycles?-instance_method">
+  
+    #<strong>has_cycles?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if the workflow has circular dependencies</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if cycles are detected</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+78
+79
+80</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 78</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_has_cycles?'>has_cycles?</span>
+  <span class='id identifier rubyid_cycles'>cycles</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="leaves-instance_method">
+  
+    #<strong>leaves</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get steps with no dependents (workflow exit points)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Leaf step names</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+113
+114
+115</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 113</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_leaves'>leaves</span>
+  <span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:leaves</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="levels-instance_method">
+  
+    #<strong>levels</strong>  &#x21d2; <tt>Hash&lt;String, Integer&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get dependency levels for all steps</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;String, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Step name to dependency level mapping</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+99
+100
+101</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 99</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_levels'>levels</span>
+  <span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:levels</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="roots-instance_method">
+  
+    #<strong>roots</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get steps with no dependencies (workflow entry points)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Root step names</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+106
+107
+108</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 106</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_roots'>roots</span>
+  <span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:roots</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="topology-instance_method">
+  
+    #<strong>topology</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get topological ordering of steps</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Topologically sorted step names</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Since:</p>
+<ul class="since">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>2.2.0</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+92
+93
+94</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/analysis/template_graph_analyzer.rb', line 92</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_topology'>topology</span>
+  <span class='id identifier rubyid_analyze'>analyze</span><span class='lbracket'>[</span><span class='symbol'>:topology</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 18 11:50:39 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>
