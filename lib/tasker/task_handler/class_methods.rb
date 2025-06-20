@@ -164,21 +164,21 @@ module Tasker
                 "Custom event from #{handler_class.name}"
             end
 
-            # Safely register event with error handling
+            # Register event - fail fast on configuration errors
             #
             # @param event_name [String] Event name
             # @param description [String] Event description
             # @param fired_by [Array] Array of handler class names
             # @param handler_class [Class] Handler class for error context
             # @return [void]
-            def safely_register_event(event_name, description, fired_by, handler_class)
+            # @raise [StandardError] If event registration fails (fail fast)
+            def safely_register_event(event_name, description, fired_by, _handler_class)
               Tasker::Events::CustomRegistry.instance.register_event(
                 event_name,
                 description: description,
                 fired_by: fired_by
               )
-            rescue StandardError => e
-              log_registration_failure(event_name, handler_class, e)
+              # Configuration errors should be visible, not silently logged
             end
 
             # Log registration failure
@@ -219,15 +219,15 @@ module Tasker
               handler_class.respond_to?(:custom_event_configuration)
             end
 
-            # Safely register all custom events from handler class
+            # Register all custom events from handler class - fail fast on configuration errors
             #
             # @param handler_class [Class] The step handler class
             # @return [void]
+            # @raise [StandardError] If custom event configuration fails (fail fast)
             def safely_register_events(handler_class)
               class_events = get_class_events(handler_class)
               class_events.each { |event_config| register_single_event(event_config, handler_class) }
-            rescue StandardError => e
-              log_registration_failure(handler_class, e)
+              # Configuration errors should be visible, not silently logged
             end
 
             # Get custom events from handler class configuration

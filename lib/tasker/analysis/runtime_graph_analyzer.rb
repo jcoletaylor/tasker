@@ -969,7 +969,7 @@ module Tasker
       def calculate_base_impact_score(downstream_count, blocked_count)
         config = dependency_graph_config
         (downstream_count * config.impact_multipliers[:downstream_weight]) +
-        (blocked_count * config.impact_multipliers[:blocked_weight])
+          (blocked_count * config.impact_multipliers[:blocked_weight])
       end
 
       # Calculate severity multiplier based on step state
@@ -988,7 +988,8 @@ module Tasker
         case step.current_state
         when 'error'
           multiplier = config.severity_multipliers[:error_state] # Errors are serious
-          multiplier += config.severity_multipliers[:exhausted_retry_bonus] if step.attempts >= (step.retry_limit || 3) # Exhausted retries are critical
+          # Exhausted retries are critical
+          multiplier += config.severity_multipliers[:exhausted_retry_bonus] if step.attempts >= (step.retry_limit || 3)
           multiplier
         when 'pending'
           step.dependencies_satisfied ? 1.0 : config.severity_multipliers[:dependency_issue] # Dependency issues
@@ -1012,7 +1013,8 @@ module Tasker
         penalty = 0
         penalty += step.attempts * config.penalty_constants[:retry_instability] # Retry instability
         penalty += config.penalty_constants[:non_retryable] unless step.retry_eligible # Non-retryable issues
-        penalty += config.penalty_constants[:exhausted_retry] if step.attempts >= (step.retry_limit || 3) # Exhausted retries
+        # Exhausted retries
+        penalty += config.penalty_constants[:exhausted_retry] if step.attempts >= (step.retry_limit || 3)
         penalty
       end
 

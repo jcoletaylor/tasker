@@ -6,15 +6,21 @@ This document outlines the implementation plan for Tasker v2.2.1, focusing on in
 
 ## Status
 
-🎯 **v2.2.1 Development** - EXPANDED SCOPE
+🎯 **v2.2.1 Development** - PHASE 3.1 ✅ COMPLETED + MOVING TO API DEVELOPMENT
 
 **Foundation**: v2.2.0 successfully published with pride!
 - ✅ Complete workflow orchestration system
 - ✅ Production-ready authentication/authorization
 - ✅ 75.18% YARD documentation coverage
-- ✅ All 674 tests passing
+- ✅ All 1000 tests passing (PERFECT!)
 
-**Focus**: Polish, best practices, developer experience excellence + System Enhancement & API Expansion
+**Recent Achievement**: **Phase 3.1 Handler Factory Namespacing ✅ COMPLETED**
+- ✅ Enhanced HandlerFactory with dependent system namespacing
+- ✅ Atomic registration with "fail fast" error handling
+- ✅ State leakage resolution with surgical cleanup pattern
+- ✅ 1000/1000 tests passing - complete system integrity
+
+**Focus**: API Enhancement & Handler Discovery + Runtime Dependency Graph Exposure
 
 ## Phase 1: Industry Best Practices Enhancement
 
@@ -195,408 +201,239 @@ end
 
 **Scope**: Identify hardcoded calculation weights and make them configurable
 
-**Implementation Plan**:
-```ruby
-# Configuration for dependency graph calculations
-config.tasker.dependency_graph do |graph|
-  graph.weight_multipliers = { complexity: 1.5, priority: 2.0 }
-  graph.threshold_constants = { bottleneck_threshold: 0.8 }
-end
-```
+**Implementation Plan**: ✅ SUCCESSFULLY COMPLETED
+- **Hardcoded Constants Elimination**: Successfully replaced all hardcoded weights, multipliers, and thresholds in RuntimeGraphAnalyzer
+- **String Key Transformation Solution**: Solved complex dry-struct nested hash issue with `.constructor` pattern for deep_symbolize_keys
+- **Comprehensive Configuration**: Implemented 5 hash schemas (impact_scoring, state_severity, penalty_calculation, severity_thresholds, duration_estimates)
+- **Type Safety Excellence**: Full dry-struct validation with meaningful error messages and sensible defaults
+- **ConfigurationProxy Integration**: Seamless access via `config.dependency_graph` with clean dot notation
+
+### 2.4 Backoff Configuration ✅ COMPLETED
+
+**Objective**: Make retry backoff timing configurable instead of hardcoded
+
+**Scope**: Replace hardcoded timing constants in BackoffCalculator and TaskFinalizer
+
+**Implementation Plan**: ✅ SUCCESSFULLY COMPLETED
+- **Hardcoded Constants Elimination**: Successfully replaced all timing constants in BackoffCalculator and TaskFinalizer::DelayCalculator
+- **BackoffConfig Type Creation**: Comprehensive configuration with default_backoff_seconds, max_backoff_seconds, jitter settings, and reenqueue_delays
+- **Clean Attempt Logic**: Proper handling where step.attempts=0 (first attempt) gets backoff[0]=1 second, step.attempts=2 gets backoff[2]=4 seconds
+- **HTTP Retry-After Preservation**: All existing server-requested backoff functionality maintained with configurable maximum caps
+- **Task Reenqueue Integration**: Dynamic DelayCalculator with configurable delays for has_ready_steps, waiting_for_dependencies, processing states
+
+## Phase 3: API Enhancement & Handler Namespacing
+
+### 3.1 Handler Factory Namespacing ✅ COMPLETED
+
+**Objective**: Enhance HandlerFactory to support dependent system namespacing
+
+**Scope**: Enable same handler names across different dependent systems with atomic registration
+
+**Implementation Plan**: ✅ SUCCESSFULLY COMPLETED
+- **Enhanced Registration**: Successfully implemented `register(name, class_name, dependent_system: 'default_system')` signature
+- **Namespaced Registry**: Registry structure updated to `@handler_classes[dependent_system][name]` with efficient namespace tracking
+- **Atomic Registration**: Configuration validation happens before registry modification, preventing partial state on errors
+- **"Fail Fast" Philosophy**: Configuration errors surface immediately as exceptions instead of silent failures
+- **State Leakage Resolution**: Fixed critical test isolation issue with surgical cleanup pattern preserving shared singleton state
+- **Production Ready**: All workflow patterns, health checks, and system integration working perfectly
 
 **Acceptance Criteria**: ✅ ALL COMPLETED
-- [x] Audit all dependency graph calculation constants
-- [x] Identify integer/float weights used in calculations
-- [x] Create configuration system for these constants
-- [x] Maintain sensible defaults for all parameters
-- [x] Validate configuration values at startup
-- [x] Document impact of different configuration values
-- [x] Performance testing with different configurations
+- [x] Enhanced `HandlerFactory#register` method with `dependent_system` parameter
+- [x] Backward compatibility preservation with comprehensive test coverage
+- [x] Namespace enumeration and listing functionality ready for API support
+- [x] Performance benchmarks for lookup operations (O(1) namespace access)
+- [x] Atomic registration with configuration validation before registry modification
+- [x] "Fail fast" error handling with clear error messages
+- [x] State leakage resolution with surgical cleanup pattern
+- [x] Perfect test suite: 1000/1000 tests passing
 
 **Files Created/Modified**: ✅ ALL COMPLETED
-- [x] `lib/tasker/types/dependency_graph_config.rb` - Enhanced with 5 comprehensive hash schemas
-- [x] `lib/tasker/analysis/runtime_graph_analyzer.rb` - Integrated configurable constants
-- [x] `lib/generators/tasker/templates/initialize.rb.erb` - Added dependency graph configuration
-- [x] `docs/DEVELOPER_GUIDE.md` - Added Section 7: Dependency Graph & Bottleneck Analysis Configuration
-- [x] `spec/lib/tasker/types/dependency_graph_config_spec.rb` - Comprehensive configuration tests
+- [x] `lib/tasker/handler_factory.rb` - Enhanced with dependent_system parameter support
+- [x] `spec/lib/tasker/handler_factory_spec.rb` - Comprehensive namespacing tests with surgical cleanup
+- [x] `spec/rails_helper.rb` - Enhanced mock class loading for consistent test execution
+- [x] Enhanced error handling across HandlerFactory and TaskHandler registrations
 
 **Achievement Summary**: ✅ SUCCESSFULLY COMPLETED
-- **Hardcoded Constants Eliminated**: Replaced all hardcoded weights, multipliers, and thresholds in RuntimeGraphAnalyzer
-- **String Key Transformation**: Solved dry-struct nested hash key transformation with `.constructor` approach
-- **Comprehensive Configuration**: 5 hash schemas (impact_scoring, state_severity, penalty_calculation, severity_thresholds, duration_estimates)
-- **Type Safety**: Full dry-struct validation with meaningful error messages and defaults
-- **ConfigurationProxy Integration**: Seamless access via `config.dependency_graph` with dot notation
-- **Zero Breaking Changes**: All existing functionality preserved with backward-compatible defaults
-- **Production Documentation**: Complete developer guide with examples and advanced use cases
+- **Handler Factory Excellence**: Complete namespacing implementation with zero breaking changes
+- **State Leakage Resolution**: Critical debugging and fix of test isolation destroying singleton state
+- **"Fail Fast" Philosophy**: Configuration errors surface immediately preventing silent failures
+- **Perfect Test Suite**: 1000/1000 tests passing with robust state isolation
+- **Production Ready**: All workflow patterns, health checks, and system integration working flawlessly
+- **Atomic Operations**: Failed registrations don't leave partial state in registry
 
-### 2.4 Backoff Configuration 🎯
+### 3.2 REST API Handlers Endpoint 🎯 NEXT PRIORITY
 
-**Objective**: Make default backoff seconds logic configurable
+**Objective**: Create REST endpoints for handler discovery and namespace management
 
-**Scope**: Expose backoff timing constants as configuration parameters
+**Scope**: Expose HandlerFactory namespacing through REST API with comprehensive metadata
 
 **Implementation Plan**:
 ```ruby
-# Configurable backoff calculation
-config.tasker.backoff do |backoff|
-  backoff.default_backoff_seconds = [1, 2, 4, 8, 16, 32]
-  backoff.max_backoff_seconds = 300
-  backoff.backoff_multiplier = 2.0
-end
+# New routes to add:
+GET /tasker/handlers                    # List all handlers grouped by namespace
+GET /tasker/handlers/:handler_name      # Single handler with namespace resolution
+GET /tasker/handlers/:namespace/:name   # Explicit namespaced lookup
 ```
 
 **Acceptance Criteria**:
-- [ ] Identify all hardcoded backoff timing constants
-- [ ] Create configurable backoff calculator
-- [ ] Maintain backward compatibility with existing backoff logic
-- [ ] Validate backoff configuration parameters
-- [ ] Document backoff strategies and their impacts
-- [ ] Test various backoff configurations
-- [ ] Integration with existing retry mechanisms
+- [ ] REST endpoints for handler discovery with namespace support
+- [ ] JSON serialization with handler metadata and step template introspection
+- [ ] Comprehensive RSwag request specs with OpenAPI schema validation
+- [ ] Error handling for missing handlers and namespaces with clear error messages
+- [ ] Authorization integration with proper permission checking
+- [ ] Performance optimization for handler enumeration and serialization
 
 **Files to Create/Modify**:
-- `lib/tasker/configuration/backoff.rb`
-- `lib/tasker/orchestration/configurable_backoff_calculator.rb`
-- Update existing backoff logic to use configuration
-- `docs/BACKOFF_CONFIGURATION.md`
-- `spec/lib/tasker/configuration/backoff_spec.rb`
+- `app/controllers/tasker/handlers_controller.rb` - New controller for handler endpoints
+- `config/routes.rb` - Add handler routes
+- `spec/requests/tasker/handlers_spec.rb` - RSwag request specs with OpenAPI documentation
+- `lib/tasker/authorization/resource_constants.rb` - Handler permission resources
+- Handler serialization logic with step template metadata
 
-## Phase 3: API Enhancement & Developer Experience
+**Dependencies**:
+- ✅ Phase 3.1 Handler Factory Namespacing (COMPLETED)
+- RSwag gem for OpenAPI documentation
+- Authorization resource constants for handler permissions
 
-### 3.1 Template Dependency Graph API 🎯
+### 3.3 Runtime Dependency Graph API 🎯 PARALLEL PRIORITY
 
-**Objective**: Expose template dependency graphs as JSON over REST API
+**Objective**: Expose runtime dependency analysis through enhanced task endpoints
 
-**Scope**: New REST endpoint to provide workflow structure information before execution
+**Scope**: Add optional dependency graph data to existing task endpoints
 
 **Implementation Plan**:
 ```ruby
-# New API endpoint
-GET /tasker/handlers/:handler_name/dependency_graph
-# Returns JSON representation of workflow structure
-```
-
-**Acceptance Criteria**:
-- [ ] New controller endpoint for template dependency graphs
-- [ ] JSON serialization of workflow structure
-- [ ] Efficient lookup by task handler name
-- [ ] Proper error handling for unknown handlers
-- [ ] API documentation and examples
-- [ ] Comprehensive test coverage
-- [ ] Performance optimization for large workflows
-
-**Files to Create/Modify**:
-- `app/controllers/tasker/template_graphs_controller.rb`
-- `app/serializers/tasker/template_graph_serializer.rb`
-- `config/routes.rb` (add template graph routes)
-- `spec/controllers/tasker/template_graphs_controller_spec.rb`
-- `docs/API_TEMPLATE_GRAPHS.md`
-
-### 3.2 Handler Factory Namespacing 🎯
-
-**Objective**: Enhanced handler registration with dependent system and module namespacing
-
-**Scope**: Support for hierarchical handler organization with REST route reflection
-
-**Implementation Plan**:
-```ruby
-# Enhanced handler registration
-# Patterns: optional_module.required_task_name
-#          optional_dependent_system.optional_module.required_task_name
-
-config.tasker.handlers do |handlers|
-  handlers.register("payments.process_order", PaymentOrderHandler)
-  handlers.register("inventory.restock.process", InventoryRestockHandler)
-end
-```
-
-**Acceptance Criteria**:
-- [ ] Enhanced handler factory with namespace support
-- [ ] Hierarchical organization: dependent_system.module.task_name
-- [ ] REST routes that reflect namespace structure
-- [ ] Backward compatibility with existing handler names
-- [ ] Developer experience improvements for handler organization
-- [ ] Clear namespace resolution and conflict handling
-- [ ] Comprehensive documentation with examples
-
-**Files to Create/Modify**:
-- `lib/tasker/handler_factory.rb` (enhance existing)
-- `lib/tasker/handler_registration.rb`
-- `config/routes.rb` (update for namespaced routes)
-- `docs/HANDLER_NAMESPACING.md`
-- `spec/lib/tasker/handler_factory_spec.rb`
-
-### 3.3 GraphQL Utility Evaluation 🎯
-
-**Objective**: Assess GraphQL endpoints value proposition vs REST
-
-**Scope**: Create evaluation plan for GraphQL use cases and benefits analysis
-
-**Implementation Plan**:
-```ruby
-# Evaluation criteria:
-# 1. Query flexibility vs REST
-# 2. Performance characteristics
-# 3. Client adoption and usage patterns
-# 4. Maintenance overhead
-# 5. Developer experience
-```
-
-**Acceptance Criteria**:
-- [ ] Comprehensive analysis of GraphQL vs REST benefits
-- [ ] Use case evaluation for GraphQL in workflow orchestration
-- [ ] Performance comparison between GraphQL and REST endpoints
-- [ ] Client usage pattern analysis
-- [ ] Recommendation for GraphQL future in Tasker
-- [ ] Decision documentation with rationale
-- [ ] Implementation plan if GraphQL is retained
-
-**Files to Create/Modify**:
-- `docs/GRAPHQL_EVALUATION.md`
-- `docs/API_COMPARISON_ANALYSIS.md`
-- Performance benchmarking scripts
-- Usage analytics and reporting
-
-### 3.4 Runtime Dependency Graph API 🎯
-
-**Objective**: Expose execution context and step readiness in JSON responses
-
-**Scope**: Optional dependency graph data for individual task and step endpoints
-
-**Implementation Plan**:
-```ruby
-# Enhanced JSON responses
+# Enhanced existing endpoints:
 GET /tasker/tasks/:id?include_dependencies=true
-GET /tasker/steps/:id?include_readiness_status=true
-# Returns dependency graph data with execution context
+GET /tasker/tasks?include_dependencies=true
 ```
 
 **Acceptance Criteria**:
-- [ ] URL parameter-driven dependency data inclusion
-- [ ] Optimized queries for dependency graph retrieval
-- [ ] NOT enabled for index endpoints (performance consideration)
-- [ ] Enabled for individual task and step GET endpoints
-- [ ] Comprehensive dependency and readiness status information
-- [ ] Proper caching and performance optimization
-- [ ] Clear API documentation with examples
+- [ ] Optional dependency data in task endpoints via query parameter
+- [ ] RuntimeGraphAnalyzer integration with Phase 2.3 configurable parameters
+- [ ] Performance optimization with caching for expensive graph computations
+- [ ] JSON schema validation for dependency graph response format
+- [ ] Authorization integration for dependency data access
+- [ ] Graceful degradation when analysis fails
 
 **Files to Create/Modify**:
-- Update existing task/step controllers
-- `app/serializers/tasker/task_with_dependencies_serializer.rb`
-- `app/serializers/tasker/step_with_readiness_serializer.rb`
-- Update existing serializers for optional includes
-- `docs/API_DEPENDENCY_GRAPHS.md`
-- Performance optimization and caching logic
+- `app/controllers/tasker/tasks_controller.rb` - Enhanced with dependency analysis
+- Enhanced task serialization logic with dependency graph data
+- `spec/requests/tasker/tasks_spec.rb` - Updated RSwag specs for dependency inclusion
+- Dependency graph caching strategy implementation
+- Performance benchmarks for dependency analysis
 
-## Phase 4: Documentation Excellence
+**Dependencies**:
+- ✅ Phase 2.3 Dependency Graph Configuration (COMPLETED)
+- ✅ RuntimeGraphAnalyzer with configurable parameters (COMPLETED)
+- Enhanced task serialization logic
 
-### 4.1 README.md Streamlining 🎯
+## Phase 4: Advanced Features & Optimization
 
-**Objective**: Transform 802-line README into focused, scannable introduction
+### 4.1 Enhanced GraphQL Schema 🔮
 
-**Target**: ~300 lines focusing on "what and why" rather than "how"
+**Objective**: Extend GraphQL schema with handler discovery and dependency graph fields
 
-**Restructuring Plan**:
-```markdown
-# New README.md Structure (~300 lines)
-1. Introduction & Value Proposition (50 lines)
-2. Quick Installation (50 lines)
-3. Core Concepts Overview (100 lines)
-4. Simple Example (75 lines)
-5. Next Steps & Documentation Links (25 lines)
-```
+**Scope**: Add GraphQL support for new REST API capabilities
 
-**Content Migration**:
-- [ ] Move detailed implementation to `docs/DEVELOPER_GUIDE.md`
-- [ ] Move authentication details to `docs/AUTH.md`
-- [ ] Move API examples to `docs/EXAMPLES.md`
-- [ ] Keep only essential getting-started information
-- [ ] Add clear navigation to detailed documentation
+**Implementation Plan**:
+```ruby
+# New GraphQL types and fields:
+type Handler {
+  name: String!
+  namespace: String!
+  fullName: String!
+  className: String!
+  available: Boolean!
+  stepTemplates: [StepTemplate!]!
+}
 
-### 4.2 QUICK_START.md Creation 🎯
-
-**Objective**: 15-minute "Hello World" workflow experience
-
-**Target**: Simple 3-step workflow from zero to working
-
-**Content Plan**:
-```markdown
-# QUICK_START.md Structure (~400 lines)
-1. Prerequisites (5 minutes)
-2. Installation & Setup (3 minutes)
-3. First Workflow: Welcome Email Process (8 minutes)
-   - Step 1: Validate user exists
-   - Step 2: Generate welcome content
-   - Step 3: Send email
-4. Testing Your Workflow (2 minutes)
-5. Next Steps (links to advanced docs)
-```
-
-**Success Metrics**:
-- [ ] New developer can create working workflow in 15 minutes
-- [ ] Demonstrates core concepts: dependencies, error handling, results
-- [ ] Provides clear "what's next" guidance
-- [ ] Includes troubleshooting for common issues
-
-### 4.3 TROUBLESHOOTING.md Creation 🎯
-
-**Objective**: Comprehensive guide for common issues and solutions
-
-**Content Plan**:
-```markdown
-# TROUBLESHOOTING.md Structure
-1. Installation Issues
-2. Configuration Problems
-3. Workflow Execution Issues
-4. Performance Problems
-5. API and Integration Issues
-6. Configuration and Validation Errors
+type DependencyGraph {
+  analysisTimestamp: DateTime!
+  impactScore: Float!
+  criticalityLevel: String!
+  bottleneckAnalysis: BottleneckAnalysis!
+  stepDependencies: [StepDependency!]!
+}
 ```
 
 **Acceptance Criteria**:
-- [ ] Solutions for 95% of common developer issues
-- [ ] Clear problem identification guides
-- [ ] Step-by-step resolution instructions
-- [ ] Links to relevant documentation sections
-- [ ] Regular updates based on user feedback
+- [ ] GraphQL types for handlers and dependency graphs
+- [ ] Query fields for handler discovery and dependency analysis
+- [ ] Subscription support for real-time dependency updates
+- [ ] Performance optimization with DataLoader for N+1 query prevention
+- [ ] Authorization integration with GraphQL field-level permissions
 
-## Implementation Priorities
+### 4.2 Advanced Caching Strategy 🔮
 
-### Immediate (Next Sprint)
-1. **Task Diagram Removal** - Quick wins, code simplification
-2. **Health Check Endpoints** - Production readiness requirement
-3. **Comprehensive Configuration System** - Foundation for other features
+**Objective**: Implement multi-layer caching for performance optimization
 
-### Short-term (Following Sprint)
-4. **Dependency Graph Configuration** - System flexibility
-5. **Backoff Configuration** - Enhanced retry control
-6. **Template Dependency Graph API** - Developer experience
+**Scope**: Cache expensive operations like dependency analysis and handler metadata
 
-### Medium-term (Subsequent Sprints)
-7. **Handler Factory Namespacing** - Organizational improvements
-8. **Runtime Dependency Graph API** - Enhanced observability
-9. **Structured Logging Enhancement** - Production observability
+**Implementation Plan**:
+```ruby
+# Caching layers:
+# 1. In-memory caching for handler metadata
+# 2. Redis caching for dependency graph analysis
+# 3. Database query optimization with materialized views
+```
 
-### Strategic Evaluation
-10. **GraphQL Utility Evaluation** - Architectural decision
-11. **Documentation Excellence** - Developer experience
+**Acceptance Criteria**:
+- [ ] Multi-layer caching strategy with configurable TTL
+- [ ] Cache invalidation on handler registration changes
+- [ ] Performance benchmarks showing significant improvement
+- [ ] Memory usage optimization and monitoring
+- [ ] Cache warming strategies for critical paths
 
-## Success Criteria
-- [ ] All new features have comprehensive test coverage
-- [ ] Backward compatibility maintained
-- [ ] Performance characteristics preserved or improved
-- [ ] Clear migration guides for any breaking changes
-- [ ] Production-ready configuration and deployment guidance
-- [ ] Enhanced developer experience and API discoverability
+## Current Development Focus
 
-## Quality Gates
-- [ ] 100% test coverage for new features
-- [ ] Performance regression testing
-- [ ] Security review for new API endpoints
-- [ ] Documentation review and validation
-- [ ] User acceptance testing for developer experience improvements
+### Immediate Priorities (Next 2-3 Weeks)
+
+**Primary Focus**: **Phase 3.2 & 3.3 Parallel Development**
+
+**Rationale for Parallel Approach**:
+1. **No Blocking Dependencies**: 3.2 and 3.3 are independent after 3.1 completion
+2. **Faster Time to Market**: Both APIs available sooner
+3. **Foundation Complete**: Phase 3.1 provides solid base for both
+4. **Resource Utilization**: Can work on different aspects simultaneously
+
+**Phase 3.2 Handler Discovery API**:
+- REST endpoints for namespace-aware handler discovery
+- Complete RSwag documentation with OpenAPI schemas
+- Authorization integration and comprehensive test coverage
+
+**Phase 3.3 Dependency Graph API**:
+- Optional dependency data in existing task endpoints
+- RuntimeGraphAnalyzer integration with configurable parameters
+- Performance optimization with intelligent caching
+
+### Success Metrics
+
+**Quality Assurance**:
+- **Test Coverage**: Maintain 100% pass rate (currently 1000/1000 tests)
+- **Performance**: API response times <50ms for handler enumeration, <200ms for dependency graphs
+- **Documentation**: Complete OpenAPI documentation with interactive examples
+- **Backward Compatibility**: Zero breaking changes to existing functionality
+
+**Business Value**:
+- **Handler Discovery**: External systems can discover available handlers organized by dependent system
+- **Dependency Analysis**: Runtime dependency visibility for workflow optimization and debugging
+- **System Integration**: Enhanced API capabilities for external monitoring and management tools
+
+## Long-term Vision
+
+### v2.3.0 Roadmap
+- Advanced GraphQL schema with subscriptions
+- Multi-tenant handler namespacing
+- Real-time dependency monitoring
+- Enhanced observability and metrics
+
+### v3.0.0 Roadmap
+- Plugin architecture for extensibility
+- Advanced workflow orchestration patterns
+- Machine learning integration for dependency optimization
+- Cloud-native deployment patterns
 
 ---
 
-**Philosophy**: Tasker v2.2.1 will elevate the gem from "production-ready" to "industry-standard" by focusing on the details that matter most to developers and operations teams. Every enhancement respects the Unix principle while providing maximum value within the appropriate scope of a Rails workflow orchestration gem.
-
-# TODO: Tasker v2.2.1+ Rolling Development Tasks
-
-## ✅ Recently Completed: System_Status.Read Authorization
-
-### Health Check System - PRODUCTION READY ✅
-- [x] **System_Status Resource**: Added `HEALTH_STATUS` resource constant and `INDEX` action
-- [x] **Resource Registry**: Registered `tasker.health_status` with `:index` action in authorization registry
-- [x] **Custom Authorization Logic**: Status endpoint uses `health_status.index` instead of standard controller mapping
-- [x] **Proper Separation of Concerns**: Authentication uses health config, authorization uses auth config
-- [x] **Generator Support**: Updated authorization coordinator generator with system_status example
-- [x] **Test Coverage**: Comprehensive authorization scenarios with proper state isolation
-- [x] **Security Model**: Authorization only applies to authenticated users, admin override support
-
-## Immediate Priority: REST API Enhancement
-
-### Current Sprint: Dependency Graph REST API
-- [ ] **Add Optional Graph Parameter**: Implement `?include=dependency_graph` for `/tasks/:id` endpoint
-- [ ] **Create Dry::Struct Types**: Define `Tasker::Types::DependencyGraph`, `GraphNode`, `GraphEdge`
-- [ ] **Graph Builder Service**: Create service to build dependency graph from task relationships
-- [ ] **JSON Serialization**: Clean JSON output with nodes, edges, and metadata
-- [ ] **Caching Strategy**: Intelligent caching for expensive graph computations
-- [ ] **API Documentation**: Document new parameter with examples and use cases
-
-### Next Sprint: Advanced Task Management
-- [ ] **Enhanced Task Filtering**: Complex filtering capabilities for task listing endpoints
-- [ ] **Cursor-Based Pagination**: High-performance pagination for large task datasets
-- [ ] **Bulk Task Operations**: Batch operations for efficiency in high-volume scenarios
-- [ ] **Task Search API**: Full-text search capabilities across task metadata
-
-## Medium Priority: System Enhancements
-
-### Enqueuing Strategy Enhancement
-- [ ] **Expose Strategy Pattern**: Make test enqueuer strategy pattern available to developers
-- [ ] **Non-ActiveJob Support**: Enable custom enqueuing for systems not using ActiveJob
-- [ ] **Strategy Documentation**: Document how to implement custom enqueuing strategies
-- [ ] **Generator Support**: Create generator for custom enqueuing strategy templates
-
-### GraphQL Enhancements
-- [ ] **Dependency Graph Field**: Add dependency graph as optional field to GraphQL task queries
-- [ ] **Advanced Filtering**: Implement complex filtering in GraphQL queries
-- [ ] **Subscription Support**: Real-time task status updates via GraphQL subscriptions
-- [ ] **Query Optimization**: Optimize N+1 queries and implement DataLoader patterns
-
-### Performance & Observability
-- [ ] **SQL Function Optimization**: Further optimize dependency calculation functions
-- [ ] **Advanced Caching**: Multi-layer caching strategy for complex queries
-- [ ] **Performance Monitoring**: Enhanced telemetry for API performance metrics
-- [ ] **Health Check Metrics**: Additional health metrics for system monitoring
-
-## Low Priority: Future Enhancements
-
-### Authorization & Security
-- [ ] **Role-Based Access Control**: Implement role hierarchy for authorization
-- [ ] **Resource Ownership**: Add resource ownership patterns for user-specific access
-- [ ] **API Rate Limiting**: Implement rate limiting for API endpoints
-- [ ] **Audit Logging**: Comprehensive audit trail for security-sensitive operations
-
-### Integration & Extensibility
-- [ ] **Webhook System**: Event-driven notifications for external system integration
-- [ ] **Plugin Architecture**: Framework for extending Tasker with custom functionality
-- [ ] **API Versioning**: Strategy for future API evolution and backward compatibility
-- [ ] **Multi-Tenant Support**: Framework for multi-tenant task management
-
-### Developer Experience
-- [ ] **Interactive API Documentation**: Swagger/OpenAPI with interactive examples
-- [ ] **SDK Generation**: Auto-generated SDKs for popular programming languages
-- [ ] **Development Tools**: CLI tools for task management and debugging
-- [ ] **Testing Utilities**: Enhanced testing helpers and factories
-
-## 📋 Architecture Decisions Needed
-
-### REST API Design
-- **Graph Inclusion Strategy**: Parameter-based vs header-based vs separate endpoint
-- **Pagination Approach**: Cursor-based vs offset-based for different use cases
-- **Filtering Syntax**: Query parameter format for complex filtering expressions
-
-### Performance Strategy
-- **Caching Layers**: Redis vs in-memory vs database-level caching decisions
-- **Database Optimization**: Index strategy for large-scale task management
-- **Background Processing**: Queue strategy for expensive operations
-
-### Security Model
-- **Permission Granularity**: Fine-grained vs coarse-grained permission model
-- **Session Management**: Token-based vs session-based authentication strategy
-- **Cross-Origin Policy**: CORS configuration for web application integration
-
-## 🎯 Success Metrics
-
-### Current Achievement: EXCELLENT ✅
-- **Test Coverage**: 865 examples, 0 failures
-- **Documentation**: 75.18% YARD coverage with comprehensive guides
-- **Security**: Multi-layered authentication and authorization
-- **Performance**: Optimized SQL functions and intelligent caching
-- **Production Readiness**: Robust error handling and monitoring
-
-### Next Milestone Targets
-- **API Enhancement**: Complete dependency graph REST API
-- **Performance**: Sub-100ms response times for standard queries
-- **Documentation**: 80%+ YARD coverage with interactive examples
-- **Testing**: Maintain 0 failures with expanded integration tests
+**Development Philosophy**: With the solid foundation of Phase 3.1 Handler Factory Namespacing complete and all 1000 tests passing, we now focus on exposing this enhanced functionality through well-designed REST APIs. The parallel development approach for Phase 3.2 and 3.3 maximizes development velocity while maintaining the high quality standards established throughout the project.

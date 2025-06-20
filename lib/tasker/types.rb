@@ -36,8 +36,8 @@ module Tasker
     #
     # Also automatically handles deep symbolization of nested hash attributes.
     class BaseConfig < Dry::Struct
-      def initialize(*args)
-        super(*args)
+      def initialize(*)
+        super
         freeze
       end
     end

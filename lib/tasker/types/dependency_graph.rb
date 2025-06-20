@@ -214,8 +214,8 @@ module Tasker
       #   @return [GraphMetadata] Graph metadata
       attribute :metadata, GraphMetadata
 
-      def initialize(*args)
-        super(*args)
+      def initialize(*)
+        super
         # Explicitly freeze arrays for immutability
         nodes.freeze
         edges.freeze

@@ -48,7 +48,9 @@ module Tasker
       #
       # @!attribute [r] filter_parameters
       #   @return [Array<Symbol, String, Regexp>] Parameters to filter
-      attribute :filter_parameters, Types::Array.of(Types.Interface(:to_s)).default(proc { default_filter_parameters }.freeze, shared: true)
+      attribute :filter_parameters, Types::Array.of(Types.Interface(:to_s)).default(proc {
+        default_filter_parameters
+      }.freeze, shared: true)
 
       # The mask to use when filtering sensitive parameters
       #

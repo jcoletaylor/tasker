@@ -6,67 +6,133 @@ require_relative 'events/custom_registry'
 module Tasker
   # Factory for creating task handler instances
   #
-  # This class maintains a registry of task handlers by name and
-  # provides methods to retrieve handler instances when needed.
+  # This class maintains a registry of task handlers by name and dependent system,
+  # providing namespaced handler organization while maintaining backward compatibility.
   # It follows the Singleton pattern to ensure a single registry.
   class HandlerFactory
     include Singleton
 
-    # @return [Hash] Registered handler classes by handler name
+    # @return [Hash] Registered handler classes by dependent system and handler name
     attr_accessor :handler_classes
+
+    # @return [Set] Set of registered namespaces for efficient enumeration
+    attr_accessor :namespaces
 
     # Initialize a new handler factory
     #
     # @return [HandlerFactory] A new handler factory instance
     def initialize
       self.handler_classes ||= {}
+      self.namespaces ||= Set.new(['default_system'])
     end
 
-    # Get a task handler instance by name
+    # Get a task handler instance by name and optional dependent system
     #
     # @param name [String, Symbol] The name of the handler to retrieve
+    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default_system')
     # @return [Object] An instance of the requested task handler
-    # @raise [Tasker::ProceduralError] If no handler is registered with the given name
-    def get(name)
-      handler_class = handler_classes[name.to_sym]
-      raise(Tasker::ProceduralError, "No task handler for #{name}") unless handler_class
+    # @raise [Tasker::ProceduralError] If no handler is registered with the given name in the specified system
+    def get(name, dependent_system: 'default_system')
+      dependent_system = dependent_system.to_s
+      name_sym = name.to_sym
 
-      # Handle both direct class objects and string class names
-      if handler_class.is_a?(Class)
-        # Direct class registration (used in tests with anonymous classes)
-        handler_class.new
-      else
-        # String class name registration (used in production)
-        handler_class.to_s.camelize.constantize.new
-      end
-    rescue NameError => e
-      raise(Tasker::ProceduralError, "No task handler for #{name}: #{e.message}")
+      # Direct namespace lookup - allows same name in different systems
+      handler_class = handler_classes.dig(dependent_system, name_sym)
+      raise_handler_not_found(name, dependent_system) unless handler_class
+
+      instantiate_handler(handler_class)
     end
 
-    # Register a task handler class with a name
+    # Register a task handler class with a name and optional dependent system
     #
     # @param name [String, Symbol] The name to register the handler under
     # @param class_name [Class, String] The handler class to register
+    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default_system')
     # @return [void]
-    def register(name, class_name)
-      self.handler_classes[name.to_sym] = if class_name.is_a?(Class)
-                                            # Store the class directly for anonymous classes
-                                            class_name
-                                          else
-                                            # Store as string for named classes (original behavior)
-                                            class_name.to_s
-                                          end
+    # @raise [StandardError] If custom event configuration fails (fail fast)
+    def register(name, class_name, dependent_system: 'default_system')
+      dependent_system = dependent_system.to_s
+      name_sym = name.to_sym
 
-      # Automatically discover and register custom events from step handlers
+      # Validate custom event configuration BEFORE modifying registry state
+      # This ensures atomic registration - either fully succeeds or fully fails
+      normalized_class = normalize_class_name(class_name)
       discover_and_register_custom_events(class_name)
+
+      # Only modify registry state after successful configuration validation
+      handler_classes[dependent_system] ||= {}
+      namespaces.add(dependent_system)
+      handler_classes[dependent_system][name_sym] = normalized_class
+    end
+
+    # List handlers, optionally filtered by namespace
+    #
+    # @param namespace [String, Symbol, nil] Optional namespace filter
+    # @return [Hash] Handlers hash, either for specific namespace or all namespaces
+    def list_handlers(namespace: nil)
+      if namespace
+        handler_classes[namespace.to_s] || {}
+      else
+        handler_classes
+      end
+    end
+
+    # Get list of all registered namespaces
+    #
+    # @return [Array<String>] Array of namespace strings
+    def registered_namespaces
+      namespaces.to_a
     end
 
     private
+
+    # Normalize class name for consistent storage
+    #
+    # @param class_name [Class, String] The handler class to normalize
+    # @return [Class, String] Normalized class representation
+    def normalize_class_name(class_name)
+      if class_name.is_a?(Class)
+        # Store the class directly for anonymous classes
+        class_name
+      else
+        # Store as string for named classes (original behavior)
+        class_name.to_s
+      end
+    end
+
+    # Instantiate a handler from class or string
+    #
+    # @param handler_class [Class, String] The handler class to instantiate
+    # @return [Object] New handler instance
+    # @raise [Tasker::ProceduralError] If handler class cannot be instantiated
+    def instantiate_handler(handler_class)
+      if handler_class.is_a?(Class)
+        # Direct class instantiation (used in tests with anonymous classes)
+        handler_class.new
+      else
+        # String class name instantiation (used in production)
+        handler_class.to_s.camelize.constantize.new
+      end
+    rescue NameError => e
+      raise(Tasker::ProceduralError, "Failed to instantiate handler: #{e.message}")
+    end
+
+    # Raise appropriate error for handler not found
+    #
+    # @param name [String, Symbol] Handler name that was not found
+    # @param dependent_system [String] The dependent system that was searched
+    # @raise [Tasker::ProceduralError] Handler not found error
+    def raise_handler_not_found(name, dependent_system)
+      raise(Tasker::ProceduralError, "No task handler for #{name}") if dependent_system == 'default_system'
+
+      raise(Tasker::ProceduralError, "No task handler for #{name} in dependent system #{dependent_system}")
+    end
 
     # Automatically discover and register custom events from step handlers
     #
     # @param handler_class [Class, String] The handler class to scan for custom events
     # @return [void]
+    # @raise [Tasker::ConfigurationError] If custom event configuration fails
     def discover_and_register_custom_events(handler_class)
       # Get the actual class object
       klass = if handler_class.is_a?(Class)
@@ -78,13 +144,9 @@ module Tasker
       # Check if this is a step handler class (has custom_event_configuration method)
       if klass.respond_to?(:custom_event_configuration)
         # This is a step handler class - register its custom events directly
-        begin
-          class_events = klass.custom_event_configuration
-          register_custom_events_from_config(class_events, klass)
-        rescue StandardError => e
-          # Don't let custom event registration failures break handler registration
-          Rails.logger.warn "Failed to register custom events for #{klass}: #{e.message}" if defined?(Rails)
-        end
+        # Configuration failures should be visible errors, not silent warnings
+        class_events = klass.custom_event_configuration
+        register_custom_events_from_config(class_events, klass)
         return
       end
 

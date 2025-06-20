@@ -63,15 +63,15 @@ module Tasker
         error_penalty: Types::Integer.default(30),
         retry_penalty: Types::Integer.default(10)
       ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
-       .default({
-        downstream_weight: 5,
-        blocked_weight: 15,
-        path_length_weight: 10,
-        completed_penalty: 15,
-        blocked_penalty: 25,
-        error_penalty: 30,
-        retry_penalty: 10
-      }.freeze)
+                                                .default({
+                                                  downstream_weight: 5,
+                                                  blocked_weight: 15,
+                                                  path_length_weight: 10,
+                                                  completed_penalty: 15,
+                                                  blocked_penalty: 25,
+                                                  error_penalty: 30,
+                                                  retry_penalty: 10
+                                                }.freeze)
 
       # Severity multipliers for state-based calculations
       #
@@ -85,11 +85,11 @@ module Tasker
         exhausted_retry_bonus: Types::Float.default(0.5),
         dependency_issue: Types::Float.default(1.2)
       ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
-       .default({
-        error_state: 2.0,
-        exhausted_retry_bonus: 0.5,
-        dependency_issue: 1.2
-      }.freeze)
+                                                  .default({
+                                                    error_state: 2.0,
+                                                    exhausted_retry_bonus: 0.5,
+                                                    dependency_issue: 1.2
+                                                  }.freeze)
 
       # Penalty constants for problematic step conditions
       #
@@ -103,11 +103,11 @@ module Tasker
         non_retryable: Types::Integer.default(10),
         exhausted_retry: Types::Integer.default(20)
       ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
-       .default({
-        retry_instability: 3,
-        non_retryable: 10,
-        exhausted_retry: 20
-      }.freeze)
+                                               .default({
+                                                 retry_instability: 3,
+                                                 non_retryable: 10,
+                                                 exhausted_retry: 20
+                                               }.freeze)
 
       # Severity thresholds for impact score classification
       #
@@ -121,11 +121,11 @@ module Tasker
         high: Types::Integer.default(50),
         medium: Types::Integer.default(20)
       ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
-       .default({
-        critical: 100,
-        high: 50,
-        medium: 20
-      }.freeze)
+                                                 .default({
+                                                   critical: 100,
+                                                   high: 50,
+                                                   medium: 20
+                                                 }.freeze)
 
       # Duration estimation constants for path analysis
       #
@@ -139,11 +139,11 @@ module Tasker
         error_penalty_seconds: Types::Integer.default(60),
         retry_penalty_seconds: Types::Integer.default(30)
       ).constructor { |value| value.respond_to?(:deep_symbolize_keys) ? value.deep_symbolize_keys : value }
-       .default({
-        base_step_seconds: 30,
-        error_penalty_seconds: 60,
-        retry_penalty_seconds: 30
-      }.freeze)
+                                                .default({
+                                                  base_step_seconds: 30,
+                                                  error_penalty_seconds: 60,
+                                                  retry_penalty_seconds: 30
+                                                }.freeze)
     end
   end
 end

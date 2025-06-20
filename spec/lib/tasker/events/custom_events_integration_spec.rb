@@ -224,7 +224,7 @@ RSpec.describe 'Custom Events Automatic Discovery', type: :integration do
     end
   end
 
-  describe 'Error handling' do
+  describe 'Error handling - Fail Fast Philosophy' do
     let(:broken_step_handler_class) do
       Class.new(Tasker::StepHandler::Base) do
         def self.name
@@ -232,7 +232,7 @@ RSpec.describe 'Custom Events Automatic Discovery', type: :integration do
         end
 
         def self.custom_event_configuration
-          raise StandardError, 'Simulated error'
+          raise StandardError, 'Simulated configuration error'
         end
 
         def process(_task, _sequence, _step)
@@ -260,16 +260,28 @@ RSpec.describe 'Custom Events Automatic Discovery', type: :integration do
       end
     end
 
-    it 'handles errors gracefully and still registers the task handler' do
+    it 'fails fast when custom event configuration is broken - no silent failures' do
       # Use the real HandlerFactory to test error handling
+      real_factory = Tasker::HandlerFactory.instance
+
+      # Configuration failures should be visible errors, not silently swallowed
+      expect do
+        real_factory.register('broken_task', broken_task_handler_class)
+      end.to raise_error(StandardError, 'Simulated configuration error')
+
+      # Task handler should NOT be registered when configuration fails
+      expect(real_factory.handler_classes['default_system']).not_to have_key(:broken_task)
+    end
+
+    it 'provides clear error messages for configuration failures' do
       real_factory = Tasker::HandlerFactory.instance
 
       expect do
         real_factory.register('broken_task', broken_task_handler_class)
-      end.not_to raise_error
-
-      # Task handler should still be registered even if custom event discovery fails
-      expect(real_factory.handler_classes).to have_key(:broken_task)
+      end.to raise_error do |error|
+        expect(error.message).to include('Simulated configuration error')
+        expect(error).to be_a(StandardError)
+      end
     end
   end
 

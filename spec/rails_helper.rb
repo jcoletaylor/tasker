@@ -36,6 +36,9 @@ end
 # Requires supporting ruby files with custom matchers and macros, etc
 Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |f| require f }
 
+# Load test mock classes for workflow testing
+require_relative 'mocks/configurable_failure_handlers'
+
 # Checks for pending migrations and applies them before tests are run.
 begin
   ActiveRecord::Migration.maintain_test_schema!

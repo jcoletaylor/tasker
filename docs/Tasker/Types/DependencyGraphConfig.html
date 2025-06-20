@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Types::DependencyGraphConfig
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Types::DependencyGraphConfig";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (D)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span>
+     &raquo; 
+    <span class="title">DependencyGraphConfig</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Types::DependencyGraphConfig
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName"><span class='object_link'><a href="BaseConfig.html" title="Tasker::Types::BaseConfig (class)">BaseConfig</a></span></span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Dry::Struct</li>
+          
+            <li class="next"><span class='object_link'><a href="BaseConfig.html" title="Tasker::Types::BaseConfig (class)">BaseConfig</a></span></li>
+          
+            <li class="next">Tasker::Types::DependencyGraphConfig</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/types/dependency_graph_config.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Configuration type for dependency graph calculation settings</p>
+
+<p>This configuration exposes previously hardcoded calculation constants used in dependency graph analysis and bottleneck detection.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'>DependencyGraphConfig</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>impact_multipliers:</span> <span class='lbrace'>{</span> <span class='label'>downstream_weight:</span> <span class='int'>5</span><span class='comma'>,</span> <span class='label'>blocked_weight:</span> <span class='int'>15</span> <span class='rbrace'>}</span>
+<span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>With all options</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'>DependencyGraphConfig</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>impact_multipliers:</span> <span class='lbrace'>{</span>
+    <span class='label'>downstream_weight:</span> <span class='int'>5</span><span class='comma'>,</span>
+    <span class='label'>blocked_weight:</span> <span class='int'>15</span><span class='comma'>,</span>
+    <span class='label'>path_length_weight:</span> <span class='int'>10</span><span class='comma'>,</span>
+    <span class='label'>completed_penalty:</span> <span class='int'>15</span><span class='comma'>,</span>
+    <span class='label'>blocked_penalty:</span> <span class='int'>25</span><span class='comma'>,</span>
+    <span class='label'>error_penalty:</span> <span class='int'>30</span><span class='comma'>,</span>
+    <span class='label'>retry_penalty:</span> <span class='int'>10</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='label'>severity_multipliers:</span> <span class='lbrace'>{</span>
+    <span class='label'>error_state:</span> <span class='float'>2.0</span><span class='comma'>,</span>
+    <span class='label'>exhausted_retry_bonus:</span> <span class='float'>0.5</span><span class='comma'>,</span>
+    <span class='label'>dependency_issue:</span> <span class='float'>1.2</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='label'>penalty_constants:</span> <span class='lbrace'>{</span>
+    <span class='label'>retry_instability:</span> <span class='int'>3</span><span class='comma'>,</span>
+    <span class='label'>non_retryable:</span> <span class='int'>10</span><span class='comma'>,</span>
+    <span class='label'>exhausted_retry:</span> <span class='int'>20</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='label'>severity_thresholds:</span> <span class='lbrace'>{</span>
+    <span class='label'>critical:</span> <span class='int'>100</span><span class='comma'>,</span>
+    <span class='label'>high:</span> <span class='int'>50</span><span class='comma'>,</span>
+    <span class='label'>medium:</span> <span class='int'>20</span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='label'>duration_estimates:</span> <span class='lbrace'>{</span>
+    <span class='label'>base_step_seconds:</span> <span class='int'>30</span><span class='comma'>,</span>
+    <span class='label'>error_penalty_seconds:</span> <span class='int'>60</span><span class='comma'>,</span>
+    <span class='label'>retry_penalty_seconds:</span> <span class='int'>30</span>
+  <span class='rbrace'>}</span>
+<span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#duration_estimates-instance_method" title="#duration_estimates (instance method)">#<strong>duration_estimates</strong>  &#x21d2; Hash&lt;Symbol, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Duration estimation constants in seconds.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#impact_multipliers-instance_method" title="#impact_multipliers (instance method)">#<strong>impact_multipliers</strong>  &#x21d2; Hash&lt;Symbol, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Impact calculation multipliers.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#penalty_constants-instance_method" title="#penalty_constants (instance method)">#<strong>penalty_constants</strong>  &#x21d2; Hash&lt;Symbol, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Penalty calculation constants.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#severity_multipliers-instance_method" title="#severity_multipliers (instance method)">#<strong>severity_multipliers</strong>  &#x21d2; Hash&lt;Symbol, Float&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>State severity multipliers.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#severity_thresholds-instance_method" title="#severity_thresholds (instance method)">#<strong>severity_thresholds</strong>  &#x21d2; Hash&lt;Symbol, Integer&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Severity classification thresholds.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  <h2>Method Summary</h2>
+  
+  <h3 class="inherited">Methods inherited from <span class='object_link'><a href="BaseConfig.html" title="Tasker::Types::BaseConfig (class)">BaseConfig</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">#initialize</a></span></p>
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <p class="notice">This class inherits a constructor from <span class='object_link'><a href="BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">Tasker::Types::BaseConfig</a></span></p>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="duration_estimates-instance_method">
+  
+    #<strong>duration_estimates</strong>  &#x21d2; <tt>Hash&lt;Symbol, Integer&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Duration estimation constants in seconds.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;Symbol, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Duration estimation constants in seconds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/dependency_graph_config.rb', line 137</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:duration_estimates</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_schema'>schema</span><span class='lparen'>(</span>
+        <span class='label'>base_step_seconds:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>30</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>error_penalty_seconds:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>60</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>retry_penalty_seconds:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>30</span><span class='rparen'>)</span>
+      <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_constructor'>constructor</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:deep_symbolize_keys</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_deep_symbolize_keys'>deep_symbolize_keys</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span> <span class='rbrace'>}</span>
+<span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbrace'>{</span>
+  <span class='label'>base_step_seconds:</span> <span class='int'>30</span><span class='comma'>,</span>
+  <span class='label'>error_penalty_seconds:</span> <span class='int'>60</span><span class='comma'>,</span>
+  <span class='label'>retry_penalty_seconds:</span> <span class='int'>30</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="impact_multipliers-instance_method">
+  
+    #<strong>impact_multipliers</strong>  &#x21d2; <tt>Hash&lt;Symbol, Integer&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Impact calculation multipliers.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;Symbol, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Impact calculation multipliers</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/dependency_graph_config.rb', line 57</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:impact_multipliers</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_schema'>schema</span><span class='lparen'>(</span>
+        <span class='label'>downstream_weight:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>5</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>blocked_weight:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>15</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>path_length_weight:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>10</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>completed_penalty:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>15</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>blocked_penalty:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>25</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>error_penalty:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>30</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>retry_penalty:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>10</span><span class='rparen'>)</span>
+      <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_constructor'>constructor</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:deep_symbolize_keys</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_deep_symbolize_keys'>deep_symbolize_keys</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span> <span class='rbrace'>}</span>
+<span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbrace'>{</span>
+  <span class='label'>downstream_weight:</span> <span class='int'>5</span><span class='comma'>,</span>
+  <span class='label'>blocked_weight:</span> <span class='int'>15</span><span class='comma'>,</span>
+  <span class='label'>path_length_weight:</span> <span class='int'>10</span><span class='comma'>,</span>
+  <span class='label'>completed_penalty:</span> <span class='int'>15</span><span class='comma'>,</span>
+  <span class='label'>blocked_penalty:</span> <span class='int'>25</span><span class='comma'>,</span>
+  <span class='label'>error_penalty:</span> <span class='int'>30</span><span class='comma'>,</span>
+  <span class='label'>retry_penalty:</span> <span class='int'>10</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="penalty_constants-instance_method">
+  
+    #<strong>penalty_constants</strong>  &#x21d2; <tt>Hash&lt;Symbol, Integer&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Penalty calculation constants.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;Symbol, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Penalty calculation constants</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/dependency_graph_config.rb', line 101</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:penalty_constants</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_schema'>schema</span><span class='lparen'>(</span>
+        <span class='label'>retry_instability:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>3</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>non_retryable:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>10</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>exhausted_retry:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>20</span><span class='rparen'>)</span>
+      <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_constructor'>constructor</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:deep_symbolize_keys</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_deep_symbolize_keys'>deep_symbolize_keys</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span> <span class='rbrace'>}</span>
+<span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbrace'>{</span>
+  <span class='label'>retry_instability:</span> <span class='int'>3</span><span class='comma'>,</span>
+  <span class='label'>non_retryable:</span> <span class='int'>10</span><span class='comma'>,</span>
+  <span class='label'>exhausted_retry:</span> <span class='int'>20</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="severity_multipliers-instance_method">
+  
+    #<strong>severity_multipliers</strong>  &#x21d2; <tt>Hash&lt;Symbol, Float&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns State severity multipliers.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;Symbol, Float&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>State severity multipliers</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/dependency_graph_config.rb', line 83</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:severity_multipliers</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_schema'>schema</span><span class='lparen'>(</span>
+        <span class='label'>error_state:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Float</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='float'>2.0</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>exhausted_retry_bonus:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Float</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='float'>0.5</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>dependency_issue:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Float</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='float'>1.2</span><span class='rparen'>)</span>
+      <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_constructor'>constructor</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:deep_symbolize_keys</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_deep_symbolize_keys'>deep_symbolize_keys</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span> <span class='rbrace'>}</span>
+<span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbrace'>{</span>
+  <span class='label'>error_state:</span> <span class='float'>2.0</span><span class='comma'>,</span>
+  <span class='label'>exhausted_retry_bonus:</span> <span class='float'>0.5</span><span class='comma'>,</span>
+  <span class='label'>dependency_issue:</span> <span class='float'>1.2</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="severity_thresholds-instance_method">
+  
+    #<strong>severity_thresholds</strong>  &#x21d2; <tt>Hash&lt;Symbol, Integer&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Severity classification thresholds.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash&lt;Symbol, Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Severity classification thresholds</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/types/dependency_graph_config.rb', line 119</span>
+
+<span class='id identifier rubyid_attribute'>attribute</span> <span class='symbol'>:severity_thresholds</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_schema'>schema</span><span class='lparen'>(</span>
+        <span class='label'>critical:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>100</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>high:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>50</span><span class='rparen'>)</span><span class='comma'>,</span>
+        <span class='label'>medium:</span> <span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'>Integer</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='int'>20</span><span class='rparen'>)</span>
+      <span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_constructor'>constructor</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_value'>value</span><span class='op'>|</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:deep_symbolize_keys</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_deep_symbolize_keys'>deep_symbolize_keys</span> <span class='op'>:</span> <span class='id identifier rubyid_value'>value</span> <span class='rbrace'>}</span>
+<span class='period'>.</span><span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='lbrace'>{</span>
+  <span class='label'>critical:</span> <span class='int'>100</span><span class='comma'>,</span>
+  <span class='label'>high:</span> <span class='int'>50</span><span class='comma'>,</span>
+  <span class='label'>medium:</span> <span class='int'>20</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span><span class='rparen'>)</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Thu Jun 19 17:21:09 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

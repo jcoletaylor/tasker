@@ -208,8 +208,7 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
 
         # Create a test double for telemetry config instead of mocking the frozen object
         telemetry_config_double = double('telemetry_config')
-        allow(telemetry_config_double).to receive(:parameter_filter).and_return(filter_double)
-        allow(telemetry_config_double).to receive(:service_name).and_return('tasker')
+        allow(telemetry_config_double).to receive_messages(parameter_filter: filter_double, service_name: 'tasker')
         allow(Tasker.configuration).to receive(:telemetry).and_return(telemetry_config_double)
 
         attributes = { task_id: 'task-123', password: 'secret123' }
