@@ -515,7 +515,7 @@
       <pre class="code"><span class="info file"># File 'app/models/tasker/named_task.rb', line 50</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by_full_name!'>find_or_create_by_full_name!</span><span class='lparen'>(</span><span class='label'>name:</span><span class='comma'>,</span> <span class='label'>namespace_name:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_NAMESPACE-constant" title="Tasker::NamedTask::DEFAULT_NAMESPACE (constant)">DEFAULT_NAMESPACE</a></span></span><span class='comma'>,</span> <span class='label'>version:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_VERSION-constant" title="Tasker::NamedTask::DEFAULT_VERSION (constant)">DEFAULT_VERSION</a></span></span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_namespace'>namespace</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="TaskNamespace.html" title="Tasker::TaskNamespace (class)">TaskNamespace</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_by'>find_by</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="TaskNamespace.html" title="Tasker::TaskNamespace (class)">TaskNamespace</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default'><span class='object_link'><a href="TaskNamespace.html#default-class_method" title="Tasker::TaskNamespace.default (method)">default</a></span></span>
+  <span class='id identifier rubyid_namespace'>namespace</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="TaskNamespace.html" title="Tasker::TaskNamespace (class)">TaskNamespace</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span>
     <span class='label'>task_namespace:</span> <span class='id identifier rubyid_namespace'>namespace</span><span class='comma'>,</span>
     <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
@@ -900,7 +900,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun 21 00:16:54 2025 by
+  Generated on Sat Jun 21 16:34:48 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

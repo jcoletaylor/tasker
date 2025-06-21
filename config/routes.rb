@@ -10,6 +10,11 @@ Tasker::Engine.routes.draw do
     get :status, to: 'health#status'
   end
 
+  # Handler discovery endpoints
+  get '/handlers', to: 'handlers#index' # List namespaces
+  get '/handlers/:namespace', to: 'handlers#show_namespace' # List handlers in namespace
+  get '/handlers/:namespace/:name', to: 'handlers#show'     # Show specific handler with dependency graph
+
   post '/graphql', to: 'graphql#execute'
   # mount Rswag::Ui::Engine => '/api-docs'
   # mount Rswag::Api::Engine => '/api-docs'

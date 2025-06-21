@@ -48,7 +48,7 @@ module Tasker
 
     # Find or create with namespace and version support
     def self.find_or_create_by_full_name!(name:, namespace_name: DEFAULT_NAMESPACE, version: DEFAULT_VERSION)
-      namespace = TaskNamespace.find_by(name: namespace_name) || TaskNamespace.default
+      namespace = TaskNamespace.find_or_create_by!(name: namespace_name)
       find_or_create_by!(
         task_namespace: namespace,
         name: name,

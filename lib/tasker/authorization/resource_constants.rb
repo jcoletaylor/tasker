@@ -18,12 +18,13 @@ module Tasker
         WORKFLOW_STEP = 'tasker.workflow_step'
         TASK_DIAGRAM = 'tasker.task_diagram'
         HEALTH_STATUS = 'tasker.health_status'
+        HANDLER = 'tasker.handler'
 
         # Get all resource constants as an array
         #
         # @return [Array<String>] All defined resource names
         def self.all
-          [TASK, WORKFLOW_STEP, TASK_DIAGRAM, HEALTH_STATUS]
+          [TASK, WORKFLOW_STEP, TASK_DIAGRAM, HEALTH_STATUS, HANDLER]
         end
 
         # Check if a resource constant is defined

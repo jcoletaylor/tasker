@@ -1726,7 +1726,7 @@
       <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 130</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_all_associated</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span>
-  <span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='label'>named_task:</span> <span class='lbracket'>[</span><span class='symbol'>:task_namespace</span><span class='rbracket'>]</span><span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='label'>workflow_steps:</span> <span class='qsymbols_beg'>%i[</span><span class='tstring_content'>named_step</span><span class='words_sep'> </span><span class='tstring_content'>parents</span><span class='words_sep'> </span><span class='tstring_content'>children</span><span class='tstring_end'>]</span></span><span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='label'>task_annotations:</span> <span class='qsymbols_beg'>%i[</span><span class='tstring_content'>annotation_type</span><span class='tstring_end'>]</span></span><span class='rparen'>)</span>
     <span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:task_transitions</span><span class='rparen'>)</span>
@@ -1741,7 +1741,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun 21 00:16:54 2025 by
+  Generated on Sat Jun 21 16:34:48 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

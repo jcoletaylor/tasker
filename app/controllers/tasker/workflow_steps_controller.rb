@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-require_dependency 'tasker/application_controller'
+require_relative 'application_controller'
 
 module Tasker
   class WorkflowStepsController < ApplicationController

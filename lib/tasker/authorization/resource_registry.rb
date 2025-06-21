@@ -60,6 +60,13 @@ module Tasker
             ResourceConstants::ACTIONS::INDEX
           ],
           description: 'Health status endpoint information'
+        },
+        ResourceConstants::RESOURCES::HANDLER => {
+          actions: [
+            ResourceConstants::ACTIONS::INDEX,
+            ResourceConstants::ACTIONS::SHOW
+          ],
+          description: 'Handler discovery and metadata'
         }
       }.freeze
 
