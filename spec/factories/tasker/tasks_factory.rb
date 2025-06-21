@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :task, class: 'Tasker::Task' do
-    named_task { Tasker::NamedTask.find_or_create_by(name: 'dummy_task') }
+    named_task { Tasker::NamedTask.find_or_create_by_full_name!(name: 'dummy_task', namespace_name: 'default', version: '0.1.0') }
 
     # Core attributes
     initiator { 'test_user' }

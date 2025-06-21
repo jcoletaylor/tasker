@@ -1,10 +1,13 @@
 ---
-name: <%= @module_path ? "#{@module_path}/" : '' %><%= @task_name %>
+name: <%= @task_name %>
+namespace_name: <%= @namespace_name || 'default' %>
+version: <%= @version || '0.1.0' %>
 <% if @module_namespace %>
 module_namespace: <%= @module_namespace %>
 <% end %>
 task_handler_class: <%= @task_handler_class %>
 concurrent: <%= @concurrent %>
+description: "<%= @description || "Generated task handler for #{@task_name}" %>"
 
 default_dependent_system: <%= @dependent_system %>
 named_steps:

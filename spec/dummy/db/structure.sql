@@ -743,7 +743,10 @@ CREATE TABLE public.tasker_named_tasks (
     name character varying(64) NOT NULL,
     description character varying(255),
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    task_namespace_id bigint DEFAULT 1 NOT NULL,
+    version character varying(16) DEFAULT '0.1.0'::character varying NOT NULL,
+    configuration jsonb DEFAULT '"{}"'::jsonb
 );
 
 
@@ -926,6 +929,39 @@ CREATE SEQUENCE public.tasker_task_annotations_task_annotation_id_seq
 --
 
 ALTER SEQUENCE public.tasker_task_annotations_task_annotation_id_seq OWNED BY public.tasker_task_annotations.task_annotation_id;
+
+
+--
+-- Name: tasker_task_namespaces; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tasker_task_namespaces (
+    task_namespace_id integer NOT NULL,
+    name character varying(64) NOT NULL,
+    description character varying(255),
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: tasker_task_namespaces_task_namespace_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tasker_task_namespaces_task_namespace_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tasker_task_namespaces_task_namespace_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tasker_task_namespaces_task_namespace_id_seq OWNED BY public.tasker_task_namespaces.task_namespace_id;
 
 
 --
@@ -1128,6 +1164,13 @@ ALTER TABLE ONLY public.tasker_task_annotations ALTER COLUMN task_annotation_id 
 
 
 --
+-- Name: tasker_task_namespaces task_namespace_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tasker_task_namespaces ALTER COLUMN task_namespace_id SET DEFAULT nextval('public.tasker_task_namespaces_task_namespace_id_seq'::regclass);
+
+
+--
 -- Name: tasker_task_transitions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1232,6 +1275,14 @@ ALTER TABLE ONLY public.tasker_named_tasks
 
 ALTER TABLE ONLY public.tasker_task_annotations
     ADD CONSTRAINT tasker_task_annotations_pkey PRIMARY KEY (task_annotation_id);
+
+
+--
+-- Name: tasker_task_namespaces tasker_task_namespaces_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tasker_task_namespaces
+    ADD CONSTRAINT tasker_task_namespaces_pkey PRIMARY KEY (task_namespace_id);
 
 
 --
@@ -1667,17 +1718,17 @@ CREATE INDEX named_steps_name_index ON public.tasker_named_steps USING btree (na
 
 
 --
+-- Name: named_tasks_configuration_gin_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX named_tasks_configuration_gin_index ON public.tasker_named_tasks USING gin (configuration);
+
+
+--
 -- Name: named_tasks_name_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX named_tasks_name_index ON public.tasker_named_tasks USING btree (name);
-
-
---
--- Name: named_tasks_name_unique; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX named_tasks_name_unique ON public.tasker_named_tasks USING btree (name);
 
 
 --
@@ -1695,10 +1746,31 @@ CREATE INDEX named_tasks_named_steps_named_task_id_index ON public.tasker_named_
 
 
 --
+-- Name: named_tasks_namespace_name_version_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX named_tasks_namespace_name_version_unique ON public.tasker_named_tasks USING btree (task_namespace_id, name, version);
+
+
+--
 -- Name: named_tasks_steps_ids_unique; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX named_tasks_steps_ids_unique ON public.tasker_named_tasks_named_steps USING btree (named_task_id, named_step_id);
+
+
+--
+-- Name: named_tasks_task_namespace_id_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX named_tasks_task_namespace_id_index ON public.tasker_named_tasks USING btree (task_namespace_id);
+
+
+--
+-- Name: named_tasks_version_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX named_tasks_version_index ON public.tasker_named_tasks USING btree (version);
 
 
 --
@@ -1727,6 +1799,20 @@ CREATE INDEX task_annotations_annotation_type_id_index ON public.tasker_task_ann
 --
 
 CREATE INDEX task_annotations_task_id_index ON public.tasker_task_annotations USING btree (task_id);
+
+
+--
+-- Name: task_namespaces_name_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX task_namespaces_name_index ON public.tasker_task_namespaces USING btree (name);
+
+
+--
+-- Name: task_namespaces_name_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX task_namespaces_name_unique ON public.tasker_task_namespaces USING btree (name);
 
 
 --
@@ -1827,6 +1913,14 @@ ALTER TABLE ONLY public.tasker_dependent_system_object_maps
 
 ALTER TABLE ONLY public.tasker_dependent_system_object_maps
     ADD CONSTRAINT dependent_system_object_maps_dependent_system_two_id_foreign FOREIGN KEY (dependent_system_two_id) REFERENCES public.tasker_dependent_systems(dependent_system_id);
+
+
+--
+-- Name: tasker_named_tasks fk_rails_16a0297759; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tasker_named_tasks
+    ADD CONSTRAINT fk_rails_16a0297759 FOREIGN KEY (task_namespace_id) REFERENCES public.tasker_task_namespaces(task_namespace_id);
 
 
 --
@@ -1932,6 +2026,8 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250620125540'),
+('20250620125433'),
 ('20250616222419'),
 ('20250612000007'),
 ('20250612000006'),

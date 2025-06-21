@@ -22,6 +22,8 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
   let(:task_request) do
     Tasker::Types::TaskRequest.new(
       name: "<%= @task_name %>",
+      namespace: "<%= @namespace_name || 'default' %>",
+      version: "<%= @version || '0.1.0' %>",
       context: { "input_id" => "123" },
       initiator: "user",
       reason: "test",
@@ -35,6 +37,8 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
     it 'loads the task configuration from YAML' do
       expect(task_handler.config).to be_a(Hash)
       expect(task_handler.config['name']).to eq('<%= @task_name %>')
+      expect(task_handler.config['namespace_name']).to eq('<%= @namespace_name || 'default' %>')
+      expect(task_handler.config['version']).to eq('<%= @version || '0.1.0' %>')
     end
 
     it 'validates the configuration' do
@@ -101,7 +105,13 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
 
   describe 'complete workflow' do
     before do
-      factory.register("<%= @task_name %>", described_class)
+      # Register handler with namespace + version support
+      factory.register(
+        "<%= @task_name %>",
+        described_class,
+        namespace_name: "<%= @namespace_name || 'default' %>",
+        version: "<%= @version || '0.1.0' %>"
+      )
       stubs.get("/data") do |env|
         Faraday::Response.new(
           Faraday::Env.from(

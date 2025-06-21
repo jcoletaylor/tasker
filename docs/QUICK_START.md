@@ -283,15 +283,18 @@ puts "Created user: #{user.name} with ID: #{user.id}"
 # Create and execute the workflow
 task_request = Tasker::Types::TaskRequest.new(
   name: 'welcome_user',
+  namespace: 'notifications',    # NEW: Organize tasks by domain
+  version: '1.0.0',             # NEW: Semantic versioning support
   context: { user_id: user.id }
 )
 
-# note that the handler name is the same as the task name in the YAML configuration
-# this needs to be distinct across the tasks in the system, to be registered correctly
-# all task handlers will be automatically registered with the handler factory
-# and can be retrieved by name, which will happen in the API call to the tasker engine
-# where the task request would be initialized and queued for execution
-handler = Tasker::HandlerFactory.instance.get('welcome_user')
+# Handler lookup with namespace + version support
+# Note: namespace and version are optional - they default to 'default' and '0.1.0'
+handler = Tasker::HandlerFactory.instance.get(
+  'welcome_user',
+  namespace_name: 'notifications',  # Optional - defaults to 'default'
+  version: '1.0.0'                 # Optional - defaults to '0.1.0'
+)
 task = handler.initialize_task!(task_request)
 
 puts "Task created with ID: #{task.id}"

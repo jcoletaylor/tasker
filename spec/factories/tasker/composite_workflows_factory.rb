@@ -21,7 +21,7 @@ FactoryBot.define do
     before(:create) do |task, _evaluator|
       # ✅ FACTORY CONSISTENCY: Use the correct task handler registration name
       # This must match ApiTask::IntegrationExample::TASK_REGISTRY_NAME which is 'api_integration_task'
-      api_named_task = Tasker::NamedTask.find_or_create_by!(name: 'api_integration_task') do |named_task|
+      api_named_task = Tasker::NamedTask.find_or_create_by_full_name!(name: 'api_integration_task', namespace_name: 'default', version: '0.1.0') do |named_task|
         named_task.description = 'API integration workflow task'
       end
 
@@ -300,7 +300,7 @@ FactoryBot.define do
     before(:create) do |task, _evaluator|
       # ✅ FACTORY CONSISTENCY: Use find_or_create pattern to avoid conflicts
       # This handles cases where the named_task already exists from previous tests
-      dummy_named_task = Tasker::NamedTask.find_or_create_by!(name: 'dummy_task') do |named_task|
+      dummy_named_task = Tasker::NamedTask.find_or_create_by_full_name!(name: 'dummy_task', namespace_name: 'default', version: '0.1.0') do |named_task|
         named_task.description = 'Dummy task for testing workflow step logic'
       end
       task.named_task = dummy_named_task
@@ -359,7 +359,7 @@ FactoryBot.define do
     trait :dummy_task_two do
       # Override the named_task for dummy_task_two variant
       before(:create) do |task, _evaluator|
-        dummy_task_two_named_task = Tasker::NamedTask.find_or_create_by!(name: 'dummy_task_two') do |named_task|
+        dummy_task_two_named_task = Tasker::NamedTask.find_or_create_by_full_name!(name: 'dummy_task_two', namespace_name: 'default', version: '0.1.0') do |named_task|
           named_task.description = 'Second dummy task variant for testing'
         end
         task.named_task = dummy_task_two_named_task

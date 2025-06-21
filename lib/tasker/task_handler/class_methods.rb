@@ -314,7 +314,7 @@ module Tasker
       # @param name [String, Symbol] The name to register the handler under
       # @param concurrent [Boolean] Whether to use concurrent processing
       # @return [void]
-      def register_handler(name, concurrent: true)
+      def register_handler(name, namespace_name: 'default', version: '0.1.0', concurrent: true)
         # Set a flag indicating whether to use concurrent processing
         class_variable_set(:@@use_concurrent_processing, concurrent)
 
@@ -324,7 +324,7 @@ module Tasker
         end
 
         # Register the handler with the factory
-        Tasker::HandlerFactory.instance.register(name, self)
+        Tasker::HandlerFactory.instance.register(name, self, namespace_name: namespace_name, version: version)
       end
     end
   end

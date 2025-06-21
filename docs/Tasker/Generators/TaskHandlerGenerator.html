@@ -163,10 +163,6 @@
       <pre class="lines">
 
 
-22
-23
-24
-25
 26
 27
 28
@@ -199,10 +195,16 @@
 55
 56
 57
-58</pre>
+58
+59
+60
+61
+62
+63
+64</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/generators/tasker/task_handler_generator.rb', line 22</span>
+      <pre class="code"><span class="info file"># File 'lib/generators/tasker/task_handler_generator.rb', line 26</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create_task_handler_files'>create_task_handler_files</span>
   <span class='comment'># Set variables first
@@ -211,7 +213,9 @@
   <span class='ivar'>@task_handler_class</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_camelize'>camelize</span>
   <span class='ivar'>@task_name</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_underscore'>underscore</span>
   <span class='ivar'>@concurrent</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:concurrent</span><span class='rbracket'>]</span>
-  <span class='ivar'>@dependent_system</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:dependent_system</span><span class='rbracket'>]</span>
+  <span class='ivar'>@namespace_name</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:namespace_name</span><span class='rbracket'>]</span>
+  <span class='ivar'>@version</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:version</span><span class='rbracket'>]</span>
+  <span class='ivar'>@description</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:description</span><span class='rbracket'>]</span>
   <span class='ivar'>@steps</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='lbracket'>[</span><span class='symbol'>:steps</span><span class='rbracket'>]</span>
 
   <span class='comment'># Load configuration
@@ -251,7 +255,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun 19 17:21:10 2025 by
+  Generated on Sat Jun 21 00:16:57 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

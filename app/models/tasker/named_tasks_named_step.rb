@@ -53,8 +53,7 @@ module Tasker
       inst
     end
 
-    def self.associate_named_step_with_named_task(task, template, named_step)
-      named_task = Tasker::NamedTask.find_or_create_by!(name: task.name)
+    def self.associate_named_step_with_named_task(named_task, template, named_step)
       ntns = named_steps_for_named_task(named_task.named_task_id).where(named_step: { name: named_step.name }).first
       return ntns if ntns
 

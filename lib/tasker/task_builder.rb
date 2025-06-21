@@ -209,6 +209,8 @@ module Tasker
       # Register the handler
       @handler_class.register_handler(
         @config['name'],
+        namespace_name: @config['namespace_name'] || :default,
+        version: @config['version'] || '0.1.0',
         concurrent: @config.fetch('concurrent', true)
       )
 

@@ -66,60 +66,61 @@ module Tasker
     describe '#initialize' do
       it 'initializes with default namespace in namespaces set' do
         # Since HandlerFactory is a singleton, we test the current instance state
-        expect(factory.namespaces).to include('default_system')
+        expect(factory.namespaces).to include(:default)
         expect(factory.handler_classes).to be_a(Hash)
       end
     end
 
     describe '#register' do
-      context 'with default_system (backward compatibility)' do
-        it 'registers handler in default_system when no dependent_system specified' do
+      context 'with default (backward compatibility)' do
+        it 'registers handler in default when no namespace specified' do
           factory.register('legacy_task', legacy_handler_class)
 
-          expect(factory.handler_classes['default_system']).to have_key(:legacy_task)
-          expect(factory.handler_classes['default_system'][:legacy_task]).to eq(legacy_handler_class)
-          expect(factory.namespaces).to include('default_system')
+          expect(factory.handler_classes[:default]).to have_key(:legacy_task)
+          expect(factory.handler_classes[:default][:legacy_task]).to eq({ '0.1.0' => legacy_handler_class })
+          expect(factory.namespaces).to include(:default)
         end
 
         it 'handles string class names' do
           factory.register('string_task', 'TestStringHandler')
 
-          expect(factory.handler_classes['default_system'][:string_task]).to eq('TestStringHandler')
+          expect(factory.handler_classes[:default][:string_task]).to eq({ '0.1.0' => 'TestStringHandler' })
         end
       end
 
-      context 'with explicit dependent_system' do
-        it 'registers handler in specified dependent system' do
-          factory.register('process_order', payment_handler_class, dependent_system: 'payments')
+      context 'with explicit namespace' do
+        it 'registers handler in specified namespace' do
+          factory.register('process_order', payment_handler_class, namespace_name: :payments, version: '0.1.0')
 
-          expect(factory.handler_classes['payments']).to have_key(:process_order)
-          expect(factory.handler_classes['payments'][:process_order]).to eq(payment_handler_class)
-          expect(factory.namespaces).to include('payments')
+          expect(factory.handler_classes[:payments]).to have_key(:process_order)
+          expect(factory.handler_classes[:payments][:process_order]).to eq({ '0.1.0' => payment_handler_class })
+          expect(factory.namespaces).to include(:payments)
         end
 
         it 'allows same name in different dependent systems' do
-          factory.register('process_order', payment_handler_class, dependent_system: 'payments')
-          factory.register('process_order', inventory_handler_class, dependent_system: 'inventory')
+          factory.register('process_order', payment_handler_class, namespace_name: :payments, version: '0.1.0')
+          factory.register('process_order', inventory_handler_class, namespace_name: :inventory, version: '0.1.0')
 
-          expect(factory.handler_classes['payments'][:process_order]).to eq(payment_handler_class)
-          expect(factory.handler_classes['inventory'][:process_order]).to eq(inventory_handler_class)
-          expect(factory.namespaces).to include('payments', 'inventory')
+          expect(factory.handler_classes[:payments][:process_order]).to eq({ '0.1.0' => payment_handler_class })
+          expect(factory.handler_classes[:inventory][:process_order]).to eq({ '0.1.0' => inventory_handler_class })
+          expect(factory.namespaces).to include(:payments, :inventory)
         end
 
-        it 'converts dependent_system to string' do
-          factory.register('symbol_task', payment_handler_class, dependent_system: :payments)
+        it 'converts namespace to string' do
+          factory.register('symbol_task', payment_handler_class, namespace_name: :payments, version: '0.1.0')
 
-          expect(factory.handler_classes['payments']).to have_key(:symbol_task)
-          expect(factory.namespaces).to include('payments')
+          expect(factory.handler_classes[:payments]).to have_key(:symbol_task)
+          expect(factory.handler_classes[:payments][:symbol_task]).to eq({ '0.1.0' => payment_handler_class })
+          expect(factory.namespaces).to include(:payments)
         end
 
         it 'initializes namespace if it does not exist' do
-          expect(factory.handler_classes).not_to have_key('new_system')
+          expect(factory.handler_classes).not_to have_key(:new_system)
 
-          factory.register('new_task', payment_handler_class, dependent_system: 'new_system')
+          factory.register('new_task', payment_handler_class, namespace_name: 'new_system', version: '0.1.0')
 
-          expect(factory.handler_classes).to have_key('new_system')
-          expect(factory.namespaces).to include('new_system')
+          expect(factory.handler_classes).to have_key(:new_system)
+          expect(factory.namespaces).to include(:new_system)
         end
       end
 
@@ -156,21 +157,21 @@ module Tasker
           end.to raise_error(StandardError, 'Configuration is broken')
 
           # Handler should NOT be registered when configuration fails
-          # Due to atomic registration, the default_system key may not even exist
-          default_handlers = factory.handler_classes['default_system'] || {}
+          # Due to atomic registration, the default key may not even exist
+          default_handlers = factory.handler_classes[:default] || {}
           expect(default_handlers).not_to have_key(:broken_handler)
         end
 
         it 'provides clear error messages for configuration failures' do
           expect do
-            factory.register('broken_handler', broken_handler_class, dependent_system: 'payments')
+            factory.register('broken_handler', broken_handler_class, namespace_name: :payments, version: '0.1.0')
           end.to raise_error do |error|
             expect(error.message).to eq('Configuration is broken')
             expect(error).to be_a(StandardError)
           end
 
           # Namespace should not be polluted with failed registrations
-          expect(factory.handler_classes).not_to have_key('payments')
+          expect(factory.handler_classes).not_to have_key(:payments)
         end
 
         it 'successfully registers handlers with valid custom event configuration' do
@@ -184,8 +185,8 @@ module Tasker
           end.not_to raise_error
 
           # Handler should be successfully registered
-          expect(factory.handler_classes['default_system']).to have_key(:working_handler)
-          expect(factory.handler_classes['default_system'][:working_handler]).to eq(working_handler_class)
+          expect(factory.handler_classes[:default]).to have_key(:working_handler)
+          expect(factory.handler_classes[:default][:working_handler]).to eq({ '0.1.0' => working_handler_class })
         end
 
         it 'preserves atomicity - no partial registration on configuration failure' do
@@ -193,7 +194,7 @@ module Tasker
           original_namespaces = factory.namespaces.dup
 
           expect do
-            factory.register('broken_handler', broken_handler_class, dependent_system: 'new_system')
+            factory.register('broken_handler', broken_handler_class, namespace_name: 'new_system', version: '0.1.0')
           end.to raise_error(StandardError, 'Configuration is broken')
 
           # Factory state should be unchanged after failure
@@ -206,19 +207,19 @@ module Tasker
     describe '#get' do
       before do
         factory.register('legacy_task', legacy_handler_class)
-        factory.register('process_order', payment_handler_class, dependent_system: 'payments')
-        factory.register('process_order', inventory_handler_class, dependent_system: 'inventory')
+        factory.register('process_order', payment_handler_class, namespace_name: :payments, version: '0.1.0')
+        factory.register('process_order', inventory_handler_class, namespace_name: :inventory, version: '0.1.0')
       end
 
-      context 'with default_system (backward compatibility)' do
-        it 'retrieves handler from default_system when no dependent_system specified' do
+      context 'with default (backward compatibility)' do
+        it 'retrieves handler from default when no namespace specified' do
           handler = factory.get('legacy_task')
 
           expect(handler).to be_a(legacy_handler_class)
         end
 
-        it 'retrieves handler from default_system when explicitly specified' do
-          handler = factory.get('legacy_task', dependent_system: 'default_system')
+        it 'retrieves handler from default when explicitly specified' do
+          handler = factory.get('legacy_task')
 
           expect(handler).to be_a(legacy_handler_class)
         end
@@ -226,38 +227,38 @@ module Tasker
 
       context 'with explicit dependent_system' do
         it 'retrieves handler from specified dependent system' do
-          payment_handler = factory.get('process_order', dependent_system: 'payments')
-          inventory_handler = factory.get('process_order', dependent_system: 'inventory')
+          payment_handler = factory.get('process_order', namespace_name: :payments, version: '0.1.0')
+          inventory_handler = factory.get('process_order', namespace_name: :inventory, version: '0.1.0')
 
           expect(payment_handler).to be_a(payment_handler_class)
           expect(inventory_handler).to be_a(inventory_handler_class)
         end
 
         it 'converts dependent_system to string' do
-          handler = factory.get('process_order', dependent_system: :payments)
+          handler = factory.get('process_order', namespace_name: :payments, version: '0.1.0')
 
           expect(handler).to be_a(payment_handler_class)
         end
       end
 
       context 'error handling' do
-        it 'raises appropriate error for missing handler in default_system' do
+        it 'raises appropriate error for missing handler in default' do
           expect do
             factory.get('nonexistent')
           end.to raise_error(ProceduralError, 'No task handler for nonexistent')
         end
 
-        it 'raises appropriate error for missing handler in specific dependent_system' do
+        it 'raises appropriate error for missing handler in specific namespace' do
           expect do
-            factory.get('nonexistent', dependent_system: 'payments')
-          end.to raise_error(ProceduralError, 'No task handler for nonexistent in dependent system payments')
+            factory.get('nonexistent', namespace_name: :payments, version: '0.1.0')
+          end.to raise_error(ProceduralError, 'No task handler for nonexistent in namespace payments and version 0.1.0')
         end
 
         it 'raises error when handler exists in different dependent_system' do
           expect do
-            factory.get('process_order', dependent_system: 'nonexistent_system')
+            factory.get('process_order', namespace_name: 'nonexistent_system', version: '0.1.0')
           end.to raise_error(ProceduralError,
-                             'No task handler for process_order in dependent system nonexistent_system')
+                             'No task handler for process_order in namespace nonexistent_system and version 0.1.0')
         end
       end
 
@@ -267,7 +268,7 @@ module Tasker
           # The actual instantiation will be tested with real classes in integration tests
           factory.register('string_task', 'TestStringHandler')
 
-          expect(factory.handler_classes['default_system'][:string_task]).to eq('TestStringHandler')
+          expect(factory.handler_classes[:default][:string_task]['0.1.0']).to eq('TestStringHandler')
         end
       end
     end
@@ -275,25 +276,25 @@ module Tasker
     describe '#list_handlers' do
       before do
         factory.register('legacy_task', legacy_handler_class)
-        factory.register('payment_task', payment_handler_class, dependent_system: 'payments')
-        factory.register('inventory_task', inventory_handler_class, dependent_system: 'inventory')
-        factory.register('process_order', payment_handler_class, dependent_system: 'payments')
+        factory.register('payment_task', payment_handler_class, namespace_name: :payments, version: '0.1.0')
+        factory.register('inventory_task', inventory_handler_class, namespace_name: :inventory, version: '0.1.0')
+        factory.register('process_order', payment_handler_class, namespace_name: :payments, version: '0.1.0')
       end
 
       it 'returns all handlers when no namespace specified' do
         all_handlers = factory.list_handlers
 
-        expect(all_handlers).to have_key('default_system')
-        expect(all_handlers).to have_key('payments')
-        expect(all_handlers).to have_key('inventory')
-        expect(all_handlers['default_system']).to have_key(:legacy_task)
-        expect(all_handlers['payments']).to have_key(:payment_task)
-        expect(all_handlers['payments']).to have_key(:process_order)
-        expect(all_handlers['inventory']).to have_key(:inventory_task)
+        expect(all_handlers).to have_key(:default)
+        expect(all_handlers).to have_key(:payments)
+        expect(all_handlers).to have_key(:inventory)
+        expect(all_handlers[:default]).to have_key(:legacy_task)
+        expect(all_handlers[:payments]).to have_key(:payment_task)
+        expect(all_handlers[:payments]).to have_key(:process_order)
+        expect(all_handlers[:inventory]).to have_key(:inventory_task)
       end
 
       it 'returns handlers for specific namespace' do
-        payment_handlers = factory.list_handlers(namespace: 'payments')
+        payment_handlers = factory.list_handlers(namespace: :payments)
 
         expect(payment_handlers).to have_key(:payment_task)
         expect(payment_handlers).to have_key(:process_order)
@@ -316,17 +317,17 @@ module Tasker
     end
 
     describe '#registered_namespaces' do
-      it 'returns default_system initially' do
-        expect(factory.registered_namespaces).to eq(['default_system'])
+      it 'returns default initially' do
+        expect(factory.registered_namespaces).to eq([:default])
       end
 
       it 'includes all registered namespaces' do
         factory.register('legacy_task', legacy_handler_class)
-        factory.register('payment_task', payment_handler_class, dependent_system: 'payments')
-        factory.register('inventory_task', inventory_handler_class, dependent_system: 'inventory')
+        factory.register('payment_task', payment_handler_class, namespace_name: :payments, version: '0.1.0')
+        factory.register('inventory_task', inventory_handler_class, namespace_name: :inventory, version: '0.1.0')
 
         namespaces = factory.registered_namespaces
-        expect(namespaces).to include('default_system', 'payments', 'inventory')
+        expect(namespaces).to include(:default, :payments, :inventory)
         expect(namespaces.length).to eq(3)
       end
     end
@@ -349,7 +350,7 @@ module Tasker
       it 'preserves custom event discovery functionality' do
         expect(factory).to receive(:discover_and_register_custom_events).with(event_handler_class)
 
-        factory.register('event_task', event_handler_class, dependent_system: 'events')
+        factory.register('event_task', event_handler_class, namespace_name: 'events', version: '0.1.0')
       end
     end
 
@@ -364,7 +365,7 @@ module Tasker
         handler = factory.get('legacy_task')
 
         expect(handler).to be_a(legacy_handler_class)
-        expect(factory.handler_classes['default_system']).to have_key(:legacy_task)
+        expect(factory.handler_classes[:default]).to have_key(:legacy_task)
       end
     end
   end

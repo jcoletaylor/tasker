@@ -17,7 +17,7 @@ module Tasker
       Rails.logger.info "TaskRunnerJob: Starting execution for task #{task_id}"
 
       # Get the appropriate task handler and process the task
-      handler = handler_factory.get(task.name)
+      handler = handler_factory.get(task.name, namespace_name: task.namespace_name, version: task.version)
       handler.handle(task)
 
       # Check if task completed successfully

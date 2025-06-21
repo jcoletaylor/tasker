@@ -103,7 +103,11 @@ module Tasker
       # @return [Object] The task handler instance
       def get_task_handler_for_task(task)
         handler_factory = Tasker::HandlerFactory.instance
-        handler_factory.get(task.name)
+        handler_factory.get(
+          task.name,
+          namespace_name: task.named_task.task_namespace.name,
+          version: task.named_task.version
+        )
       end
 
       # Get task handler class for a task name

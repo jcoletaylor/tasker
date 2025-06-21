@@ -4,8 +4,12 @@
 module <%= @module_namespace %>
 <% end %>
   class <%= @task_handler_class %> < Tasker::ConfiguredTask
+    # Generated with TaskNamespace + Versioning support
+    # Namespace: <%= @namespace_name || 'default' %>
+    # Version: <%= @version || '0.1.0' %>
+    #
     # Add your task handler logic here, if necessary
-    # for configured tasks you can override:
+    # For configured tasks you can override:
     # self.task_name method
     # self.yaml_path method
     # self.config method

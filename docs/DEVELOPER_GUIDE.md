@@ -2,13 +2,50 @@
 
 ## Overview
 
-This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around five main developer-facing components:
+This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around six main developer-facing components:
 
-1. **Task Handlers** - Define and coordinate multi-step workflows
-2. **Step Handlers** - Implement the business logic for individual workflow steps
-3. **Event Subscribers** - Create integrations with external services and monitoring systems
-4. **YAML Configuration** - Declarative workflow and step configuration
-5. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
+1. **TaskNamespaces & Versioning** - Organize and version task handlers for scalable workflow management
+2. **Task Handlers** - Define and coordinate multi-step workflows
+3. **Step Handlers** - Implement the business logic for individual workflow steps
+4. **Event Subscribers** - Create integrations with external services and monitoring systems
+5. **YAML Configuration** - Declarative workflow and step configuration with namespace support
+6. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
+
+## New in Tasker 2.3.0: TaskNamespace + Versioning Architecture
+
+Tasker now supports **hierarchical task organization** and **semantic versioning** for enterprise-scale workflow management:
+
+### Key Benefits
+- **Namespace Isolation**: Organize tasks by domain (`payments`, `inventory`, `notifications`)
+- **Version Coexistence**: Multiple versions of the same task can run simultaneously
+- **Zero Breaking Changes**: Existing tasks continue working with automatic defaults
+- **Enterprise Scalability**: Clean separation of concerns for large organizations
+
+### Quick Example
+```ruby
+# Create namespaced task handlers
+task_request = Tasker::Types::TaskRequest.new(
+  name: 'process_order',
+  namespace: 'payments',    # NEW: Namespace organization
+  version: '2.1.0',        # NEW: Semantic versioning
+  context: { order_id: 123 }
+)
+
+# Handler lookup with namespace + version
+handler = Tasker::HandlerFactory.instance.get(
+  'process_order',
+  namespace_name: 'payments',
+  version: '2.1.0'
+)
+```
+
+### Namespace Organization Patterns
+- **`payments`** - Payment processing, billing, refunds
+- **`inventory`** - Stock management, fulfillment, warehouse operations
+- **`notifications`** - Email, SMS, push notifications, alerts
+- **`integrations`** - Third-party APIs, webhooks, data synchronization
+- **`data_processing`** - ETL, data transformation, analytics pipelines
+- **`default`** - General workflows (automatic fallback when unspecified)
 
 ## Architecture Overview
 
@@ -57,7 +94,147 @@ flowchart TB
     class Sentry,Metrics,Alerts,Notifications external
 ```
 
-## 1. Task Handlers
+## 1. TaskNamespaces & Versioning
+
+TaskNamespaces provide organizational hierarchy for task handlers, while versioning enables multiple versions of the same task to coexist. This is essential for enterprise environments with complex workflows and deployment strategies.
+
+### TaskNamespace Management
+
+#### Creating TaskNamespaces
+
+TaskNamespaces are automatically created when referenced, but you can also create them explicitly:
+
+```ruby
+# Automatic creation during task creation
+task_request = Tasker::Types::TaskRequest.new(
+  name: 'process_payment',
+  namespace: 'payments',  # Automatically creates 'payments' namespace if needed
+  version: '1.0.0',
+  context: { payment_id: 123 }
+)
+
+# Manual creation with description
+namespace = Tasker::TaskNamespace.create!(
+  name: 'payments',
+  description: 'Payment processing and billing workflows'
+)
+```
+
+#### Namespace Patterns & Best Practices
+
+**Domain-Based Organization**:
+```yaml
+# config/tasker/tasks/payments/process_order.yaml
+---
+name: process_order
+namespace_name: payments
+version: 2.1.0
+task_handler_class: Payments::ProcessOrderHandler
+
+# config/tasker/tasks/inventory/process_order.yaml
+---
+name: process_order
+namespace_name: inventory
+version: 1.5.0
+task_handler_class: Inventory::ProcessOrderHandler
+```
+
+**Version Management Strategies**:
+```ruby
+# Gradual rollout - start with specific version
+handler_v2 = Tasker::HandlerFactory.instance.get(
+  'process_payment',
+  namespace_name: 'payments',
+  version: '2.0.0'
+)
+
+# Legacy support - maintain old version
+handler_v1 = Tasker::HandlerFactory.instance.get(
+  'process_payment',
+  namespace_name: 'payments',
+  version: '1.5.0'
+)
+
+# Default behavior - uses latest registered version
+handler_default = Tasker::HandlerFactory.instance.get('process_payment')
+```
+
+#### HandlerFactory Registry Architecture
+
+The HandlerFactory now uses a **3-level registry** for precise task identification:
+
+```ruby
+# Registry Structure: namespace_name → handler_name → version → handler_class
+# Example internal structure:
+{
+  payments: {
+    process_order: {
+      '1.0.0' => Payments::ProcessOrderV1,
+      '2.0.0' => Payments::ProcessOrderV2
+    }
+  },
+  inventory: {
+    process_order: {
+      '1.5.0' => Inventory::ProcessOrder
+    }
+  }
+}
+```
+
+**Registration Examples**:
+```ruby
+# Class-based registration with namespace + version
+class PaymentHandler < Tasker::TaskHandler
+  register_handler(
+    'process_payment',
+    namespace_name: 'payments',
+    version: '2.0.0',
+    concurrent: true
+  )
+end
+
+# YAML-based registration
+# config/tasker/tasks/payments/process_payment.yaml
+---
+name: process_payment
+namespace_name: payments
+version: 2.0.0
+task_handler_class: PaymentHandler
+```
+
+### Versioning Best Practices
+
+#### Semantic Versioning
+Follow [semver.org](https://semver.org) conventions:
+- **Major version** (`2.0.0`): Breaking changes, incompatible API changes
+- **Minor version** (`1.1.0`): New features, backward compatible
+- **Patch version** (`1.0.1`): Bug fixes, backward compatible
+
+#### Version Lifecycle Management
+```ruby
+# Development workflow
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '2.0.0-beta.1')  # Pre-release
+end
+
+# Production deployment
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '2.0.0')         # Stable release
+end
+
+# Maintenance mode
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '1.5.2')         # Patch release for legacy
+end
+```
+
+## 2. Task Handlers
 
 Task handlers define the overall workflow structure and coordinate step execution. They are the entry point for creating and managing multi-step processes.
 
@@ -574,12 +751,14 @@ YAML files provide declarative configuration for task handlers, defining workflo
 ### Task Handler YAML Structure
 
 ```yaml
-# config/tasker/tasks/order_process/order_handler.yaml
+# config/tasker/tasks/payments/order_process.yaml
 ---
 name: order_process
-module_namespace: OrderProcess
+namespace_name: payments        # NEW: TaskNamespace organization
+version: 1.2.0                 # NEW: Semantic versioning
+module_namespace: OrderProcess  # Ruby module namespace
 task_handler_class: OrderHandler
-concurrent: true  # Enable parallel step execution
+concurrent: true               # Enable parallel step execution
 
 # JSON Schema validation for task context
 schema:
@@ -694,6 +873,124 @@ environments:
       Authorization: "Bearer ${API_TOKEN}"
     timeout: 15
     retries: 3
+```
+
+### TaskNamespace + Versioning in YAML
+
+The new namespace and versioning system provides enterprise-scale organization:
+
+#### Namespace-Based File Organization
+
+**Recommended File Structure**:
+```
+config/tasker/tasks/
+├── payments/
+│   ├── process_order.yaml          # version: 1.0.0
+│   ├── process_refund.yaml         # version: 1.1.0
+│   └── validate_payment.yaml       # version: 2.0.0
+├── inventory/
+│   ├── process_order.yaml          # version: 1.5.0 (same name, different namespace)
+│   ├── stock_check.yaml            # version: 1.0.0
+│   └── reorder_items.yaml          # version: 1.2.0
+└── notifications/
+    ├── send_email.yaml             # version: 1.0.0
+    ├── send_sms.yaml               # version: 1.1.0
+    └── push_notification.yaml      # version: 2.0.0
+```
+
+#### Version Coexistence Examples
+
+**Multiple Versions of Same Task**:
+```yaml
+# config/tasker/tasks/payments/process_order_v1.yaml
+---
+name: process_order
+namespace_name: payments
+version: 1.0.0                      # Legacy version
+task_handler_class: Payments::ProcessOrderV1
+
+# config/tasker/tasks/payments/process_order_v2.yaml
+---
+name: process_order
+namespace_name: payments
+version: 2.0.0                      # Current version
+task_handler_class: Payments::ProcessOrderV2
+concurrent: true                    # New features in v2.0.0
+```
+
+#### Namespace-Specific Configuration
+
+**Domain-Specific Settings**:
+```yaml
+# config/tasker/tasks/integrations/api_sync.yaml
+---
+name: api_sync
+namespace_name: integrations
+version: 1.3.0
+task_handler_class: Integrations::ApiSyncHandler
+
+# Integration-specific settings
+handler_config:
+  max_concurrent_requests: 5
+  rate_limit_per_second: 10
+  dependent_systems:        # External systems this task interacts with
+    - salesforce_api
+    - inventory_service
+    - notification_queue
+
+step_templates:
+  - name: fetch_data
+    handler_class: Integrations::FetchDataHandler
+    dependent_system: salesforce_api    # Step-level system identification
+
+  - name: transform_data
+    handler_class: Integrations::TransformDataHandler
+
+  - name: upload_data
+    handler_class: Integrations::UploadDataHandler
+    dependent_system: inventory_service
+```
+
+#### Configuration Validation & Defaults
+
+**YAML Configuration Schema**:
+```yaml
+# Full configuration with all optional fields
+---
+name: process_payment                      # Required
+namespace_name: payments                   # Optional - defaults to 'default'
+version: 2.1.0                           # Optional - defaults to '0.1.0'
+module_namespace: Payments                # Optional - Ruby module namespace
+task_handler_class: ProcessPaymentHandler # Required
+concurrent: true                          # Optional - defaults to false
+description: "Advanced payment processing" # Optional - for documentation
+
+# Database configuration (optional)
+configuration:
+  priority: high
+  max_execution_time: 300
+  custom_metadata:
+    team: payments
+    owner: alice@company.com
+    documentation_url: https://wiki.company.com/payments
+```
+
+#### Migration Strategy for Existing Configurations
+
+**Backward Compatibility**: Existing YAML files continue working unchanged:
+```yaml
+# Existing file - continues working with defaults
+---
+name: legacy_task
+task_handler_class: LegacyHandler
+# Automatically gets: namespace_name: 'default', version: '0.1.0'
+
+# Enhanced file - new capabilities
+---
+name: legacy_task
+namespace_name: default     # Explicit default
+version: 0.1.0             # Explicit version
+task_handler_class: LegacyHandler
 ```
 
 ## 5. Authentication & Authorization

@@ -22,23 +22,23 @@ module Tasker
     #
     # @return [HandlerFactory] A new handler factory instance
     def initialize
-      self.handler_classes ||= {}
-      self.namespaces ||= Set.new(['default_system'])
+      self.handler_classes ||= ActiveSupport::HashWithIndifferentAccess.new
+      self.namespaces ||= Set.new([:default])
     end
 
     # Get a task handler instance by name and optional dependent system
     #
     # @param name [String, Symbol] The name of the handler to retrieve
-    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default_system')
+    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default')
     # @return [Object] An instance of the requested task handler
     # @raise [Tasker::ProceduralError] If no handler is registered with the given name in the specified system
-    def get(name, dependent_system: 'default_system')
-      dependent_system = dependent_system.to_s
+    def get(name, namespace_name: :default, version: '0.1.0')
+      namespace_name = namespace_name.to_sym
       name_sym = name.to_sym
 
       # Direct namespace lookup - allows same name in different systems
-      handler_class = handler_classes.dig(dependent_system, name_sym)
-      raise_handler_not_found(name, dependent_system) unless handler_class
+      handler_class = handler_classes.dig(namespace_name, name_sym, version)
+      raise_handler_not_found(name, namespace_name, version) unless handler_class
 
       instantiate_handler(handler_class)
     end
@@ -47,22 +47,23 @@ module Tasker
     #
     # @param name [String, Symbol] The name to register the handler under
     # @param class_name [Class, String] The handler class to register
-    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default_system')
+    # @param dependent_system [String, Symbol] The dependent system namespace (defaults to 'default')
     # @return [void]
     # @raise [StandardError] If custom event configuration fails (fail fast)
-    def register(name, class_name, dependent_system: 'default_system')
-      dependent_system = dependent_system.to_s
+    def register(name, class_or_class_name, namespace_name: :default, version: '0.1.0')
       name_sym = name.to_sym
+      namespace_name = namespace_name.to_sym
 
       # Validate custom event configuration BEFORE modifying registry state
       # This ensures atomic registration - either fully succeeds or fully fails
-      normalized_class = normalize_class_name(class_name)
-      discover_and_register_custom_events(class_name)
+      normalized_class = normalize_class_name(class_or_class_name)
+      discover_and_register_custom_events(class_or_class_name)
 
       # Only modify registry state after successful configuration validation
-      handler_classes[dependent_system] ||= {}
-      namespaces.add(dependent_system)
-      handler_classes[dependent_system][name_sym] = normalized_class
+      handler_classes[namespace_name] ||= ActiveSupport::HashWithIndifferentAccess.new
+      handler_classes[namespace_name][name_sym] ||= ActiveSupport::HashWithIndifferentAccess.new
+      handler_classes[namespace_name][name_sym][version] = normalized_class
+      namespaces.add(namespace_name)
     end
 
     # List handlers, optionally filtered by namespace
@@ -71,7 +72,7 @@ module Tasker
     # @return [Hash] Handlers hash, either for specific namespace or all namespaces
     def list_handlers(namespace: nil)
       if namespace
-        handler_classes[namespace.to_s] || {}
+        handler_classes[namespace.to_s] || ActiveSupport::HashWithIndifferentAccess.new
       else
         handler_classes
       end
@@ -88,15 +89,15 @@ module Tasker
 
     # Normalize class name for consistent storage
     #
-    # @param class_name [Class, String] The handler class to normalize
+    # @param class_or_class_name [Class, String] The handler class to normalize
     # @return [Class, String] Normalized class representation
-    def normalize_class_name(class_name)
-      if class_name.is_a?(Class)
+    def normalize_class_name(class_or_class_name)
+      if class_or_class_name.is_a?(Class)
         # Store the class directly for anonymous classes
-        class_name
+        class_or_class_name
       else
         # Store as string for named classes (original behavior)
-        class_name.to_s
+        class_or_class_name.to_s
       end
     end
 
@@ -120,12 +121,14 @@ module Tasker
     # Raise appropriate error for handler not found
     #
     # @param name [String, Symbol] Handler name that was not found
-    # @param dependent_system [String] The dependent system that was searched
+    # @param namespace_name [String] The namespace that was searched
+    # @param version [String] The version that was searched
     # @raise [Tasker::ProceduralError] Handler not found error
-    def raise_handler_not_found(name, dependent_system)
-      raise(Tasker::ProceduralError, "No task handler for #{name}") if dependent_system == 'default_system'
+    def raise_handler_not_found(name, namespace_name, version)
+      raise(Tasker::ProceduralError, "No task handler for #{name}") if namespace_name == :default
 
-      raise(Tasker::ProceduralError, "No task handler for #{name} in dependent system #{dependent_system}")
+      raise(Tasker::ProceduralError,
+            "No task handler for #{name} in namespace #{namespace_name} and version #{version}")
     end
 
     # Automatically discover and register custom events from step handlers

@@ -1,148 +1,149 @@
 # Active Context
 
-## Current Focus: Phase 3.1 Handler Factory Namespacing ✅ SUCCESSFULLY COMPLETED
+## Current Focus: ✅ **Phase 3.x.1 Database Foundation + Documentation COMPLETE** → Ready for Phase 3.x.2 REST API
 
-**Status**: PHASE 3.1 ✅ COMPLETED + STATE LEAKAGE RESOLVED + ALL 1000 TESTS PASSING
+**Status**: **PHASE 3.x.1 COMPLETE** - Database foundation, integration, and documentation successfully implemented and tested
 
-### 🎉 Phase 3.1: Handler Factory Namespacing - SUCCESSFULLY COMPLETED ✅
+### 🎯 **ACHIEVEMENTS: Database Foundation (Phase 3.x.1)**
 
-**FINAL ACHIEVEMENT**: **1000/1000 tests passing** - Complete system integrity maintained!
+✅ **TaskNamespace Model**: Complete with find_or_create_by wrapper for robust default handling
+✅ **NamedTask Enhancement**: Enhanced with namespace + version + configuration support
+✅ **Database Migrations**: Successfully run in both development and test environments
+✅ **Factory Updates**: All factories updated to work with new architecture
+✅ **HandlerFactory Architecture**: Completely redesigned with 3-level registry (namespace → name → version)
+✅ **TaskBuilder Integration**: YAML configs now support `namespace_name` and `version`
+✅ **Test Coverage**: Comprehensive tests passing for new architecture
+✅ **Plugin Integration**: Updated to use proper namespace + version lookups
+✅ **GraphQL Mutations**: Enhanced to support namespace + version parameters
+✅ **Documentation**: Comprehensive updates to README.md, DEVELOPER_GUIDE.md, and QUICK_START.md with namespace + versioning examples and patterns
 
-**COMPLETED IMPLEMENTATION**:
-- ✅ **Enhanced HandlerFactory**: Successfully implemented `dependent_system` parameter support
-- ✅ **Namespace-Aware Registry**: Registry structure updated to `@handler_classes[dependent_system][name]`
-- ✅ **Backward Compatibility**: Existing registrations continue working with `default_system`
-- ✅ **"Fail Fast" Error Handling**: Configuration errors now surface immediately instead of silent failures
-- ✅ **Handler Registration Infrastructure**: Mock class loading and automatic registration working perfectly
-- ✅ **Atomic Registration**: Configuration validation happens before registry modification
-- ✅ **State Leakage Resolution**: Fixed test isolation issues with surgical cleanup pattern
-- ✅ **Production Ready**: All workflow patterns, health checks, and system integration tests passing
+### 🔧 **CORE ARCHITECTURAL CHANGES COMPLETED**
 
-#### 🎯 State Leakage Issue - RESOLVED ✅
-
-**Root Cause Identified**: `handler_factory_spec.rb` had destructive cleanup that wiped the entire HandlerFactory registry before each test, clearing workflow task handlers that were correctly auto-registered during class loading.
-
-**Solution Implemented**: **Surgical Cleanup Pattern**
-- **Before**: Store original state (`@original_handler_classes`, `@original_namespaces`)
-- **After**: Only remove test-specific handlers, restore original state
-- **Preservation**: Keep all production workflow handlers intact between tests
-
-**Key Insight**: The issue was NOT with Phase 3.1 HandlerFactory changes - it was test isolation destroying shared singleton state. The workflow task handlers were correctly registering via automatic `register_handler(TASK_NAME)` calls in class definitions.
-
-#### Phase 3.1 Technical Implementation ✅
-
-**Final HandlerFactory Structure**:
+#### **1. HandlerFactory 3-Level Registry**
 ```ruby
-class HandlerFactory
-  def register(name, class_name, dependent_system: 'default_system')
-    dependent_system = dependent_system.to_s
-    name_sym = name.to_sym
+# New Structure: namespace_name → handler_name → version → handler_class
+handler_classes[:payments][:process_order]['1.0.0'] = PaymentHandler
+handler_classes[:inventory][:process_order]['2.1.0'] = InventoryHandler
 
-    # Validate custom event configuration BEFORE modifying registry state
-    normalized_class = normalize_class_name(class_name)
-    discover_and_register_custom_events(class_name)
-
-    # Only modify registry state after successful validation
-    handler_classes[dependent_system] ||= {}
-    namespaces.add(dependent_system)
-    handler_classes[dependent_system][name_sym] = normalized_class
-  end
-
-  def get(name, dependent_system: 'default_system')
-    dependent_system = dependent_system.to_s
-    name_sym = name.to_sym
-
-    handler_class = handler_classes.dig(dependent_system, name_sym)
-    raise_handler_not_found(name, dependent_system) unless handler_class
-
-    instantiate_handler(handler_class)
-  end
-end
+# New Method Signatures
+register(name, class_name, namespace_name: :default, version: '0.1.0')
+get(name, namespace_name: :default, version: '0.1.0')
 ```
 
-**Key Architectural Achievements**:
-- **Atomic Registration**: Configuration errors prevent partial registry state
-- **Namespace Tracking**: `@namespaces` Set for efficient enumeration
-- **Backward Compatibility**: `default_system` parameter default maintains existing behavior
-- **Error Propagation**: Configuration failures surface immediately as exceptions
-- **Test Isolation**: Surgical cleanup preserves shared state while allowing test-specific modifications
+#### **2. NamedTask Namespace Integration**
+```ruby
+# Full namespace + version support
+NamedTask.find_or_create_by_full_name!(
+  namespace_name: 'payments',
+  name: 'process_order',
+  version: '1.0.0'
+)
 
-### 📋 REMAINING FOR COMPLETE 3.1 FINISH
+# Automatic defaults: namespace='default', version='0.1.0'
+```
 
-**Core Implementation**: ✅ COMPLETE - All namespacing functionality working
-**Test Suite**: ✅ COMPLETE - All 1000 tests passing
-**Error Handling**: ✅ COMPLETE - "Fail fast" philosophy implemented
+#### **3. TaskBuilder YAML Configuration**
+```yaml
+name: api_task/integration_example
+namespace_name: api_tests    # ✅ Fixed - was 'namespace'
+version: 1.0.0              # ✅ New versioning support
+module_namespace: ApiTask
+task_handler_class: IntegrationExample
+```
 
-**Optional Enhancements** (can be done in parallel with Phase 3.2):
-- Namespace enumeration methods (`list_handlers`, `namespaces`) - for REST API convenience
-- Enhanced error messages for namespace vs handler distinction
-- Documentation updates for enhanced HandlerFactory
+#### **4. Task-to-Handler Lookup Integration**
+```ruby
+# Before: Only used task name
+handler_factory.get(task.name)
 
-### 🚀 Next Phase Readiness
+# After: Uses full namespace + version from NamedTask
+handler_factory.get(
+  task.name,
+  namespace_name: task.named_task.task_namespace.name,
+  version: task.named_task.version
+)
+```
 
-**Phase 3.2: REST API Handlers Endpoint** - READY TO START
-- Foundation complete with namespaced HandlerFactory
-- All test infrastructure stable and reliable
-- "Fail fast" error handling provides clear API error responses
+### 📊 **INTEGRATION STATUS**
 
-**Phase 3.3: Runtime Dependency Graph API** - CAN START IN PARALLEL
-- Independent of handler namespacing
-- Leverages Phase 2.3 configurable dependency graph analysis
-- No blocking dependencies on 3.2
+| Component | Status | Details |
+|-----------|--------|---------|
+| **TaskNamespace Model** | ✅ Complete | Robust default handling, validations, associations |
+| **NamedTask Model** | ✅ Complete | Full namespace + version + configuration support |
+| **HandlerFactory** | ✅ Complete | 3-level registry with namespace + version |
+| **TaskBuilder** | ✅ Complete | YAML config reads namespace_name + version |
+| **Task Handlers** | ✅ Complete | register_handler() supports new signature |
+| **Plugin Integration** | ✅ Complete | Uses task's namespace + version for lookups |
+| **GraphQL API** | ✅ Complete | Supports namespace + version parameters |
+| **Factories & Tests** | ✅ Complete | All updated and passing |
+| **Documentation** | ✅ Complete | README, DEVELOPER_GUIDE, QUICK_START updated with examples |
 
-### 📊 Final Test Suite Status - PERFECT ✅
+### 🎯 **NEXT: Phase 3.x.2 - REST API Endpoints**
 
-- **Total Tests**: 1000 examples
-- **Passing**: 1000 examples (100% pass rate) 🎉
-- **Failing**: 0 examples
-- **Coverage**: Maintained excellent coverage throughout
+**Immediate Priority**: Update REST API controllers and endpoints to support namespace + version parameters in:
+- Task creation endpoints
+- Task lookup endpoints
+- Handler listing endpoints
+- Task status endpoints
 
-**Test Categories - ALL PASSING**:
-- ✅ **Configuration Tests**: All dry-struct configuration tests passing
-- ✅ **Authentication/Authorization**: All security tests passing
-- ✅ **Custom Event Registration**: All "fail fast" error handling tests passing
-- ✅ **Production Workflows**: All workflow pattern tests passing
-- ✅ **Health Functions**: All system health tests passing
-- ✅ **Handler Factory**: All namespacing and registration tests passing
-- ✅ **State Machine**: All workflow orchestration tests passing
+**After REST API**: Move to runtime dependency graph API and template management interfaces.
 
-## Recently Completed Work ✅
+---
 
-### ✅ Phase 3.1 Handler Factory Namespacing - SUCCESSFULLY COMPLETED
-- **Enhanced Registration**: `register(name, class_name, dependent_system: 'default_system')` signature implemented and working
-- **Namespaced Registry**: Registry structure supports dependent system organization with full backward compatibility
-- **Atomic Registration**: Configuration validation before registry modification prevents partial state
-- **"Fail Fast" Philosophy**: Configuration errors surface immediately instead of silent failures
-- **State Leakage Resolution**: Fixed test isolation with surgical cleanup pattern preserving shared singleton state
-- **Production Ready**: All 1000 tests passing with complete system integrity
+## 🔍 **ARCHITECTURAL DECISIONS VALIDATED**
 
-### ✅ State Leakage Debugging & Resolution - CRITICAL SYSTEM FIX
-- **Root Cause Analysis**: Identified destructive test cleanup in `handler_factory_spec.rb` wiping entire registry
-- **Surgical Cleanup Implementation**: Preserved production handlers while allowing test-specific modifications
-- **Test Infrastructure Enhancement**: Robust test isolation without destroying shared singleton state
-- **System Reliability**: Eliminated flaky test behavior and registry corruption between test runs
+### **1. TaskNamespace vs dependent_system Separation** ✅
+- **TaskNamespace**: Organizational hierarchy for task types (`payments`, `inventory`, `notifications`)
+- **dependent_system**: External integration context (preserved in step templates for API/queue/database integrations)
+- **Result**: Clean separation of concerns - organization vs. integration
 
-### ✅ "Fail Fast" Error Handling Enhancement - PRODUCTION READY
-- **Configuration Error Visibility**: Eliminated silent failures across HandlerFactory and TaskHandler registrations
-- **Atomic State Management**: Failed registrations don't leave partial state in registry
-- **Error Propagation**: Configuration failures propagate as exceptions with clear error messages
-- **Test Infrastructure**: Mock class loading and automatic registration working reliably
+### **2. Semantic Versioning Integration** ✅
+- **Format**: Standard semver (e.g., `1.0.0`, `2.1.3`)
+- **Defaults**: `0.1.0` for all new handlers
+- **Registry**: Allows multiple versions of same handler in same namespace
+- **Result**: Proper version management without breaking existing deployments
 
-## Implementation Dependencies & Next Phase Readiness
+### **3. Robust Default Handling** ✅
+- **TaskNamespace.default**: Always works via find_or_create_by
+- **Fallback Logic**: Graceful handling when namespace/version not specified
+- **Test Compatibility**: No test database seeding required
+- **Result**: Zero-friction development experience
 
-### Phase 3.1 → Phase 3.2 Foundation Complete ✅
-**Handler Factory Namespacing foundation is production-ready**:
-- Core namespacing architecture implemented and thoroughly tested
-- Handler registration enhanced with dependent system support
-- All 1000 tests passing - system integrity confirmed
-- Ready for REST API endpoint development
+---
 
-### Phase 3.2 → Phase 3.3 Parallel Development Ready ✅
-**Both can proceed simultaneously**:
-- REST endpoints can be developed independently using completed HandlerFactory
-- Runtime dependency graph API leverages Phase 2.3 configuration (already complete)
-- No blocking dependencies between API endpoints
+## 🚨 **CRITICAL SUCCESS FACTORS**
 
-**Current Priority**: Begin Phase 3.2 REST API handlers endpoint development with confidence in solid foundation.
+### **1. Full Integration Achieved** ✅
+All components now work together:
+- NamedTask stores namespace + version
+- HandlerFactory uses namespace + version for registration and lookup
+- Task creation uses NamedTask data for handler resolution
+- APIs support namespace + version parameters
 
-**Next Strategic Decision**: Choose between Phase 3.2 (REST handlers endpoint) or Phase 3.3 (runtime dependency graph API) for immediate focus, or proceed with both in parallel.
+### **2. Backward Compatibility Maintained** ✅
+- Existing handlers work with default namespace and version
+- No breaking changes to existing APIs
+- All existing tests pass
+- Migration path for existing deployments is smooth
+
+### **3. Test Coverage Comprehensive** ✅
+- Model tests for TaskNamespace and NamedTask
+- HandlerFactory tests for 3-level registry
+- Integration tests for task creation and handler lookup
+- Factory tests for complex workflow scenarios
+
+### **4. Documentation Updates Complete** ✅
+- **README.md**: Updated examples with namespace + version support, added TaskNamespace organization section
+- **DEVELOPER_GUIDE.md**: New dedicated section on TaskNamespaces & Versioning, comprehensive YAML configuration examples
+- **QUICK_START.md**: Updated task creation examples with namespace + version parameters
+- **All Examples**: Updated to show new patterns and best practices
+
+**Documentation Changes Include**:
+- TaskNamespace organization patterns (`payments`, `inventory`, `notifications`, etc.)
+- HandlerFactory 3-level registry architecture explanation
+- YAML configuration schema with namespace_name + version fields
+- Version coexistence examples and migration strategies
+- Semantic versioning best practices and lifecycle management
+- Backward compatibility guidance for existing configurations
+
+**Status**: **Ready to proceed with Phase 3.x.2 REST API endpoints**

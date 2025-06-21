@@ -150,7 +150,8 @@ module Tasker
     # @param task_request [Tasker::Types::TaskRequest] The task request containing task parameters
     # @return [Tasker::Task] A new unsaved task instance
     def self.from_task_request(task_request)
-      named_task = Tasker::NamedTask.find_or_create_by!(name: task_request.name)
+      named_task = Tasker::NamedTask.find_or_create_by_full_name!(name: task_request.name,
+                                                                  namespace_name: task_request.namespace, version: task_request.version)
       # Extract values from task_request, removing nils
       request_values = get_request_options(task_request)
       # Merge defaults with request values
@@ -238,6 +239,10 @@ module Tasker
       @task_execution_context = nil
       @diagram = nil
     end
+
+    delegate :namespace_name, to: :named_task
+
+    delegate :version, to: :named_task
 
     private
 

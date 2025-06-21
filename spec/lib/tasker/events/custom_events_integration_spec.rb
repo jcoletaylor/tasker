@@ -270,7 +270,7 @@ RSpec.describe 'Custom Events Automatic Discovery', type: :integration do
       end.to raise_error(StandardError, 'Simulated configuration error')
 
       # Task handler should NOT be registered when configuration fails
-      expect(real_factory.handler_classes['default_system']).not_to have_key(:broken_task)
+      expect(real_factory.handler_classes['default']).not_to have_key(:broken_task)
     end
 
     it 'provides clear error messages for configuration failures' do

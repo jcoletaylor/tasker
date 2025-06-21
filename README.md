@@ -53,10 +53,39 @@ bundle exec rails tasker:setup
 Tasker organizes workflows around these key concepts:
 
 - **Tasks**: The overall process to be executed
+- **TaskNamespaces**: Organizational hierarchy for grouping related task types
 - **TaskHandlers**: Classes that define and coordinate workflow steps
 - **Steps**: Individual units of work within a task
 - **StepHandlers**: Classes that implement the logic for each step
 - **Dependencies**: Relationships between steps that determine execution order
+- **Versioning**: Semantic versioning support for task handlers with coexistence
+
+### TaskNamespace Organization
+
+Tasker supports organizing task handlers into logical namespaces for better organization and isolation:
+
+```ruby
+# Different namespaces can have tasks with the same name
+payments_task = Tasker::HandlerFactory.instance.get(
+  'process_order',
+  namespace_name: 'payments',
+  version: '2.1.0'
+)
+
+inventory_task = Tasker::HandlerFactory.instance.get(
+  'process_order',
+  namespace_name: 'inventory',
+  version: '1.5.0'
+)
+```
+
+Common namespace patterns:
+- **`payments`** - Payment processing workflows
+- **`inventory`** - Stock and inventory management
+- **`notifications`** - Email, SMS, and alert workflows
+- **`integrations`** - Third-party API integrations
+- **`data_processing`** - ETL and data transformation workflows
+- **`default`** - General-purpose workflows (used when no namespace specified)
 
 ## Simple Example: Order Processing
 
@@ -72,6 +101,8 @@ This creates a complete workflow structure:
 ```yaml
 ---
 name: order_process
+namespace_name: default
+version: 1.0.0
 task_handler_class: OrderProcess
 concurrent: true
 
@@ -117,10 +148,17 @@ end
 # Create and execute a task
 task_request = Tasker::Types::TaskRequest.new(
   name: 'order_process',
+  namespace: 'default',        # Optional - defaults to 'default'
+  version: '1.0.0',           # Optional - defaults to '0.1.0'
   context: { order_id: 12345 }
 )
 
-handler = Tasker::HandlerFactory.instance.get('order_process')
+# Handler lookup now supports namespace + version
+handler = Tasker::HandlerFactory.instance.get(
+  'order_process',
+  namespace_name: 'default',   # Optional - defaults to 'default'
+  version: '1.0.0'            # Optional - defaults to '0.1.0'
+)
 task = handler.initialize_task!(task_request)
 
 # Task is now queued for processing with automatic retry logic

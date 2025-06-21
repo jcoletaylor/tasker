@@ -7,15 +7,19 @@ module Tasker
     class TaskHandlerGenerator < Rails::Generators::NamedBase
       source_root File.expand_path('templates', __dir__)
 
-      desc 'Generate a new Tasker task handler with YAML configuration and tests'
+      desc 'Generate a new Tasker task handler with TaskNamespace + versioning support, YAML configuration and tests'
 
       class_option :module_namespace, type: :string, default: nil,
                                       desc: 'The module namespace for the task handler ' \
                                             '(defaults to Tasker.configuration.engine.default_module_namespace)'
       class_option :concurrent, type: :boolean, default: true,
                                 desc: 'Whether the task can be run concurrently'
-      class_option :dependent_system, type: :string, default: 'default_system',
-                                      desc: 'The default dependent system for the task'
+      class_option :namespace_name, type: :string, default: 'default',
+                                    desc: 'The TaskNamespace for organizing the task (e.g., payments, inventory, notifications)'
+      class_option :version, type: :string, default: '0.1.0',
+                             desc: 'Semantic version for the task handler (e.g., 1.0.0, 2.1.0)'
+      class_option :description, type: :string, default: nil,
+                                 desc: 'Description of what this task handler does'
       class_option :steps, type: :array, default: [],
                            desc: 'Step names to include in the task (e.g., --steps=validate,process,complete)'
 
@@ -26,7 +30,9 @@ module Tasker
         @task_handler_class = name.camelize
         @task_name = name.underscore
         @concurrent = options[:concurrent]
-        @dependent_system = options[:dependent_system]
+        @namespace_name = options[:namespace_name]
+        @version = options[:version]
+        @description = options[:description]
         @steps = options[:steps]
 
         # Load configuration
@@ -118,10 +124,16 @@ module Tasker
         say 'Usage example:'
         say '  task_request = Tasker::Types::TaskRequest.new('
         say "    name: '#{@task_name}',"
+        say "    namespace: '#{@namespace_name}',"
+        say "    version: '#{@version}',"
         say '    context: { /* your task context */ }'
         say '  )'
         say ''
-        say "  handler = Tasker::HandlerFactory.instance.get('#{@task_name}')"
+        say '  handler = Tasker::HandlerFactory.instance.get('
+        say "    '#{@task_name}',"
+        say "    namespace_name: '#{@namespace_name}',"
+        say "    version: '#{@version}'"
+        say '  )'
         say '  task = handler.initialize_task!(task_request)'
       end
     end

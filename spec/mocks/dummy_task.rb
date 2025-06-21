@@ -28,7 +28,7 @@ class DummyTask
   end
 
   # register the task handler with the handler factory
-  register_handler(TASK_REGISTRY_NAME)
+  register_handler(TASK_REGISTRY_NAME, namespace_name: 'default', version: '0.1.0')
 
   # define steps for the step handlers
   # only name and handler_class are required, but others help with visibility and findability
