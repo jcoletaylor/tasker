@@ -128,7 +128,7 @@ module Tasker
     #
     # @return [ActiveRecord::Relation] Tasks with all associated records preloaded
     scope :with_all_associated, lambda {
-      includes(:named_task)
+      includes(named_task: [:task_namespace])
         .includes(workflow_steps: %i[named_step parents children])
         .includes(task_annotations: %i[annotation_type])
         .includes(:task_transitions)

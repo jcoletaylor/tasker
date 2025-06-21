@@ -31,7 +31,7 @@ module Tasker
     self.primary_key = :named_task_id
 
     belongs_to :task_namespace
-    has_many :tasks, dependent: :destroy
+    has_many :tasks, dependent: :nullify
 
     validates :name, presence: true, length: { maximum: 64 }
     validates :version, presence: true, format: {

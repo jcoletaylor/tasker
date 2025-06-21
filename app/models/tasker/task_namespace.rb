@@ -20,7 +20,7 @@ module Tasker
   class TaskNamespace < ApplicationRecord
     self.primary_key = :task_namespace_id
 
-    has_many :named_tasks, dependent: :destroy
+    has_many :named_tasks, dependent: :nullify
 
     validates :name, presence: true, uniqueness: true, length: { maximum: 64 }
     validates :description, length: { maximum: 255 }

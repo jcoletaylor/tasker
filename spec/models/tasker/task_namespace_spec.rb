@@ -65,12 +65,11 @@ module Tasker
         expect(namespace.named_tasks.count).to eq(2)
       end
 
-      it 'destroys dependent named tasks when destroyed' do
+      it 'does not destroy dependent named tasks when destroyed' do
         namespace = create(:task_namespace)
-        named_task = create(:named_task, task_namespace: namespace)
+        create(:named_task, task_namespace: namespace)
 
-        expect { namespace.destroy! }.to change(Tasker::NamedTask, :count).by(-1)
-        expect(Tasker::NamedTask.find_by(named_task_id: named_task.named_task_id)).to be_nil
+        expect { namespace.destroy! }.to raise_error(ActiveRecord::NotNullViolation)
       end
     end
 
