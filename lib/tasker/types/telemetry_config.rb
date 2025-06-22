@@ -58,6 +58,96 @@ module Tasker
       #   @return [String] Filter mask string
       attribute :filter_mask, Types::String.default('[FILTERED]')
 
+      # Structured logging configuration
+      #
+      # @!attribute [r] structured_logging_enabled
+      #   @return [Boolean] Whether structured logging is enabled
+      attribute :structured_logging_enabled, Types::Bool.default(true)
+
+      # Correlation ID header name for HTTP propagation
+      #
+      # @!attribute [r] correlation_id_header
+      #   @return [String] Header name for correlation ID
+      attribute :correlation_id_header, Types::String.default('X-Correlation-ID')
+
+      # Log level for structured logging
+      #
+      # @!attribute [r] log_level
+      #   @return [String] Log level (debug, info, warn, error, fatal)
+      attribute :log_level, Types::String.default('info')
+
+      # Log output format
+      #
+      # @!attribute [r] log_format
+      #   @return [String] Log format (json, pretty_json, logfmt)
+      attribute :log_format, Types::String.default('json')
+
+      # Metrics configuration
+      #
+      # @!attribute [r] metrics_enabled
+      #   @return [Boolean] Whether metrics collection is enabled
+      attribute :metrics_enabled, Types::Bool.default(true)
+
+      # Metrics endpoint path
+      #
+      # @!attribute [r] metrics_endpoint
+      #   @return [String] Path for metrics endpoint
+      attribute :metrics_endpoint, Types::String.default('/tasker/metrics')
+
+      # Metrics output format
+      #
+      # @!attribute [r] metrics_format
+      #   @return [String] Metrics format (prometheus, json)
+      attribute :metrics_format, Types::String.default('prometheus')
+
+      # Whether metrics endpoint requires authentication
+      #
+      # @!attribute [r] metrics_auth_required
+      #   @return [Boolean] Whether metrics endpoint requires auth
+      attribute :metrics_auth_required, Types::Bool.default(false)
+
+      # Performance monitoring configuration
+      #
+      # @!attribute [r] performance_monitoring_enabled
+      #   @return [Boolean] Whether performance monitoring is enabled
+      attribute :performance_monitoring_enabled, Types::Bool.default(true)
+
+      # Threshold for slow query detection (seconds)
+      #
+      # @!attribute [r] slow_query_threshold_seconds
+      #   @return [Float] Slow query threshold in seconds
+      attribute :slow_query_threshold_seconds, Types::Float.default(1.0)
+
+      # Memory usage threshold for spike detection (MB)
+      #
+      # @!attribute [r] memory_threshold_mb
+      #   @return [Integer] Memory threshold in megabytes
+      attribute :memory_threshold_mb, Types::Integer.default(100)
+
+      # Event sampling rate (0.0 to 1.0)
+      #
+      # @!attribute [r] event_sampling_rate
+      #   @return [Float] Sampling rate for events
+      attribute :event_sampling_rate, Types::Float.default(1.0)
+
+      # Events to filter out from collection
+      #
+      # @!attribute [r] filtered_events
+      #   @return [Array<String>] List of event names to skip
+      attribute :filtered_events, Types::Array.of(Types::String).default([].freeze)
+
+      # Maximum number of metric samples to store in memory
+      #
+      # @!attribute [r] max_stored_samples
+      #   @return [Integer] Maximum stored samples
+      attribute :max_stored_samples, Types::Integer.default(1000)
+
+      # How long to retain metrics data (hours)
+      #
+      # @!attribute [r] metrics_retention_hours
+      #   @return [Integer] Retention period in hours
+      attribute :metrics_retention_hours, Types::Integer.default(24)
+
       # Advanced telemetry configuration options
       #
       # @!attribute [r] config

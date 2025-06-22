@@ -26,13 +26,47 @@ Tasker.configuration do |config|
   #   db.name = :tasker
   # end
 
-  # Telemetry configuration
+  # Telemetry and observability configuration
+  # Comprehensive observability with structured logging, metrics, and performance monitoring
   # config.telemetry do |tel|
+  #   # === BASIC TELEMETRY SETTINGS ===
   #   tel.enabled = true
   #   tel.service_name = 'my_app_tasker'
   #   tel.service_version = '1.2.3'
+  #
+  #   # === STRUCTURED LOGGING (Phase 4.1 Complete) ===
+  #   tel.structured_logging_enabled = true
+  #   tel.correlation_id_header = 'X-Correlation-ID'  # HTTP header for correlation ID propagation
+  #   tel.log_level = 'info'                          # debug, info, warn, error, fatal
+  #   tel.log_format = 'json'                         # json, pretty_json, logfmt
+  #
+  #   # === SENSITIVE DATA FILTERING ===
   #   tel.filter_mask = '***REDACTED***'
   #   tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
+  #
+  #   # === METRICS COLLECTION (Phase 4.2 Ready) ===
+  #   tel.metrics_enabled = true
+  #   tel.metrics_endpoint = '/tasker/metrics'         # Prometheus endpoint
+  #   tel.metrics_format = 'prometheus'                # prometheus, json
+  #   tel.metrics_auth_required = false               # Set to true for production
+  #   tel.max_stored_samples = 1000                   # Memory limit for metrics
+  #   tel.metrics_retention_hours = 24                # How long to keep metrics
+  #
+  #   # === PERFORMANCE MONITORING ===
+  #   tel.performance_monitoring_enabled = true
+  #   tel.slow_query_threshold_seconds = 1.0         # Detect slow operations
+  #   tel.memory_threshold_mb = 100                   # Memory spike detection
+  #   tel.event_sampling_rate = 1.0                   # 1.0 = 100%, 0.1 = 10% sampling
+  #   tel.filtered_events = []                        # Events to exclude from collection
+  #
+  #   # === ADVANCED CONFIGURATION ===
+  #   # tel.configure_telemetry({
+  #   #   batch_events: false,                        # Enable event batching
+  #   #   buffer_size: 100,                          # Events to buffer before flush
+  #   #   flush_interval: 5,                         # Seconds between flushes
+  #   #   async_processing: false,                   # Future: async event processing
+  #   #   sampling_rate: 1.0                         # Event sampling rate
+  #   # })
   # end
 
   # Dependency graph and bottleneck analysis configuration

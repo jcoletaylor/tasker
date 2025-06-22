@@ -32,6 +32,7 @@ RSpec.describe Tasker::StepHandler::Base do
   let(:step) { task.workflow_steps.first }
   let(:task_handler) { Tasker::HandlerFactory.instance.get(DummyTask::TASK_REGISTRY_NAME) }
   let(:sequence) { task_handler.get_sequence(task) }
+  let(:events_publisher) { Tasker::Events::Publisher.instance }
 
   describe 'automatic event publishing around process method execution' do
     context 'with successful step execution' do
@@ -41,7 +42,7 @@ RSpec.describe Tasker::StepHandler::Base do
         # Spy on event publishing methods to verify they're called
         allow(handler).to receive(:publish_step_started)
         allow(handler).to receive(:publish_step_completed)
-        allow(handler).to receive(:publish_event)
+        allow(events_publisher).to receive(:publish)
       end
 
       it 'automatically publishes step_started and step_completed events around process() method' do
@@ -54,7 +55,7 @@ RSpec.describe Tasker::StepHandler::Base do
       it 'publishes BEFORE_HANDLE event for compatibility' do
         handler.handle(task, sequence, step)
 
-        expect(handler).to have_received(:publish_event).with(
+        expect(events_publisher).to have_received(:publish).with(
           Tasker::Constants::StepEvents::BEFORE_HANDLE,
           hash_including(
             task_id: task.task_id,
@@ -88,7 +89,7 @@ RSpec.describe Tasker::StepHandler::Base do
         # Spy on event publishing methods to verify they're called
         allow(handler).to receive(:publish_step_started)
         allow(handler).to receive(:publish_step_failed)
-        allow(handler).to receive(:publish_event)
+        allow(events_publisher).to receive(:publish)
       end
 
       it 'automatically publishes step_started and step_failed events when process() fails' do
@@ -150,7 +151,7 @@ RSpec.describe Tasker::StepHandler::Base do
     before do
       allow(handler).to receive(:publish_step_started)
       allow(handler).to receive(:publish_step_completed)
-      allow(handler).to receive(:publish_event)
+      allow(events_publisher).to receive(:publish)
     end
 
     it 'works with factory-created task and step data' do

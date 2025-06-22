@@ -515,7 +515,7 @@
       <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_show'>show</span>
-  <span class='id identifier rubyid_include_dependencies'>include_dependencies</span> <span class='op'>=</span> <span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:include_dependencies</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>true</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_include_dependencies'>include_dependencies</span> <span class='op'>=</span> <span class='const'>ActiveModel</span><span class='op'>::</span><span class='const'>Type</span><span class='op'>::</span><span class='const'>Boolean</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_cast'>cast</span><span class='lparen'>(</span><span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:include_dependencies</span><span class='rbracket'>]</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span>
     <span class='label'>json:</span> <span class='ivar'>@task</span><span class='comma'>,</span>
@@ -585,7 +585,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 22 08:31:54 2025 by
+  Generated on Sun Jun 22 18:59:49 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

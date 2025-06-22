@@ -32,7 +32,9 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
       error_task = create(:tree_workflow_task)
       # Transition task to in_progress first
       error_task.state_machine.transition_to!(:in_progress)
-      error_task.workflow_steps.first.tap do |step|
+      # Find a step with no dependencies (leaf step in tree workflow)
+      error_step = error_task.workflow_steps.find { |step| step.parents.empty? }
+      error_step.tap do |step|
         step.state_machine.transition_to!(:in_progress)
         step.state_machine.transition_to!(:error)
         step.update!(attempts: 1, retry_limit: 3, retryable: true)

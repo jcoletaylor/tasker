@@ -2,6 +2,7 @@
 
 require_relative '../events/event_payload_builder'
 require_relative '../events/custom_registry'
+require_relative 'structured_logging'
 
 module Tasker
   module Concerns
@@ -10,6 +11,8 @@ module Tasker
     # This concern provides domain-specific event publishing methods that automatically
     # build standardized payloads and resolve event constants. The API is designed for
     # maximum clarity and minimum cognitive overhead.
+    #
+    # Enhanced with structured logging integration for production observability.
     #
     # Usage:
     #   include Tasker::Concerns::EventPublisher
@@ -26,6 +29,11 @@ module Tasker
     module EventPublisher
       extend ActiveSupport::Concern
 
+      included do
+        # Include structured logging for event publishing observability
+        include Tasker::Concerns::StructuredLogging
+      end
+
       # ========================================================================
       # CLEAN STEP EVENT PUBLISHING - METHOD NAME = EVENT TYPE
       # ========================================================================
@@ -38,7 +46,9 @@ module Tasker
       # @return [void]
       def publish_step_started(step, **context)
         payload = build_step_payload(step, :started, context)
-        publish_event(Tasker::Constants::StepEvents::EXECUTION_REQUESTED, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::EXECUTION_REQUESTED, payload) do
+          log_step_event(step, :started, **context.slice(:processing_mode, :concurrent_batch_size))
+        end
       end
 
       # Publish step before handle event
@@ -49,7 +59,9 @@ module Tasker
       # @return [void]
       def publish_step_before_handle(step, **context)
         payload = build_step_payload(step, :before_handle, context)
-        publish_event(Tasker::Constants::StepEvents::BEFORE_HANDLE, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::BEFORE_HANDLE, payload) do
+          log_step_event(step, :before_handle, **context.slice(:handler_class, :dependencies_met))
+        end
       end
 
       # Publish step completed event
@@ -60,7 +72,10 @@ module Tasker
       # @return [void]
       def publish_step_completed(step, **context)
         payload = build_step_payload(step, :completed, context)
-        publish_event(Tasker::Constants::StepEvents::COMPLETED, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::COMPLETED, payload) do
+          duration = context[:duration] || extract_duration_from_step(step)
+          log_step_event(step, :completed, duration: duration, **context.slice(:operation_count, :records_processed))
+        end
       end
 
       # Publish step failed event
@@ -82,7 +97,11 @@ module Tasker
         end
 
         payload = build_step_payload(step, :failed, context)
-        publish_event(Tasker::Constants::StepEvents::FAILED, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::FAILED, payload) do
+          duration = context[:duration] || extract_duration_from_step(step)
+          log_step_event(step, :failed, duration: duration, error: error&.message)
+          log_exception(error, context: { step_id: step.workflow_step_id, task_id: step.task.task_id }) if error
+        end
       end
 
       # Publish step retry requested event
@@ -95,7 +114,12 @@ module Tasker
       def publish_step_retry_requested(step, retry_reason: 'Step execution failed', **context)
         context = context.merge(retry_reason: retry_reason)
         payload = build_step_payload(step, :retry, context)
-        publish_event(Tasker::Constants::StepEvents::RETRY_REQUESTED, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::RETRY_REQUESTED, payload) do
+          log_step_event(step, :retry_requested,
+                         retry_reason: retry_reason,
+                         attempt_count: step.attempts,
+                         **context.slice(:backoff_seconds, :max_retries))
+        end
       end
 
       # Publish step cancelled event
@@ -108,7 +132,9 @@ module Tasker
       def publish_step_cancelled(step, cancellation_reason: 'Step cancelled', **context)
         context = context.merge(cancellation_reason: cancellation_reason)
         payload = build_step_payload(step, :cancelled, context)
-        publish_event(Tasker::Constants::StepEvents::CANCELLED, payload)
+        publish_event_with_logging(Tasker::Constants::StepEvents::CANCELLED, payload) do
+          log_step_event(step, :cancelled, cancellation_reason: cancellation_reason)
+        end
       end
 
       # ========================================================================
@@ -123,7 +149,9 @@ module Tasker
       # @return [void]
       def publish_task_started(task, **context)
         payload = build_task_payload(task, :started, context)
-        publish_event(Tasker::Constants::TaskEvents::START_REQUESTED, payload)
+        publish_event_with_logging(Tasker::Constants::TaskEvents::START_REQUESTED, payload) do
+          log_task_event(task, :started, **context.slice(:execution_mode, :priority, :step_count))
+        end
       end
 
       # Publish task completed event
@@ -134,7 +162,9 @@ module Tasker
       # @return [void]
       def publish_task_completed(task, **context)
         payload = build_task_payload(task, :completed, context)
-        publish_event(Tasker::Constants::TaskEvents::COMPLETED, payload)
+        publish_event_with_logging(Tasker::Constants::TaskEvents::COMPLETED, payload) do
+          log_task_event(task, :completed, **context.slice(:total_duration, :completed_steps, :total_steps))
+        end
       end
 
       # Publish task failed event
@@ -152,7 +182,12 @@ module Tasker
         )
 
         payload = build_task_payload(task, :failed, context)
-        publish_event(Tasker::Constants::TaskEvents::FAILED, payload)
+        publish_event_with_logging(Tasker::Constants::TaskEvents::FAILED, payload) do
+          log_task_event(task, :failed,
+                         error: error_message,
+                         failed_step_count: error_steps.size,
+                         **context.slice(:total_duration, :completed_steps))
+        end
       end
 
       # Publish task retry requested event
@@ -165,7 +200,9 @@ module Tasker
       def publish_task_retry_requested(task, retry_reason: 'Task retry requested', **context)
         context = context.merge(retry_reason: retry_reason)
         payload = build_task_payload(task, :retry, context)
-        publish_event(Tasker::Constants::TaskEvents::RETRY_REQUESTED, payload)
+        publish_event_with_logging(Tasker::Constants::TaskEvents::RETRY_REQUESTED, payload) do
+          log_task_event(task, :retry_requested, retry_reason: retry_reason)
+        end
       end
 
       # ========================================================================
@@ -181,7 +218,9 @@ module Tasker
       def publish_workflow_task_started(task_id, **context)
         context = context.merge(task_id: task_id)
         payload = build_orchestration_payload(:task_started, context)
-        publish_event(Tasker::Constants::WorkflowEvents::TASK_STARTED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::TASK_STARTED, payload) do
+          log_orchestration_event('workflow_task_started', :started, task_id: task_id, **context)
+        end
       end
 
       # Publish workflow step completed event (orchestration layer)
@@ -194,15 +233,18 @@ module Tasker
       def publish_workflow_step_completed(task_id, step_id, **context)
         context = context.merge(task_id: task_id, step_id: step_id)
         payload = build_orchestration_payload(:step_completed, context)
-        publish_event(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::STEP_COMPLETED, payload) do
+          log_orchestration_event('workflow_step_completed', :completed,
+                                  task_id: task_id, step_id: step_id, **context)
+        end
       end
 
       # Publish viable steps discovered event
       # Automatically resolves to WorkflowEvents::VIABLE_STEPS_DISCOVERED
       #
       # @param task_id [String] The task ID
-      # @param step_ids [Array<String>] Array of step IDs ready for execution
-      # @param processing_mode [String] The processing mode
+      # @param step_ids [Array<String>] Array of step IDs that are viable
+      # @param processing_mode [String] The processing mode ('concurrent' or 'sequential')
       # @param context [Hash] Additional orchestration context
       # @return [void]
       def publish_viable_steps_discovered(task_id, step_ids, processing_mode: 'concurrent', **context)
@@ -214,62 +256,70 @@ module Tasker
         )
 
         payload = build_orchestration_payload(:viable_steps_discovered, context)
-        publish_event(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::VIABLE_STEPS_DISCOVERED, payload) do
+          log_orchestration_event('viable_steps_discovered', :discovered,
+                                  task_id: task_id, step_count: step_ids.size, processing_mode: processing_mode)
+        end
       end
 
       # Publish no viable steps event
       # Automatically resolves to WorkflowEvents::NO_VIABLE_STEPS
       #
       # @param task_id [String] The task ID
-      # @param reason [String] The reason no viable steps were found
+      # @param reason [String] The reason why no steps are viable
       # @param context [Hash] Additional orchestration context
       # @return [void]
       def publish_no_viable_steps(task_id, reason: 'No steps ready for execution', **context)
         context = context.merge(task_id: task_id, reason: reason)
         payload = build_orchestration_payload(:no_viable_steps, context)
-        publish_event(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::NO_VIABLE_STEPS, payload) do
+          log_orchestration_event('no_viable_steps', :detected, task_id: task_id, reason: reason)
+        end
       end
 
       # ========================================================================
-      # TASK FINALIZATION ORCHESTRATION EVENTS - NEW CLEAN HELPERS
+      # TASK FINALIZATION EVENTS WITH STRUCTURED LOGGING
       # ========================================================================
 
       # Publish task finalization started event
-      # Automatically resolves to WorkflowEvents::TASK_FINALIZATION_STARTED
       #
       # @param task [Task] The task being finalized
-      # @param processed_steps_count [Integer] Number of processed steps
-      # @param context [Hash] Additional finalization context
+      # @param processed_steps_count [Integer] Number of steps processed
+      # @param context [Hash] Additional context
       # @return [void]
       def publish_task_finalization_started(task, processed_steps_count: 0, **context)
         context = context.merge(
           task_id: task.task_id,
-          task_name: task.name,
-          processed_steps_count: processed_steps_count,
-          event_phase: :started
+          processed_steps_count: processed_steps_count
         )
 
         payload = build_orchestration_payload(:task_finalization_started, context)
-        publish_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_STARTED, payload) do
+          log_orchestration_event('task_finalization', :started,
+                                  task_id: task.task_id, processed_steps_count: processed_steps_count)
+        end
       end
 
       # Publish task finalization completed event
-      # Automatically resolves to WorkflowEvents::TASK_FINALIZATION_COMPLETED
       #
-      # @param task [Task] The task that completed finalization
-      # @param processed_steps_count [Integer] Number of processed steps
-      # @param context [Hash] Additional finalization context
+      # @param task [Task] The task that was finalized
+      # @param processed_steps_count [Integer] Number of steps processed
+      # @param context [Hash] Additional context
       # @return [void]
       def publish_task_finalization_completed(task, processed_steps_count: 0, **context)
         context = context.merge(
           task_id: task.task_id,
-          task_name: task.name,
           processed_steps_count: processed_steps_count,
-          event_phase: :completed
+          final_status: task.status
         )
 
         payload = build_orchestration_payload(:task_finalization_completed, context)
-        publish_event(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::TASK_FINALIZATION_COMPLETED, payload) do
+          log_orchestration_event('task_finalization', :completed,
+                                  task_id: task.task_id,
+                                  final_status: task.status,
+                                  processed_steps_count: processed_steps_count)
+        end
       end
 
       # Publish task pending transition event (for synchronous processing)
@@ -435,7 +485,13 @@ module Tasker
         )
 
         payload = build_orchestration_payload(:steps_execution_completed, context)
-        publish_event(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED, payload)
+        publish_event_with_logging(Tasker::Constants::WorkflowEvents::STEPS_EXECUTION_COMPLETED, payload) do
+          log_orchestration_event('steps_execution_completed', :completed,
+                                  task_id: task.task_id,
+                                  processed_count: processed_count,
+                                  successful_count: successful_count,
+                                  failure_count: processed_count - successful_count)
+        end
       end
 
       # ========================================================================
@@ -459,7 +515,12 @@ module Tasker
         )
 
         payload = build_step_payload(step, :backoff, context)
-        publish_event(Tasker::Constants::ObservabilityEvents::Step::BACKOFF, payload)
+        publish_event_with_logging(Tasker::Constants::ObservabilityEvents::Step::BACKOFF, payload) do
+          log_step_event(step, :backoff,
+                         backoff_seconds: backoff_seconds,
+                         backoff_type: backoff_type,
+                         **context.slice(:retry_attempt, :max_retries))
+        end
       end
 
       # ========================================================================
@@ -480,7 +541,9 @@ module Tasker
         )
 
         payload = build_task_payload(task, :enqueue, context)
-        publish_event(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE, payload)
+        publish_event_with_logging(Tasker::Constants::ObservabilityEvents::Task::ENQUEUE, payload) do
+          log_task_event(task, :enqueued, **context.slice(:queue_name, :job_class, :priority))
+        end
       end
 
       # ========================================================================
@@ -500,7 +563,12 @@ module Tasker
           timestamp: Time.current
         )
 
-        publish_event(event_name, enhanced_payload)
+        publish_event_with_logging(event_name, enhanced_payload) do
+          log_structured(:info, 'Custom event published',
+                         event_name: event_name,
+                         event_type: 'custom',
+                         **payload.slice(:task_id, :step_id, :operation, :context))
+        end
       end
 
       # ========================================================================
@@ -554,20 +622,50 @@ module Tasker
 
       private
 
-      # Core publish method - used internally by domain-specific methods
+      # Core publish method with structured logging integration
       #
       # @param event_constant [String] The event constant
       # @param payload [Hash] The event payload
+      # @param block [Proc] Optional block for structured logging
       # @return [void]
-      def publish_event(event_constant, payload = {})
+      def publish_event_with_logging(event_constant, payload = {})
         # Add timestamp if not present
         payload[:timestamp] ||= Time.current
+
+        # Execute structured logging if block provided
+        if block_given?
+          begin
+            yield
+          rescue StandardError => e
+            Rails.logger.debug { "EventPublisher: Structured logging failed for #{event_constant}: #{e.message}" }
+          end
+        end
 
         # Publish through the unified publisher
         Tasker::Events::Publisher.instance.publish(event_constant, payload)
       rescue StandardError => e
         # Trap publishing errors so they don't break core system flow
         Rails.logger.error { "Error publishing event #{event_constant}: #{e.message}" }
+      end
+
+      # Core publish method - used internally by domain-specific methods
+      #
+      # @param event_constant [String] The event constant
+      # @param payload [Hash] The event payload
+      # @return [void]
+      def publish_event(event_constant, payload = {})
+        publish_event_with_logging(event_constant, payload)
+      end
+
+      # Extract duration from step timing information
+      #
+      # @param step [WorkflowStep] The step to extract duration from
+      # @return [Float, nil] Duration in seconds or nil if not available
+      def extract_duration_from_step(step)
+        return nil unless step.updated_at && step.created_at
+
+        # Simple duration calculation - can be enhanced with more precise timing
+        (step.updated_at - step.created_at).to_f
       end
 
       # Build standardized step payload automatically
