@@ -11,7 +11,7 @@ module Tasker
     let(:task) { create(:task, named_task: named_task, reason: 'test serialization') }
 
     # Use find_or_create_by to avoid duplicates in other tests
-    let(:default_task_namespace) { Tasker::TaskNamespace.find_or_create_by!(name: 'default') }
+    let(:default_task_namespace) { Tasker::TaskNamespace.default }
     let(:default_named_task) { create(:named_task, name: 'default_task', task_namespace: default_task_namespace) }
     let(:default_task) { create(:task, named_task: default_named_task) }
 

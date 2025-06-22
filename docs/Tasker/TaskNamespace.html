@@ -142,30 +142,6 @@
 </li>
 
       
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#find_by_name_or_default-class_method" title="find_by_name_or_default (class method)">.<strong>find_by_name_or_default</strong>(name)  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Get namespace by name, with fallback to default.</p>
-</div></span>
-  
-</li>
-
-      
     </ul>
   
     <h2>
@@ -194,30 +170,6 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Check if this is the default namespace.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
-      <a href="#full_name-instance_method" title="#full_name (instance method)">#<strong>full_name</strong>  &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'>
-<p>Get full namespace identifier.</p>
 </div></span>
   
 </li>
@@ -272,62 +224,13 @@
 
 29
 30
-31
-32
-33</pre>
+31</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/models/tasker/task_namespace.rb', line 29</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_default'>default</span>
-  <span class='ivar'>@default</span> <span class='op'>||=</span> <span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
-  <span class='ivar'>@default</span><span class='period'>.</span><span class='id identifier rubyid_description'>description</span> <span class='op'>||=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Default task namespace</span><span class='tstring_end'>&#39;</span></span>
-  <span class='ivar'>@default</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="find_by_name_or_default-class_method">
-  
-    .<strong>find_by_name_or_default</strong>(name)  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Get namespace by name, with fallback to default</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-39
-40
-41
-42
-43</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task_namespace.rb', line 39</span>
-
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_find_by_name_or_default'>find_by_name_or_default</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='id identifier rubyid_default'>default</span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span> <span class='op'>||</span> <span class='id identifier rubyid_name'>name</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span>
-
-  <span class='id identifier rubyid_find_by'>find_by</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_default'>default</span>
+  <span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -379,56 +282,15 @@
       <pre class="lines">
 
 
-46
-47
-48</pre>
+37
+38
+39</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task_namespace.rb', line 46</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task_namespace.rb', line 37</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default?'>default?</span>
   <span class='id identifier rubyid_name'>name</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="full_name-instance_method">
-  
-    #<strong>full_name</strong>  &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-<p>Get full namespace identifier</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-51
-52
-53</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task_namespace.rb', line 51</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_full_name'>full_name</span>
-  <span class='id identifier rubyid_name'>name</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -440,7 +302,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun 21 20:33:20 2025 by
+  Generated on Sun Jun 22 08:31:53 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

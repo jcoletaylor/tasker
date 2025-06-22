@@ -18,17 +18,5 @@ class EnhanceNamedTasksWithNamespaceAndVersion < ActiveRecord::Migration[7.2]
     remove_index :tasker_named_tasks, name: 'named_tasks_name_unique'
     add_index :tasker_named_tasks, %i[task_namespace_id name version],
               unique: true, name: 'named_tasks_namespace_name_version_unique'
-
-    # Data migration: set all existing records to default namespace and version
-    reversible do |dir|
-      dir.up do
-        # Ensure default namespace exists (should be created by previous migration)
-        execute <<-SQL.squish
-          UPDATE tasker_named_tasks
-          SET task_namespace_id = 1, version = '0.1.0'
-          WHERE task_namespace_id IS NULL OR version IS NULL;
-        SQL
-      end
-    end
   end
 end

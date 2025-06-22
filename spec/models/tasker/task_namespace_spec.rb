@@ -79,7 +79,6 @@ module Tasker
 
         expect(default_namespace).to be_persisted
         expect(default_namespace.name).to eq('default')
-        expect(default_namespace.description).to eq('Default task namespace')
       end
 
       it 'creates the default namespace if it does not exist' do
@@ -92,7 +91,6 @@ module Tasker
 
         expect(default_namespace).to be_persisted
         expect(default_namespace.name).to eq('default')
-        expect(default_namespace.description).to eq('Default task namespace')
       end
 
       it 'returns existing default namespace without creating duplicate' do

@@ -27,29 +27,15 @@ module Tasker
 
     # Find or create default namespace - always works even if not seeded
     def self.default
-      @default ||= find_or_create_by!(name: 'default')
-      @default.description ||= 'Default task namespace'
-      @default
+      find_or_create_by!(name: 'default')
     end
 
     # Scope for non-default namespaces
     scope :custom, -> { where.not(name: 'default') }
 
-    # Get namespace by name, with fallback to default
-    def self.find_by_name_or_default(name)
-      return default if name.blank? || name == 'default'
-
-      find_by(name: name) || default
-    end
-
     # Check if this is the default namespace
     def default?
       name == 'default'
-    end
-
-    # Get full namespace identifier
-    def full_name
-      name
     end
   end
 end

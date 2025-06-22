@@ -4,7 +4,7 @@ lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
 lib/tasker/errors.rb f69f032114647dc76a343ea7b7e78a8ff3f07715
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb ec4b39540bc6cfa78cadc0b7a24b05946403d6ae
+lib/tasker/version.rb 724a4bfa5ed176d589b8875b4853fe9b9137763a
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
 app/models/tasker/task.rb 32f9c05fca5bfe024572fa4406e5aebdd1898a04
@@ -37,7 +37,7 @@ app/models/tasker/workflow_step.rb 1f0fae25c6a26cb2437f274e2560108e3cc0f5a2
 lib/tasker/authorization/errors.rb 205a66140852b0af77d6e108966253de8ebbc813
 lib/tasker/types/backoff_config.rb 6764533ddbb5c0fd1659e7d24a3c97ad7277737f
 app/controllers/tasker/page_sort.rb 949589a400dd58c1caf5ea9cd0a9fc5abed3582d
-app/models/tasker/task_namespace.rb 4ecaf4c0139af48816ad19047d3c15e291ed44d0
+app/models/tasker/task_namespace.rb 75b8241b0e1b6062990c9cf2729eaa643d07d2d3
 lib/tasker/authentication/errors.rb 242ddef2f47de5b56b65e586948b99bc34bc2f8f
 lib/tasker/concerns/authorizable.rb ca39e501299ba149a836f7d242f5c5f642b6af8d
 lib/tasker/health/status_checker.rb f68d8187dce6be0f2344966b9f7dd93b85a91fa7

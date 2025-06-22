@@ -6,7 +6,7 @@ FactoryBot.define do
     description { "Test task: #{name}" }
     version { '0.1.0' }
 
-    # Association with default namespace
+    # Association with default namespace - use factory trait to ensure proper creation
     task_namespace { Tasker::TaskNamespace.default }
 
     # Use consistent names for traits that need handler factory integration
