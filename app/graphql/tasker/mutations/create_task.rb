@@ -22,7 +22,11 @@ module Tasker
         task_request = Tasker::Types::TaskRequest.new(task_params.merge({ context: context }))
         task = nil
         begin
-          handler = handler_factory.get(task_request.name)
+          handler = handler_factory.get(
+            task_request.name,
+            namespace_name: task_request.namespace || Tasker::NamedTask::DEFAULT_NAMESPACE,
+            version: task_request.version || Tasker::NamedTask::DEFAULT_VERSION
+          )
           task = handler.initialize_task!(task_request)
         rescue Tasker::ProceduralError => e
           task = Tasker::Task.new

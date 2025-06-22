@@ -123,6 +123,11 @@
         </dt>
         <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker.health_status</span><span class='tstring_end'>&#39;</span></span></pre></dd>
       
+        <dt id="HANDLER-constant" class="">HANDLER =
+          
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker.handler</span><span class='tstring_end'>&#39;</span></span></pre></dd>
+      
     </dl>
   
 
@@ -241,15 +246,15 @@
       <pre class="lines">
 
 
-25
 26
-27</pre>
+27
+28</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_constants.rb', line 25</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_constants.rb', line 26</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_all'>all</span>
-  <span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#TASK-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK (constant)">TASK</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#WORKFLOW_STEP-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP (constant)">WORKFLOW_STEP</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#TASK_DIAGRAM-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM (constant)">TASK_DIAGRAM</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#HEALTH_STATUS-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS (constant)">HEALTH_STATUS</a></span></span><span class='rbracket'>]</span>
+  <span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#TASK-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK (constant)">TASK</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#WORKFLOW_STEP-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP (constant)">WORKFLOW_STEP</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#TASK_DIAGRAM-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM (constant)">TASK_DIAGRAM</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#HEALTH_STATUS-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS (constant)">HEALTH_STATUS</a></span></span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#HANDLER-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::HANDLER (constant)">HANDLER</a></span></span><span class='rbracket'>]</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -320,12 +325,12 @@
       <pre class="lines">
 
 
-33
 34
-35</pre>
+35
+36</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_constants.rb', line 33</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_constants.rb', line 34</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_all'>all</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -340,7 +345,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:36 2025 by
+  Generated on Sun Jun 22 08:31:51 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

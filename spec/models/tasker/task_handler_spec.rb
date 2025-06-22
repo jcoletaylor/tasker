@@ -36,7 +36,8 @@ module Tasker
 
       it 'is not able to initialize a task if the context is invalid' do
         # Create task with invalid context using factory approach with find_or_create pattern
-        dummy_named_task = Tasker::NamedTask.find_or_create_by!(name: 'dummy_task') do |named_task|
+        dummy_named_task = Tasker::NamedTask.find_or_create_by_full_name!(name: 'dummy_task',
+                                                                          namespace_name: 'default', version: '0.1.0') do |named_task|
           named_task.description = 'Dummy task for testing workflow step logic'
         end
 

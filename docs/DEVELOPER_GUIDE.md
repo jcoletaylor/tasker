@@ -2,13 +2,50 @@
 
 ## Overview
 
-This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around five main developer-facing components:
+This guide provides a comprehensive overview of developing with Tasker, covering all the key components that make up the workflow engine. Tasker is designed around six main developer-facing components:
 
-1. **Task Handlers** - Define and coordinate multi-step workflows
-2. **Step Handlers** - Implement the business logic for individual workflow steps
-3. **Event Subscribers** - Create integrations with external services and monitoring systems
-4. **YAML Configuration** - Declarative workflow and step configuration
-5. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
+1. **TaskNamespaces & Versioning** - Organize and version task handlers for scalable workflow management
+2. **Task Handlers** - Define and coordinate multi-step workflows
+3. **Step Handlers** - Implement the business logic for individual workflow steps
+4. **Event Subscribers** - Create integrations with external services and monitoring systems
+5. **YAML Configuration** - Declarative workflow and step configuration with namespace support
+6. **Authentication & Authorization** - Secure your workflows with flexible authentication strategies
+
+## New in Tasker 2.3.0: TaskNamespace + Versioning Architecture
+
+Tasker now supports **hierarchical task organization** and **semantic versioning** for enterprise-scale workflow management:
+
+### Key Benefits
+- **Namespace Isolation**: Organize tasks by domain (`payments`, `inventory`, `notifications`)
+- **Version Coexistence**: Multiple versions of the same task can run simultaneously
+- **Zero Breaking Changes**: Existing tasks continue working with automatic defaults
+- **Enterprise Scalability**: Clean separation of concerns for large organizations
+
+### Quick Example
+```ruby
+# Create namespaced task handlers
+task_request = Tasker::Types::TaskRequest.new(
+  name: 'process_order',
+  namespace: 'payments',    # NEW: Namespace organization
+  version: '2.1.0',        # NEW: Semantic versioning
+  context: { order_id: 123 }
+)
+
+# Handler lookup with namespace + version
+handler = Tasker::HandlerFactory.instance.get(
+  'process_order',
+  namespace_name: 'payments',
+  version: '2.1.0'
+)
+```
+
+### Namespace Organization Patterns
+- **`payments`** - Payment processing, billing, refunds
+- **`inventory`** - Stock management, fulfillment, warehouse operations
+- **`notifications`** - Email, SMS, push notifications, alerts
+- **`integrations`** - Third-party APIs, webhooks, data synchronization
+- **`data_processing`** - ETL, data transformation, analytics pipelines
+- **`default`** - General workflows (automatic fallback when unspecified)
 
 ## Architecture Overview
 
@@ -57,7 +94,147 @@ flowchart TB
     class Sentry,Metrics,Alerts,Notifications external
 ```
 
-## 1. Task Handlers
+## 1. TaskNamespaces & Versioning
+
+TaskNamespaces provide organizational hierarchy for task handlers, while versioning enables multiple versions of the same task to coexist. This is essential for enterprise environments with complex workflows and deployment strategies.
+
+### TaskNamespace Management
+
+#### Creating TaskNamespaces
+
+TaskNamespaces are automatically created when referenced, but you can also create them explicitly:
+
+```ruby
+# Automatic creation during task creation
+task_request = Tasker::Types::TaskRequest.new(
+  name: 'process_payment',
+  namespace: 'payments',  # Automatically creates 'payments' namespace if needed
+  version: '1.0.0',
+  context: { payment_id: 123 }
+)
+
+# Manual creation with description
+namespace = Tasker::TaskNamespace.create!(
+  name: 'payments',
+  description: 'Payment processing and billing workflows'
+)
+```
+
+#### Namespace Patterns & Best Practices
+
+**Domain-Based Organization**:
+```yaml
+# config/tasker/tasks/payments/process_order.yaml
+---
+name: process_order
+namespace_name: payments
+version: 2.1.0
+task_handler_class: Payments::ProcessOrderHandler
+
+# config/tasker/tasks/inventory/process_order.yaml
+---
+name: process_order
+namespace_name: inventory
+version: 1.5.0
+task_handler_class: Inventory::ProcessOrderHandler
+```
+
+**Version Management Strategies**:
+```ruby
+# Gradual rollout - start with specific version
+handler_v2 = Tasker::HandlerFactory.instance.get(
+  'process_payment',
+  namespace_name: 'payments',
+  version: '2.0.0'
+)
+
+# Legacy support - maintain old version
+handler_v1 = Tasker::HandlerFactory.instance.get(
+  'process_payment',
+  namespace_name: 'payments',
+  version: '1.5.0'
+)
+
+# Default behavior - uses latest registered version
+handler_default = Tasker::HandlerFactory.instance.get('process_payment')
+```
+
+#### HandlerFactory Registry Architecture
+
+The HandlerFactory now uses a **3-level registry** for precise task identification:
+
+```ruby
+# Registry Structure: namespace_name → handler_name → version → handler_class
+# Example internal structure:
+{
+  payments: {
+    process_order: {
+      '1.0.0' => Payments::ProcessOrderV1,
+      '2.0.0' => Payments::ProcessOrderV2
+    }
+  },
+  inventory: {
+    process_order: {
+      '1.5.0' => Inventory::ProcessOrder
+    }
+  }
+}
+```
+
+**Registration Examples**:
+```ruby
+# Class-based registration with namespace + version
+class PaymentHandler < Tasker::TaskHandler
+  register_handler(
+    'process_payment',
+    namespace_name: 'payments',
+    version: '2.0.0',
+    concurrent: true
+  )
+end
+
+# YAML-based registration
+# config/tasker/tasks/payments/process_payment.yaml
+---
+name: process_payment
+namespace_name: payments
+version: 2.0.0
+task_handler_class: PaymentHandler
+```
+
+### Versioning Best Practices
+
+#### Semantic Versioning
+Follow [semver.org](https://semver.org) conventions:
+- **Major version** (`2.0.0`): Breaking changes, incompatible API changes
+- **Minor version** (`1.1.0`): New features, backward compatible
+- **Patch version** (`1.0.1`): Bug fixes, backward compatible
+
+#### Version Lifecycle Management
+```ruby
+# Development workflow
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '2.0.0-beta.1')  # Pre-release
+end
+
+# Production deployment
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '2.0.0')         # Stable release
+end
+
+# Maintenance mode
+class PaymentHandler < Tasker::TaskHandler
+  register_handler('process_payment',
+                   namespace_name: 'payments',
+                   version: '1.5.2')         # Patch release for legacy
+end
+```
+
+## 2. Task Handlers
 
 Task handlers define the overall workflow structure and coordinate step execution. They are the entry point for creating and managing multi-step processes.
 
@@ -574,12 +751,14 @@ YAML files provide declarative configuration for task handlers, defining workflo
 ### Task Handler YAML Structure
 
 ```yaml
-# config/tasker/tasks/order_process/order_handler.yaml
+# config/tasker/tasks/payments/order_process.yaml
 ---
 name: order_process
-module_namespace: OrderProcess
+namespace_name: payments        # NEW: TaskNamespace organization
+version: 1.2.0                 # NEW: Semantic versioning
+module_namespace: OrderProcess  # Ruby module namespace
 task_handler_class: OrderHandler
-concurrent: true  # Enable parallel step execution
+concurrent: true               # Enable parallel step execution
 
 # JSON Schema validation for task context
 schema:
@@ -694,6 +873,124 @@ environments:
       Authorization: "Bearer ${API_TOKEN}"
     timeout: 15
     retries: 3
+```
+
+### TaskNamespace + Versioning in YAML
+
+The new namespace and versioning system provides enterprise-scale organization:
+
+#### Namespace-Based File Organization
+
+**Recommended File Structure**:
+```
+config/tasker/tasks/
+├── payments/
+│   ├── process_order.yaml          # version: 1.0.0
+│   ├── process_refund.yaml         # version: 1.1.0
+│   └── validate_payment.yaml       # version: 2.0.0
+├── inventory/
+│   ├── process_order.yaml          # version: 1.5.0 (same name, different namespace)
+│   ├── stock_check.yaml            # version: 1.0.0
+│   └── reorder_items.yaml          # version: 1.2.0
+└── notifications/
+    ├── send_email.yaml             # version: 1.0.0
+    ├── send_sms.yaml               # version: 1.1.0
+    └── push_notification.yaml      # version: 2.0.0
+```
+
+#### Version Coexistence Examples
+
+**Multiple Versions of Same Task**:
+```yaml
+# config/tasker/tasks/payments/process_order_v1.yaml
+---
+name: process_order
+namespace_name: payments
+version: 1.0.0                      # Legacy version
+task_handler_class: Payments::ProcessOrderV1
+
+# config/tasker/tasks/payments/process_order_v2.yaml
+---
+name: process_order
+namespace_name: payments
+version: 2.0.0                      # Current version
+task_handler_class: Payments::ProcessOrderV2
+concurrent: true                    # New features in v2.0.0
+```
+
+#### Namespace-Specific Configuration
+
+**Domain-Specific Settings**:
+```yaml
+# config/tasker/tasks/integrations/api_sync.yaml
+---
+name: api_sync
+namespace_name: integrations
+version: 1.3.0
+task_handler_class: Integrations::ApiSyncHandler
+
+# Integration-specific settings
+handler_config:
+  max_concurrent_requests: 5
+  rate_limit_per_second: 10
+  dependent_systems:        # External systems this task interacts with
+    - salesforce_api
+    - inventory_service
+    - notification_queue
+
+step_templates:
+  - name: fetch_data
+    handler_class: Integrations::FetchDataHandler
+    dependent_system: salesforce_api    # Step-level system identification
+
+  - name: transform_data
+    handler_class: Integrations::TransformDataHandler
+
+  - name: upload_data
+    handler_class: Integrations::UploadDataHandler
+    dependent_system: inventory_service
+```
+
+#### Configuration Validation & Defaults
+
+**YAML Configuration Schema**:
+```yaml
+# Full configuration with all optional fields
+---
+name: process_payment                      # Required
+namespace_name: payments                   # Optional - defaults to 'default'
+version: 2.1.0                           # Optional - defaults to '0.1.0'
+module_namespace: Payments                # Optional - Ruby module namespace
+task_handler_class: ProcessPaymentHandler # Required
+concurrent: true                          # Optional - defaults to false
+description: "Advanced payment processing" # Optional - for documentation
+
+# Database configuration (optional)
+configuration:
+  priority: high
+  max_execution_time: 300
+  custom_metadata:
+    team: payments
+    owner: alice@company.com
+    documentation_url: https://wiki.company.com/payments
+```
+
+#### Migration Strategy for Existing Configurations
+
+**Backward Compatibility**: Existing YAML files continue working unchanged:
+```yaml
+# Existing file - continues working with defaults
+---
+name: legacy_task
+task_handler_class: LegacyHandler
+# Automatically gets: namespace_name: 'default', version: '0.1.0'
+
+# Enhanced file - new capabilities
+---
+name: legacy_task
+namespace_name: default     # Explicit default
+version: 0.1.0             # Explicit version
+task_handler_class: LegacyHandler
 ```
 
 ## 5. Authentication & Authorization
@@ -861,6 +1158,262 @@ bundle exec rails db:migrate
 - **Monitoring**: Monitor connection usage and performance for both databases
 - **Backup Strategy**: Implement coordinated backup strategies if data consistency across databases is required
 - **Network Latency**: Consider network latency if databases are on different servers
+
+## 7. Dependency Graph & Bottleneck Analysis Configuration
+
+Tasker provides advanced dependency graph analysis and bottleneck detection capabilities that can be fine-tuned for your specific workflow patterns. The dependency graph configuration controls how Tasker analyzes workflow dependencies, identifies bottlenecks, and calculates impact scores for optimization recommendations.
+
+### Key Features
+
+- **Configurable Impact Scoring**: Customize how different factors influence bottleneck calculations
+- **Adaptive Severity Classification**: Define custom thresholds for Critical/High/Medium/Low priority bottlenecks
+- **Dynamic Duration Estimation**: Configure time estimates for path analysis and planning
+- **State-Based Multipliers**: Adjust scoring based on step states and execution conditions
+- **Retry Pattern Analysis**: Configure penalties for instability and failure patterns
+
+### Quick Configuration Example
+
+```ruby
+# config/initializers/tasker.rb
+Tasker.configuration do |config|
+  config.dependency_graph do |graph|
+    # Prioritize blocked steps more heavily
+    graph.impact_multipliers = {
+      blocked_weight: 20,        # Increase from default 15
+      error_penalty: 40          # Increase from default 30
+    }
+
+    # Lower thresholds for faster bottleneck detection
+    graph.severity_thresholds = {
+      critical: 80,              # Decrease from default 100
+      high: 40,                  # Decrease from default 50
+      medium: 15                 # Decrease from default 20
+    }
+  end
+end
+```
+
+### Configuration Options
+
+#### Impact Multipliers
+
+Control how different factors contribute to the overall bottleneck impact score:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.impact_multipliers = {
+    downstream_weight: 5,      # Weight for downstream step count
+    blocked_weight: 15,        # Weight for blocked step count (most critical)
+    path_length_weight: 10,    # Weight for critical path length
+    completed_penalty: 15,     # Penalty to reduce priority of completed work
+    blocked_penalty: 25,       # Penalty to increase priority of blocked work
+    error_penalty: 30,         # Penalty for steps in error state (highest)
+    retry_penalty: 10          # Penalty for steps requiring retries
+  }
+end
+```
+
+**Impact Score Calculation:**
+```
+base_score = (downstream_count * downstream_weight) + (blocked_count * blocked_weight)
+path_score = path_length * path_length_weight
+penalties = (completed_steps * completed_penalty) + (blocked_steps * blocked_penalty) +
+            (error_steps * error_penalty) + (retry_steps * retry_penalty)
+final_score = (base_score + path_score + penalties) * severity_multiplier
+```
+
+#### Severity Multipliers
+
+Adjust impact scores based on step states and execution conditions:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.severity_multipliers = {
+    error_state: 2.0,          # Multiply score by 2.0 for steps in error state
+    exhausted_retry_bonus: 0.5, # Additional 0.5x multiplier for exhausted retries
+    dependency_issue: 1.2       # 1.2x multiplier for dependency-related issues
+  }
+end
+```
+
+**State-Based Scoring Examples:**
+- Normal step: `base_score * 1.0`
+- Error step: `base_score * 2.0`
+- Error step with exhausted retries: `base_score * (2.0 + 0.5) = base_score * 2.5`
+- Dependency blocked step: `base_score * 1.2`
+
+#### Penalty Constants
+
+Add fixed penalty points for specific problematic conditions:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.penalty_constants = {
+    retry_instability: 3,      # +3 points per retry attempt
+    non_retryable: 10,         # +10 points for non-retryable failures
+    exhausted_retry: 20        # +20 points for exhausted retry attempts
+  }
+end
+```
+
+**Penalty Application:**
+- Step with 2 retry attempts: `+6 penalty points`
+- Non-retryable failure: `+10 penalty points`
+- Exhausted retries (3+ attempts): `+20 penalty points`
+
+#### Severity Thresholds
+
+Define score ranges for bottleneck classification:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.severity_thresholds = {
+    critical: 100,             # Score >= 100: Requires immediate attention
+    high: 50,                  # Score >= 50: High priority for optimization
+    medium: 20                 # Score >= 20: Monitor and plan improvements
+  }                            # Score < 20: Low priority
+end
+```
+
+**Classification Examples:**
+- Score 150: **Critical** - Blocking multiple workflows, immediate intervention required
+- Score 75: **High** - Significant impact, should be addressed in current sprint
+- Score 35: **Medium** - Moderate impact, address in upcoming planning cycle
+- Score 10: **Low** - Minor impact, monitor for trends
+
+#### Duration Estimates
+
+Configure time estimates for path analysis and planning:
+
+```ruby
+config.dependency_graph do |graph|
+  graph.duration_estimates = {
+    base_step_seconds: 30,     # Default time estimate per step
+    error_penalty_seconds: 60, # Additional time for error recovery
+    retry_penalty_seconds: 30  # Additional time per retry attempt
+  }
+end
+```
+
+**Duration Calculation:**
+```
+estimated_duration = (step_count * base_step_seconds) +
+                     (error_steps * error_penalty_seconds) +
+                     (total_retry_attempts * retry_penalty_seconds)
+```
+
+### Use Cases & Recommendations
+
+#### High-Volume Transaction Processing
+
+For workflows processing thousands of transactions per hour:
+
+```ruby
+config.dependency_graph do |graph|
+  # Emphasize blocking issues more heavily
+  graph.impact_multipliers = {
+    blocked_weight: 25,        # Increase sensitivity to blocked steps
+    error_penalty: 40          # Prioritize error resolution
+  }
+
+  # Lower thresholds for faster detection
+  graph.severity_thresholds = {
+    critical: 75,              # Faster escalation
+    high: 35,
+    medium: 15
+  }
+
+  # Faster execution estimates for high-volume patterns
+  graph.duration_estimates = {
+    base_step_seconds: 15,     # Optimized processes run faster
+    error_penalty_seconds: 45  # Reduced error recovery time
+  }
+end
+```
+
+#### Long-Running Batch Processes
+
+For workflows that run for hours or days:
+
+```ruby
+config.dependency_graph do |graph|
+  # Focus on path length and completion tracking
+  graph.impact_multipliers = {
+    path_length_weight: 20,    # Longer paths have higher impact
+    completed_penalty: 5       # Reduce penalty for completed work
+  }
+
+  # Higher thresholds due to expected longer execution
+  graph.severity_thresholds = {
+    critical: 200,
+    high: 100,
+    medium: 50
+  }
+
+  # Longer execution estimates
+  graph.duration_estimates = {
+    base_step_seconds: 120,    # Steps take longer in batch processes
+    error_penalty_seconds: 300 # Error recovery is more expensive
+  }
+end
+```
+
+#### Real-Time Processing Systems
+
+For workflows requiring sub-second response times:
+
+```ruby
+config.dependency_graph do |graph|
+  # Maximize sensitivity to any delays
+  graph.impact_multipliers = {
+    retry_penalty: 20,         # Retries are very costly
+    error_penalty: 50          # Errors must be resolved immediately
+  }
+
+  # Very low thresholds for immediate response
+  graph.severity_thresholds = {
+    critical: 30,
+    high: 15,
+    medium: 5
+  }
+
+  # Tight time estimates
+  graph.duration_estimates = {
+    base_step_seconds: 1,      # Sub-second execution expected
+    error_penalty_seconds: 10, # Errors add significant delay
+    retry_penalty_seconds: 5   # Each retry is expensive
+  }
+end
+```
+
+### Monitoring & Observability
+
+The dependency graph analysis integrates with Tasker's observability system to provide actionable insights:
+
+```ruby
+# Published events include bottleneck severity levels
+Tasker::Events.subscribe('task.bottleneck_detected') do |event|
+  severity = event.payload['severity']  # 'Critical', 'High', 'Medium', 'Low'
+  impact_score = event.payload['impact_score']
+
+  case severity
+  when 'Critical'
+    PagerDuty.alert("Critical workflow bottleneck detected: #{impact_score}")
+  when 'High'
+    Slack.notify("#ops", "High priority bottleneck: #{impact_score}")
+  end
+end
+```
+
+### Production Best Practices
+
+1. **Start with Defaults**: Begin with default values and adjust based on observed patterns
+2. **Monitor Thresholds**: Track how often each severity level is triggered
+3. **A/B Testing**: Test configuration changes on a subset of workflows first
+4. **Gradual Tuning**: Make small adjustments and measure impact over time
+5. **Documentation**: Document your configuration rationale for team knowledge
+
+The dependency graph configuration provides powerful tools for optimizing workflow performance while maintaining the flexibility to adapt to your specific operational requirements.
 
 ## Extensibility & Advanced Patterns
 
@@ -1346,8 +1899,232 @@ RSpec.describe NotificationSubscriber do
 end
 ```
 
+## 7. REST API Integration
+
+Tasker provides comprehensive REST API endpoints for handler discovery, task management, and dependency graph analysis. This enables programmatic workflow management and external system integration.
+
+### Handler Discovery API
+
+The handler discovery API allows external systems to explore available workflows and their configurations:
+
+**List All Namespaces**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers
+```
+
+**Explore Handlers in Namespace**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments
+```
+
+**Get Handler Details with Dependency Graph**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments/process_payment?version=2.1.0
+```
+
+### Task Management API
+
+Create and manage tasks programmatically with full namespace and version support:
+
+**Create Task**:
+```bash
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "process_order",
+       "namespace": "payments",
+       "version": "2.1.0",
+       "context": {"order_id": 123, "amount": 99.99}
+     }' \
+     https://your-app.com/tasker/tasks
+```
+
+**Monitor Task Progress**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/tasks/TASK_ID?include_dependencies=true
+```
+
+### JavaScript Client Example
+
+```javascript
+class TaskerClient {
+  constructor(baseURL, token) {
+    this.client = axios.create({
+      baseURL,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  async discoverHandlers(namespace) {
+    const response = await this.client.get(`/handlers/${namespace}`);
+    return response.data.handlers;
+  }
+
+  async createTask(name, namespace, version, context) {
+    const response = await this.client.post('/tasks', {
+      name, namespace, version, context
+    });
+    return response.data;
+  }
+
+  async getHandlerDependencyGraph(namespace, name, version) {
+    const response = await this.client.get(`/handlers/${namespace}/${name}`, {
+      params: { version }
+    });
+    return response.data.dependency_graph;
+  }
+}
+```
+
+### Integration Patterns
+
+**Microservice Integration**:
+```ruby
+# In your microservice
+class WorkflowService
+  def initialize
+    @tasker_client = TaskerClient.new(
+      ENV['TASKER_BASE_URL'],
+      ENV['TASKER_API_TOKEN']
+    )
+  end
+
+  def trigger_payment_workflow(order_data)
+    # Discover available payment handlers
+    handlers = @tasker_client.get_handlers('payments')
+
+    # Create task with specific version
+    task = @tasker_client.create_task(
+      'process_payment',
+      'payments',
+      '2.1.0',
+      order_data
+    )
+
+    # Monitor progress
+    monitor_task_progress(task['id'])
+  end
+end
+```
+
+**Dashboard Integration**:
+```javascript
+// Real-time workflow monitoring dashboard
+const WorkflowDashboard = {
+  async loadNamespaces() {
+    const response = await taskerClient.get('/handlers');
+    return response.data.namespaces;
+  },
+
+  async visualizeDependencyGraph(namespace, handlerName) {
+    const handler = await taskerClient.getHandlerDetails(namespace, handlerName);
+    const graph = handler.dependency_graph;
+
+    // Render dependency graph visualization
+    this.renderGraph(graph.nodes, graph.edges, graph.execution_order);
+  },
+
+  async monitorActiveTasks() {
+    const tasks = await taskerClient.get('/tasks?status=in_progress');
+    tasks.data.tasks.forEach(task => {
+      this.updateTaskStatus(task.id, task.status);
+    });
+  }
+};
+```
+
+### API Authentication Integration
+
+**Custom Authentication**:
+```ruby
+# lib/tasker_api_authenticator.rb
+class TaskerApiAuthenticator
+  def authenticate!(request)
+    token = extract_token_from_request(request)
+    user = verify_jwt_token(token)
+    raise Tasker::Authentication::AuthenticationError unless user
+    user
+  end
+
+  def current_user(request)
+    authenticate!(request)
+  rescue Tasker::Authentication::AuthenticationError
+    nil
+  end
+
+  def authenticated?(request)
+    current_user(request).present?
+  end
+
+  def validate_configuration
+    # Validate JWT configuration
+    raise "JWT secret not configured" unless ENV['JWT_SECRET']
+  end
+
+  private
+
+  def extract_token_from_request(request)
+    auth_header = request.headers['Authorization']
+    auth_header&.split(' ')&.last
+  end
+
+  def verify_jwt_token(token)
+    JWT.decode(token, ENV['JWT_SECRET'], true, algorithm: 'HS256')
+  rescue JWT::DecodeError
+    nil
+  end
+end
+```
+
+### Error Handling Best Practices
+
+```javascript
+// Robust error handling for API integration
+class TaskerApiClient {
+  async createTaskWithRetry(name, namespace, version, context, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.createTask(name, namespace, version, context);
+      } catch (error) {
+        if (error.response?.status === 429) {
+          // Rate limited - exponential backoff
+          await this.sleep(Math.pow(2, attempt) * 1000);
+          continue;
+        }
+
+        if (error.response?.status >= 500 && attempt < maxRetries) {
+          // Server error - retry
+          await this.sleep(1000 * attempt);
+          continue;
+        }
+
+        // Client error or max retries exceeded
+        throw new TaskerApiError(
+          `Failed to create task after ${attempt} attempts`,
+          error
+        );
+      }
+    }
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+```
+
+For complete API documentation, see **[REST_API.md](REST_API.md)**.
+
 ## Related Documentation
 
+- **[REST_API.md](REST_API.md)** - Complete REST API documentation with examples
 - **[EVENT_SYSTEM.md](EVENT_SYSTEM.md)** - Complete event system documentation
 - **[TELEMETRY.md](TELEMETRY.md)** - OpenTelemetry integration and observability
 - **[OVERVIEW.md](OVERVIEW.md)** - System architecture overview

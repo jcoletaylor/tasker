@@ -88,7 +88,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/jcoletaylor</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.2.1</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.3.0</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -115,6 +115,8 @@ bundle exec rails db:migrate
 <ul><li>
 <p><strong>Tasks</strong>: The overall process to be executed</p>
 </li><li>
+<p><strong>TaskNamespaces</strong>: Organizational hierarchy for grouping related task types</p>
+</li><li>
 <p><strong>TaskHandlers</strong>: Classes that define and coordinate workflow steps</p>
 </li><li>
 <p><strong>Steps</strong>: Individual units of work within a task</p>
@@ -122,7 +124,29 @@ bundle exec rails db:migrate
 <p><strong>StepHandlers</strong>: Classes that implement the logic for each step</p>
 </li><li>
 <p><strong>Dependencies</strong>: Relationships between steps that determine execution order</p>
+</li><li>
+<p><strong>Versioning</strong>: Semantic versioning support for task handlers with coexistence</p>
 </li></ul>
+
+<h3 id="label-TaskNamespace+Organization">TaskNamespace Organization</h3>
+
+<p>Tasker supports organizing task handlers into logical namespaces for better organization and isolation:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Different namespaces can have tasks with the same name
+</span><span class='id identifier rubyid_payments_task'>payments_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>process_order</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>namespace_name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>payments</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>2.1.0</span><span class='tstring_end'>&#39;</span></span>
+<span class='rparen'>)</span>
+
+<span class='id identifier rubyid_inventory_task'>inventory_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>process_order</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>namespace_name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>inventory</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.5.0</span><span class='tstring_end'>&#39;</span></span>
+<span class='rparen'>)</span>
+</code></pre>
+
+<p>Common namespace patterns: - <strong><code>payments</code></strong> - Payment processing workflows - <strong><code>inventory</code></strong> - Stock and inventory management - <strong><code>notifications</code></strong> - Email, SMS, and alert workflows - <strong><code>integrations</code></strong> - Third-party API integrations - <strong><code>data_processing</code></strong> - ETL and data transformation workflows - <strong><code>default</code></strong> - General-purpose workflows (used when no namespace specified)</p>
 
 <h2 id="label-Simple+Example-3A+Order+Processing">Simple Example: Order Processing</h2>
 
@@ -137,6 +161,8 @@ bundle exec rails db:migrate
 
 <pre class="code ruby"><code class="ruby">---
 name: order_process
+namespace_name: default
+version: 1.0.0
 task_handler_class: OrderProcess
 concurrent: true
 
@@ -182,10 +208,17 @@ step_templates:
 <pre class="code ruby"><code class="ruby"><span class='comment'># Create and execute a task
 </span><span class='id identifier rubyid_task_request'>task_request</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">TaskRequest</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
   <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
-  <span class='label'>context:</span> <span class='lbrace'>{</span> <span class='label'>order_id:</span> <span class='int'>12345</span> <span class='rbrace'>}</span>
+  <span class='label'>namespace:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>        <span class='comment'># Optional - defaults to &#39;default&#39;
+</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>           <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
+</span>  <span class='label'>context:</span> <span class='lbrace'>{</span> <span class='label'>order_id:</span> <span class='int'>12345</span> <span class='rbrace'>}</span>
 <span class='rparen'>)</span>
 
-<span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='comment'># Handler lookup now supports namespace + version
+</span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span>
+  <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>namespace_name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>   <span class='comment'># Optional - defaults to &#39;default&#39;
+</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span>            <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
+</span><span class='rparen'>)</span>
 <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
 
 <span class='comment'># Task is now queued for processing with automatic retry logic
@@ -215,6 +248,56 @@ step_templates:
 
 <span class='comment'># GraphQL mutation automatically requires tasker.task:create permission
 </span><span class='id identifier rubyid_mutation'>mutation</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_createTask'>createTask</span><span class='lparen'>(</span><span class='label'>input:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>New Task</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_taskId'>taskId</span> <span class='rbrace'>}</span> <span class='rbrace'>}</span>
+</code></pre>
+
+<h3 id="label-REST+API+-26+Handler+Discovery">REST API &amp; Handler Discovery</h3>
+
+<p>Tasker provides comprehensive REST API endpoints for handler discovery, task management, and dependency graph analysis:</p>
+
+<p><strong>Handler Discovery API</strong>:</p>
+
+<pre class="code ruby"><code class="ruby"># List all namespaces with handler counts
+curl -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
+     https://your-app.com/tasker/handlers
+
+# List handlers in specific namespace
+curl -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
+     https://your-app.com/tasker/handlers/payments
+
+# Get handler details with dependency graph
+curl -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
+     https://your-app.com/tasker/handlers/payments/process_order?version=2.1.0
+</code></pre>
+
+<p><strong>Response includes dependency graph visualization</strong>:</p>
+
+<pre class="code ruby"><code class="ruby">{
+  &quot;id&quot;: &quot;process_order&quot;,
+  &quot;namespace&quot;: &quot;payments&quot;,
+  &quot;version&quot;: &quot;2.1.0&quot;,
+  &quot;step_templates&quot;: [...],
+  &quot;dependency_graph&quot;: {
+    &quot;nodes&quot;: [&quot;validate_order&quot;, &quot;process_payment&quot;, &quot;send_confirmation&quot;],
+    &quot;edges&quot;: [
+      {&quot;from&quot;: &quot;validate_order&quot;, &quot;to&quot;: &quot;process_payment&quot;},
+      {&quot;from&quot;: &quot;process_payment&quot;, &quot;to&quot;: &quot;send_confirmation&quot;}
+    ],
+    &quot;execution_order&quot;: [&quot;validate_order&quot;, &quot;process_payment&quot;, &quot;send_confirmation&quot;]
+  }
+}
+</code></pre>
+
+<p><strong>Task Management API</strong>:</p>
+
+<pre class="code ruby"><code class="ruby"># Create task with namespace/version support
+curl -X POST -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
+     -H &quot;Content-Type: application/json&quot; \
+     -d &#39;{&quot;name&quot;: &quot;process_order&quot;, &quot;namespace&quot;: &quot;payments&quot;, &quot;version&quot;: &quot;2.1.0&quot;, &quot;context&quot;: {&quot;order_id&quot;: 123}}&#39; \
+     https://your-app.com/tasker/tasks
+
+# List tasks with namespace filtering
+curl -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
+     &quot;https://your-app.com/tasker/tasks?namespace=payments&amp;version=2.1.0&quot;
 </code></pre>
 
 <h3 id="label-Event+System+-26+Integrations">Event System &amp; Integrations</h3>
@@ -334,6 +417,8 @@ GET /tasker/health/status
 
 <h3 id="label-F0-9F-94-A7+Advanced+Topics">🔧 Advanced Topics</h3>
 <ul><li>
+<p><strong>API Guide[docs/REST_API.md]</strong> - Complete REST API documentation with handler discovery</p>
+</li><li>
 <p><strong>&amp; Authorization[docs/AUTH.md]</strong> - Complete security system</p>
 </li><li>
 <p><strong>Monitoring[docs/HEALTH.md]</strong> - Production health endpoints and monitoring</p>
@@ -391,7 +476,7 @@ bundle exec rubocop
 </div></div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:35 2025 by
+  Generated on Sun Jun 22 08:31:51 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

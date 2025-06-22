@@ -11,9 +11,13 @@ RSpec.describe Tasker::HealthController, type: :request do
 
     # Configure basic health settings for tests
     Tasker.configure do |config|
-      config.health.cache_duration_seconds = 30
-      config.auth.authentication_enabled = false
-      config.auth.authorization_enabled = false
+      config.health do |health|
+        health.cache_duration_seconds = 30
+      end
+      config.auth do |auth|
+        auth.authentication_enabled = false
+        auth.authorization_enabled = false
+      end
     end
 
     example.run
@@ -72,10 +76,12 @@ RSpec.describe Tasker::HealthController, type: :request do
 
       # Configure authentication and authorization as enabled
       Tasker.configure do |config|
-        config.auth.authentication_enabled = true
-        config.auth.authorization_enabled = true
-        config.auth.authenticator_class = 'TestAuthenticator'
-        config.auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authorization_enabled = true
+          auth.authenticator_class = 'TestAuthenticator'
+          auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+        end
       end
 
       allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_return({
@@ -112,10 +118,12 @@ RSpec.describe Tasker::HealthController, type: :request do
 
       # Configure authentication and authorization as enabled
       Tasker.configure do |config|
-        config.auth.authentication_enabled = true
-        config.auth.authorization_enabled = true
-        config.auth.authenticator_class = 'TestAuthenticator'
-        config.auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authorization_enabled = true
+          auth.authenticator_class = 'TestAuthenticator'
+          auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+        end
       end
 
       # Should work without any authentication/authorization headers
@@ -134,7 +142,9 @@ RSpec.describe Tasker::HealthController, type: :request do
         original_config = Tasker.configuration.dup
 
         Tasker.configure do |config|
-          config.auth.authorization_enabled = false
+          config.auth do |auth|
+            auth.authorization_enabled = false
+          end
         end
 
         example.run
@@ -199,10 +209,12 @@ RSpec.describe Tasker::HealthController, type: :request do
 
       before do
         Tasker.configure do |config|
-          config.auth.authentication_enabled = true
-          config.auth.authorization_enabled = true
-          config.auth.authenticator_class = 'TestAuthenticator'
-          config.auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+          config.auth do |auth|
+            auth.authentication_enabled = true
+            auth.authorization_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
+            auth.authorization_coordinator_class = 'CustomAuthorizationCoordinator'
+          end
         end
 
         # Mock successful authentication
@@ -288,7 +300,9 @@ RSpec.describe Tasker::HealthController, type: :request do
         original_config = Tasker.configuration.dup
 
         Tasker.configure do |config|
-          config.auth.authorization_enabled = false
+          config.auth do |auth|
+            auth.authorization_enabled = false
+          end
         end
 
         example.run
@@ -316,7 +330,9 @@ RSpec.describe Tasker::HealthController, type: :request do
       original_config = Tasker.configuration.dup
 
       Tasker.configure do |config|
-        config.auth.authorization_enabled = false
+        config.auth do |auth|
+          auth.authorization_enabled = false
+        end
       end
 
       example.run
@@ -364,7 +380,9 @@ RSpec.describe Tasker::HealthController, type: :request do
   describe 'response headers' do
     before do
       Tasker.configure do |config|
-        config.auth.authorization_enabled = false
+        config.auth do |auth|
+          auth.authorization_enabled = false
+        end
       end
     end
 

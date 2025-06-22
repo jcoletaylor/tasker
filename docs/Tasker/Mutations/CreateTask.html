@@ -190,7 +190,11 @@
 36
 37
 38
-39</pre>
+39
+40
+41
+42
+43</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/graphql/tasker/mutations/create_task.rb', line 20</span>
@@ -200,7 +204,11 @@
   <span class='id identifier rubyid_task_request'>task_request</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">TaskRequest</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_task_params'>task_params</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='lbrace'>{</span> <span class='label'>context:</span> <span class='id identifier rubyid_context'>context</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='kw'>nil</span>
   <span class='kw'>begin</span>
-    <span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_factory'>handler_factory</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_factory'>handler_factory</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span>
+      <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+      <span class='label'>namespace_name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_namespace'>namespace</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../NamedTask.html#DEFAULT_NAMESPACE-constant" title="Tasker::NamedTask::DEFAULT_NAMESPACE (constant)">DEFAULT_NAMESPACE</a></span></span><span class='comma'>,</span>
+      <span class='label'>version:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_version'>version</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../NamedTask.html#DEFAULT_VERSION-constant" title="Tasker::NamedTask::DEFAULT_VERSION (constant)">DEFAULT_VERSION</a></span></span>
+    <span class='rparen'>)</span>
     <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
     <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Task</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
@@ -225,7 +233,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:38 2025 by
+  Generated on Sun Jun 22 08:31:54 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

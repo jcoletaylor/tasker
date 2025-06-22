@@ -221,7 +221,7 @@ module Tasker
       steps =
         templates.map do |template|
           named_step = named_steps.find { |ns| template.name == ns.name }
-          NamedTasksNamedStep.associate_named_step_with_named_task(task, template, named_step)
+          NamedTasksNamedStep.associate_named_step_with_named_task(task.named_task, template, named_step)
           step = where(task_id: task.task_id, named_step_id: named_step.named_step_id).first
           step ||= build_default_step!(task, template, named_step)
           step

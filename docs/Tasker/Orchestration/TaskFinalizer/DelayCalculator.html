@@ -111,69 +111,6 @@
   
 
 </div>
-  
-    <h2>
-      Constant Summary
-      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
-    </h2>
-
-    <dl class="constants">
-      
-        <dt id="DELAY_MAP-constant" class="">DELAY_MAP =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Frozen hash for O(1) delay lookups with descriptive comments</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='lbrace'>{</span>
-  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#HAS_READY_STEPS-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS (constant)">HAS_READY_STEPS</a></span></span> <span class='op'>=&gt;</span> <span class='int'>0</span><span class='comma'>,</span> <span class='comment'># Steps ready - immediate processing
-</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span> <span class='op'>=&gt;</span> <span class='int'>45</span><span class='comma'>,</span> <span class='comment'># Waiting for deps - 45 seconds
-</span>  <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#PROCESSING-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::PROCESSING (constant)">PROCESSING</a></span></span> <span class='op'>=&gt;</span> <span class='int'>10</span> <span class='comment'># Processing - moderate delay
-</span><span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
-      
-        <dt id="DEFAULT_DELAY-constant" class="">DEFAULT_DELAY =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>Default delay for unclear states or no context</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='int'>30</span></pre></dd>
-      
-        <dt id="MAXIMUM_DELAY-constant" class="">MAXIMUM_DELAY =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>five minutes</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='int'>300</span></pre></dd>
-      
-    </dl>
-  
-
 
 
 
@@ -187,6 +124,30 @@
     </h2>
 
     <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#backoff_config-class_method" title="backoff_config (class method)">.<strong>backoff_config</strong>  &#x21d2; Tasker::Types::BackoffConfig </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get backoff configuration with memoization.</p>
+</div></span>
+  
+</li>
+
       
         <li class="public ">
   <span class="summary_signature">
@@ -212,6 +173,78 @@
 </li>
 
       
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_delay-class_method" title="default_delay (class method)">.<strong>default_delay</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Default delay for unclear states or no context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#delay_map-class_method" title="delay_map (class method)">.<strong>delay_map</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Frozen hash for O(1) delay lookups with descriptive comments Values now use configurable backoff progression.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#maximum_delay-class_method" title="maximum_delay (class method)">.<strong>maximum_delay</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Maximum delay cap.</p>
+</div></span>
+  
+</li>
+
+      
     </ul>
   
 
@@ -222,7 +255,66 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="calculate_reenqueue_delay-class_method">
+  <h3 class="signature first" id="backoff_config-class_method">
+  
+    .<strong>backoff_config</strong>  &#x21d2; <tt><span class='object_link'><a href="../../Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">Tasker::Types::BackoffConfig</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get backoff configuration with memoization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../../Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">Tasker::Types::BackoffConfig</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The backoff configuration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+442
+443
+444</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 442</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_backoff_config'>backoff_config</span>
+  <span class='ivar'>@backoff_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_backoff'><span class='object_link'><a href="../../Configuration.html#backoff-instance_method" title="Tasker::Configuration#backoff (method)">backoff</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="calculate_reenqueue_delay-class_method">
   
     .<strong>calculate_reenqueue_delay</strong>(context)  &#x21d2; <tt>Integer</tt> 
   
@@ -287,23 +379,23 @@
       <pre class="lines">
 
 
-457
-458
-459
-460
-461
-462
-463
-464
-465
-466
-467</pre>
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 457</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 473</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_calculate_reenqueue_delay'>calculate_reenqueue_delay</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
-  <span class='kw'>return</span> <span class='const'><span class='object_link'><a href="#DEFAULT_DELAY-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DEFAULT_DELAY (constant)">DEFAULT_DELAY</a></span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_default_delay'>default_delay</span> <span class='kw'>unless</span> <span class='id identifier rubyid_context'>context</span>
 
   <span class='comment'># For waiting_for_dependencies status, check if we have failed steps with backoff timing
 </span>  <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span>
@@ -311,7 +403,138 @@
     <span class='kw'>return</span> <span class='id identifier rubyid_optimal_delay'>optimal_delay</span> <span class='kw'>if</span> <span class='id identifier rubyid_optimal_delay'>optimal_delay</span><span class='period'>.</span><span class='id identifier rubyid_positive?'>positive?</span>
   <span class='kw'>end</span>
 
-  <span class='const'><span class='object_link'><a href="#DELAY_MAP-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DELAY_MAP (constant)">DELAY_MAP</a></span></span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="#DEFAULT_DELAY-constant" title="Tasker::Orchestration::TaskFinalizer::DelayCalculator::DEFAULT_DELAY (constant)">DEFAULT_DELAY</a></span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_delay_map'>delay_map</span><span class='period'>.</span><span class='id identifier rubyid_fetch'>fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_execution_status'>execution_status</span><span class='comma'>,</span> <span class='id identifier rubyid_default_delay'>default_delay</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_delay-class_method">
+  
+    .<strong>default_delay</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Default delay for unclear states or no context</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+457
+458
+459</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 457</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_delay'>default_delay</span>
+  <span class='id identifier rubyid_backoff_config'>backoff_config</span><span class='period'>.</span><span class='id identifier rubyid_default_reenqueue_delay'>default_reenqueue_delay</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="delay_map-class_method">
+  
+    .<strong>delay_map</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Frozen hash for O(1) delay lookups with descriptive comments Values now use configurable backoff progression</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+448
+449
+450
+451
+452
+453
+454</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 448</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_delay_map'>delay_map</span>
+  <span class='ivar'>@delay_map</span> <span class='op'>||=</span> <span class='lbrace'>{</span>
+    <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#HAS_READY_STEPS-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS (constant)">HAS_READY_STEPS</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_backoff_config'>backoff_config</span><span class='period'>.</span><span class='id identifier rubyid_reenqueue_delays'>reenqueue_delays</span><span class='lbracket'>[</span><span class='symbol'>:has_ready_steps</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#WAITING_FOR_DEPENDENCIES-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES (constant)">WAITING_FOR_DEPENDENCIES</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_backoff_config'>backoff_config</span><span class='period'>.</span><span class='id identifier rubyid_reenqueue_delays'>reenqueue_delays</span><span class='lbracket'>[</span><span class='symbol'>:waiting_for_dependencies</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="../../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution.html" title="Tasker::Constants::TaskExecution (module)">TaskExecution</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html" title="Tasker::Constants::TaskExecution::ExecutionStatus (module)">ExecutionStatus</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Constants/TaskExecution/ExecutionStatus.html#PROCESSING-constant" title="Tasker::Constants::TaskExecution::ExecutionStatus::PROCESSING (constant)">PROCESSING</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_backoff_config'>backoff_config</span><span class='period'>.</span><span class='id identifier rubyid_reenqueue_delays'>reenqueue_delays</span><span class='lbracket'>[</span><span class='symbol'>:processing</span><span class='rbracket'>]</span>
+  <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="maximum_delay-class_method">
+  
+    .<strong>maximum_delay</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Maximum delay cap</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+462
+463
+464</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 462</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_maximum_delay'>maximum_delay</span>
+  <span class='id identifier rubyid_backoff_config'>backoff_config</span><span class='period'>.</span><span class='id identifier rubyid_max_backoff_seconds'>max_backoff_seconds</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -323,7 +546,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:38 2025 by
+  Generated on Sun Jun 22 08:31:54 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

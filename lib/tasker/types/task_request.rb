@@ -12,6 +12,14 @@ module Tasker
       #   @return [String] The name of the task to be performed
       attribute :name, Types::Strict::String
 
+      # @!attribute [r] namespace
+      #   @return [String] The namespace of the task to be performed
+      attribute :namespace, Types::Strict::String.default('default')
+
+      # @!attribute [r] version
+      #   @return [String] The version of the task to be performed
+      attribute :version, Types::Strict::String.default('0.1.0')
+
       # @!attribute [r] context
       #   @return [Hash] Context data required for task execution, containing task-specific information
       attribute :context, Types::Hash

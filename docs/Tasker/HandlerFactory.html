@@ -109,7 +109,7 @@
     
 <p>Factory for creating task handler instances</p>
 
-<p>This class maintains a registry of task handlers by name and provides methods to retrieve handler instances when needed. It follows the Singleton pattern to ensure a single registry.</p>
+<p>This class maintains a registry of task handlers by name and dependent system, providing namespaced handler organization while maintaining backward compatibility. It follows the Singleton pattern to ensure a single registry.</p>
 
 
   </div>
@@ -145,7 +145,34 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Registered handler classes by handler name.</p>
+<p>Registered handler classes by dependent system and handler name.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#namespaces-instance_method" title="#namespaces (instance method)">#<strong>namespaces</strong>  &#x21d2; Set </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Set of registered namespaces for efficient enumeration.</p>
 </div></span>
   
 </li>
@@ -167,7 +194,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#get-instance_method" title="#get (instance method)">#<strong>get</strong>(name)  &#x21d2; Object </a>
+      <a href="#get-instance_method" title="#get (instance method)">#<strong>get</strong>(name, namespace_name: :default, version: &#39;0.1.0&#39;)  &#x21d2; Object </a>
     
 
     
@@ -182,7 +209,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Get a task handler instance by name.</p>
+<p>Get a task handler instance by name and optional dependent system.</p>
 </div></span>
   
 </li>
@@ -217,7 +244,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#register-instance_method" title="#register (instance method)">#<strong>register</strong>(name, class_name)  &#x21d2; void </a>
+      <a href="#list_handlers-instance_method" title="#list_handlers (instance method)">#<strong>list_handlers</strong>(namespace: nil)  &#x21d2; Hash </a>
     
 
     
@@ -232,7 +259,55 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Register a task handler class with a name.</p>
+<p>List handlers, optionally filtered by namespace.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#register-instance_method" title="#register (instance method)">#<strong>register</strong>(name, class_or_class_name, namespace_name: :default, version: &#39;0.1.0&#39;)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Register a task handler class with a name and optional dependent system.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#registered_namespaces-instance_method" title="#registered_namespaces (instance method)">#<strong>registered_namespaces</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get list of all registered namespaces.</p>
 </div></span>
   
 </li>
@@ -271,15 +346,17 @@
       <pre class="lines">
 
 
-21
-22
-23</pre>
+24
+25
+26
+27</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 21</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 24</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
-  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_handler_classes'>handler_classes</span> <span class='op'>||=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_handler_classes'>handler_classes</span> <span class='op'>||=</span> <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>HashWithIndifferentAccess</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_namespaces'>namespaces</span> <span class='op'>||=</span> <span class='const'>Set</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='symbol'>:default</span><span class='rbracket'>]</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -305,7 +382,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Returns Registered handler classes by handler name.</p>
+<p>Returns Registered handler classes by dependent system and handler name.</p>
 
 
   </div>
@@ -324,7 +401,7 @@
       
         &mdash;
         <div class='inline'>
-<p>Registered handler classes by handler name</p>
+<p>Registered handler classes by dependent system and handler name</p>
 </div>
       
     </li>
@@ -352,6 +429,67 @@
 </table>
 </div>
     
+      
+      <span id="namespaces=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="namespaces-instance_method">
+  
+    #<strong>namespaces</strong>  &#x21d2; <tt>Set</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns Set of registered namespaces for efficient enumeration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Set</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Set of registered namespaces for efficient enumeration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+19
+20
+21</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 19</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_namespaces'>namespaces</span>
+  <span class='ivar'>@namespaces</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 
@@ -362,7 +500,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="get-instance_method">
   
-    #<strong>get</strong>(name)  &#x21d2; <tt>Object</tt> 
+    #<strong>get</strong>(name, namespace_name: :default, version: &#39;0.1.0&#39;)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -371,7 +509,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Get a task handler instance by name</p>
+<p>Get a task handler instance by name and optional dependent system</p>
 
 
   </div>
@@ -392,6 +530,22 @@
         &mdash;
         <div class='inline'>
 <p>The name of the handler to retrieve</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>dependent_system</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The dependent system namespace (defaults to ‘default’)</p>
 </div>
       
     </li>
@@ -428,7 +582,7 @@
       
         &mdash;
         <div class='inline'>
-<p>If no handler is registered with the given name</p>
+<p>If no handler is registered with the given name in the specified system</p>
 </div>
       
     </li>
@@ -441,11 +595,6 @@
       <pre class="lines">
 
 
-30
-31
-32
-33
-34
 35
 36
 37
@@ -458,22 +607,106 @@
 44</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 30</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 35</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_handler_class'>handler_class</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span>
-  <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No task handler for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_handler_class'>handler_class</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>namespace_name:</span> <span class='symbol'>:default</span><span class='comma'>,</span> <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>0.1.0</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_namespace_name'>namespace_name</span> <span class='op'>=</span> <span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
+  <span class='id identifier rubyid_name_sym'>name_sym</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
 
-  <span class='comment'># Handle both direct class objects and string class names
-</span>  <span class='kw'>if</span> <span class='id identifier rubyid_handler_class'>handler_class</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span>
-    <span class='comment'># Direct class registration (used in tests with anonymous classes)
-</span>    <span class='id identifier rubyid_handler_class'>handler_class</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='comment'># Direct namespace lookup - allows same name in different systems
+</span>  <span class='id identifier rubyid_handler_class'>handler_class</span> <span class='op'>=</span> <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='period'>.</span><span class='id identifier rubyid_dig'>dig</span><span class='lparen'>(</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='comma'>,</span> <span class='id identifier rubyid_name_sym'>name_sym</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise_handler_not_found'>raise_handler_not_found</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='comma'>,</span> <span class='id identifier rubyid_version'>version</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_handler_class'>handler_class</span>
+
+  <span class='id identifier rubyid_instantiate_handler'>instantiate_handler</span><span class='lparen'>(</span><span class='id identifier rubyid_handler_class'>handler_class</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="list_handlers-instance_method">
+  
+    #<strong>list_handlers</strong>(namespace: nil)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>List handlers, optionally filtered by namespace</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>namespace</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional namespace filter</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Handlers hash, either for specific namespace or all namespaces</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+73
+74
+75
+76
+77
+78
+79</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 73</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_list_handlers'>list_handlers</span><span class='lparen'>(</span><span class='label'>namespace:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_namespace'>namespace</span>
+    <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_namespace'>namespace</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>HashWithIndifferentAccess</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
   <span class='kw'>else</span>
-    <span class='comment'># String class name registration (used in production)
-</span>    <span class='id identifier rubyid_handler_class'>handler_class</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='period'>.</span><span class='id identifier rubyid_camelize'>camelize</span><span class='period'>.</span><span class='id identifier rubyid_constantize'>constantize</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+    <span class='id identifier rubyid_handler_classes'>handler_classes</span>
   <span class='kw'>end</span>
-<span class='kw'>rescue</span> <span class='const'>NameError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
-  <span class='id identifier rubyid_raise'>raise</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>No task handler for </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -483,7 +716,7 @@
       <div class="method_details ">
   <h3 class="signature " id="register-instance_method">
   
-    #<strong>register</strong>(name, class_name)  &#x21d2; <tt>void</tt> 
+    #<strong>register</strong>(name, class_or_class_name, namespace_name: :default, version: &#39;0.1.0&#39;)  &#x21d2; <tt>void</tt> 
   
 
   
@@ -492,7 +725,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     <p class="note returns_void">This method returns an undefined value.</p>
-<p>Register a task handler class with a name</p>
+<p>Register a task handler class with a name and optional dependent system</p>
 
 
   </div>
@@ -533,8 +766,42 @@
       
     </li>
   
+    <li>
+      
+        <span class='name'>dependent_system</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The dependent system namespace (defaults to ‘default’)</p>
+</div>
+      
+    </li>
+  
 </ul>
 
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>StandardError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If custom event configuration fails (fail fast)</p>
+</div>
+      
+    </li>
+  
+</ul>
 
 </div><table class="source_code">
   <tr>
@@ -542,8 +809,6 @@
       <pre class="lines">
 
 
-51
-52
 53
 54
 55
@@ -553,22 +818,89 @@
 59
 60
 61
-62</pre>
+62
+63
+64
+65
+66
+67</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 51</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 53</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_register'>register</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='rparen'>)</span>
-  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span>
-                                        <span class='comment'># Store the class directly for anonymous classes
-</span>                                        <span class='id identifier rubyid_class_name'>class_name</span>
-                                      <span class='kw'>else</span>
-                                        <span class='comment'># Store as string for named classes (original behavior)
-</span>                                        <span class='id identifier rubyid_class_name'>class_name</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
-                                      <span class='kw'>end</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_register'>register</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_class_or_class_name'>class_or_class_name</span><span class='comma'>,</span> <span class='label'>namespace_name:</span> <span class='symbol'>:default</span><span class='comma'>,</span> <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>0.1.0</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_name_sym'>name_sym</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
+  <span class='id identifier rubyid_namespace_name'>namespace_name</span> <span class='op'>=</span> <span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
 
-  <span class='comment'># Automatically discover and register custom events from step handlers
-</span>  <span class='id identifier rubyid_discover_and_register_custom_events'>discover_and_register_custom_events</span><span class='lparen'>(</span><span class='id identifier rubyid_class_name'>class_name</span><span class='rparen'>)</span>
+  <span class='comment'># Validate custom event configuration BEFORE modifying registry state
+</span>  <span class='comment'># This ensures atomic registration - either fully succeeds or fully fails
+</span>  <span class='id identifier rubyid_normalized_class'>normalized_class</span> <span class='op'>=</span> <span class='id identifier rubyid_normalize_class_name'>normalize_class_name</span><span class='lparen'>(</span><span class='id identifier rubyid_class_or_class_name'>class_or_class_name</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_discover_and_register_custom_events'>discover_and_register_custom_events</span><span class='lparen'>(</span><span class='id identifier rubyid_class_or_class_name'>class_or_class_name</span><span class='rparen'>)</span>
+
+  <span class='comment'># Only modify registry state after successful configuration validation
+</span>  <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>HashWithIndifferentAccess</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id identifier rubyid_name_sym'>name_sym</span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='const'>ActiveSupport</span><span class='op'>::</span><span class='const'>HashWithIndifferentAccess</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='id identifier rubyid_handler_classes'>handler_classes</span><span class='lbracket'>[</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id identifier rubyid_name_sym'>name_sym</span><span class='rbracket'>]</span><span class='lbracket'>[</span><span class='id identifier rubyid_version'>version</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_normalized_class'>normalized_class</span>
+  <span class='id identifier rubyid_namespaces'>namespaces</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="registered_namespaces-instance_method">
+  
+    #<strong>registered_namespaces</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get list of all registered namespaces</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Array of namespace strings</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+84
+85
+86</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/handler_factory.rb', line 84</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_registered_namespaces'>registered_namespaces</span>
+  <span class='id identifier rubyid_namespaces'>namespaces</span><span class='period'>.</span><span class='id identifier rubyid_to_a'>to_a</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -580,7 +912,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:37 2025 by
+  Generated on Sun Jun 22 08:31:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

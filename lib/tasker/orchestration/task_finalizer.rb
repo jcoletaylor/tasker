@@ -435,18 +435,34 @@ module Tasker
       # Service class to calculate delays
       # Reduces complexity by organizing delay calculation logic
       class DelayCalculator
-        # Frozen hash for O(1) delay lookups with descriptive comments
-        DELAY_MAP = {
-          Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS => 0, # Steps ready - immediate processing
-          Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES => 45, # Waiting for deps - 45 seconds
-          Constants::TaskExecution::ExecutionStatus::PROCESSING => 10 # Processing - moderate delay
-        }.freeze
-
-        DEFAULT_DELAY = 30 # Default delay for unclear states or no context
-
-        MAXIMUM_DELAY = 300 # five minutes
-
         class << self
+          # Get backoff configuration with memoization
+          #
+          # @return [Tasker::Types::BackoffConfig] The backoff configuration
+          def backoff_config
+            @backoff_config ||= Tasker.configuration.backoff
+          end
+
+          # Frozen hash for O(1) delay lookups with descriptive comments
+          # Values now use configurable backoff progression
+          def delay_map
+            @delay_map ||= {
+              Constants::TaskExecution::ExecutionStatus::HAS_READY_STEPS => backoff_config.reenqueue_delays[:has_ready_steps],
+              Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES => backoff_config.reenqueue_delays[:waiting_for_dependencies],
+              Constants::TaskExecution::ExecutionStatus::PROCESSING => backoff_config.reenqueue_delays[:processing]
+            }.freeze
+          end
+
+          # Default delay for unclear states or no context
+          def default_delay
+            backoff_config.default_reenqueue_delay
+          end
+
+          # Maximum delay cap
+          def maximum_delay
+            backoff_config.max_backoff_seconds
+          end
+
           # Calculate intelligent re-enqueue delay based on execution context and step backoff timing
           #
           # This method considers the actual backoff timing of failed steps to avoid
@@ -455,7 +471,7 @@ module Tasker
           # @param context [Tasker::TaskExecutionContext] The execution context
           # @return [Integer] Delay in seconds
           def calculate_reenqueue_delay(context)
-            return DEFAULT_DELAY unless context
+            return default_delay unless context
 
             # For waiting_for_dependencies status, check if we have failed steps with backoff timing
             if context.execution_status == Constants::TaskExecution::ExecutionStatus::WAITING_FOR_DEPENDENCIES
@@ -463,7 +479,7 @@ module Tasker
               return optimal_delay if optimal_delay.positive?
             end
 
-            DELAY_MAP.fetch(context.execution_status, DEFAULT_DELAY)
+            delay_map.fetch(context.execution_status, default_delay)
           end
 
           private
@@ -497,9 +513,10 @@ module Tasker
               next_retry_time > now ? (next_retry_time - now).to_i : 0
             end.max
 
-            # Add a small buffer (5 seconds) to ensure the step is definitely ready
-            # Cap the maximum delay at 5 minutes to prevent excessive delays
-            [(max_delay || 0) + 5, MAXIMUM_DELAY].min
+            # Add a configurable buffer time to ensure the step is definitely ready
+            # Cap the maximum delay to prevent excessive delays
+            buffer_time = backoff_config.buffer_seconds
+            [(max_delay || 0) + buffer_time, maximum_delay].min
           end
         end
       end

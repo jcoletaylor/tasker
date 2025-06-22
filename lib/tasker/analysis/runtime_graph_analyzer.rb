@@ -108,6 +108,14 @@ module Tasker
 
       private
 
+      # Get configuration for dependency graph calculations
+      #
+      # @return [Tasker::Types::DependencyGraphConfig] Configuration for calculations
+      # @api private
+      def dependency_graph_config
+        @dependency_graph_config ||= Tasker.configuration.dependency_graph
+      end
+
       # Load workflow steps with named step associations
       #
       # @return [ActiveRecord::Relation] Workflow steps with eager-loaded named steps
@@ -317,21 +325,32 @@ module Tasker
       end
 
       # Calculate criticality score using task context for efficiency
+      # Calculate path criticality score using configurable multipliers
+      #
+      # Uses configurable impact multipliers for flexible path scoring.
+      #
+      # @param path_length [Integer] Length of the path
+      # @param path_metrics [Hash] Metrics about the path steps
+      # @param duration [Integer] Estimated path duration
+      # @param task_context [Object] Task execution context
+      # @return [Float] Path criticality score using configurable weights
       def calculate_path_criticality_score(path_length, path_metrics, duration, task_context)
+        config = dependency_graph_config
+
         # Base score from path length relative to total task size
-        score = path_length * 10
+        score = path_length * config.impact_multipliers[:path_length_weight]
 
         # Factor in task-wide context for better scoring
         task_completion_factor = task_context.completion_percentage / 100.0
         task_health_factor = task_context.health_status == 'healthy' ? 1.0 : 1.5
 
         # Reduce score for completed work
-        score -= path_metrics[:completed_steps] * 15
+        score -= path_metrics[:completed_steps] * config.impact_multipliers[:completed_penalty]
 
         # Increase score for problems (weighted by task health)
-        score += path_metrics[:blocked_steps] * 25 * task_health_factor
-        score += path_metrics[:error_steps] * 30 * task_health_factor
-        score += path_metrics[:retry_steps] * 10
+        score += path_metrics[:blocked_steps] * config.impact_multipliers[:blocked_penalty] * task_health_factor
+        score += path_metrics[:error_steps] * config.impact_multipliers[:error_penalty] * task_health_factor
+        score += path_metrics[:retry_steps] * config.impact_multipliers[:retry_penalty]
 
         # Factor in estimated duration and task completion
         score += (duration / 60.0) * 2 # 2 points per minute
@@ -365,18 +384,25 @@ module Tasker
         @get_task_execution_context ||= Tasker::Functions::FunctionBasedTaskExecutionContext.find(task_id)
       end
 
-      # Calculate estimated duration for a path
+      # Calculate estimated duration for a path using configurable estimates
+      #
+      # Uses configurable duration constants for flexible time estimation.
+      #
+      # @param path_steps [Array] Steps in the path
+      # @return [Integer] Estimated duration in seconds using configurable estimates
       def calculate_path_duration(path_steps)
-        # Base estimation: assume each step takes 30 seconds on average
-        base_duration = path_steps.length * 30 # 30 seconds per step
+        config = dependency_graph_config
+
+        # Base estimation: configurable seconds per step
+        base_duration = path_steps.length * config.duration_estimates[:base_step_seconds]
 
         # Calculate penalties in a single pass
         error_penalty = 0
         retry_penalty = 0
 
         path_steps.each do |step|
-          error_penalty += 60 if step.current_state == 'error' # 1 minute per error
-          retry_penalty += step.attempts * 30 # 30 seconds per retry attempt
+          error_penalty += config.duration_estimates[:error_penalty_seconds] if step.current_state == 'error'
+          retry_penalty += step.attempts * config.duration_estimates[:retry_penalty_seconds]
         end
 
         base_duration + error_penalty + retry_penalty
@@ -631,21 +657,29 @@ module Tasker
         }
       end
 
-      # Calculate impact score for an error
+      # Calculate impact score for an error using configurable weights
+      #
+      # Uses configurable impact multipliers for flexible error impact assessment.
+      #
+      # @param error_step [Object] Error step object
+      # @param blocked_downstream [Integer] Number of blocked downstream steps
+      # @param total_downstream [Integer] Total downstream steps
+      # @return [Integer] Error impact score using configurable weights
       def calculate_error_impact_score(error_step, blocked_downstream, total_downstream)
+        config = dependency_graph_config
         score = 0
 
         # Base impact from blocked downstream steps
-        score += blocked_downstream * 10
+        score += blocked_downstream * config.impact_multipliers[:blocked_weight]
 
         # Additional impact for total downstream reach
-        score += total_downstream * 2
+        score += total_downstream * config.impact_multipliers[:downstream_weight]
 
         # Penalty for exhausted retries (permanent blockage)
-        score += 50 if error_step.attempts >= (error_step.retry_limit || 3)
+        score += config.penalty_constants[:exhausted_retry] if error_step.attempts >= (error_step.retry_limit || 3)
 
         # Penalty for high retry count (instability)
-        score += error_step.attempts * 5
+        score += error_step.attempts * config.penalty_constants[:retry_instability]
 
         score
       end
@@ -742,10 +776,17 @@ module Tasker
       end
 
       # Determine priority level based on impact score
+      #
+      # Uses configurable thresholds for consistent severity classification.
+      #
+      # @param impact_score [Integer] The calculated impact score
+      # @return [String] Priority level: 'Critical', 'High', 'Medium', or 'Low'
       def determine_priority_level(impact_score)
-        return 'Critical' if impact_score >= 100
-        return 'High' if impact_score >= 50
-        return 'Medium' if impact_score >= 20
+        config = dependency_graph_config
+
+        return 'Critical' if impact_score >= config.severity_thresholds[:critical]
+        return 'High' if impact_score >= config.severity_thresholds[:high]
+        return 'Medium' if impact_score >= config.severity_thresholds[:medium]
 
         'Low'
       end
@@ -918,33 +959,40 @@ module Tasker
       #
       # Provides the foundation score based on how many steps are affected.
       # Blocked steps are weighted more heavily than total downstream steps.
+      # Uses configurable multipliers for flexible impact weighting.
       #
       # @param downstream_count [Integer] Total number of downstream steps
       # @param blocked_count [Integer] Number of blocked downstream steps
-      # @return [Integer] Base impact score (downstream * 5 + blocked * 15)
+      # @return [Integer] Base impact score using configurable weights
       #
       # @api private
       def calculate_base_impact_score(downstream_count, blocked_count)
-        (downstream_count * 5) + (blocked_count * 15)
+        config = dependency_graph_config
+        (downstream_count * config.impact_multipliers[:downstream_weight]) +
+          (blocked_count * config.impact_multipliers[:blocked_weight])
       end
 
       # Calculate severity multiplier based on step state
       #
       # Applies multipliers based on the current state of the step, with error
       # states receiving higher multipliers, especially for exhausted retries.
+      # Uses configurable multipliers for flexible severity weighting.
       #
       # @param step [Object] Step readiness status object
-      # @return [Float] Severity multiplier (1.0 to 2.5)
+      # @return [Float] Severity multiplier using configurable weights
       #
       # @api private
       def calculate_state_severity_multiplier(step)
+        config = dependency_graph_config
+
         case step.current_state
         when 'error'
-          multiplier = 2.0 # Errors are serious
-          multiplier += 0.5 if step.attempts >= (step.retry_limit || 3) # Exhausted retries are critical
+          multiplier = config.severity_multipliers[:error_state] # Errors are serious
+          # Exhausted retries are critical
+          multiplier += config.severity_multipliers[:exhausted_retry_bonus] if step.attempts >= (step.retry_limit || 3)
           multiplier
         when 'pending'
-          step.dependencies_satisfied ? 1.0 : 1.2 # Dependency issues
+          step.dependencies_satisfied ? 1.0 : config.severity_multipliers[:dependency_issue] # Dependency issues
         else
           1.0
         end
@@ -953,25 +1001,35 @@ module Tasker
       # Calculate additional penalty scores for problematic conditions
       #
       # Adds penalty points for retry instability, non-retryable issues,
-      # and exhausted retry attempts.
+      # and exhausted retry attempts. Uses configurable constants for
+      # flexible penalty weighting.
       #
       # @param step [Object] Step readiness status object
-      # @return [Integer] Total penalty score
+      # @return [Integer] Total penalty score using configurable penalties
       #
       # @api private
       def calculate_bottleneck_penalties(step)
+        config = dependency_graph_config
         penalty = 0
-        penalty += step.attempts * 3 # Retry instability
-        penalty += 10 unless step.retry_eligible # Non-retryable issues
-        penalty += 20 if step.attempts >= (step.retry_limit || 3) # Exhausted retries
+        penalty += step.attempts * config.penalty_constants[:retry_instability] # Retry instability
+        penalty += config.penalty_constants[:non_retryable] unless step.retry_eligible # Non-retryable issues
+        # Exhausted retries
+        penalty += config.penalty_constants[:exhausted_retry] if step.attempts >= (step.retry_limit || 3)
         penalty
       end
 
       # Determine severity level based on impact score
+      #
+      # Uses configurable thresholds for flexible severity classification.
+      #
+      # @param impact_score [Integer] The calculated impact score
+      # @return [String] Severity level: 'Critical', 'High', 'Medium', or 'Low'
       def determine_bottleneck_severity_level(impact_score)
-        return 'Critical' if impact_score >= 100
-        return 'High' if impact_score >= 50
-        return 'Medium' if impact_score >= 20
+        config = dependency_graph_config
+
+        return 'Critical' if impact_score >= config.severity_thresholds[:critical]
+        return 'High' if impact_score >= config.severity_thresholds[:high]
+        return 'Medium' if impact_score >= config.severity_thresholds[:medium]
 
         'Low'
       end

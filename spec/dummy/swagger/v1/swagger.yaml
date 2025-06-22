@@ -4,7 +4,71 @@ info:
   title: API V1
   version: v1
 paths:
-  "/tasker/tasks/{task_id}/task_diagram":
+  "/tasker/handlers":
+    get:
+      summary: list namespaces - authentication required
+      tags:
+      - Handlers
+      description: Lists all registered namespaces with handler counts
+      operationId: listNamespaces
+      responses:
+        '200':
+          description: successful
+        '401':
+          description: unauthorized
+  "/tasker/handlers/{namespace}":
+    parameters:
+    - name: namespace
+      in: path
+      description: Handler namespace
+      required: true
+      schema:
+        type: string
+    get:
+      summary: list handlers in namespace
+      tags:
+      - Handlers
+      description: Lists all handlers in a specific namespace with their versions
+      operationId: listHandlersInNamespace
+      responses:
+        '200':
+          description: successful - payments namespace
+        '404':
+          description: namespace not found
+  "/tasker/handlers/{namespace}/{name}":
+    parameters:
+    - name: namespace
+      in: path
+      description: Handler namespace
+      required: true
+      schema:
+        type: string
+    - name: name
+      in: path
+      description: Handler name
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show handler with dependency graph
+      tags:
+      - Handlers
+      description: Show a specific handler with full details including dependency
+        graph
+      operationId: getHandlerWithDependencies
+      parameters:
+      - name: version
+        in: query
+        required: false
+        description: Handler version
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful - complex handler with dependencies
+        '404':
+          description: namespace not found
+  "/tasker/tasks/{task_id}/task_diagrams":
     parameters:
     - name: task_id
       in: path
@@ -27,7 +91,7 @@ paths:
           type: string
       responses:
         '200':
-          description: successful JSON response
+          description: successful HTML response
           content:
             application/json:
               schema:
@@ -138,7 +202,7 @@ paths:
       parameters: []
       responses:
         '201':
-          description: successful
+          description: successful with namespace and version
         '400':
           description: bad request
       requestBody:
@@ -148,6 +212,10 @@ paths:
               type: object
               properties:
                 name:
+                  type: string
+                namespace:
+                  type: string
+                version:
                   type: string
                 context:
                   type: object
@@ -177,6 +245,13 @@ paths:
       - Tasks
       description: Show Task
       operationId: getTask
+      parameters:
+      - name: include_dependencies
+        in: query
+        required: false
+        description: Include dependency analysis
+        schema:
+          type: boolean
       responses:
         '200':
           description: successful for completed task

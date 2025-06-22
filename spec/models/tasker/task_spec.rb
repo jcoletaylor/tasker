@@ -51,7 +51,11 @@ module Tasker
     describe 'task creation' do
       it 'is able to create with defaults' do
         # Set identity strategy to hash for testing
-        Tasker.configuration.engine.identity_strategy = :hash
+        Tasker.configuration do |config|
+          config.engine do |engine|
+            engine.identity_strategy = :hash
+          end
+        end
 
         # Create first task using factory approach
         task = create_dummy_task_workflow(context: { dummy: true }, reason: 'task creation test')

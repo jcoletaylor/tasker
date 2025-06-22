@@ -121,7 +121,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#associate_named_step_with_named_task-class_method" title="associate_named_step_with_named_task (class method)">.<strong>associate_named_step_with_named_task</strong>(task, template, named_step)  &#x21d2; Object </a>
+      <a href="#associate_named_step_with_named_task-class_method" title="associate_named_step_with_named_task (class method)">.<strong>associate_named_step_with_named_task</strong>(named_task, template, named_step)  &#x21d2; Object </a>
     
 
     
@@ -239,7 +239,7 @@
       <div class="method_details first">
   <h3 class="signature first" id="associate_named_step_with_named_task-class_method">
   
-    .<strong>associate_named_step_with_named_task</strong>(task, template, named_step)  &#x21d2; <tt>Object</tt> 
+    .<strong>associate_named_step_with_named_task</strong>(named_task, template, named_step)  &#x21d2; <tt>Object</tt> 
   
 
   
@@ -267,14 +267,12 @@
 69
 70
 71
-72
-73</pre>
+72</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/models/tasker/named_tasks_named_step.rb', line 56</span>
 
-<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_associate_named_step_with_named_task'>associate_named_step_with_named_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_template'>template</span><span class='comma'>,</span> <span class='id identifier rubyid_named_step'>named_step</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by!'>find_or_create_by!</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_associate_named_step_with_named_task'>associate_named_step_with_named_task</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='comma'>,</span> <span class='id identifier rubyid_template'>template</span><span class='comma'>,</span> <span class='id identifier rubyid_named_step'>named_step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_ntns'>ntns</span> <span class='op'>=</span> <span class='id identifier rubyid_named_steps_for_named_task'>named_steps_for_named_task</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='period'>.</span><span class='id identifier rubyid_named_task_id'>named_task_id</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>named_step:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_named_step'>named_step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_ntns'>ntns</span> <span class='kw'>if</span> <span class='id identifier rubyid_ntns'>ntns</span>
 
@@ -377,12 +375,12 @@
       <pre class="lines">
 
 
+78
 79
-80
-81</pre>
+80</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/named_tasks_named_step.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/named_tasks_named_step.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_step_name'>step_name</span>
   <span class='id identifier rubyid_named_step'>named_step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
@@ -407,12 +405,12 @@
       <pre class="lines">
 
 
+74
 75
-76
-77</pre>
+76</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/named_tasks_named_step.rb', line 75</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/named_tasks_named_step.rb', line 74</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_task_name'>task_name</span>
   <span class='id identifier rubyid_named_task'>named_task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
@@ -427,7 +425,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Jun 18 11:50:38 2025 by
+  Generated on Sun Jun 22 08:31:54 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

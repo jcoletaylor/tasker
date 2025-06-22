@@ -85,7 +85,7 @@ module Tasker
             end
 
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-            expect(step.backoff_request_seconds).to eq(4) # Initial delay
+            expect(step.backoff_request_seconds).to eq(1) # First attempt (1) gets backoff[0] = 1 second
           end
 
           it 'increases backoff with each attempt' do
@@ -95,7 +95,7 @@ module Tasker
 
             step.attempts = 2
             expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-            expect(step.backoff_request_seconds).to eq(8)
+            expect(step.backoff_request_seconds).to eq(4) # Attempt 2 (3rd attempt) gets backoff[2] = 4 seconds
           end
         end
       end
@@ -107,7 +107,7 @@ module Tasker
           end
 
           expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
-          expect(step.backoff_request_seconds).to eq(4)
+          expect(step.backoff_request_seconds).to eq(1) # First attempt gets backoff[0] = 1 second
         end
       end
 

@@ -25,7 +25,11 @@ RSpec.describe Tasker::Authentication::Coordinator do
   describe '.authenticator' do
     context 'with authentication disabled' do
       before do
-        Tasker.configuration.auth.authentication_enabled = false
+        Tasker.configuration do |config|
+          config.auth do |auth|
+            auth.authentication_enabled = false
+          end
+        end
       end
 
       it 'returns a NoneAuthenticator instance' do
@@ -35,8 +39,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with custom authentication enabled' do
       before do
-        Tasker.configuration.auth.authentication_enabled = true
-        Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
+        Tasker.configuration do |config|
+          config.auth do |auth|
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'TestAuthenticator'
+          end
+        end
       end
 
       it 'returns the custom authenticator instance' do
@@ -60,8 +68,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with authentication enabled but missing authenticator_class' do
       before do
-        Tasker.configuration.auth.authentication_enabled = true
-        Tasker.configuration.auth.authenticator_class = nil
+        Tasker.configuration do |config|
+          config.auth do |auth|
+            auth.authentication_enabled = true
+            auth.authenticator_class = nil
+          end
+        end
       end
 
       it 'raises ConfigurationError' do
@@ -74,8 +86,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with invalid authenticator class' do
       before do
-        Tasker.configuration.auth.authentication_enabled = true
-        Tasker.configuration.auth.authenticator_class = 'NonExistentClass'
+        Tasker.configuration do |config|
+          config.auth do |auth|
+            auth.authentication_enabled = true
+            auth.authenticator_class = 'NonExistentClass'
+          end
+        end
       end
 
       it 'raises NameError' do
@@ -94,8 +110,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     before do
       stub_const('IncompleteAuthenticator', incomplete_authenticator_class)
-      Tasker.configuration.auth.authentication_enabled = true
-      Tasker.configuration.auth.authenticator_class = 'IncompleteAuthenticator'
+      Tasker.configuration do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'IncompleteAuthenticator'
+        end
+      end
     end
 
     it 'raises InterfaceError for missing authenticate! method' do
@@ -109,8 +129,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
   describe 'configuration validation' do
     before do
       TestAuthenticator.set_validation_errors(['Invalid configuration'])
-      Tasker.configuration.auth.authentication_enabled = true
-      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
+      Tasker.configuration do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'TestAuthenticator'
+        end
+      end
     end
 
     it 'raises ConfigurationError for validation failures' do
@@ -123,8 +147,12 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe 'method delegation' do
     before do
-      Tasker.configuration.auth.authentication_enabled = true
-      Tasker.configuration.auth.authenticator_class = 'TestAuthenticator'
+      Tasker.configuration do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = true
+          auth.authenticator_class = 'TestAuthenticator'
+        end
+      end
     end
 
     describe '.authenticate!' do
@@ -154,7 +182,11 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe '.reset!' do
     it 'clears the cached authenticator' do
-      Tasker.configuration.auth.authentication_enabled = false
+      Tasker.configuration do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = false
+        end
+      end
       first_authenticator = described_class.authenticator
 
       described_class.reset!

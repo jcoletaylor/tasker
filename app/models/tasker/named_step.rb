@@ -26,7 +26,7 @@ module Tasker
   class NamedStep < ApplicationRecord
     self.primary_key = :named_step_id
     belongs_to :dependent_system
-    has_many :workflow_steps, dependent: :destroy
+    has_many :workflow_steps, dependent: :nullify
     validates :name, presence: true, uniqueness: { scope: :dependent_system_id }
 
     def self.create_named_steps_from_templates(templates)

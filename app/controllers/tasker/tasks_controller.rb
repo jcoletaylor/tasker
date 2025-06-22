@@ -1,7 +1,7 @@
 # typed: false
 # frozen_string_literal: true
 
-require_dependency 'tasker/application_controller'
+require_relative 'application_controller'
 
 module Tasker
   class TasksController < ApplicationController
@@ -20,7 +20,16 @@ module Tasker
 
     # GET /tasks/1
     def show
-      render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
+      include_dependencies = ActiveModel::Type::Boolean.new.cast(params[:include_dependencies])
+
+      render(
+        json: @task,
+        status: :ok,
+        adapter: :json,
+        root: :task,
+        serializer: Tasker::TaskSerializer,
+        include_dependencies: include_dependencies
+      )
     end
 
     # POST /tasks
@@ -31,11 +40,20 @@ module Tasker
       end
       set_task_request
       begin
-        handler = handler_factory.get(@task_request.name)
+        # Use namespace and version from task request for handler lookup
+        handler = handler_factory.get(
+          @task_request.name,
+          namespace_name: @task_request.namespace,
+          version: @task_request.version
+        )
         @task = handler.initialize_task!(@task_request)
       rescue Tasker::ProceduralError => e
         @task = Tasker::Task.new
         @task.errors.add(:name, e.to_s)
+      rescue StandardError => e
+        @task = Tasker::Task.new
+        error_message = "Handler error for #{@task_request.namespace}.#{@task_request.name}@#{@task_request.version}: #{e.message}"
+        @task.errors.add(:handler, error_message)
       end
 
       # we don't want to re-run save here because it will remove the
@@ -74,7 +92,8 @@ module Tasker
     end
 
     def task_params
-      params.require(:task).permit(:name, :initiator, :source_system, :reason, tags: [], context: {})
+      params.require(:task).permit(:name, :namespace, :version, :initiator, :source_system, :reason, tags: [],
+                                                                                                     context: {})
     end
 
     def update_task_params

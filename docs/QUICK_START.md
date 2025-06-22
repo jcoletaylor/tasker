@@ -20,7 +20,7 @@ Before starting, ensure you have:
 ```ruby
 # Gemfile
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.2.1'
+  gem 'tasker', '~> 2.3.0'
 end
 ```
 
@@ -283,15 +283,18 @@ puts "Created user: #{user.name} with ID: #{user.id}"
 # Create and execute the workflow
 task_request = Tasker::Types::TaskRequest.new(
   name: 'welcome_user',
+  namespace: 'notifications',    # NEW: Organize tasks by domain
+  version: '1.0.0',             # NEW: Semantic versioning support
   context: { user_id: user.id }
 )
 
-# note that the handler name is the same as the task name in the YAML configuration
-# this needs to be distinct across the tasks in the system, to be registered correctly
-# all task handlers will be automatically registered with the handler factory
-# and can be retrieved by name, which will happen in the API call to the tasker engine
-# where the task request would be initialized and queued for execution
-handler = Tasker::HandlerFactory.instance.get('welcome_user')
+# Handler lookup with namespace + version support
+# Note: namespace and version are optional - they default to 'default' and '0.1.0'
+handler = Tasker::HandlerFactory.instance.get(
+  'welcome_user',
+  namespace_name: 'notifications',  # Optional - defaults to 'default'
+  version: '1.0.0'                 # Optional - defaults to '0.1.0'
+)
 task = handler.initialize_task!(task_request)
 
 puts "Task created with ID: #{task.id}"
@@ -360,6 +363,113 @@ send_email (uses email content)
 ✅ **Passed data between steps** using results
 ✅ **Handled errors gracefully** with validation
 
+## Using the REST API (Bonus: 5 minutes)
+
+Tasker provides comprehensive REST API endpoints for programmatic workflow management. Here's how to interact with your workflow via API:
+
+### 1. Discover Available Handlers
+
+```bash
+# List all namespaces
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:3000/tasker/handlers
+
+# Explore handlers in notifications namespace
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:3000/tasker/handlers/notifications
+
+# Get detailed handler information with dependency graph
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:3000/tasker/handlers/notifications/welcome_user?version=1.0.0
+```
+
+### 2. Create Tasks via API
+
+```bash
+# Create a welcome user task via REST API
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "welcome_user",
+       "namespace": "notifications",
+       "version": "1.0.0",
+       "context": {"user_id": 1}
+     }' \
+     http://localhost:3000/tasker/tasks
+```
+
+### 3. Monitor Task Progress
+
+```bash
+# Get task details with dependency analysis
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     http://localhost:3000/tasker/tasks/TASK_ID?include_dependencies=true
+```
+
+### 4. JavaScript Integration Example
+
+```javascript
+// Simple JavaScript client for workflow management
+class TaskerClient {
+  constructor(baseURL, token) {
+    this.baseURL = baseURL;
+    this.token = token;
+  }
+
+  async createWelcomeTask(userId) {
+    const response = await fetch(`${this.baseURL}/tasks`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: 'welcome_user',
+        namespace: 'notifications',
+        version: '1.0.0',
+        context: { user_id: userId }
+      })
+    });
+
+    return response.json();
+  }
+
+  async getTaskStatus(taskId) {
+    const response = await fetch(`${this.baseURL}/tasks/${taskId}?include_dependencies=true`, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
+
+    return response.json();
+  }
+}
+
+// Usage
+const tasker = new TaskerClient('http://localhost:3000/tasker', 'YOUR_JWT_TOKEN');
+const task = await tasker.createWelcomeTask(1);
+const status = await tasker.getTaskStatus(task.id);
+```
+
+The API response includes the dependency graph visualization:
+```json
+{
+  "id": "welcome_user",
+  "namespace": "notifications",
+  "version": "1.0.0",
+  "dependency_graph": {
+    "nodes": ["validate_user", "generate_content", "send_email"],
+    "edges": [
+      {"from": "validate_user", "to": "generate_content"},
+      {"from": "generate_content", "to": "send_email"}
+    ],
+    "execution_order": ["validate_user", "generate_content", "send_email"]
+  }
+}
+```
+
+For complete API documentation, see **[REST API Guide](REST_API.md)**.
+
 ## Next Steps
 
 ### 🚀 Build More Complex Workflows
@@ -368,12 +478,13 @@ send_email (uses email content)
 - Add API integration steps
 
 ### 🔧 Add Production Features
+- **[REST API Guide](REST_API.md)** - Complete API documentation with handler discovery
 - **[Authentication](AUTH.md)** - Secure your workflows
 - **[Event Subscribers](EVENT_SYSTEM.md)** - Add monitoring and alerting
 - **[Telemetry](TELEMETRY.md)** - OpenTelemetry integration
 
 ### 📚 Explore Advanced Topics
-- **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete implementation guide
+- **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete implementation guide with API integration
 - **[Examples](../spec/examples/)** - Real-world workflow patterns and implementations
 - **[System Overview](OVERVIEW.md)** - Architecture deep dive
 

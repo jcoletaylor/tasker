@@ -167,7 +167,7 @@ FactoryBot.define do
     before(:create) do |task, _evaluator|
       # Use shared NamedTask - many tasks can reference the same named_task
       # Handle race conditions with retry logic
-      task.named_task = find_or_create_named_task('linear_workflow_task', 'Linear workflow with sequential step dependencies')
+      task.named_task = find_or_create_named_task('linear_workflow_task', description: 'Linear workflow with sequential step dependencies')
     end
 
     after(:create) do |task, _evaluator|
@@ -186,7 +186,7 @@ FactoryBot.define do
 
     before(:create) do |task, _evaluator|
       # Use shared NamedTask - many tasks can reference the same named_task
-      task.named_task = find_or_create_named_task('diamond_workflow_task', 'Diamond workflow with convergent/divergent pattern')
+      task.named_task = find_or_create_named_task('diamond_workflow_task', description: 'Diamond workflow with convergent/divergent pattern')
     end
 
     after(:create) do |task, _evaluator|
@@ -205,7 +205,7 @@ FactoryBot.define do
 
     before(:create) do |task, _evaluator|
       # Use shared NamedTask - many tasks can reference the same named_task
-      task.named_task = find_or_create_named_task('parallel_merge_workflow_task', 'Parallel merge workflow with multiple independent branches')
+      task.named_task = find_or_create_named_task('parallel_merge_workflow_task', description: 'Parallel merge workflow with multiple independent branches')
     end
 
     after(:create) do |task, _evaluator|
@@ -224,7 +224,7 @@ FactoryBot.define do
 
     before(:create) do |task, _evaluator|
       # Use shared NamedTask - many tasks can reference the same named_task
-      task.named_task = find_or_create_named_task('tree_workflow_task', 'Tree workflow with hierarchical branching structure')
+      task.named_task = find_or_create_named_task('tree_workflow_task', description: 'Tree workflow with hierarchical branching structure')
     end
 
     after(:create) do |task, _evaluator|
@@ -243,7 +243,7 @@ FactoryBot.define do
 
     before(:create) do |task, _evaluator|
       # Use shared NamedTask - many tasks can reference the same named_task
-      task.named_task = find_or_create_named_task('mixed_workflow_task', 'Mixed workflow with complex dependency patterns')
+      task.named_task = find_or_create_named_task('mixed_workflow_task', description: 'Mixed workflow with complex dependency patterns')
     end
 
     after(:create) do |task, _evaluator|
@@ -327,26 +327,17 @@ FactoryBot.define do
   end
 end
 
-# Helper method to safely find or create NamedTask with race condition handling
-def find_or_create_named_task(name, description)
+# Helper method to find or create NamedTask
+def find_or_create_named_task(name, namespace: 'default', version: Tasker::NamedTask::DEFAULT_VERSION, description: nil)
   # Use the EXACT handler name - many tasks should share the same NamedTask
   # This is critical for proper handler lookup in the HandlerFactory
 
-  retries = 0
-  begin
-    Tasker::NamedTask.find_or_create_by!(name: name) do |named_task|
-      named_task.description = description
-    end
-  rescue ActiveRecord::RecordNotUnique
-    retries += 1
-    if retries <= 3
-      # Brief backoff to handle race conditions
-      sleep(0.01 * retries)
-      retry
-    else
-      # If still failing after retries, just find the existing one
-      Tasker::NamedTask.find_by!(name: name)
-    end
+  Tasker::NamedTask.find_or_create_by_full_name!(
+    namespace_name: namespace,
+    name: name,
+    version: version
+  ) do |named_task|
+    named_task.description = description if description
   end
 end
 

@@ -16,11 +16,11 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
 
   describe 'nested auth configuration' do
     it 'provides access to auth configuration block' do
-      expect(config.auth).to be_a(Tasker::Configuration::AuthConfiguration)
+      expect(config.auth).to be_a(Tasker::Types::AuthConfig)
     end
 
-    it 'yields auth configuration in block' do
-      expect { |b| config.auth(&b) }.to yield_with_args(Tasker::Configuration::AuthConfiguration)
+    it 'yields configuration proxy in block' do
+      expect { |b| config.auth(&b) }.to yield_with_args(Tasker::Configuration::ConfigurationProxy)
     end
 
     it 'supports method chaining' do
@@ -29,7 +29,7 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
         auth.authenticator_class = 'DeviseAuthenticator'
       end
 
-      expect(result).to be_a(Tasker::Configuration::AuthConfiguration)
+      expect(result).to be_a(Tasker::Types::AuthConfig)
       expect(result.authentication_enabled).to be(true)
       expect(result.authenticator_class).to eq('DeviseAuthenticator')
     end
@@ -54,11 +54,15 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
       expect(config.auth.authenticator_class).to eq('DeviseAuthenticator')
     end
 
-    it 'supports enabling and disabling authentication' do
-      config.auth.authentication_enabled = true
+    it 'supports enabling and disabling authentication using block configuration' do
+      config.auth do |auth|
+        auth.authentication_enabled = true
+      end
       expect(config.auth.authentication_enabled).to be(true)
 
-      config.auth.authentication_enabled = false
+      config.auth do |auth|
+        auth.authentication_enabled = false
+      end
       expect(config.auth.authentication_enabled).to be(false)
     end
 
