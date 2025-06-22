@@ -20,7 +20,7 @@ module Tasker
 
     # GET /tasks/1
     def show
-      include_dependencies = params[:include_dependencies] == 'true'
+      include_dependencies = ActiveModel::Type::Boolean.new.cast(params[:include_dependencies])
 
       render(
         json: @task,
