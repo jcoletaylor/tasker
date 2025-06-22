@@ -24,7 +24,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.2.1'
+  gem 'tasker', '~> 2.3.0'
 end
 ```
 
@@ -191,6 +191,56 @@ query { tasks { taskId status } }
 mutation { createTask(input: { name: "New Task" }) { taskId } }
 ```
 
+### REST API & Handler Discovery
+
+Tasker provides comprehensive REST API endpoints for handler discovery, task management, and dependency graph analysis:
+
+**Handler Discovery API**:
+```bash
+# List all namespaces with handler counts
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers
+
+# List handlers in specific namespace
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments
+
+# Get handler details with dependency graph
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments/process_order?version=2.1.0
+```
+
+**Response includes dependency graph visualization**:
+```json
+{
+  "id": "process_order",
+  "namespace": "payments",
+  "version": "2.1.0",
+  "step_templates": [...],
+  "dependency_graph": {
+    "nodes": ["validate_order", "process_payment", "send_confirmation"],
+    "edges": [
+      {"from": "validate_order", "to": "process_payment"},
+      {"from": "process_payment", "to": "send_confirmation"}
+    ],
+    "execution_order": ["validate_order", "process_payment", "send_confirmation"]
+  }
+}
+```
+
+**Task Management API**:
+```bash
+# Create task with namespace/version support
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"name": "process_order", "namespace": "payments", "version": "2.1.0", "context": {"order_id": 123}}' \
+     https://your-app.com/tasker/tasks
+
+# List tasks with namespace filtering
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     "https://your-app.com/tasker/tasks?namespace=payments&version=2.1.0"
+```
+
 ### Event System & Integrations
 
 Tasker provides comprehensive event-driven observability for custom integrations:
@@ -290,6 +340,7 @@ end
 - **[Examples](spec/examples/)** - Real-world workflow patterns and implementations
 
 ### 🔧 Advanced Topics
+- **[REST API Guide](docs/REST_API.md)** - Complete REST API documentation with handler discovery
 - **[Authentication & Authorization](docs/AUTH.md)** - Complete security system
 - **[Health Monitoring](docs/HEALTH.md)** - Production health endpoints and monitoring
 - **[Event System](docs/EVENT_SYSTEM.md)** - Observability and integrations

@@ -1899,8 +1899,232 @@ RSpec.describe NotificationSubscriber do
 end
 ```
 
+## 7. REST API Integration
+
+Tasker provides comprehensive REST API endpoints for handler discovery, task management, and dependency graph analysis. This enables programmatic workflow management and external system integration.
+
+### Handler Discovery API
+
+The handler discovery API allows external systems to explore available workflows and their configurations:
+
+**List All Namespaces**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers
+```
+
+**Explore Handlers in Namespace**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments
+```
+
+**Get Handler Details with Dependency Graph**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/handlers/payments/process_payment?version=2.1.0
+```
+
+### Task Management API
+
+Create and manage tasks programmatically with full namespace and version support:
+
+**Create Task**:
+```bash
+curl -X POST -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "process_order",
+       "namespace": "payments",
+       "version": "2.1.0",
+       "context": {"order_id": 123, "amount": 99.99}
+     }' \
+     https://your-app.com/tasker/tasks
+```
+
+**Monitor Task Progress**:
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     https://your-app.com/tasker/tasks/TASK_ID?include_dependencies=true
+```
+
+### JavaScript Client Example
+
+```javascript
+class TaskerClient {
+  constructor(baseURL, token) {
+    this.client = axios.create({
+      baseURL,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  async discoverHandlers(namespace) {
+    const response = await this.client.get(`/handlers/${namespace}`);
+    return response.data.handlers;
+  }
+
+  async createTask(name, namespace, version, context) {
+    const response = await this.client.post('/tasks', {
+      name, namespace, version, context
+    });
+    return response.data;
+  }
+
+  async getHandlerDependencyGraph(namespace, name, version) {
+    const response = await this.client.get(`/handlers/${namespace}/${name}`, {
+      params: { version }
+    });
+    return response.data.dependency_graph;
+  }
+}
+```
+
+### Integration Patterns
+
+**Microservice Integration**:
+```ruby
+# In your microservice
+class WorkflowService
+  def initialize
+    @tasker_client = TaskerClient.new(
+      ENV['TASKER_BASE_URL'],
+      ENV['TASKER_API_TOKEN']
+    )
+  end
+
+  def trigger_payment_workflow(order_data)
+    # Discover available payment handlers
+    handlers = @tasker_client.get_handlers('payments')
+
+    # Create task with specific version
+    task = @tasker_client.create_task(
+      'process_payment',
+      'payments',
+      '2.1.0',
+      order_data
+    )
+
+    # Monitor progress
+    monitor_task_progress(task['id'])
+  end
+end
+```
+
+**Dashboard Integration**:
+```javascript
+// Real-time workflow monitoring dashboard
+const WorkflowDashboard = {
+  async loadNamespaces() {
+    const response = await taskerClient.get('/handlers');
+    return response.data.namespaces;
+  },
+
+  async visualizeDependencyGraph(namespace, handlerName) {
+    const handler = await taskerClient.getHandlerDetails(namespace, handlerName);
+    const graph = handler.dependency_graph;
+
+    // Render dependency graph visualization
+    this.renderGraph(graph.nodes, graph.edges, graph.execution_order);
+  },
+
+  async monitorActiveTasks() {
+    const tasks = await taskerClient.get('/tasks?status=in_progress');
+    tasks.data.tasks.forEach(task => {
+      this.updateTaskStatus(task.id, task.status);
+    });
+  }
+};
+```
+
+### API Authentication Integration
+
+**Custom Authentication**:
+```ruby
+# lib/tasker_api_authenticator.rb
+class TaskerApiAuthenticator
+  def authenticate!(request)
+    token = extract_token_from_request(request)
+    user = verify_jwt_token(token)
+    raise Tasker::Authentication::AuthenticationError unless user
+    user
+  end
+
+  def current_user(request)
+    authenticate!(request)
+  rescue Tasker::Authentication::AuthenticationError
+    nil
+  end
+
+  def authenticated?(request)
+    current_user(request).present?
+  end
+
+  def validate_configuration
+    # Validate JWT configuration
+    raise "JWT secret not configured" unless ENV['JWT_SECRET']
+  end
+
+  private
+
+  def extract_token_from_request(request)
+    auth_header = request.headers['Authorization']
+    auth_header&.split(' ')&.last
+  end
+
+  def verify_jwt_token(token)
+    JWT.decode(token, ENV['JWT_SECRET'], true, algorithm: 'HS256')
+  rescue JWT::DecodeError
+    nil
+  end
+end
+```
+
+### Error Handling Best Practices
+
+```javascript
+// Robust error handling for API integration
+class TaskerApiClient {
+  async createTaskWithRetry(name, namespace, version, context, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.createTask(name, namespace, version, context);
+      } catch (error) {
+        if (error.response?.status === 429) {
+          // Rate limited - exponential backoff
+          await this.sleep(Math.pow(2, attempt) * 1000);
+          continue;
+        }
+
+        if (error.response?.status >= 500 && attempt < maxRetries) {
+          // Server error - retry
+          await this.sleep(1000 * attempt);
+          continue;
+        }
+
+        // Client error or max retries exceeded
+        throw new TaskerApiError(
+          `Failed to create task after ${attempt} attempts`,
+          error
+        );
+      }
+    }
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+```
+
+For complete API documentation, see **[REST_API.md](REST_API.md)**.
+
 ## Related Documentation
 
+- **[REST_API.md](REST_API.md)** - Complete REST API documentation with examples
 - **[EVENT_SYSTEM.md](EVENT_SYSTEM.md)** - Complete event system documentation
 - **[TELEMETRY.md](TELEMETRY.md)** - OpenTelemetry integration and observability
 - **[OVERVIEW.md](OVERVIEW.md)** - System architecture overview

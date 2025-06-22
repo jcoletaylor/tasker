@@ -311,6 +311,7 @@
       <pre class="lines">
 
 
+36
 37
 38
 39
@@ -340,11 +341,10 @@
 63
 64
 65
-66
-67</pre>
+66</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 37</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 36</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create'>create</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_task_params_as_symbolized_hash'>task_params_as_symbolized_hash</span><span class='lbracket'>[</span><span class='symbol'>:name</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span>
@@ -408,14 +408,14 @@
       <pre class="lines">
 
 
+78
 79
 80
 81
-82
-83</pre>
+82</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 79</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 78</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_destroy'>destroy</span>
   <span class='comment'># Use state machine to transition task to cancelled
@@ -509,8 +509,7 @@
 30
 31
 32
-33
-34</pre>
+33</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 22</span>
@@ -518,15 +517,14 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_show'>show</span>
   <span class='id identifier rubyid_include_dependencies'>include_dependencies</span> <span class='op'>=</span> <span class='id identifier rubyid_params'>params</span><span class='lbracket'>[</span><span class='symbol'>:include_dependencies</span><span class='rbracket'>]</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>true</span><span class='tstring_end'>&#39;</span></span>
 
-  <span class='kw'>if</span> <span class='id identifier rubyid_include_dependencies'>include_dependencies</span>
-    <span class='comment'># TODO: Implement dependency graph analysis integration
-</span>    <span class='comment'># This will be part of Phase 3.3 Runtime Dependency Graph API
-</span>    <span class='id identifier rubyid_task_data'>task_data</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskSerializer.html" title="Tasker::TaskSerializer (class)">TaskSerializer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@task</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_serializable_hash'>serializable_hash</span>
-    <span class='id identifier rubyid_task_data'>task_data</span><span class='lbracket'>[</span><span class='symbol'>:dependency_analysis</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>message:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Dependency analysis coming in Phase 3.3</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
-    <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='lbrace'>{</span> <span class='label'>task:</span> <span class='id identifier rubyid_task_data'>task_data</span> <span class='rbrace'>}</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:ok</span>
-  <span class='kw'>else</span>
-    <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span><span class='label'>json:</span> <span class='ivar'>@task</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:ok</span><span class='comma'>,</span> <span class='label'>adapter:</span> <span class='symbol'>:json</span><span class='comma'>,</span> <span class='label'>root:</span> <span class='symbol'>:task</span><span class='comma'>,</span> <span class='label'>serializer:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskSerializer.html" title="Tasker::TaskSerializer (class)">TaskSerializer</a></span></span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
+  <span class='id identifier rubyid_render'>render</span><span class='lparen'>(</span>
+    <span class='label'>json:</span> <span class='ivar'>@task</span><span class='comma'>,</span>
+    <span class='label'>status:</span> <span class='symbol'>:ok</span><span class='comma'>,</span>
+    <span class='label'>adapter:</span> <span class='symbol'>:json</span><span class='comma'>,</span>
+    <span class='label'>root:</span> <span class='symbol'>:task</span><span class='comma'>,</span>
+    <span class='label'>serializer:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskSerializer.html" title="Tasker::TaskSerializer (class)">TaskSerializer</a></span></span><span class='comma'>,</span>
+    <span class='label'>include_dependencies:</span> <span class='id identifier rubyid_include_dependencies'>include_dependencies</span>
+  <span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -559,16 +557,16 @@
       <pre class="lines">
 
 
+69
 70
 71
 72
 73
 74
-75
-76</pre>
+75</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/tasks_controller.rb', line 69</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_update'>update</span>
   <span class='kw'>if</span> <span class='ivar'>@task</span><span class='period'>.</span><span class='id identifier rubyid_update'>update</span><span class='lparen'>(</span><span class='id identifier rubyid_update_task_params'>update_task_params</span><span class='rparen'>)</span>
@@ -587,7 +585,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun 21 16:34:50 2025 by
+  Generated on Sat Jun 21 20:33:20 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

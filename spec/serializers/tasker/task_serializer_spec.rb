@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require_relative '../../mocks/dummy_task'
 
 module Tasker
   RSpec.describe TaskSerializer, type: :serializer do
@@ -13,6 +14,10 @@ module Tasker
     let(:default_task_namespace) { Tasker::TaskNamespace.find_or_create_by!(name: 'default') }
     let(:default_named_task) { create(:named_task, name: 'default_task', task_namespace: default_task_namespace) }
     let(:default_task) { create(:task, named_task: default_named_task) }
+
+    before do
+      register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+    end
 
     describe '#serializable_hash' do
       context 'with namespace and version information' do
@@ -194,6 +199,109 @@ module Tasker
       it 'includes workflow_steps and task_annotations associations' do
         expect(serialized_data).to have_key(:workflow_steps)
         expect(serialized_data).to have_key(:task_annotations)
+      end
+    end
+
+    describe 'dependency analysis serialization' do
+      # Use a dummy task with actual workflow steps for dependency analysis testing
+      let(:dummy_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'serializer test') }
+
+      describe 'basic serialization without dependency analysis' do
+        let(:serializer) { described_class.new(dummy_task) }
+        let(:serialized_data) { serializer.serializable_hash }
+
+        it 'includes all expected attributes' do
+          expect(serialized_data[:task_id]).to eq(dummy_task.task_id)
+          expect(serialized_data[:name]).to eq(dummy_task.name)
+          expect(serialized_data[:namespace]).to eq('default')
+          expect(serialized_data[:version]).to eq('0.1.0')
+          expect(serialized_data[:full_name]).to eq('default.dummy_task@0.1.0')
+          expect(serialized_data[:workflow_steps]).to be_present
+          expect(serialized_data).to have_key(:task_annotations)
+        end
+
+        it 'does not include dependency analysis by default' do
+          expect(serialized_data).not_to have_key(:dependency_analysis)
+        end
+      end
+
+      describe 'with dependency analysis enabled' do
+        let(:serializer) { described_class.new(dummy_task, include_dependencies: true) }
+        let(:serialized_data) { serializer.serializable_hash }
+
+        it 'includes dependency analysis when requested' do
+          expect(serialized_data[:dependency_analysis]).to be_present
+        end
+
+        it 'includes all dependency analysis components' do
+          dependency_analysis = serialized_data[:dependency_analysis]
+
+          expect(dependency_analysis[:dependency_graph]).to be_present
+          expect(dependency_analysis[:critical_paths]).to be_present
+          expect(dependency_analysis[:parallelism_opportunities]).to be_present
+          expect(dependency_analysis[:error_chains]).to be_present
+          expect(dependency_analysis[:bottlenecks]).to be_present
+          expect(dependency_analysis[:analysis_timestamp]).to be_present
+          expect(dependency_analysis[:task_execution_summary]).to be_present
+        end
+
+        it 'includes task execution summary with correct structure' do
+          summary = serialized_data[:dependency_analysis][:task_execution_summary]
+
+          expect(summary[:total_steps]).to be_a(Integer)
+          expect(summary[:total_dependencies]).to be_a(Integer)
+          expect(summary[:dependency_levels]).to be_a(Integer)
+          expect(summary[:longest_path_length]).to be_a(Integer)
+          expect(summary[:critical_bottlenecks_count]).to be_a(Integer)
+          expect(summary[:error_chains_count]).to be_a(Integer)
+          expect(summary[:parallelism_efficiency]).to be_a(Numeric)
+          expect(summary[:overall_health]).to be_in(%w[healthy warning critical])
+          expect(summary[:recommendations]).to be_an(Array)
+        end
+
+        it 'includes dependency graph structure' do
+          graph = serialized_data[:dependency_analysis][:dependency_graph]
+
+          expect(graph[:nodes]).to be_an(Array)
+          expect(graph[:edges]).to be_an(Array)
+          expect(graph[:adjacency_list]).to be_a(Hash)
+          expect(graph[:reverse_adjacency_list]).to be_a(Hash)
+          expect(graph[:dependency_levels]).to be_a(Hash)
+        end
+      end
+
+      describe 'error handling in dependency analysis' do
+        let(:serializer) { described_class.new(dummy_task, include_dependencies: true) }
+
+        before do
+          # Mock the dependency_graph method to raise an error
+          allow(dummy_task).to receive(:dependency_graph).and_raise(StandardError, 'Test analysis error')
+        end
+
+        it 'gracefully handles dependency analysis errors' do
+          serialized_data = serializer.serializable_hash
+          dependency_analysis = serialized_data[:dependency_analysis]
+
+          expect(dependency_analysis[:error]).to include('Test analysis error')
+          expect(dependency_analysis[:analysis_timestamp]).to be_present
+        end
+      end
+
+      describe 'conditional inclusion logic' do
+        it 'includes dependency analysis when include_dependencies is true' do
+          serializer = described_class.new(dummy_task, include_dependencies: true)
+          expect(serializer.include_dependency_analysis?).to be true
+        end
+
+        it 'excludes dependency analysis when include_dependencies is false' do
+          serializer = described_class.new(dummy_task, include_dependencies: false)
+          expect(serializer.include_dependency_analysis?).to be false
+        end
+
+        it 'excludes dependency analysis when include_dependencies is not specified' do
+          serializer = described_class.new(dummy_task)
+          expect(serializer.include_dependency_analysis?).to be false
+        end
       end
     end
   end

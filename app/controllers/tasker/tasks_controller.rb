@@ -22,15 +22,14 @@ module Tasker
     def show
       include_dependencies = params[:include_dependencies] == 'true'
 
-      if include_dependencies
-        # TODO: Implement dependency graph analysis integration
-        # This will be part of Phase 3.3 Runtime Dependency Graph API
-        task_data = Tasker::TaskSerializer.new(@task).serializable_hash
-        task_data[:dependency_analysis] = { message: 'Dependency analysis coming in Phase 3.3' }
-        render json: { task: task_data }, status: :ok
-      else
-        render(json: @task, status: :ok, adapter: :json, root: :task, serializer: Tasker::TaskSerializer)
-      end
+      render(
+        json: @task,
+        status: :ok,
+        adapter: :json,
+        root: :task,
+        serializer: Tasker::TaskSerializer,
+        include_dependencies: include_dependencies
+      )
     end
 
     # POST /tasks

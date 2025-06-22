@@ -249,7 +249,55 @@ module Tasker
             json_response = JSON.parse(response.body).deep_symbolize_keys
             expect(json_response[:task][:task_id]).to eq(dummy_task.id)
             expect(json_response[:task][:dependency_analysis]).to be_present
-            expect(json_response[:task][:dependency_analysis][:message]).to include('Phase 3.3')
+
+            # Verify the full dependency analysis structure
+            dependency_analysis = json_response[:task][:dependency_analysis]
+            expect(dependency_analysis[:dependency_graph]).to be_present
+            expect(dependency_analysis[:critical_paths]).to be_present
+            expect(dependency_analysis[:parallelism_opportunities]).to be_present
+            expect(dependency_analysis[:error_chains]).to be_present
+            expect(dependency_analysis[:bottlenecks]).to be_present
+            expect(dependency_analysis[:analysis_timestamp]).to be_present
+            expect(dependency_analysis[:task_execution_summary]).to be_present
+
+            # Verify task execution summary structure
+            summary = dependency_analysis[:task_execution_summary]
+            expect(summary[:total_steps]).to be_a(Integer)
+            expect(summary[:total_dependencies]).to be_a(Integer)
+            expect(summary[:dependency_levels]).to be_a(Integer)
+            expect(summary[:longest_path_length]).to be_a(Integer)
+            expect(summary[:critical_bottlenecks_count]).to be_a(Integer)
+            expect(summary[:error_chains_count]).to be_a(Integer)
+            expect(summary[:parallelism_efficiency]).to be_a(Numeric)
+            expect(summary[:overall_health]).to be_in(['healthy', 'warning', 'critical'])
+            expect(summary[:recommendations]).to be_an(Array)
+
+            # Verify dependency graph structure
+            graph = dependency_analysis[:dependency_graph]
+            expect(graph[:nodes]).to be_an(Array)
+            expect(graph[:edges]).to be_an(Array)
+            expect(graph[:adjacency_list]).to be_a(Hash)
+            expect(graph[:reverse_adjacency_list]).to be_a(Hash)
+            expect(graph[:dependency_levels]).to be_a(Hash)
+          end
+        end
+
+        response(200, 'dependency analysis error handling') do
+          let(:dummy_task) { create_dummy_task_workflow(context: { dummy: true }, reason: 'error test') }
+          let(:task_id) { dummy_task.id }
+          let(:include_dependencies) { true }
+
+          before do
+            # Mock the dependency_graph method to raise an error
+            allow_any_instance_of(Tasker::Task).to receive(:dependency_graph).and_raise(StandardError, 'Test analysis error')
+          end
+
+          run_test! do |response|
+            json_response = JSON.parse(response.body).deep_symbolize_keys
+            expect(json_response[:task][:task_id]).to eq(dummy_task.id)
+            expect(json_response[:task][:dependency_analysis]).to be_present
+            expect(json_response[:task][:dependency_analysis][:error]).to include('Test analysis error')
+            expect(json_response[:task][:dependency_analysis][:analysis_timestamp]).to be_present
           end
         end
 

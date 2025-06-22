@@ -27,9 +27,9 @@ module Tasker
 
     # Find or create default namespace - always works even if not seeded
     def self.default
-      find_or_create_by!(name: 'default') do |namespace|
-        namespace.description = 'Default task namespace'
-      end
+      @default ||= find_or_create_by!(name: 'default')
+      @default.description ||= 'Default task namespace'
+      @default
     end
 
     # Scope for non-default namespaces
