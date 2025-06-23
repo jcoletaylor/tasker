@@ -1,17 +1,97 @@
 # Tasker Progress Tracker
 
-## 🎯 Current Status: ✅ **Phase 3.x.2 REST API Development COMPLETE** → Phase 3.x.3 Runtime Dependency Graph API
+## 🎯 Current Status: ✅ **Phase 4.2.1 TelemetryEventRouter Foundation COMPLETE** → Phase 4.2.2 Native Metrics Collection Backend
 
-**Latest Achievement**: **Phase 3.x.2 REST API Development** completed successfully with comprehensive handler discovery API, dependency graph generation, enhanced task management, and complete documentation excellence.
+**Latest Achievement**: **Phase 4.2.1 TelemetryEventRouter Foundation** completed successfully with intelligent event routing, fail-fast architecture, and comprehensive foundation for native metrics collection.
 
-**Final Metrics from Phase 3.x.2**:
-- ✅ **68 Tests Passing** - Complete API functionality with comprehensive test coverage
-- ✅ **Handler Discovery API** - 3 endpoints with namespace organization and version support
-- ✅ **Dependency Graph Generation** - Automatic analysis with nodes, edges, execution order
-- ✅ **Enhanced Task Management** - Full namespace/version support in existing endpoints
-- ✅ **Authentication Integration** - Complete security with proper authorization
-- ✅ **OpenAPI Documentation** - RSwag integration with interactive API testing
-- ✅ **Documentation Excellence** - README, DEVELOPER_GUIDE, QUICK_START, and new REST_API.md
+**Final Metrics from Phase 4.2.1**:
+- ✅ **79 Tests Passing** - Complete telemetry routing functionality with comprehensive test coverage
+- ✅ **EventRouter Foundation** - Intelligent singleton router for event→telemetry mapping
+- ✅ **EventMapping Configuration** - Type-safe, immutable routing configuration using dry-struct
+- ✅ **Fail-Fast Architecture** - Explicit guard clauses, meaningful return types, clear error messages
+- ✅ **Zero Breaking Changes** - All 8 existing TelemetrySubscriber events preserved
+- ✅ **Enhanced Event Coverage** - 25+ additional lifecycle events with intelligent routing
+- ✅ **Phase 4.2.2 Ready** - Complete foundation for native metrics collection backend
+
+## 🏆 PHASE 4.2.1 TELEMETRY EVENT ROUTER FOUNDATION - COMPLETE
+
+### 🎯 **Major Achievements**
+
+#### **✅ Intelligent Event Routing System**
+- **EventRouter Singleton**: Intelligent core for event→telemetry mapping following established patterns
+- **EventMapping Configuration**: Type-safe, immutable routing rules using dry-struct patterns
+- **Multi-Backend Support**: Flexible routing to :trace, :metrics, :logs with smart combinations
+- **Declarative Configuration**: Clean API for bulk configuration and individual mapping
+
+#### **✅ Fail-Fast Architecture Excellence**
+- **Explicit Guard Clauses**: All predicate methods return explicit booleans, never nil
+- **Clear Error Messages**: ArgumentError with helpful messages for invalid backends/configurations
+- **Predictable APIs**: Boolean methods always return true/false, no ambiguous nil values
+- **Zero Safe Navigation**: All implicit nil handling replaced with explicit early returns
+
+#### **✅ Zero Breaking Changes Foundation**
+- **8 Current Events Preserved**: All existing TelemetrySubscriber events → both traces AND metrics
+- **25+ Enhanced Events**: Additional lifecycle events with intelligent routing decisions
+- **Performance Sampling**: Database/intensive operations configured with appropriate sampling rates
+- **Operational Intelligence**: High-priority events identified for critical metrics collection
+
+#### **✅ Production-Ready Architecture**
+- **Thread-Safe Operations**: Concurrent mapping access with atomic updates
+- **Immutable Configuration**: All EventMapping objects frozen after creation
+- **Comprehensive Testing**: 79 tests covering all functionality including edge cases
+- **Pattern Consistency**: Follows HandlerFactory/Events::Publisher singleton patterns
+
+### 🔧 **Technical Implementation Details**
+
+#### **EventRouter Core Architecture**
+```ruby
+# Intelligent routing configuration:
+Tasker::Telemetry::EventRouter.configure do |router|
+  # PRESERVE: All current 8 events → both traces AND metrics
+  router.map('task.completed', backends: [:trace, :metrics])
+
+  # ENHANCE: Intelligent routing for new events
+  router.map('observability.task.enqueue', backends: [:metrics], priority: :high)
+  router.map('database.query_executed', backends: [:trace, :metrics], sampling_rate: 0.1)
+end
+```
+
+#### **Fail-Fast Predicate Methods**
+```ruby
+# Explicit boolean returns, never nil
+def routes_to_traces?(event_name)
+  mapping = mapping_for(event_name)
+  return false unless mapping  # ← Explicit guard clause
+  mapping.active? && mapping.routes_to_traces?
+end
+```
+
+#### **Type-Safe EventMapping Configuration**
+```ruby
+# Immutable configuration with validation
+mapping = EventMapping.new(
+  event_name: 'step.before_handle',
+  backends: [:trace],
+  sampling_rate: 0.1,
+  priority: :normal,
+  enabled: true
+)
+# All objects frozen after creation
+```
+
+#### **Enhanced Error Handling**
+```ruby
+# Fail-fast on invalid backends
+def events_for_backend(backend)
+  case backend
+  when :trace, :traces then trace_events
+  when :metric, :metrics then metrics_events
+  when :log, :logs then log_events
+  else
+    raise ArgumentError, "Unknown backend type: #{backend.inspect}"
+  end
+end
+```
 
 ## 🏆 PHASE 3.x.2 REST API TRANSFORMATION - COMPLETE
 
@@ -98,6 +178,10 @@ show_namespace: 'tasker.handler:show'
 ### ✅ **Production-Ready Components**
 | Component | Status | Version | Notes |
 |-----------|--------|---------|--------|
+| **TelemetryEventRouter Foundation** | ✅ Complete | 4.2.1 | Intelligent event routing with fail-fast architecture |
+| **EventMapping Configuration** | ✅ Complete | 4.2.1 | Type-safe, immutable routing rules |
+| **Fail-Fast Architecture** | ✅ Complete | 4.2.1 | Explicit guard clauses, meaningful return types |
+| **Enhanced Event Coverage** | ✅ Complete | 4.2.1 | 25+ lifecycle events with intelligent routing |
 | **Handler Discovery API** | ✅ Complete | 3.x.2 | 3 endpoints with dependency graphs |
 | **Enhanced Task Management** | ✅ Complete | 3.x.2 | Full namespace/version support |
 | **Authentication Integration** | ✅ Complete | 3.x.2 | Complete security framework |
@@ -118,32 +202,32 @@ show_namespace: 'tasker.handler:show'
 | **Task Finalizer Bug Fix** | ✅ Complete | Retry orchestration working |
 | **YARD Documentation** | ✅ Complete | 75.18% coverage, production ready |
 
-## 🎯 **NEXT PHASE: 3.x.3 Runtime Dependency Graph API**
+## 🎯 **NEXT PHASE: 4.2.2 Native Metrics Collection Backend**
 
 ### 🎪 **Immediate Priorities**
 
-#### **Runtime Dependency Analysis Enhancement**
-- Enhanced task endpoints with optional runtime dependency analysis
-- RuntimeGraphAnalyzer integration with configurable parameters from Phase 2.3
-- Performance optimization with caching for expensive graph computations
-- Enhanced task serialization with dependency analysis data
+#### **Native Metrics Backend Development**
+- Thread-safe metrics storage using EventRouter intelligence for automatic routing
+- Atomic counter operations with ConcurrentHash for high-performance metric updates
+- Prometheus export capability with standard metric formats and time-series data
+- Integration hooks with existing TelemetrySubscriber for seamless metric collection
 
-#### **Task Status API Enhancement**
-- Include runtime dependency analysis in task status responses
-- Add dependency bottleneck analysis and impact scoring
-- Implement dependency-aware task filtering and sorting
-- Create dependency health metrics and alerts
+#### **Intelligent Event Processing**
+- Leverage EventRouter mappings for automatic metrics backend routing
+- Implement high-priority event fast-path processing for operational metrics
+- Add sampling-aware metric collection using EventMapping configuration
+- Create metric aggregation strategies for different event types
 
-#### **Performance & Caching Strategy**
-- Implement caching layer for expensive dependency computations
-- Add performance benchmarks for dependency analysis operations
-- Create cache invalidation strategies for task state changes
-- Optimize serialization performance for large dependency graphs
+#### **Production-Ready Metrics Storage**
+- Thread-safe metric storage with atomic operations and memory efficiency
+- Multiple metric types (counters, gauges, histograms) with appropriate use cases
+- Time-series data management with configurable retention policies
+- Performance optimization for high-throughput metric collection
 
 ### 🔮 **Future Phases**
-- **Phase 3.x.4**: Advanced GraphQL Schema Enhancement
-- **Phase 3.x.5**: Multi-layer Caching Strategy
-- **Phase 4.0**: Production Optimization & Monitoring
+- **Phase 4.2.3**: Performance Profiling Integration - Bottleneck detection, SQL monitoring
+- **Phase 4.2.4**: Integration & Testing - Comprehensive validation and benchmarking
+- **Phase 4.3**: Enhanced TelemetrySubscriber Evolution - 35+ events and 5+ span hierarchy
 
 ## 🚀 **ARCHITECTURAL SUCCESS VALIDATION**
 

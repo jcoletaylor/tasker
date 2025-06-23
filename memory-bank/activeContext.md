@@ -1,173 +1,129 @@
-# Active Context
+# Active Context: Phase 4.2.2 Native Metrics Collection Backend
 
-## Current Focus: ✅ **Phase 3.x.2 REST API Development COMPLETE** → Ready for Phase 3.x.3 Runtime Dependency Graph API
+## 🎯 Current Focus: Strategic Phase 4.2.2 Planning
 
-**Status**: **PHASE 3.x.2 COMPLETE** - REST API endpoints, handler discovery, and comprehensive documentation successfully implemented
+**Current State**: **Phase 4.2.1 TelemetryEventRouter Foundation COMPLETED** with 79 tests passing
+**Next Target**: **Phase 4.2.2 Native Metrics Collection Backend** - Thread-safe metrics storage with EventRouter intelligence
 
-### 🎯 **ACHIEVEMENTS: REST API Development (Phase 3.x.2)**
+### 📍 **Where We Are Right Now**
 
-✅ **Handler Discovery API**: Complete 3-endpoint system for namespace and handler exploration
-✅ **Dependency Graph Generation**: Automatic analysis with nodes, edges, and execution order
-✅ **Enhanced Task Management**: Full namespace/version support in existing endpoints
-✅ **Comprehensive Testing**: 68 tests total (19 handler API + 49 additional) all passing
-✅ **Authentication Integration**: Full security with proper authorization and error handling
-✅ **OpenAPI Documentation**: Complete RSwag integration with interactive API documentation
-✅ **Documentation Excellence**: Comprehensive updates to README.md, DEVELOPER_GUIDE.md, QUICK_START.md, and new REST_API.md
+#### **✅ Phase 4.2.1 Just Completed**
+- **Intelligent Event Routing System**: EventRouter singleton with fail-fast architecture
+- **Type-Safe Configuration**: EventMapping using dry-struct patterns with immutable objects
+- **Zero Breaking Changes**: All 8 existing TelemetrySubscriber events preserved → both traces AND metrics
+- **Enhanced Event Coverage**: 25+ additional lifecycle events with intelligent routing decisions
+- **Fail-Fast Excellence**: Explicit guard clauses, meaningful return types, clear error messages
 
-### 🔧 **CORE API ENDPOINTS IMPLEMENTED**
+#### **🎪 Phase 4.2.2 Strategic Foundation Ready**
+Our EventRouter foundation provides the perfect intelligence layer for native metrics:
+- **Intelligent Routing Decisions**: EventRouter already knows which events should generate metrics
+- **Performance Sampling**: Database/intensive operations pre-configured with appropriate sampling rates
+- **Operational Intelligence**: High-priority events identified for fast-path metric collection
+- **Thread-Safe Patterns**: Established concurrent access patterns ready for metrics storage
 
-#### **Handler Discovery API**
+## 🚀 **Phase 4.2.2 Strategic Approach**
+
+### **Core Strategy: EventRouter-Driven Metrics**
+Instead of creating a separate metrics system, we leverage our EventRouter intelligence:
+
 ```ruby
-# Implemented endpoint structure:
-GET /tasker/handlers                    # List all namespaces with handler counts
-GET /tasker/handlers/:namespace         # List handlers in specific namespace
-GET /tasker/handlers/:namespace/:name   # Get handler with dependency graph
+# EventRouter already knows routing decisions:
+router.routes_to_metrics?('observability.task.enqueue')  # → true (high priority)
+router.routes_to_metrics?('database.query_executed')     # → true (10% sampling)
+router.routes_to_metrics?('step.before_handle')          # → false (traces only)
+
+# Native metrics backend uses this intelligence automatically
 ```
 
-#### **Enhanced Task Management API**
-```ruby
-# Enhanced existing endpoints with namespace/version support:
-POST /tasker/tasks                      # Create task with namespace/version
-GET /tasker/tasks                       # List tasks with namespace/version filtering
-GET /tasker/tasks/:id                   # Get task with namespace/version info
-```
+### **Technical Architecture Direction**
 
-#### **Dependency Graph Integration**
-```ruby
-# Automatic dependency analysis includes:
-dependency_graph: {
-  nodes: ["step1", "step2", "step3"],
-  edges: [{"from": "step1", "to": "step2"}],
-  execution_order: ["step1", "step2", "step3"]
-}
-```
+#### **1. Thread-Safe Metrics Storage**
+- **ConcurrentHash-based storage** for atomic metric updates without locks
+- **Multiple metric types**: Counters, gauges, histograms with appropriate use cases
+- **Memory efficiency**: Compact storage for high-throughput environments
+- **Atomic operations**: Thread-safe increments/updates following Ruby best practices
 
-### 📊 **IMPLEMENTATION DETAILS**
+#### **2. EventRouter Integration**
+- **Automatic metric routing** using existing EventMapping configuration
+- **Sampling-aware collection** respecting EventMapping sampling_rate settings
+- **Priority-based processing** with fast-path for high-priority operational events
+- **Zero configuration overlap** - EventRouter remains single source of truth
 
-#### **✅ Handler Discovery System**
-- **HandlerSerializer**: Complete step template introspection with all dry-struct attributes
-- **Namespace Organization**: Automatic namespace discovery with handler counts
-- **Version Support**: Full semantic versioning with fallback logic
-- **Error Handling**: Comprehensive error responses for missing handlers/namespaces
+#### **3. Prometheus Export Capability**
+- **Standard metric formats** following Prometheus exposition format
+- **Time-series data** with configurable retention and aggregation
+- **Label support** for dimensional metrics (namespace, version, handler_type)
+- **Performance optimization** for export operations in production
 
-#### **✅ Task Management Enhancement**
-- **TaskSerializer**: Enhanced with namespace, version, and full_name attributes
-- **API Parameter Support**: Namespace and version parameters in all task endpoints
-- **Dependency Analysis**: Optional include_dependencies parameter for detailed analysis
-- **Filtering Support**: Namespace/version filtering in task listing endpoints
+### **Implementation Priorities**
 
-#### **✅ Authentication & Authorization**
-- **Security Integration**: Full authentication using existing Tasker auth system
-- **Resource Constants**: HANDLER resource added to authorization system
-- **Permission Mapping**: Proper permission checking for all endpoints
-- **Error Responses**: Comprehensive 401/403 error handling
+#### **Phase 4.2.2.1: Core Metrics Storage (2-3 days)**
+1. **MetricsBackend class** with thread-safe ConcurrentHash storage
+2. **Basic metric types** - Counter, Gauge, Histogram with atomic operations
+3. **EventRouter integration** - Automatic metric collection based on routing decisions
+4. **Comprehensive testing** - Thread safety, performance, and correctness validation
 
-#### **✅ Testing & Documentation**
-- **RSwag Integration**: Complete OpenAPI documentation with interactive testing
-- **Comprehensive Test Coverage**: 19 handler API tests + 49 additional tests
-- **Error Scenario Testing**: All error conditions properly tested
-- **Authorization Testing**: Complete permission checking validation
+#### **Phase 4.2.2.2: Prometheus Export (2-3 days)**
+1. **PrometheusExporter module** with standard exposition format
+2. **Time-series data management** with configurable retention policies
+3. **Label support** for dimensional metrics and filtering
+4. **Performance optimization** for high-throughput export operations
 
-### 📈 **DOCUMENTATION EXCELLENCE ACHIEVED**
+#### **Phase 4.2.2.3: Production Integration (1-2 days)**
+1. **TelemetrySubscriber integration** - Seamless metric collection from existing events
+2. **Configuration validation** - Ensure EventRouter + MetricsBackend consistency
+3. **Performance benchmarking** - Validate production-ready performance characteristics
+4. **Documentation updates** - Integration examples and configuration guidance
 
-#### **✅ README.md Updates**
-- **REST API Section**: Complete handler discovery and task management examples
-- **Version Updates**: Updated to v2.3.0 throughout
-- **API Examples**: cURL examples with authentication
-- **Dependency Graph**: JSON response format examples
+## 🧠 **Key Architectural Decisions**
 
-#### **✅ DEVELOPER_GUIDE.md Enhancements**
-- **REST API Integration Section**: Complete section 7 with comprehensive examples
-- **JavaScript Client**: Complete TaskerClient implementation example
-- **Integration Patterns**: Microservice and dashboard integration examples
-- **Error Handling**: Best practices for API integration
+### **Decision 1: EventRouter as Single Source of Truth**
+- **Rationale**: Avoid configuration duplication between routing and metrics
+- **Benefit**: Automatic metric collection based on existing intelligent routing decisions
+- **Implementation**: MetricsBackend queries EventRouter for routing decisions
 
-#### **✅ QUICK_START.md API Addition**
-- **REST API Bonus Section**: 5-minute API usage guide
-- **Handler Discovery**: Step-by-step API exploration
-- **Task Creation**: API-based task creation examples
-- **JavaScript Integration**: Complete client example
+### **Decision 2: Thread-Safe without Locks**
+- **Rationale**: High-performance metrics collection requires minimal overhead
+- **Benefit**: Atomic operations using ConcurrentHash for lock-free metric updates
+- **Implementation**: Ruby's thread-safe collections with atomic increment operations
 
-#### **✅ New REST_API.md Documentation**
-- **Comprehensive API Guide**: Complete documentation for all endpoints
-- **Authentication Examples**: JWT and custom authentication patterns
-- **Error Handling**: Complete error response documentation
-- **Client Libraries**: JavaScript/Node.js client implementation
-- **Best Practices**: Production integration guidance
-- **OpenAPI Integration**: Swagger documentation references
+### **Decision 3: Prometheus-Compatible Export**
+- **Rationale**: Industry standard for metrics collection and monitoring
+- **Benefit**: Seamless integration with existing monitoring infrastructure
+- **Implementation**: Standard exposition format with time-series data support
 
-#### **✅ TODO.md Status Updates**
-- **Phase 3.x.2 Completion**: Marked as completed with comprehensive achievement summary
-- **Version Update**: Updated to v2.3.0 development status
-- **Next Phase Planning**: Ready for Phase 3.x.3 Runtime Dependency Graph API
+## 📋 **Success Criteria for Phase 4.2.2**
 
-### 🎯 **NEXT: Phase 3.x.3 - Runtime Dependency Graph API**
+### **Technical Success**
+- [ ] **Thread-safe metrics storage** with atomic operations and zero race conditions
+- [ ] **EventRouter integration** with automatic metric routing and sampling respect
+- [ ] **Prometheus export** with standard format and time-series data
+- [ ] **Performance validation** with benchmarks for high-throughput scenarios
 
-**Immediate Priority**: Enhance existing task endpoints with runtime dependency analysis
-- Optional dependency graph data via `include_dependencies=true` parameter
-- RuntimeGraphAnalyzer integration with configurable parameters
-- Performance optimization with caching for expensive computations
-- Enhanced task serialization with dependency analysis
+### **Architecture Success**
+- [ ] **Zero configuration duplication** - EventRouter remains single source of truth
+- [ ] **Fail-fast principles** maintained throughout metrics backend
+- [ ] **Pattern consistency** with existing Tasker singleton and factory patterns
+- [ ] **Comprehensive testing** with thread safety and performance validation
 
-**After Phase 3.x.3**: Memory bank updates and branch completion preparation
+### **Integration Success**
+- [ ] **TelemetrySubscriber integration** with seamless metric collection
+- [ ] **Backward compatibility** with all existing telemetry functionality
+- [ ] **Documentation excellence** with clear integration examples
+- [ ] **Production readiness** with proper error handling and monitoring
 
----
+## 🎖️ **Recent Architectural Learnings Applied**
 
-## 🔍 **ARCHITECTURAL INTEGRATION VALIDATED**
+### **Fail-Fast Architecture Principles**
+- **Explicit guard clauses**: All predicate methods return explicit booleans, never nil
+- **Clear error messages**: ArgumentError with helpful messages for invalid inputs
+- **Predictable APIs**: Methods always return meaningful values of expected types
+- **Zero safe navigation**: All implicit nil handling replaced with explicit early returns
 
-### **1. Handler Discovery Excellence** ✅
-- **Complete API Coverage**: All HandlerFactory functionality exposed via REST API
-- **Namespace Organization**: Automatic discovery and organization of handlers by namespace
-- **Version Management**: Full semantic versioning support with fallback logic
-- **Dependency Visualization**: Automatic dependency graph generation from step templates
+### **Pattern Consistency Excellence**
+- **Singleton patterns**: Following HandlerFactory/Events::Publisher established patterns
+- **Type-safe configuration**: Using dry-struct patterns from existing configuration classes
+- **Thread-safe operations**: Concurrent access patterns validated and tested
+- **Immutable objects**: All configuration frozen after creation for safety
 
-### **2. Task Management Enhancement** ✅
-- **Namespace/Version Integration**: All task endpoints support namespace and version parameters
-- **Backward Compatibility**: Existing functionality preserved with sensible defaults
-- **Enhanced Serialization**: Task responses include namespace, version, and full_name
-- **Filtering Support**: Comprehensive filtering by namespace, version, and status
-
-### **3. Authentication & Authorization** ✅
-- **Security Integration**: Full integration with existing Tasker authentication system
-- **Resource Management**: Proper HANDLER resource constant and permission mapping
-- **Error Handling**: Comprehensive 401/403 error responses with clear messages
-- **API Token Support**: JWT and custom authentication patterns documented
-
-### **4. Documentation Excellence** ✅
-- **Complete Coverage**: All new functionality documented across multiple guides
-- **Integration Examples**: JavaScript, cURL, and Ruby integration patterns
-- **Best Practices**: Production deployment and error handling guidance
-- **OpenAPI Documentation**: Interactive API documentation with RSwag integration
-
----
-
-## 🚨 **CRITICAL SUCCESS FACTORS**
-
-### **1. Production-Ready API Implementation** ✅
-All endpoints are fully functional with:
-- Comprehensive error handling and validation
-- Proper authentication and authorization integration
-- Performance optimization for handler enumeration
-- Complete test coverage with RSwag OpenAPI documentation
-
-### **2. Dependency Graph Innovation** ✅
-Automatic dependency analysis provides:
-- Step-by-step execution order calculation
-- Edge detection based on depends_on_step relationships
-- Node extraction from step templates
-- Graceful error handling for malformed configurations
-
-### **3. Documentation Excellence** ✅
-Comprehensive documentation updates include:
-- Complete API reference with examples
-- Integration patterns for multiple languages
-- Best practices for production deployment
-- Interactive OpenAPI documentation
-
-### **4. Backward Compatibility Maintained** ✅
-- All existing functionality preserved
-- Sensible defaults for new parameters
-- No breaking changes to existing APIs
-- Smooth migration path for existing integrations
-
-**Status**: **Ready to proceed with Phase 3.x.3 Runtime Dependency Graph API**
+**Next Action**: Begin Phase 4.2.2.1 MetricsBackend core development with thread-safe storage implementation

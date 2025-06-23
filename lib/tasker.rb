@@ -50,6 +50,10 @@ module Tasker
   module StateMachine
   end
 
+  # Namespace for telemetry components
+  module Telemetry
+  end
+
   # Accesses the global configuration for Tasker
   #
   # @yield [Configuration] The configuration instance if a block is given

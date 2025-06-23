@@ -759,3 +759,193 @@ This implementation plan transforms Tasker from having excellent workflow orches
 5. **Integration Testing**: End-to-end observability validation
 
 This implementation plan provides a comprehensive observability enhancement that builds on Tasker's existing strengths while adding critical production monitoring capabilities.
+
+---
+
+## **🔍 COMPREHENSIVE TELEMETRY ARCHITECTURE ANALYSIS**
+
+*Updated after Phase 4.1 completion and detailed TelemetrySubscriber review*
+
+### **Current TelemetrySubscriber Architecture Assessment**
+
+#### **✅ Strong Foundation Identified**
+1. **Solid BaseSubscriber Architecture** - Proper error handling, event routing, OpenTelemetry integration
+2. **Hierarchical Span Creation** - Task spans as parents with step spans as children
+3. **Production-Ready Features** - Telemetry filtering, configuration validation, defensive coding
+4. **Rich Attribute Extraction** - Comprehensive event data conversion for OpenTelemetry
+
+#### **🚨 Critical Gaps Discovered**
+
+**1. Limited Event Coverage (8 of 40+ available events)**
+```ruby
+# CURRENT: Only 8 events subscribed in TelemetrySubscriber
+subscribe_to INITIALIZE_REQUESTED, START_REQUESTED, COMPLETED, FAILED,    # Task: 4 events
+             EXECUTION_REQUESTED, COMPLETED, FAILED, RETRY_REQUESTED      # Step: 4 events
+
+# MISSING: 35+ critical lifecycle events including:
+# - WorkflowEvents::VIABLE_STEPS_DISCOVERED (orchestration visibility)
+# - ObservabilityEvents::Step::BACKOFF (retry cycle monitoring)
+# - ObservabilityEvents::Task::ENQUEUE (job queue observability)
+# - ObservabilityEvents::Task::FINALIZE (task completion processing)
+# - StepEvents::BEFORE_HANDLE (handler execution spans)
+# - Database operation events (query performance spans)
+# - Dependency resolution events (critical path analysis)
+```
+
+**2. Incomplete Span Hierarchy (2 levels vs needed 5+)**
+```ruby
+# CURRENT: Simple 2-level hierarchy
+task_execution → step_execution
+
+# NEEDED: Comprehensive 5+ level hierarchy
+task_execution
+├── workflow_orchestration
+│   ├── step_batch_execution
+│   │   ├── individual_steps
+│   │   └── state_transitions
+│   └── dependency_resolution
+└── database_operations
+```
+
+**3. Zero Native Metrics Collection**
+- All telemetry routed to OpenTelemetry spans only
+- No aggregated metrics for operational dashboards
+- Missing Prometheus `/tasker/metrics` endpoint functionality
+- No thread-safe metrics storage backend
+
+**4. Missing Event-Driven Intelligence**
+- No intelligent routing between traces vs metrics
+- Manual subscription management vs declarative event mapping
+- Underutilization of robust 40+ event pub/sub system
+
+---
+
+## **🎯 PHASE 4.2: STRATEGIC EVOLUTION PLAN**
+
+### **Core Strategy: Event-Driven Telemetry Router**
+
+**Philosophy**: Preserve all existing TelemetrySubscriber functionality while dramatically expanding observability through intelligent event routing that leverages our robust event pub/sub system.
+
+### **Phase 4.2.1: TelemetryEventRouter Foundation** (Days 1-2)
+
+#### **Intelligent Event Routing Core**
+```ruby
+# The evolution preserves existing functionality while adding intelligence
+class Tasker::Telemetry::EventRouter
+  def self.configure
+    # PRESERVE: All current 8 events → both traces AND metrics
+    map 'task.initialize_requested' => [:trace, :metrics]
+    map 'task.start_requested' => [:trace, :metrics]
+    map 'task.completed' => [:trace, :metrics]
+    map 'task.failed' => [:trace, :metrics]
+    map 'step.execution_requested' => [:trace, :metrics]
+    map 'step.completed' => [:trace, :metrics]
+    map 'step.failed' => [:trace, :metrics]
+    map 'step.retry_requested' => [:trace, :metrics]
+
+    # ENHANCE: Add missing lifecycle events with intelligent routing
+    map 'workflow.viable_steps_discovered' => [:trace, :metrics]
+    map 'observability.step.backoff' => [:trace, :metrics]
+    map 'observability.task.enqueue' => [:metrics]    # Job queue metrics only
+    map 'observability.task.finalize' => [:trace]     # Detailed spans only
+    map 'step.before_handle' => [:trace]              # Handler execution spans
+
+    # EXTEND: Database and dependency events
+    map 'database.query_executed' => [:trace, :metrics]
+    map 'dependency.resolved' => [:trace]
+    map 'batch.step_execution' => [:trace, :metrics]
+  end
+end
+```
+
+#### **Declarative Configuration Benefits**
+- **Zero Breaking Changes** - All existing spans continue working
+- **Intelligent Routing** - Events routed to appropriate backends (traces vs metrics)
+- **Scalable Subscriptions** - Easy to add new events without code changes
+- **Performance Optimization** - Route expensive traces vs cheap metrics appropriately
+
+### **Phase 4.2.2: Native Metrics Backend** (Days 3-4)
+
+#### **Thread-Safe Metrics Collection**
+```ruby
+class Tasker::Metrics::Backend
+  # Thread-safe metric collection with multiple output formats
+  def record_counter(name, value, tags = {})
+  def record_histogram(name, value, tags = {})
+  def record_gauge(name, value, tags = {})
+
+  # Export capabilities
+  def export_prometheus    # /tasker/metrics endpoint
+  def export_json          # Alternative format
+  def health_check         # Backend status
+end
+```
+
+#### **Production-Ready Features**
+- **Thread-Safe Storage** - Concurrent metric collection without locks
+- **Memory Management** - Configurable retention with automatic cleanup
+- **Multiple Formats** - Prometheus, JSON, and custom export formats
+- **Performance Optimized** - O(1) metric recording with efficient aggregation
+
+### **Phase 4.2.3: Enhanced TelemetrySubscriber Evolution** (Days 5-6)
+
+#### **Preserve + Enhance Approach**
+```ruby
+class TelemetrySubscriber < BaseSubscriber
+  # PRESERVE: All existing span creation methods unchanged
+  # ENHANCE: Subscribe to 35+ events via TelemetryEventRouter
+  # EXTEND: 5+ level span hierarchy with orchestration layers
+
+  def initialize
+    super
+    @event_router = Tasker::Telemetry::EventRouter.new
+    subscribe_via_router  # New intelligent subscription method
+  end
+
+  private
+
+  def subscribe_via_router
+    @event_router.trace_events.each do |event|
+      # Enhanced subscription preserving existing span logic
+      subscribe_to_event_with_spans(event)
+    end
+  end
+end
+```
+
+#### **Enhanced Span Hierarchy**
+- **Orchestration Spans** - Workflow coordination visibility
+- **Batch Execution Spans** - Step batch processing spans
+- **Database Operation Spans** - Query performance tracking
+- **Dependency Resolution Spans** - Critical path analysis
+- **Handler Execution Spans** - Individual step handler timing
+
+### **Phase 4.2.4: Integration & Testing** (Day 7)
+
+#### **Comprehensive Validation**
+- **Zero Regression Testing** - All existing spans continue working
+- **Performance Validation** - Metrics collection overhead < 5%
+- **Memory Efficiency** - Metrics storage within configured bounds
+- **Integration Testing** - Full telemetry pipeline validation
+
+### **Expected Phase 4.2 Outcomes**
+
+#### **Observability Excellence**
+- **35+ Event Coverage** - From 8 events to comprehensive lifecycle monitoring
+- **5+ Level Span Hierarchy** - Deep workflow execution visibility
+- **Native Metrics Backend** - Thread-safe Prometheus-compatible metrics
+- **Intelligent Event Routing** - Appropriate telemetry backend selection
+
+#### **Production Benefits**
+- **Operational Dashboards** - Real-time aggregate metrics for monitoring
+- **Detailed Debugging** - Comprehensive spans for troubleshooting
+- **Performance Insights** - Bottleneck identification across all workflow layers
+- **Zero Breaking Changes** - Seamless evolution of existing functionality
+
+#### **Developer Experience**
+- **Declarative Configuration** - Simple event→telemetry mapping
+- **Flexible Backend Selection** - Route events to traces, metrics, or both
+- **Enhanced Debugging** - Rich span hierarchy for complex workflow analysis
+- **Production-Ready Defaults** - Sensible configuration out-of-the-box
+
+This strategic evolution transforms our current solid-but-limited TelemetrySubscriber into a comprehensive, event-driven observability system that scales to handle enterprise-grade workflow monitoring while preserving all existing functionality.

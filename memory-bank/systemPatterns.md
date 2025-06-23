@@ -1,5 +1,59 @@
 # System Patterns
 
+## Core Architectural Philosophy
+
+### **Fail-Fast Architecture Principles**
+
+Tasker follows explicit fail-fast principles throughout the codebase to ensure predictable behavior and clear error handling:
+
+#### **Explicit Guard Clauses over Safe Navigation**
+```ruby
+# ✅ PREFERRED: Explicit guard clauses with meaningful returns
+def routes_to_traces?(event_name)
+  mapping = mapping_for(event_name)
+  return false unless mapping  # Clear intent, explicit boolean return
+  mapping.active? && mapping.routes_to_traces?
+end
+
+# ❌ AVOID: Safe navigation returning ambiguous nil
+def routes_to_traces?(event_name)
+  mapping = mapping_for(event_name)
+  mapping&.active? && mapping&.routes_to_traces?  # Can return nil unexpectedly
+end
+```
+
+#### **Clear API Contracts**
+- **Boolean methods always return `true` or `false`**, never `nil`
+- **Error conditions are explicit** with descriptive `ArgumentError` messages
+- **Early returns with meaningful values** of expected types
+- **No silent failures** - invalid inputs fail immediately with helpful errors
+
+#### **Pattern Benefits**
+- **Immediate feedback** for invalid inputs at call site
+- **Predictable APIs** with clear return type contracts
+- **Easier debugging** without ambiguous `nil` values
+- **Better test reliability** with exact boolean assertions
+- **Self-documenting code** that shows intent explicitly
+
+#### **Real-World Example: TelemetryEventRouter**
+```ruby
+# Fail-fast on unknown backend types
+def events_for_backend(backend)
+  case backend
+  when :trace, :traces then trace_events
+  when :metric, :metrics then metrics_events
+  when :log, :logs then log_events
+  else
+    raise ArgumentError, "Unknown backend type: #{backend.inspect}. Valid: :trace, :metrics, :logs"
+  end
+end
+
+# Clear boolean predicate with explicit guard
+def mapping_exists?(event_name)
+  mappings.key?(event_name.to_s)  # Always returns true/false
+end
+```
+
 ## Architecture Overview
 
 ### Core Components
@@ -174,6 +228,54 @@ end
 5. **Step Retry**: Same execution process, new attempt number
 
 **CRITICAL**: This is **step-level retry via reenqueuing**, not task-level retry loops.
+
+## Telemetry & Observability Patterns
+
+### **Intelligent Event Routing Architecture (Phase 4.2.1)**
+
+#### **EventRouter Singleton Pattern**
+Follows established Tasker singleton patterns for centralized, thread-safe event routing:
+
+```ruby
+# Centralized routing configuration
+Tasker::Telemetry::EventRouter.configure do |router|
+  # PRESERVE: All existing 8 TelemetrySubscriber events
+  router.map('task.completed', backends: [:trace, :metrics])
+
+  # ENHANCE: Intelligent routing for operational events
+  router.map('observability.task.enqueue', backends: [:metrics], priority: :high)
+  router.map('database.query_executed', backends: [:trace, :metrics], sampling_rate: 0.1)
+end
+```
+
+#### **Type-Safe Configuration Pattern**
+Uses dry-struct patterns from existing Tasker configuration classes:
+
+```ruby
+# Immutable, frozen configuration objects
+mapping = EventMapping.new(
+  event_name: 'step.before_handle',
+  backends: [:trace],
+  sampling_rate: 0.1,
+  priority: :normal,
+  enabled: true
+)
+# All objects frozen after creation for thread safety
+```
+
+#### **Zero Breaking Changes Strategy**
+Preserves existing functionality while adding intelligence:
+
+- **8 Current Events**: All existing TelemetrySubscriber events → both traces AND metrics
+- **25+ Enhanced Events**: Additional lifecycle events with intelligent routing
+- **Performance Sampling**: Database/intensive operations with appropriate rates
+- **Operational Intelligence**: High-priority events for fast-path metrics
+
+#### **Thread-Safe Intelligent Routing**
+- **Concurrent mapping access** with atomic updates
+- **Event-to-backend mapping** queries without locks
+- **Sampling-aware routing** respecting configuration
+- **Priority-based processing** for operational events
 
 ## Key Design Patterns
 
