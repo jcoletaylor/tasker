@@ -695,3 +695,114 @@ delay = backoff_config.reenqueue_delays[status] || backoff_config.default_reenqu
 ### ❌ Incomplete Strategy Pattern
 **Wrong**: Test strategies that don't replicate production behavior
 **Right**: Test strategies that follow the same reenqueuing path as production
+
+## Observability & Telemetry Architecture
+
+### **Phase 4 Observability Enhancement**
+**Comprehensive Plan**: See `docs/OBSERVABILITY_ENHANCEMENT.md` for complete architectural documentation
+
+#### **Current Architecture (Phase 4.1 & 4.2.1-4.2.2.2 Complete)**
+- **Structured Logging**: StructuredLogging concern with correlation ID management and JSON formatting
+- **Event-Driven Telemetry**: TelemetryEventRouter with intelligent routing to traces, metrics, or both
+- **Native Metrics Collection**: Thread-safe MetricsBackend with Counter, Gauge, Histogram types
+- **Prometheus Export**: Standard format export via `/tasker/metrics` endpoint with optional authentication
+
+#### **Hybrid Cache Architecture (Phase 4.2.2.3 Planned)**
+**Problem**: In-memory `Concurrent::Hash` storage causes memory accumulation and lacks cross-container coordination
+**Solution**: Hybrid dual-storage combining performance of in-memory operations with Rails.cache persistence
+
+**Design Principles**:
+1. **Performance Preservation**: Keep `Concurrent::Hash` for hot-path concurrent processing
+2. **Cache Store Agnostic**: Work with any Rails.cache store via feature detection
+3. **Cross-Container Coordination**: Atomic operations when supported, graceful degradation when not
+4. **Framework Boundaries**: Standard formats with plugin architecture for extensibility
+
+**Cache Store Strategies**:
+- **Redis/Memcached**: Full coordination with atomic operations and distributed locking
+- **File/Memory Stores**: Local-only mode with clear degradation messaging
+- **Automatic Detection**: Feature detection selects appropriate strategy
+
+#### **Observability Integration Patterns**
+
+**Event-Driven Collection**:
+```ruby
+# EventRouter provides intelligent routing decisions
+router.routes_to_metrics?('task.completed')          # → true (operational data)
+router.routes_to_metrics?('step.before_handle')      # → false (traces only)
+router.routes_to_metrics?('database.query_executed') # → true (10% sampling)
+
+# MetricsBackend uses routing intelligence automatically
+# TelemetrySubscriber creates spans for detailed debugging
+# Custom subscribers handle vendor-specific integrations
+```
+
+**Framework Boundary Respect**:
+- **Tasker Provides**: Thread-safe collection, standard formats (Prometheus/JSON/CSV), plugin architecture
+- **Developers Provide**: Vendor integrations via event subscribers, custom exporters, business logic
+
+**Telemetry Subscriber Pattern**:
+```ruby
+class MetricsSubscriber < BaseSubscriber
+  subscribe_to 'task.completed', 'task.failed'
+
+  def handle_task_completed(event)
+    # Developer chooses their metrics system
+    StatsD.histogram('task.duration', event[:duration])
+    # OR use native metrics backend
+    backend.counter('tasks_completed', **extract_labels(event)).increment
+  end
+end
+```
+
+#### **Production Readiness Features**
+
+**TTL Safety & Export Coordination**:
+- Export scheduling with safety margins before cache TTL expiration
+- Distributed locking for cross-container export coordination
+- Emergency TTL extension for failed exports
+- Automatic retry logic with exponential backoff
+
+**Performance Characteristics**:
+- <5% overhead for in-memory operations (hot path unchanged)
+- Configurable sync frequency (default 30 seconds)
+- Memory-bounded storage with TTL cleanup
+- Thread-safe operations without locks using atomic primitives
+
+**Infrastructure Agnostic**:
+- Works with any Rails.cache store configuration
+- Clear operational guidance about capabilities and limitations
+- Migration path for teams wanting enhanced distributed features
+- Zero breaking changes to existing functionality
+
+### **Telemetry Configuration Patterns**
+
+```ruby
+# Comprehensive telemetry configuration
+config.telemetry do |t|
+  # Structured logging
+  t.structured_logging_enabled = true
+  t.correlation_id_header = 'X-Correlation-ID'
+
+  # Native metrics with cache-agnostic configuration
+  t.metrics_enabled = true
+  t.retention_window = 5.minutes
+  t.export_safety_margin = 1.minute
+  t.sync_interval = 30.seconds
+
+  # Cross-container coordination (auto-detected)
+  t.cross_container_coordination = :auto
+  t.atomic_operations = :auto
+
+  # Export targets with plugin architecture
+  t.export_targets = {
+    prometheus_file: { strategy: :scheduled, interval: 1.minute },
+    http_push: { strategy: :threshold, threshold: 1000 }
+  }
+
+  # Developer extensibility
+  t.register_exporter(:datadog, DataDogExporter)      # Custom exporter
+  t.register_exporter(:influxdb, InfluxDBExporter)    # Custom exporter
+end
+```
+
+This observability architecture provides enterprise-grade monitoring capabilities while maintaining Tasker's developer-friendly design principles and respecting Rails engine infrastructure agnostic requirements.

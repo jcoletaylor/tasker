@@ -10,6 +10,7 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
       expect(described_class::RESOURCES::TASK_DIAGRAM).to eq('tasker.task_diagram')
       expect(described_class::RESOURCES::HEALTH_STATUS).to eq('tasker.health_status')
       expect(described_class::RESOURCES::HANDLER).to eq('tasker.handler')
+      expect(described_class::RESOURCES::METRICS).to eq('tasker.metrics')
     end
 
     describe '.all' do
@@ -22,7 +23,8 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
           'tasker.workflow_step',
           'tasker.task_diagram',
           'tasker.health_status',
-          'tasker.handler'
+          'tasker.handler',
+          'tasker.metrics'
         )
       end
     end
@@ -34,6 +36,7 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
         expect(described_class::RESOURCES.include?('tasker.task_diagram')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.health_status')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.handler')).to be(true)
+        expect(described_class::RESOURCES.include?('tasker.metrics')).to be(true)
       end
 
       it 'returns false for undefined resources' do

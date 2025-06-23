@@ -9,8 +9,9 @@
 # Components:
 # - EventRouter: Intelligent routing core for event→telemetry mapping
 # - EventMapping: Declarative configuration for routing decisions
-# - SubscriberEnhancer: Evolution wrapper for existing TelemetrySubscriber
-# - MetricsBackend: Thread-safe native metrics collection (Phase 4.2.2)
+# - MetricTypes: Counter, Gauge, Histogram with atomic thread-safe operations
+# - MetricsBackend: Thread-safe native metrics collection with EventRouter integration
+# - SubscriberEnhancer: Evolution wrapper for existing TelemetrySubscriber (Phase 4.2.3)
 #
 # Core Philosophy: PRESERVE all existing TelemetrySubscriber functionality while
 # dramatically expanding observability through intelligent event routing.
@@ -23,13 +24,24 @@
 #     router.map 'observability.task.enqueue' => [:metrics]
 #   end
 #
+#   # Direct metrics collection with thread-safe operations
+#   backend = Tasker::Telemetry::MetricsBackend.instance
+#   backend.counter('api_requests_total', endpoint: '/tasks').increment
+#   backend.gauge('active_connections').set(42)
+#   backend.histogram('request_duration_seconds').observe(0.125)
+#
+#   # Automatic event-driven metrics via EventRouter integration
+#   router.route_event('task.completed', { task_id: '123', duration: 2.5 })
+#
 #   # Evolution of existing TelemetrySubscriber (zero breaking changes)
-#   enhanced_subscriber = Tasker::Telemetry::SubscriberEnhancer.new
+#   enhanced_subscriber = Tasker::Telemetry::SubscriberEnhancer.new  # Phase 4.2.3
 #   enhanced_subscriber.subscribe_to_publisher(publisher)
 
 # Explicitly require telemetry components for predictable loading
 require_relative 'telemetry/event_mapping'
 require_relative 'telemetry/event_router'
+require_relative 'telemetry/metric_types'
+require_relative 'telemetry/metrics_backend'
 
 module Tasker
   module Telemetry

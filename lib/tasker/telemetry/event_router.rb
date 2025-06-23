@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'metrics_backend'
+
 module Tasker
   module Telemetry
     # EventRouter provides intelligent routing of events to appropriate telemetry backends
@@ -51,6 +53,9 @@ module Tasker
 
         # Load default mappings that preserve existing TelemetrySubscriber functionality
         load_default_mappings
+
+        # Register this router with MetricsBackend for automatic routing
+        MetricsBackend.instance.register_event_router(self)
       end
 
       # Configure event routing with a block
@@ -192,6 +197,30 @@ module Tasker
       # @return [Array<String>] All configured event names
       def configured_events
         mappings.keys
+      end
+
+      # Route an event to appropriate backends based on configuration
+      #
+      # This is the core routing method that directs events to traces,
+      # metrics, and logs based on their configured mapping.
+      #
+      # @param event_name [String] The lifecycle event name
+      # @param payload [Hash] Event payload data
+      # @return [Hash] Results from each backend (backend => success boolean)
+      def route_event(event_name, payload = {})
+        results = {}
+        mapping = mapping_for(event_name)
+        return results unless mapping && mapping.active?
+
+        # Route to metrics backend if configured
+        if mapping.routes_to_metrics?
+          results[:metrics] = MetricsBackend.instance.handle_event(event_name, payload)
+        end
+
+        # TODO: Route to trace backend (Phase 4.2.3)
+        # TODO: Route to log backend (Phase 4.2.3)
+
+        results
       end
 
       # Bulk configure multiple mappings
