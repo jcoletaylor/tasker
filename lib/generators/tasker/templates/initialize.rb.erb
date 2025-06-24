@@ -27,14 +27,16 @@ Tasker.configuration do |config|
   # end
 
   # Telemetry and observability configuration
-  # Comprehensive observability with structured logging, metrics, and performance monitoring
+  # Tasker provides two complementary observability systems:
+  # 1. TelemetrySubscriber (event-driven OpenTelemetry spans for detailed tracing)
+  # 2. MetricsBackend (native metrics collection for dashboards and alerting)
   # config.telemetry do |tel|
-  #   # === BASIC TELEMETRY SETTINGS ===
-  #   tel.enabled = true
+  #   # === OPENTELEMETRY SPANS (Event-Driven Tracing) ===
+  #   tel.enabled = true                              # Enable TelemetrySubscriber
   #   tel.service_name = 'my_app_tasker'
   #   tel.service_version = '1.2.3'
   #
-  #   # === STRUCTURED LOGGING (Phase 4.1 Complete) ===
+  #   # === STRUCTURED LOGGING ===
   #   tel.structured_logging_enabled = true
   #   tel.correlation_id_header = 'X-Correlation-ID'  # HTTP header for correlation ID propagation
   #   tel.log_level = 'info'                          # debug, info, warn, error, fatal
@@ -44,13 +46,38 @@ Tasker.configuration do |config|
   #   tel.filter_mask = '***REDACTED***'
   #   tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
   #
-  #   # === METRICS COLLECTION (Phase 4.2 Ready) ===
-  #   tel.metrics_enabled = true
-  #   tel.metrics_endpoint = '/tasker/metrics'         # Prometheus endpoint
-  #   tel.metrics_format = 'prometheus'                # prometheus, json
-  #   tel.metrics_auth_required = false               # Set to true for production
-  #   tel.max_stored_samples = 1000                   # Memory limit for metrics
-  #   tel.metrics_retention_hours = 24                # How long to keep metrics
+  #   # === NATIVE METRICS COLLECTION (Direct Collection) ===
+  #   tel.metrics_enabled = true                      # Enable MetricsBackend
+  #   tel.metrics_format = 'prometheus'               # 'prometheus', 'json', 'csv'
+  #
+  #   # Prometheus export configuration (matches TelemetryConfig.default_prometheus_config)
+  #   tel.prometheus = {
+  #     endpoint: ENV['PROMETHEUS_ENDPOINT'],         # Prometheus remote write endpoint (nil disables)
+  #
+  #     # Basic authentication for Prometheus endpoint
+  #     username: ENV['PROMETHEUS_USERNAME'],
+  #     password: ENV['PROMETHEUS_PASSWORD'],
+  #
+  #     # Job configuration
+  #     job_timeout: 5.minutes,
+  #     export_timeout: 2.minutes,
+  #     retry_attempts: 3,
+  #
+  #     # Export scheduling
+  #     retention_window: 5.minutes,                 # How long metrics are retained before TTL expiry
+  #     safety_margin: 1.minute,                     # Export before TTL expires (safety buffer)
+  #
+  #     # Metric naming
+  #     metric_prefix: 'tasker',
+  #     include_instance_labels: true,
+  #
+  #     # Performance tuning
+  #     compression: 'snappy',                       # 'snappy', 'gzip', or nil
+  #     batch_size: 1000,
+  #
+  #     # Test/development mode
+  #     skip_if_unavailable: true                    # Don't fail if Prometheus is unreachable
+  #   }
   #
   #   # === PERFORMANCE MONITORING ===
   #   tel.performance_monitoring_enabled = true
@@ -58,15 +85,6 @@ Tasker.configuration do |config|
   #   tel.memory_threshold_mb = 100                   # Memory spike detection
   #   tel.event_sampling_rate = 1.0                   # 1.0 = 100%, 0.1 = 10% sampling
   #   tel.filtered_events = []                        # Events to exclude from collection
-  #
-  #   # === ADVANCED CONFIGURATION ===
-  #   # tel.configure_telemetry({
-  #   #   batch_events: false,                        # Enable event batching
-  #   #   buffer_size: 100,                          # Events to buffer before flush
-  #   #   flush_interval: 5,                         # Seconds between flushes
-  #   #   async_processing: false,                   # Future: async event processing
-  #   #   sampling_rate: 1.0                         # Event sampling rate
-  #   # })
   # end
 
   # Dependency graph and bottleneck analysis configuration

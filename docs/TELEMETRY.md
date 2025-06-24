@@ -136,14 +136,44 @@ flowchart LR
     class CustomMetrics metrics
 ```
 
-## Avoiding Duplication: Single Responsibility
+## Two Complementary Observability Systems
 
-To avoid the telemetry duplication you noticed, follow this pattern:
+Tasker provides **two distinct but complementary observability systems** designed for different use cases:
 
-### ✅ **TelemetrySubscriber** - Spans Only
+### 🔍 **TelemetrySubscriber (Event-Driven Spans)**
+- **Purpose**: Detailed tracing and debugging with OpenTelemetry spans
+- **Trigger**: Automatic via event subscription (no manual instrumentation needed)
+- **Use Cases**:
+  - "Why did task #12345 fail?"
+  - "What's the execution path through this workflow?"
+  - "Which step is causing the bottleneck?"
+- **Data**: Rich contextual information, hierarchical relationships, error details
+- **Storage**: OpenTelemetry backends (Jaeger, Zipkin, Honeycomb)
+- **Performance**: Optimized for detailed context, not high-volume aggregation
+
+### 📊 **MetricsBackend (Native Metrics Collection)**
+- **Purpose**: High-performance aggregated metrics for dashboards and alerting
+- **Trigger**: Direct collection during workflow execution (no events)
+- **Use Cases**:
+  - "How many tasks completed in the last hour?"
+  - "What's the 95th percentile execution time?"
+  - "Alert if error rate exceeds 5%"
+- **Data**: Numerical counters, gauges, histograms with labels
+- **Storage**: Prometheus, JSON, CSV exports
+- **Performance**: Optimized for high-volume, low-latency operations
+
+### Why Two Systems?
+
+**Performance**: Native metrics avoid event publishing overhead for high-frequency operations
+**Reliability**: Metrics collection continues even if event system has issues
+**Flexibility**: Choose appropriate storage backend for each use case
+**Scalability**: Each system optimized for its specific workload
+
+### ✅ **TelemetrySubscriber** - Spans Only (Event-Driven)
 ```ruby
 class TelemetrySubscriber < BaseSubscriber
   # ONLY creates OpenTelemetry spans with hierarchical context
+  # Triggered automatically by Tasker's event system
   # Does NOT record metrics - focuses on detailed tracing
 
   def handle_task_completed(event)
@@ -153,38 +183,37 @@ class TelemetrySubscriber < BaseSubscriber
 end
 ```
 
-### ✅ **Custom MetricsSubscriber** - Metrics Only
+### ✅ **MetricsBackend** - Native Collection (Direct)
 ```ruby
-class MetricsSubscriber < BaseSubscriber
+class MetricsBackend
   # ONLY records aggregated metrics for dashboards/alerts
+  # Called directly during workflow execution
   # Does NOT create spans - focuses on operational data
 
-  def handle_task_completed(event)
-    execution_duration = safe_get(event, :execution_duration, 0)
-    task_name = safe_get(event, :task_name, 'unknown')
-
+  def record_task_completion(task_name:, duration:, status:)
     # Record metrics for dashboards and alerting
-    StatsD.histogram('tasker.task.duration', execution_duration, tags: ["task:#{task_name}"])
-    StatsD.increment('tasker.task.completed', tags: ["task:#{task_name}"])
+    counter("tasker.task.executions", status: status, task_name: task_name)
+    histogram("tasker.task.duration", value: duration, task_name: task_name)
   end
 end
 ```
 
-### ✅ **Clean Architecture** - Single Telemetry System
+### ✅ **Clean Architecture** - Complementary Systems
 ```ruby
-# Tasker now uses a single, clean telemetry approach:
-# - TelemetrySubscriber creates OpenTelemetry spans
-# - Custom subscribers handle metrics and integrations
-# - No legacy systems to configure or disable
-
 # config/initializers/tasker.rb
 Tasker.configuration do |config|
-  # Simple telemetry configuration
   config.telemetry do |tel|
-    tel.enabled = true  # Enable TelemetrySubscriber
+    # Enable OpenTelemetry spans (event-driven)
+    tel.enabled = true
+
+    # Enable native metrics collection (direct)
+    tel.metrics_enabled = true
+    tel.metrics_format = 'prometheus'
   end
 end
 ```
+
+See [METRICS.md](METRICS.md) for comprehensive details on the native metrics system including cache strategies, Kubernetes integration, and production deployment patterns.
 
 ## Configuration
 

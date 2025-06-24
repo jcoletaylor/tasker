@@ -481,7 +481,8 @@ For complete API documentation, see **[REST API Guide](REST_API.md)**.
 - **[REST API Guide](REST_API.md)** - Complete API documentation with handler discovery
 - **[Authentication](AUTH.md)** - Secure your workflows
 - **[Event Subscribers](EVENT_SYSTEM.md)** - Add monitoring and alerting
-- **[Telemetry](TELEMETRY.md)** - OpenTelemetry integration
+- **[Telemetry](TELEMETRY.md)** - OpenTelemetry spans for detailed tracing
+- **[Metrics](METRICS.md)** - Native metrics collection for dashboards and alerting
 
 ### 📚 Explore Advanced Topics
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete implementation guide with API integration
