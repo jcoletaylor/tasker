@@ -85,6 +85,10 @@ module Tasker
         register_observability_events
         event_count += count_observability_events
 
+        # Register Export Events
+        register_export_events
+        event_count += count_export_events
+
         # Register Test Events (for testing environments)
         register_test_events
         event_count += count_test_events
@@ -107,6 +111,15 @@ module Tasker
         end
       end
 
+      # Register export events for telemetry plugin coordination
+      def register_export_events
+        require_relative '../telemetry/events/export_events'
+
+        Tasker::Telemetry::Events::ExportEvents::ALL_EVENTS.each do |event_name|
+          register_event(event_name)
+        end
+      end
+
       # Register test events for testing environments
       def register_test_events
         Tasker::Constants::TestEvents.constants.each do |const_name|
@@ -120,6 +133,11 @@ module Tasker
         task_count = Tasker::Constants::ObservabilityEvents::Task.constants.size
         step_count = Tasker::Constants::ObservabilityEvents::Step.constants.size
         task_count + step_count
+      end
+
+      # Count export events for logging
+      def count_export_events
+        Tasker::Telemetry::Events::ExportEvents::ALL_EVENTS.size
       end
 
       # Count test events for logging

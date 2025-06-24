@@ -46,7 +46,7 @@ RSpec.describe Tasker::MetricsExportJob do
   end
 
   before do
-    allow(Tasker::Telemetry::ExportCoordinator).to receive(:new).and_return(coordinator)
+    allow(Tasker::Telemetry::ExportCoordinator).to receive(:instance).and_return(coordinator)
     allow(Tasker::Telemetry::MetricsExportService).to receive(:new).and_return(export_service)
     allow(coordinator).to receive(:execute_coordinated_export).and_return(successful_export_result)
     allow(export_service).to receive(:export_metrics).and_return(service_result)
@@ -213,7 +213,7 @@ RSpec.describe Tasker::MetricsExportJob do
       it 'does nothing for first execution' do
         allow(job).to receive(:executions).and_return(1)
 
-        expect(Tasker::Telemetry::ExportCoordinator).not_to receive(:new)
+        expect(Tasker::Telemetry::ExportCoordinator).not_to receive(:instance)
         job.send(:extend_cache_ttl_for_retry)
       end
     end
@@ -225,7 +225,7 @@ RSpec.describe Tasker::MetricsExportJob do
 
       it 'extends cache TTL for retry delay' do
         coordinator = instance_double(Tasker::Telemetry::ExportCoordinator)
-        allow(Tasker::Telemetry::ExportCoordinator).to receive(:new).and_return(coordinator)
+        allow(Tasker::Telemetry::ExportCoordinator).to receive(:instance).and_return(coordinator)
         allow(coordinator).to receive(:extend_cache_ttl).and_return({ success: true, metrics_extended: 5 })
         allow(job).to receive(:log_ttl_extension_for_retry)
 
@@ -237,7 +237,7 @@ RSpec.describe Tasker::MetricsExportJob do
 
       it 'handles TTL extension errors gracefully' do
         coordinator = instance_double(Tasker::Telemetry::ExportCoordinator)
-        allow(Tasker::Telemetry::ExportCoordinator).to receive(:new).and_return(coordinator)
+        allow(Tasker::Telemetry::ExportCoordinator).to receive(:instance).and_return(coordinator)
         allow(coordinator).to receive(:extend_cache_ttl).and_raise(StandardError, 'TTL error')
         allow(job).to receive(:log_ttl_extension_error)
 

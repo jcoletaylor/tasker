@@ -194,6 +194,346 @@ lib/tasker/engine.rb                             # Enhanced - Initialize metrics
 spec/lib/tasker/metrics/                         # New - Comprehensive metrics tests
 ```
 
+---
+
+## ✅ **PHASE 4.2.2.3.1 SUCCESSFULLY COMPLETED** - Plugin Architecture Integration Points
+
+### **Outstanding Implementation Results**
+- **✅ Event-Driven Export Coordination** - Complete ExportCoordinator with plugin registration and lifecycle events
+- **✅ Plugin Registry System** - Centralized plugin discovery, format-based lookup, and auto-discovery capabilities
+- **✅ BaseExporter Interface** - Abstract plugin class with lifecycle callbacks and error handling
+- **✅ Built-in Format Exporters** - JSON and CSV exporters as reference implementations
+- **✅ Comprehensive Testing** - 67+ tests covering plugin registration, event coordination, and format validation
+- **✅ Framework Boundary Respect** - Clean separation between Tasker core and plugin responsibilities
+
+#### **Developer-Facing Integration Points**
+
+```ruby
+# Plugin Development Example
+class MyCustomExporter < Tasker::Telemetry::Plugins::BaseExporter
+  VERSION = '1.0.0'
+  DESCRIPTION = 'Custom metrics exporter for external system'
+
+  def export(metrics_data, options = {})
+    # Custom export logic
+    response = HTTParty.post(@endpoint_url, {
+      body: format_metrics(metrics_data).to_json
+    })
+    { success: response.success?, response: response }
+  end
+
+  def supports_format?(format)
+    %w[json custom].include?(format.to_s)
+  end
+
+  # Optional lifecycle callbacks
+  def on_cache_sync(sync_data)
+    logger.info("Cache synced: #{sync_data[:metrics_count]} metrics")
+  end
+end
+
+# Plugin Registration
+coordinator = Tasker::Telemetry::ExportCoordinator.instance
+coordinator.register_plugin('my_exporter', MyCustomExporter.new)
+```
+
+#### **Event Coordination System**
+- **Export Events**: `CACHE_SYNCED`, `EXPORT_REQUESTED`, `EXPORT_COMPLETED`, `EXPORT_FAILED`
+- **Plugin Events**: `PLUGIN_REGISTERED`, `PLUGIN_UNREGISTERED`
+- **Lifecycle Integration**: Automatic coordination with MetricsBackend cache sync operations
+
+---
+
+## Real-World Telemetry Validation
+
+### Overview
+Comprehensive validation approaches for ensuring Tasker's telemetry and metrics exports correctly integrate with production observability systems including Jaeger and Prometheus.
+
+### Local Development Environment Setup
+
+#### Docker Compose for Observability Stack
+
+```yaml
+# docker-compose.observability.yml
+version: '3.8'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    ports:
+      - "16686:16686"    # Jaeger UI
+      - "14250:14250"    # gRPC
+      - "14268:14268"    # HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge
+```
+
+#### Prometheus Configuration
+
+```yaml
+# config/prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'tasker-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']  # Rails app
+    metrics_path: '/tasker/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+```
+
+### Validation Scripts
+
+#### 1. Jaeger Trace Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_jaeger_traces.sh
+
+JAEGER_URL="http://localhost:16686"
+SERVICE_NAME="tasker"
+
+echo "🔍 Validating Jaeger traces for Tasker..."
+
+# Check Jaeger connectivity
+curl -f "$JAEGER_URL/api/services" > /dev/null 2>&1 || {
+    echo "❌ Jaeger not accessible"
+    exit 1
+}
+
+# Get services and validate Tasker presence
+SERVICES=$(curl -s "$JAEGER_URL/api/services" | jq -r '.data[]')
+if echo "$SERVICES" | grep -q "$SERVICE_NAME"; then
+    echo "✅ Tasker service found in Jaeger"
+else
+    echo "⚠️  Tasker service not found"
+    exit 1
+fi
+
+# Analyze recent traces
+TRACES=$(curl -s "$JAEGER_URL/api/traces?service=$SERVICE_NAME&lookback=1h")
+TRACE_COUNT=$(echo "$TRACES" | jq '.data | length')
+echo "✅ Found $TRACE_COUNT traces for $SERVICE_NAME"
+
+# Check for expected operations
+EXPECTED_OPERATIONS=("task.created" "task.completed" "step.processed")
+for op in "${EXPECTED_OPERATIONS[@]}"; do
+    if echo "$TRACES" | jq -r '.data[].spans[].operationName' | grep -q "$op"; then
+        echo "✅ Found expected operation: $op"
+    else
+        echo "⚠️  Missing expected operation: $op"
+    fi
+done
+
+echo "🎉 Jaeger validation completed!"
+```
+
+#### 2. Prometheus Metrics Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_prometheus_metrics.sh
+
+PROMETHEUS_URL="http://localhost:9090"
+TASKER_METRICS_URL="http://localhost:3000/tasker/metrics"
+
+echo "📊 Validating Prometheus metrics for Tasker..."
+
+# Check connectivity
+curl -f "$PROMETHEUS_URL/-/healthy" > /dev/null 2>&1 || {
+    echo "❌ Prometheus not accessible"
+    exit 1
+}
+
+curl -f "$TASKER_METRICS_URL" > /dev/null 2>&1 || {
+    echo "❌ Tasker metrics not accessible"
+    exit 1
+}
+
+# Validate metrics endpoint
+TASKER_METRICS=$(curl -s "$TASKER_METRICS_URL")
+METRIC_COUNT=$(echo "$TASKER_METRICS" | grep -c "^[a-zA-Z]" || true)
+echo "✅ Tasker exposing $METRIC_COUNT metrics"
+
+# Check expected metrics
+EXPECTED_METRICS=(
+    "tasker_tasks_total"
+    "tasker_steps_total"
+    "tasker_workflow_duration_seconds"
+    "tasker_active_connections"
+)
+
+for metric in "${EXPECTED_METRICS[@]}"; do
+    if echo "$TASKER_METRICS" | grep -q "^$metric"; then
+        echo "✅ Found metric: $metric"
+    else
+        echo "⚠️  Missing metric: $metric"
+    fi
+done
+
+# Validate Prometheus ingestion
+PROM_METRICS=$(curl -s "$PROMETHEUS_URL/api/v1/label/__name__/values" | jq -r '.data[] | select(contains("tasker"))')
+PROM_METRIC_COUNT=$(echo "$PROM_METRICS" | wc -l)
+echo "✅ Prometheus has $PROM_METRIC_COUNT Tasker metrics"
+
+# Check scrape health
+SCRAPE_HEALTH=$(curl -s "$PROMETHEUS_URL/api/v1/query?query=up{job=\"tasker-metrics\"}" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "0")
+if [ "$SCRAPE_HEALTH" = "1" ]; then
+    echo "✅ Tasker metrics scrape is healthy"
+else
+    echo "❌ Tasker metrics scrape is down"
+fi
+
+echo "🎉 Prometheus validation completed!"
+```
+
+#### 3. End-to-End Telemetry Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_e2e_telemetry.sh
+
+echo "🚀 Running end-to-end telemetry validation..."
+
+# Generate test workload
+echo "📝 Generating test workload..."
+curl -X POST http://localhost:3000/tasker/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { createTask(input: { namedTaskName: \"test_workflow\", context: \"{\\\"test\\\": true}\" }) { task { id } } }"
+  }' > /dev/null
+
+sleep 5  # Allow telemetry propagation
+
+# Run validations
+./scripts/validate_jaeger_traces.sh
+./scripts/validate_prometheus_metrics.sh
+
+# Cross-validate correlation
+RECENT_TASKS=$(curl -s "http://localhost:16686/api/traces?service=tasker&lookback=5m" | jq '.data | length')
+TASK_METRIC=$(curl -s "http://localhost:9090/api/v1/query?query=increase(tasker_tasks_total[5m])" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "0")
+
+echo "📈 Recent task traces: $RECENT_TASKS"
+echo "📊 Task metric increase: $TASK_METRIC"
+
+if [ "$RECENT_TASKS" -gt 0 ] && [ "$(echo "$TASK_METRIC > 0" | bc)" -eq 1 ]; then
+    echo "✅ Trace-metric correlation validated"
+else
+    echo "⚠️  Trace-metric correlation issue detected"
+fi
+
+echo "🎉 End-to-end telemetry validation completed!"
+```
+
+### Integration Testing Strategies
+
+#### Non-Failing Test Integration
+
+```ruby
+# spec/integration/telemetry_export_spec.rb
+RSpec.describe 'Telemetry Export Integration', type: :integration do
+  it 'exports metrics to Prometheus format', :prometheus do
+    # Generate test metrics
+    backend = Tasker::Telemetry::MetricsBackend.instance
+    backend.counter('test_counter').increment(5)
+    backend.gauge('test_gauge').set(42)
+
+    # Export and validate
+    result = backend.export
+    prometheus_exporter = Tasker::Telemetry::PrometheusExporter.new
+    export_result = prometheus_exporter.safe_export(result)
+
+    expect(export_result[:success]).to be true
+    expect(export_result[:data]).to include('test_counter 5')
+    expect(export_result[:data]).to include('test_gauge 42')
+
+    # Optional: Send to real Prometheus if available
+    send_to_prometheus(export_result[:data]) if ENV['PROMETHEUS_PUSHGATEWAY_URL']
+  end
+
+  private
+
+  def send_to_prometheus(metrics_data)
+    uri = URI("#{ENV['PROMETHEUS_PUSHGATEWAY_URL']}/metrics/job/tasker-test")
+    Net::HTTP.post(uri, metrics_data, 'Content-Type' => 'text/plain')
+  end
+end
+```
+
+#### CI/CD Integration
+
+```yaml
+# .github/workflows/telemetry-validation.yml
+name: Telemetry Validation
+
+on:
+  pull_request:
+    paths:
+      - 'lib/tasker/telemetry/**'
+
+jobs:
+  validate-telemetry:
+    runs-on: ubuntu-latest
+
+    services:
+      jaeger:
+        image: jaegertracing/all-in-one:1.47
+        ports:
+          - 16686:16686
+        options: >-
+          --health-cmd "curl -f http://localhost:16686/api/services"
+          --health-interval 10s
+
+      prometheus:
+        image: prom/prometheus:v2.45.0
+        ports:
+          - 9090:9090
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run telemetry validation
+        run: ./scripts/validate_e2e_telemetry.sh
+```
+
+This comprehensive validation approach ensures Tasker's telemetry works correctly with real-world observability infrastructure.
+
+---
+
 ### 🔍 **Phase 4.3: Performance Profiling Integration**
 **Timeline**: 4-5 days
 **Impact**: Medium-High - Enables data-driven optimization
@@ -886,303 +1226,9 @@ end
 - **Multiple Formats** - Prometheus, JSON, and custom export formats
 - **Performance Optimized** - O(1) metric recording with efficient aggregation
 
-### **Phase 4.2.3: Enhanced TelemetrySubscriber Evolution** (Days 5-6)
+### **Phase 4.2.2.3: Plugin Architecture for Custom Exporters**
 
-#### **Preserve + Enhance Approach**
-```ruby
-class TelemetrySubscriber < BaseSubscriber
-  # PRESERVE: All existing span creation methods unchanged
-  # ENHANCE: Subscribe to 35+ events via TelemetryEventRouter
-  # EXTEND: 5+ level span hierarchy with orchestration layers
-
-  def initialize
-    super
-    @event_router = Tasker::Telemetry::EventRouter.new
-    subscribe_via_router  # New intelligent subscription method
-  end
-
-  private
-
-  def subscribe_via_router
-    @event_router.trace_events.each do |event|
-      # Enhanced subscription preserving existing span logic
-      subscribe_to_event_with_spans(event)
-    end
-  end
-end
-```
-
-#### **Enhanced Span Hierarchy**
-- **Orchestration Spans** - Workflow coordination visibility
-- **Batch Execution Spans** - Step batch processing spans
-- **Database Operation Spans** - Query performance tracking
-- **Dependency Resolution Spans** - Critical path analysis
-- **Handler Execution Spans** - Individual step handler timing
-
-### **Phase 4.2.4: Integration & Testing** (Day 7)
-
-#### **Comprehensive Validation**
-- **Zero Regression Testing** - All existing spans continue working
-- **Performance Validation** - Metrics collection overhead < 5%
-- **Memory Efficiency** - Metrics storage within configured bounds
-- **Integration Testing** - Full telemetry pipeline validation
-
-### **Expected Phase 4.2 Outcomes**
-
-#### **Observability Excellence**
-- **35+ Event Coverage** - From 8 events to comprehensive lifecycle monitoring
-- **5+ Level Span Hierarchy** - Deep workflow execution visibility
-- **Cache-Agnostic Native Metrics Backend** - Thread-safe metrics with Rails.cache persistence
-- **Intelligent Event Routing** - Appropriate telemetry backend selection
-
-#### **Production Benefits**
-- **Operational Dashboards** - Real-time aggregate metrics for monitoring with cross-container coordination
-- **Detailed Debugging** - Comprehensive spans for troubleshooting
-- **Performance Insights** - Bottleneck identification across all workflow layers
-- **Zero Breaking Changes** - Seamless evolution of existing functionality
-
-#### **Developer Experience**
-- **Declarative Configuration** - Simple event→telemetry mapping
-- **Flexible Backend Selection** - Route events to traces, metrics, or both
-- **Enhanced Debugging** - Rich span hierarchy for complex workflow analysis
-- **Production-Ready Defaults** - Sensible configuration out-of-the-box
-
-This strategic evolution transforms our current solid-but-limited TelemetrySubscriber into a comprehensive, event-driven observability system that scales to handle enterprise-grade workflow monitoring while preserving all existing functionality.
-
-## 🚧 **PHASE 4.2.2.3: HYBRID RAILS CACHE + EVENT-DRIVEN EXPORT ARCHITECTURE**
-
-**Current Challenge**: In-memory `Concurrent::Hash` storage causes memory accumulation in long-running containers and lacks cross-container coordination for distributed deployments.
-
-**Strategic Solution**: Implement hybrid dual-storage architecture combining performance of in-memory operations with persistence and coordination of Rails.cache, designed to be cache-store agnostic.
-
-### **🎯 Architecture Overview: Cache-Agnostic Dual Storage**
-
-#### **Core Design Principles**
-- **Performance Preservation**: Keep `Concurrent::Hash` for hot-path concurrent processing
-- **Cache Store Agnostic**: Work with any Rails.cache store (Redis, Memcached, File, Memory)
-- **Cross-Container Coordination**: Atomic operations and aggregation across instances when supported
-- **Graceful Degradation**: Reduced functionality vs broken functionality for limited cache stores
-- **Framework Boundaries**: Prometheus export (industry standard) not vendor lock-in
-
-#### **Dual-Storage Strategy**
-```ruby
-class MetricsBackend
-  def initialize
-    # Fast thread-safe in-memory storage (preserves current performance)
-    @metrics = Concurrent::Hash.new
-
-    # Persistent distributed storage with cache capability detection
-    @cache_capabilities = detect_cache_capabilities
-    @sync_strategy = select_sync_strategy
-    @instance_id = "#{ENV['HOSTNAME'] || Socket.gethostname}-#{Process.pid}"
-  end
-
-  # Fast path: Unchanged concurrent operations for real-time processing
-  def counter(name, **labels)
-    get_or_create_metric(name, labels, :counter) do
-      MetricTypes::Counter.new(name, labels: labels)
-    end
-  end
-
-  # Background sync: Periodic cache sync without blocking operations
-  def sync_to_cache!
-    case @sync_strategy
-    when :distributed_atomic      # Redis/Memcached with atomic operations
-      sync_with_atomic_operations
-    when :distributed_basic       # Basic distributed cache
-      sync_with_read_modify_write
-    when :local_only             # Memory/File store - local snapshot only
-      sync_to_local_cache
-    end
-  end
-end
-```
-
-### **🔧 Implementation Plan**
-
-#### **Phase 4.2.2.3.1: Cache-Agnostic Feature Detection** (Day 1)
-
-##### **Cache Capability Detection**
-```ruby
-class MetricsBackend
-  private
-
-  def detect_cache_capabilities
-    store = Rails.cache
-
-    {
-      distributed: distributed_cache?(store),
-      atomic_increment: atomic_increment_supported?(store),
-      locking: locking_supported?(store),
-      ttl_inspection: ttl_inspection_supported?(store)
-    }
-  end
-
-  def distributed_cache?(store)
-    # Detect if cache is shared across processes/containers
-    store.is_a?(ActiveSupport::Cache::RedisCacheStore) ||
-    store.is_a?(ActiveSupport::Cache::MemCacheStore) ||
-    (defined?(ActiveSupport::Cache::RedisStore) && store.is_a?(ActiveSupport::Cache::RedisStore))
-  end
-
-  def atomic_increment_supported?(store)
-    # Test if increment operations are truly atomic
-    store.respond_to?(:increment) &&
-      (store.is_a?(ActiveSupport::Cache::RedisCacheStore) ||
-       store.is_a?(ActiveSupport::Cache::MemCacheStore))
-  end
-
-  def select_sync_strategy
-    case @cache_capabilities
-    when { distributed: true, atomic_increment: true, locking: true }
-      :distributed_atomic      # Redis/Memcached with full features
-    when { distributed: true, atomic_increment: true }
-      :distributed_basic       # Redis/Memcached without locking
-    when { distributed: true }
-      :distributed_manual      # Basic distributed cache
-    else
-      :local_only             # Memory/File store - no cross-process sync
-    end
-  end
-```
-
-##### **Cache Store Compatibility Matrix**
-| Cache Store | Distributed | Atomic Ops | Locking | Strategy | Features |
-|-------------|-------------|------------|---------|----------|----------|
-| `:redis_cache_store` | ✅ | ✅ | ✅ | `distributed_atomic` | Full coordination |
-| `:mem_cache_store` | ✅ | ✅ | ❌ | `distributed_basic` | Basic coordination |
-| `:file_store` | ❌ | ❌ | ❌ | `local_only` | Local export only |
-| `:memory_store` | ❌ | ❌ | ❌ | `local_only` | Single-process only |
-| `:null_store` | ❌ | ❌ | ❌ | `local_only` | Testing/disabled |
-
-#### **Phase 4.2.2.3.2: Adaptive Sync Implementation** (Day 2)
-
-##### **Multi-Strategy Sync Operations**
-```ruby
-class MetricsBackend
-  # Atomic operations for Redis/Memcached with increment support
-  def sync_with_atomic_operations
-    @metrics.each do |key, metric|
-      cache_key = build_cache_key(key)
-
-      case metric.to_h[:type]
-      when :counter
-        # Atomic cross-container counter updates
-        Rails.cache.increment(cache_key, metric.value,
-                              expires_in: @retention_window,
-                              initial: 0)
-      when :gauge, :histogram
-        Rails.cache.write(cache_key, metric.to_h,
-                          expires_in: @retention_window)
-      end
-    end
-  end
-
-  # Read-modify-write for basic distributed caches
-  def sync_with_read_modify_write
-    @metrics.each do |key, metric|
-      cache_key = build_cache_key(key)
-
-      # Non-atomic but works across most distributed stores
-      existing = Rails.cache.read(cache_key) || default_metric_data(metric.to_h[:type])
-      merged = merge_metric_data(existing, metric.to_h)
-      Rails.cache.write(cache_key, merged, expires_in: @retention_window)
-    end
-  end
-
-  # Local cache snapshot for memory/file stores
-  def sync_to_local_cache
-    export_data = prepare_export_data
-    Rails.cache.write("tasker:metrics:snapshot", export_data,
-                      expires_in: @retention_window)
-
-    Rails.logger.info "Cache store doesn't support distribution - metrics are local-only"
-  end
-end
-```
-
-#### **Phase 4.2.2.3.3: Export Job Coordination with TTL Safety** (Day 3)
-
-##### **TTL-Coordinated Export Strategy**
-```ruby
-class MetricsExportJob < ApplicationJob
-  def perform(export_type = :scheduled)
-    backend = MetricsBackend.instance
-
-    if backend.supports_distributed_locking?
-      perform_with_distributed_lock(backend, export_type)
-    else
-      perform_instance_export(backend, export_type)
-    end
-  end
-
-  private
-
-  def perform_with_distributed_lock(backend, export_type)
-    Rails.cache.with_lock("tasker:metrics:export_lock", expires_in: 2.minutes) do
-      perform_coordinated_export(backend)
-    end
-  rescue => e
-    Rails.logger.warn "Distributed locking failed, falling back to instance export: #{e.message}"
-    perform_instance_export(backend, export_type)
-  end
-
-  def perform_coordinated_export(backend)
-    # 1. Sync all instances to cache first
-    backend.sync_to_cache!
-
-    # 2. Export aggregated metrics from distributed cache
-    export_result = backend.export_distributed_metrics
-
-    # 3. Extend TTL for next cycle (prevent data loss during export delays)
-    backend.extend_metric_ttls! if export_result.success?
-
-    # 4. Schedule next export with safety margin
-    backend.schedule_next_export_with_ttl_safety
-  end
-end
-```
-
-##### **TTL Safety and Recovery**
-```ruby
-class MetricsBackend
-  def configure_retention(retention_window: 5.minutes, export_safety_margin: 1.minute)
-    @retention_window = retention_window
-    @export_interval = retention_window - export_safety_margin  # Export 1 min before TTL
-    @sync_interval = [@export_interval / 8, 30.seconds].min    # Frequent sync
-  end
-
-  # Export coordination with TTL safety
-  def export_distributed_metrics
-    case @sync_strategy
-    when :distributed_atomic, :distributed_basic, :distributed_manual
-      aggregate_from_distributed_cache
-    when :local_only
-      Rails.logger.info "Cache store doesn't support distribution - returning local metrics only"
-      export_local_metrics_only
-    end
-  end
-
-  # Emergency TTL extension for failed exports
-  def extend_metric_ttls!(extension = 2.minutes)
-    return unless @cache_capabilities[:ttl_inspection]
-
-    metric_keys = discover_metric_keys_safely
-    metric_keys.each do |key|
-      current_data = Rails.cache.read(key)
-      next unless current_data
-
-      Rails.cache.write(key, current_data, expires_in: @retention_window + extension)
-    end
-
-    Rails.logger.warn "Extended TTL for #{metric_keys.size} metrics due to export delay"
-  end
-end
-```
-
-#### **Phase 4.2.2.3.4: Plugin Architecture for Custom Exporters** (Day 4)
-
-##### **Framework-Appropriate Export Pipeline**
+#### **Framework-Appropriate Export Pipeline**
 ```ruby
 class ExportPipeline
   def initialize
@@ -1216,7 +1262,7 @@ class ExportPipeline
 end
 ```
 
-##### **Developer-Facing Plugin System**
+#### **Developer-Facing Plugin System**
 ```ruby
 # config/initializers/tasker_metrics.rb
 Tasker::Telemetry::MetricsBackend.configure do |config|
@@ -1262,605 +1308,617 @@ class MetricsSubscriber < BaseSubscriber
 end
 ```
 
-### **🎯 Framework Boundary Respect**
-
-#### **What Tasker Provides (Framework Responsibility)**
-- ✅ **Thread-safe metrics collection** (Counter, Gauge, Histogram)
-- ✅ **Cache-agnostic coordination** (works with any Rails.cache store)
-- ✅ **Standard export formats** (Prometheus, JSON, CSV)
-- ✅ **Plugin architecture** for custom exporters
-- ✅ **Event integration** via EventRouter
-- ✅ **TTL-safe export coordination** with automatic recovery
-
-#### **What Developers Provide (Application Responsibility)**
-- ✅ **Vendor integrations** (DataDog, Sentry, PagerDuty via event subscribers)
-- ✅ **Custom exporters** (for proprietary monitoring systems)
-- ✅ **Business logic** (which metrics to collect, when to alert)
-- ✅ **Infrastructure choices** (Redis vs Memcached vs File cache)
-
-#### **Clean Separation Example**
-```ruby
-# ✅ Framework: Provides mechanics and standard formats
-backend = Tasker::Telemetry::MetricsBackend.instance
-counter = backend.counter('api_requests_total', endpoint: '/tasks')
-counter.increment
-
-prometheus_export = backend.export_pipeline.export(format: :prometheus)
-
-# ✅ Developer: Provides vendor integration via subscribers
-class MetricsSubscriber < BaseSubscriber
-  def handle_task_completed(event)
-    DataDog.increment('tasks.completed', tags: extract_tags(event))
-  end
-end
-```
-
-### **📋 Expected Outcomes**
-
-#### **Performance Benefits**
-- **✅ Zero Performance Regression** - In-memory operations remain unchanged
-- **✅ Cross-Container Coordination** - When cache store supports it
-- **✅ Automatic Degradation** - Reduced features vs broken functionality
-- **✅ Memory Management** - TTL-based cleanup prevents accumulation
-
-#### **Production Readiness**
-- **✅ Container-Friendly** - No indefinite memory accumulation
-- **✅ Infrastructure Agnostic** - Works with any Rails.cache configuration
-- **✅ Failure Recovery** - TTL extension and export retry logic
-- **✅ Operational Visibility** - Clear logging of capabilities and limitations
-
-#### **Developer Experience**
-- **✅ Zero Breaking Changes** - All existing metrics APIs preserved
-- **✅ Clear Guidance** - System explains what works with which cache stores
-- **✅ Migration Path** - Easy upgrade path for enhanced features
-- **✅ Standard Formats** - Prometheus ecosystem compatibility
-
-### **🔧 Implementation Timeline**
-
-| Phase | Duration | Focus | Deliverables |
-|-------|----------|-------|--------------|
-| **4.2.2.3.1** | Day 1 | Cache Detection | Feature detection, compatibility matrix |
-| **4.2.2.3.2** | Day 2 | Adaptive Sync | Multi-strategy sync implementation |
-| **4.2.2.3.3** | Day 3 | Export Coordination | TTL-safe export jobs with locking |
-| **4.2.2.3.4** | Day 4 | Plugin Architecture | Custom exporter system |
-| **4.2.2.3.5** | Day 5 | Testing & Integration | Comprehensive validation |
-
-### **📊 Success Criteria**
-
-#### **Functional Requirements**
-- ✅ Works with all Rails.cache stores without failure
-- ✅ Cross-container metric aggregation when cache supports it
-- ✅ Export coordination prevents data loss during TTL expiration
-- ✅ Plugin system allows custom export formats
-
-#### **Performance Requirements**
-- ✅ <5% overhead for in-memory operations (hot path unchanged)
-- ✅ Configurable sync frequency (default 30 seconds)
-- ✅ Memory-bounded storage with TTL cleanup
-- ✅ Export jobs complete within TTL safety margin
-
-#### **Operational Requirements**
-- ✅ Clear logging of cache capabilities and strategy selection
-- ✅ Graceful degradation messaging for limited cache stores
-- ✅ Export failure recovery with TTL extension
-- ✅ Prometheus-compatible `/tasker/metrics` endpoint
-
-This hybrid architecture preserves the high performance of concurrent in-memory operations while adding the persistence and coordination benefits of Rails.cache in a completely cache-store agnostic way. The system gracefully adapts to available infrastructure while providing clear guidance for teams that want enhanced distributed coordination features.
-
-### **Expected Phase 4.2 Outcomes**
-
-#### **Observability Excellence**
-- **35+ Event Coverage** - From 8 events to comprehensive lifecycle monitoring
-- **5+ Level Span Hierarchy** - Deep workflow execution visibility
-- **Cache-Agnostic Native Metrics Backend** - Thread-safe metrics with Rails.cache persistence
-- **Intelligent Event Routing** - Appropriate telemetry backend selection
-
-#### **Production Benefits**
-- **Operational Dashboards** - Real-time aggregate metrics for monitoring with cross-container coordination
-- **Detailed Debugging** - Comprehensive spans for troubleshooting
-- **Performance Insights** - Bottleneck identification across all workflow layers
-- **Zero Breaking Changes** - Seamless evolution of existing functionality
-
-#### **Developer Experience**
-- **Infrastructure Agnostic** - Works with any Rails.cache store
-- **Clear Operational Guidance** - System explains capabilities and limitations
-- **Flexible Backend Selection** - Route events to traces, metrics, or both
-- **Enhanced Debugging** - Rich span hierarchy for complex workflow analysis
-- **Production-Ready Defaults** - Sensible configuration out-of-the-box
-
-This strategic evolution transforms our metrics backend into a production-ready, cache-agnostic system that provides enterprise-grade observability while respecting Rails engine design principles and framework boundaries.
-
 ---
 
-## ✅ **REFACTORING: Sleep Pattern Elimination - Job Queue Retry Architecture**
-**Date**: June 2025
-**Context**: During Phase 4.2.2.3.3 Export Coordination implementation, identified problematic `sleep` calls in retry logic that blocked execution threads and violated Rails job queue best practices.
+## Real-World Telemetry Validation
 
-### **Problem Identified: Code Smell - Synchronous Sleep Calls**
-The initial Phase 4.2.2.3.3 implementation contained problematic retry patterns:
-- **Thread Blocking**: `sleep()` calls blocked execution threads during retry delays
-- **Poor Resource Utilization**: Threads held in memory during exponential backoff periods
-- **Non-Idiomatic Rails**: Manual retry loops instead of leveraging ActiveJob retry mechanisms
-- **Difficult Testing**: Sleep-based retry logic challenging to test and mock
-- **Production Risk**: Long-running threads consuming resources unnecessarily
+### Overview
 
-### **Refactoring Strategy: Asynchronous Job Queue Pattern**
+This section provides comprehensive validation approaches for ensuring Tasker's telemetry and metrics exports are correctly landing in production observability systems. We'll cover testing against local Docker setups for Jaeger and Prometheus, along with curl-based verification scripts.
 
-#### **1. Eliminated Synchronous Retry Loops**
-**Before**: ExportCoordinator contained manual retry loops with `sleep()` calls blocking threads.
+### Local Development Environment Setup
 
-**After**: Simplified to single-attempt exports with error propagation:
-```ruby
-# ✅ CLEAN: Single attempt with error propagation
-def execute_export_with_recovery(format, include_instances)
-  begin
-    export_result = @metrics_backend.export_distributed_metrics(include_instances: include_instances)
-    log_export_success(format, 1, export_result)
-    {
-      success: true,
-      format: format,
-      attempts: 1,
-      result: export_result,
-      exported_at: Time.current.iso8601
-    }
-  rescue => error
-    log_export_attempt_failed(format, 1, error)
-    # Extend cache TTL to prevent data loss during retry delay
-    extend_cache_ttl(@config[:retry_backoff_base] + @config[:safety_margin])
-    # Re-raise error to trigger job retry mechanism
-    raise error
-  end
-end
-```
-
-#### **2. Implemented Proper ActiveJob Retry Configuration**
-**Before**: Manual retry logic mixed with business logic.
-
-**After**: Declarative retry configuration using Rails best practices:
-```ruby
-class MetricsExportJob < ApplicationJob
-  # ✅ PROPER: ActiveJob retry configuration
-  retry_on StandardError,
-           wait: :exponentially_longer,
-           attempts: 3,
-           queue: :metrics_export_retry
-
-  def perform(format:, coordinator_instance:, **args)
-    # Single execution attempt - Rails handles retries
-    coordinator.execute_coordinated_export(format: format)
-  rescue => error
-    extend_cache_ttl_for_retry  # TTL safety before retry
-    raise  # Trigger ActiveJob retry mechanism
-  end
-end
-```
-
-#### **3. Enhanced TTL Safety with Job-Aware Logic**
-**Before**: TTL extension calculated during sleep delays.
-
-**After**: Smart TTL extension based on job execution context:
-```ruby
-# ✅ SMART: Job execution-aware TTL extension
-def extend_cache_ttl_for_retry
-  return unless defined?(executions) && executions > 1
-
-  # Calculate extension based on retry attempt and expected delay
-  retry_delay = calculate_job_retry_delay(executions)
-  safety_margin = 1.minute
-  extension_duration = retry_delay + safety_margin
-
-  coordinator = Tasker::Telemetry::ExportCoordinator.new
-  result = coordinator.extend_cache_ttl(extension_duration)
-  log_ttl_extension_for_retry(extension_duration, result)
-rescue => error
-  log_ttl_extension_error(error)
-  # Don't fail the job if TTL extension fails
-end
-```
-
-### **Architecture Benefits**
-
-#### **1. Non-Blocking Execution**
-- **✅ Thread Efficiency**: No threads blocked waiting for retry delays
-- **✅ Resource Optimization**: Memory freed immediately after job completion
-- **✅ Scalable Design**: Job queue handles concurrency and resource management
-- **✅ Production Ready**: Follows Rails job queue best practices
-
-#### **2. Enhanced Observability**
-- **✅ Individual Job Tracking**: Each retry gets unique job ID and logging
-- **✅ Queue Metrics**: Leverage existing job queue monitoring tools
-- **✅ Execution Context**: Access to job execution count and timing
-- **✅ Error Propagation**: Clear error context without manual retry noise
-
-#### **3. Improved Configuration**
-- **✅ Declarative Retry Policy**: Clear retry configuration at class level
-- **✅ Queue Separation**: Retry jobs isolated to dedicated queue
-- **✅ Configurable Backoff**: Use Rails' built-in exponential backoff
-- **✅ Flexible Backend**: Works with any ActiveJob backend (Sidekiq, SQS, etc.)
-
-### **Technical Implementation Details**
-
-#### **Files Refactored**
-- **`lib/tasker/telemetry/export_coordinator.rb`**: Removed retry loops and sleep calls
-- **`app/jobs/tasker/metrics_export_job.rb`**: Enhanced with proper retry configuration
-- **`spec/lib/tasker/telemetry/export_coordinator_spec.rb`**: Updated tests for single-attempt pattern
-- **`spec/jobs/tasker/metrics_export_job_spec.rb`**: Added retry behavior testing
-
-#### **Removed Anti-Patterns**
-- ❌ `calculate_retry_backoff()` method (no longer needed)
-- ❌ Manual retry loops in coordinator
-- ❌ `sleep()` calls blocking threads
-- ❌ Complex retry state management
-
-#### **Added Best Practices**
-- ✅ ActiveJob `retry_on` configuration
-- ✅ Job execution-aware TTL extension
-- ✅ Proper error propagation
-- ✅ Queue separation for retry jobs
-
-### **Test Coverage Results**
-- **✅ 36/36 Export Coordinator Tests**: All passing with simplified logic
-- **✅ 35/35 Export Job Tests**: Including new retry behavior tests
-- **✅ 15/15 Export Service Tests**: Business logic separation maintained
-- **✅ Zero Breaking Changes**: External API preserved
-
-### **Production Benefits**
-
-#### **Performance Improvements**
-- **Resource Efficiency**: No threads held during retry delays
-- **Memory Optimization**: Immediate cleanup after job completion
-- **Scalability**: Better resource utilization under load
-- **Throughput**: More jobs can be processed with same resources
-
-#### **Operational Excellence**
-- **Standard Monitoring**: Leverage existing job queue monitoring
-- **Error Handling**: Consistent with other ActiveJob retry patterns
-- **Configuration**: Standard Rails job configuration patterns
-- **Debugging**: Clear job execution context and error traces
-
-#### **Developer Experience**
-- **Familiar Patterns**: Standard Rails job retry configuration
-- **Easy Testing**: No complex sleep timing in tests
-- **Clear Architecture**: Single responsibility separation
-- **Maintainable Code**: Standard Rails patterns throughout
-
-### **Architectural Principles Applied**
-
-#### **Single Responsibility Principle**
-- **Coordinator**: Handles single export attempts and TTL safety
-- **Job**: Manages scheduling, retries, and queue coordination
-- **Service**: Contains export business logic
-
-#### **Rails Framework Integration**
-- **ActiveJob Retry**: Uses Rails built-in retry mechanisms
-- **Queue Management**: Leverages Rails job queue infrastructure
-- **Error Handling**: Follows Rails error handling patterns
-- **Configuration**: Uses standard Rails configuration patterns
-
-#### **Production Readiness**
-- **Non-Blocking**: No thread blocking operations
-- **Idempotent**: Each retry is a clean, fresh execution
-- **Observable**: Rich logging and job tracking
-- **Scalable**: Resource-efficient design
-
-This refactoring eliminates a significant code smell and transforms the export system from a problematic synchronous retry pattern to a production-ready asynchronous job queue architecture that follows Rails best practices and scales efficiently under load.
-
----
-
-## 📋 **EXTERNAL SCHEDULING: Kubernetes CronJob Pattern**
-**Date**: June 2025
-**Context**: Instead of building complex internal scheduling logic, Tasker provides CLI commands that can be called by external schedulers like Kubernetes CronJobs, systemd timers, or cron.
-
-### **Architecture Philosophy: Separation of Concerns**
-
-Tasker follows the Unix philosophy and cloud-native patterns by providing export capabilities while delegating scheduling to infrastructure:
-
-- **✅ Application Responsibility**: Provide export functionality, coordination, and safety mechanisms
-- **✅ Infrastructure Responsibility**: Handle scheduling, retries, monitoring, and resource management
-- **✅ Clean Separation**: No complex internal scheduling logic to maintain or debug
-- **✅ Standard Patterns**: Use proven infrastructure tools for reliability
-
-### **Available Rake Tasks**
-
-#### **1. Scheduled Export (Asynchronous)**
-```bash
-# Schedule export via job queue (recommended for production)
-bundle exec rake tasker:export_metrics[prometheus]
-bundle exec rake tasker:export_metrics[json]
-bundle exec rake tasker:export_metrics[csv]
-
-# With environment variable
-METRICS_FORMAT=prometheus bundle exec rake tasker:export_metrics
-```
-
-#### **2. Immediate Export (Synchronous)**
-```bash
-# Immediate export for testing or one-off exports
-bundle exec rake tasker:export_metrics_now[prometheus]
-bundle exec rake tasker:export_metrics_now[json]
-
-# With verbose error output
-VERBOSE=true bundle exec rake tasker:export_metrics_now[prometheus]
-```
-
-#### **3. Cache Synchronization**
-```bash
-# Sync in-memory metrics to Rails.cache
-bundle exec rake tasker:sync_metrics
-```
-
-#### **4. Status and Configuration**
-```bash
-# Show current metrics status and configuration
-bundle exec rake tasker:metrics_status
-```
-
-### **Kubernetes CronJob Examples**
-
-#### **Prometheus Export Every 5 Minutes**
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: tasker-metrics-export
-  namespace: production
-spec:
-  schedule: "*/5 * * * *"  # Every 5 minutes
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: metrics-exporter
-            image: your-app:latest
-            command:
-            - /bin/bash
-            - -c
-            - |
-              cd /app && \
-              bundle exec rake tasker:export_metrics[prometheus]
-            env:
-            - name: RAILS_ENV
-              value: "production"
-            - name: METRICS_FORMAT
-              value: "prometheus"
-            resources:
-              requests:
-                memory: "128Mi"
-                cpu: "100m"
-              limits:
-                memory: "256Mi"
-                cpu: "200m"
-          restartPolicy: OnFailure
-          # Use same database and cache configuration as main app
-          envFrom:
-          - configMapRef:
-              name: app-config
-          - secretRef:
-              name: app-secrets
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
-```
-
-#### **Cache Sync Every 30 Seconds**
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: tasker-cache-sync
-  namespace: production
-spec:
-  schedule: "*/1 * * * *"  # Every minute (30s via multiple instances)
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: cache-sync
-            image: your-app:latest
-            command:
-            - /bin/bash
-            - -c
-            - |
-              cd /app && \
-              bundle exec rake tasker:sync_metrics && \
-              sleep 30 && \
-              bundle exec rake tasker:sync_metrics
-            env:
-            - name: RAILS_ENV
-              value: "production"
-            resources:
-              requests:
-                memory: "64Mi"
-                cpu: "50m"
-              limits:
-                memory: "128Mi"
-                cpu: "100m"
-          restartPolicy: OnFailure
-          envFrom:
-          - configMapRef:
-              name: app-config
-          - secretRef:
-              name: app-secrets
-  successfulJobsHistoryLimit: 2
-  failedJobsHistoryLimit: 2
-```
-
-### **Docker Compose with Cron**
+#### Docker Compose for Observability Stack
 
 ```yaml
+# docker-compose.observability.yml
 version: '3.8'
-services:
-  app:
-    image: your-app:latest
-    # ... main app configuration
 
-  metrics-exporter:
-    image: your-app:latest
-    command: >
-      bash -c "
-        echo '*/5 * * * * cd /app && bundle exec rake tasker:export_metrics[prometheus] >> /var/log/metrics-export.log 2>&1' > /etc/cron.d/metrics-export &&
-        echo '*/1 * * * * cd /app && bundle exec rake tasker:sync_metrics >> /var/log/cache-sync.log 2>&1' > /etc/cron.d/cache-sync &&
-        chmod 0644 /etc/cron.d/metrics-export /etc/cron.d/cache-sync &&
-        crontab /etc/cron.d/metrics-export &&
-        crontab /etc/cron.d/cache-sync &&
-        cron -f
-      "
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    ports:
+      - "16686:16686"    # Jaeger UI
+      - "14250:14250"    # gRPC
+      - "14268:14268"    # HTTP
+      - "6831:6831/udp"  # UDP
+      - "6832:6832/udp"  # UDP
     environment:
-      - RAILS_ENV=production
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
     volumes:
-      - metrics-logs:/var/log
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - observability
+
+  # OTEL Collector for advanced scenarios
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.81.0
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./config/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
     depends_on:
-      - redis
-      - postgres
+      - jaeger
+      - prometheus
+    networks:
+      - observability
 
 volumes:
-  metrics-logs:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  observability:
+    driver: bridge
 ```
 
-### **Systemd Timer (Linux Servers)**
+#### Prometheus Configuration
 
-#### **Export Timer**
-```ini
-# /etc/systemd/system/tasker-metrics-export.timer
-[Unit]
-Description=Export Tasker metrics every 5 minutes
-Requires=tasker-metrics-export.service
-
-[Timer]
-OnCalendar=*:0/5
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
-#### **Export Service**
-```ini
-# /etc/systemd/system/tasker-metrics-export.service
-[Unit]
-Description=Export Tasker metrics
-After=network.target
-
-[Service]
-Type=oneshot
-User=deploy
-WorkingDirectory=/var/www/your-app
-Environment=RAILS_ENV=production
-ExecStart=/usr/local/bin/bundle exec rake tasker:export_metrics[prometheus]
-StandardOutput=journal
-StandardError=journal
-```
-
-#### **Enable and Start**
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable tasker-metrics-export.timer
-sudo systemctl start tasker-metrics-export.timer
-
-# Check status
-sudo systemctl status tasker-metrics-export.timer
-sudo journalctl -u tasker-metrics-export.service -f
-```
-
-### **Traditional Cron**
-
-```bash
-# Add to crontab (crontab -e)
-
-# Export metrics every 5 minutes
-*/5 * * * * cd /var/www/your-app && bundle exec rake tasker:export_metrics[prometheus] >> /var/log/tasker-export.log 2>&1
-
-# Sync cache every minute
-* * * * * cd /var/www/your-app && bundle exec rake tasker:sync_metrics >> /var/log/tasker-sync.log 2>&1
-
-# Daily status check
-0 6 * * * cd /var/www/your-app && bundle exec rake tasker:metrics_status >> /var/log/tasker-status.log 2>&1
-```
-
-### **Monitoring and Alerting**
-
-#### **Kubernetes Monitoring**
 ```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: tasker-cronjobs
-spec:
-  selector:
-    matchLabels:
-      app: tasker-metrics-exporter
-  endpoints:
-  - port: metrics
-    interval: 30s
-    path: /metrics
+# config/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'tasker-metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000']  # Rails app
+    metrics_path: '/tasker/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
 ```
 
-#### **Prometheus Alerts**
+#### OpenTelemetry Collector Configuration
+
 ```yaml
-groups:
-- name: tasker-metrics
-  rules:
-  - alert: TaskerMetricsExportFailed
-    expr: increase(kube_job_status_failed{job_name=~"tasker-metrics-export.*"}[1h]) > 0
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Tasker metrics export job failed"
-      description: "Metrics export job has failed {{ $value }} times in the last hour"
+# config/otel-collector-config.yml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
-  - alert: TaskerMetricsExportMissing
-    expr: time() - kube_job_status_completion_time{job_name=~"tasker-metrics-export.*"} > 900
-    for: 10m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Tasker metrics export has not completed recently"
-      description: "No successful metrics export in the last 15 minutes"
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+    namespace: tasker
+    const_labels:
+      service: tasker-otel
+
+  logging:
+    loglevel: debug
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger, logging]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, logging]
 ```
 
-### **Production Best Practices**
+### Validation Scripts
 
-#### **1. Resource Management**
-- **CPU/Memory Limits**: Set appropriate resource limits for export jobs
-- **Timeout Configuration**: Configure job timeouts to prevent hanging
-- **Restart Policies**: Use `OnFailure` for CronJobs to handle transient errors
+#### 1. Jaeger Trace Validation
 
-#### **2. Error Handling**
-- **Exit Codes**: Tasks return proper exit codes for scheduler monitoring
-- **Logging**: Comprehensive logging with structured output
-- **Retry Logic**: Let infrastructure handle retries rather than application logic
+```bash
+#!/bin/bash
+# scripts/validate_jaeger_traces.sh
 
-#### **3. Configuration**
-- **Environment Variables**: Use env vars for format selection and configuration
-- **Secrets Management**: Use Kubernetes secrets or similar for sensitive config
-- **Configuration Validation**: Tasks validate configuration before execution
+set -e
 
-#### **4. Monitoring**
-- **Job Success/Failure Metrics**: Monitor scheduler job outcomes
-- **Export Duration**: Track how long exports take
-- **Cache Sync Health**: Monitor cache synchronization success rates
-- **Data Freshness**: Alert on stale metrics or failed exports
+JAEGER_URL="http://localhost:16686"
+SERVICE_NAME="tasker"
+LOOKBACK="1h"
 
-### **Advantages of External Scheduling**
+echo "🔍 Validating Jaeger traces for Tasker..."
 
-#### **🎯 Operational Benefits**
-- **Standard Tooling**: Use proven infrastructure tools (K8s, systemd, cron)
-- **Resource Isolation**: Export jobs run in separate containers/processes
-- **Independent Scaling**: Scale export frequency without affecting main app
-- **Failure Isolation**: Export failures don't impact application performance
+# Check Jaeger health
+echo "📡 Checking Jaeger connectivity..."
+curl -f "$JAEGER_URL/api/services" > /dev/null 2>&1 || {
+    echo "❌ Jaeger not accessible at $JAEGER_URL"
+    exit 1
+}
 
-#### **🛠️ Development Benefits**
-- **Simpler Codebase**: No complex internal scheduling logic to maintain
-- **Easy Testing**: Run export commands manually for testing
-- **Clear Separation**: Export logic separated from scheduling concerns
-- **Standard Patterns**: Follow cloud-native and Unix philosophy
+# Get services
+echo "🔍 Fetching available services..."
+SERVICES=$(curl -s "$JAEGER_URL/api/services" | jq -r '.data[]')
 
-#### **📊 Reliability Benefits**
-- **Infrastructure Retries**: Let K8s/systemd handle retry logic
-- **Resource Management**: Proper CPU/memory limits and monitoring
-- **Observability**: Standard job monitoring and alerting patterns
-- **Graceful Degradation**: Export failures don't cascade to main application
+if echo "$SERVICES" | grep -q "$SERVICE_NAME"; then
+    echo "✅ Tasker service found in Jaeger"
+else
+    echo "⚠️  Tasker service not found. Available services:"
+    echo "$SERVICES"
+    exit 1
+fi
 
-This external scheduling approach provides enterprise-grade reliability while keeping the Tasker codebase focused on its core workflow orchestration mission.
+# Get traces for the last hour
+echo "📊 Fetching recent traces..."
+TRACES=$(curl -s "$JAEGER_URL/api/traces?service=$SERVICE_NAME&lookback=$LOOKBACK" | jq '.data[]')
+
+if [ -z "$TRACES" ]; then
+    echo "⚠️  No traces found for $SERVICE_NAME in the last $LOOKBACK"
+    exit 1
+fi
+
+TRACE_COUNT=$(echo "$TRACES" | jq -s length)
+echo "✅ Found $TRACE_COUNT traces for $SERVICE_NAME"
+
+# Analyze trace operations
+echo "🔍 Analyzing trace operations..."
+OPERATIONS=$(echo "$TRACES" | jq -r '.spans[].operationName' | sort | uniq -c | sort -nr)
+
+echo "📈 Top operations by span count:"
+echo "$OPERATIONS" | head -10
+
+# Check for specific Tasker operations
+EXPECTED_OPERATIONS=("task.created" "task.completed" "step.processed" "workflow.executed")
+for op in "${EXPECTED_OPERATIONS[@]}"; do
+    if echo "$OPERATIONS" | grep -q "$op"; then
+        echo "✅ Found expected operation: $op"
+    else
+        echo "⚠️  Missing expected operation: $op"
+    fi
+done
+
+# Check trace duration distribution
+echo "📊 Trace duration analysis..."
+DURATIONS=$(echo "$TRACES" | jq -r '.spans[] | select(.operationName | contains("task")) | .duration')
+if [ -n "$DURATIONS" ]; then
+    AVG_DURATION=$(echo "$DURATIONS" | awk '{sum+=$1; count++} END {print sum/count/1000}')
+    echo "⏱️  Average task duration: ${AVG_DURATION}ms"
+fi
+
+echo "🎉 Jaeger validation completed successfully!"
+```
+
+#### 2. Prometheus Metrics Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_prometheus_metrics.sh
+
+set -e
+
+PROMETHEUS_URL="http://localhost:9090"
+TASKER_METRICS_URL="http://localhost:3000/tasker/metrics"
+
+echo "📊 Validating Prometheus metrics for Tasker..."
+
+# Check Prometheus health
+echo "📡 Checking Prometheus connectivity..."
+curl -f "$PROMETHEUS_URL/-/healthy" > /dev/null 2>&1 || {
+    echo "❌ Prometheus not accessible at $PROMETHEUS_URL"
+    exit 1
+}
+
+# Check Tasker metrics endpoint
+echo "🔍 Checking Tasker metrics endpoint..."
+curl -f "$TASKER_METRICS_URL" > /dev/null 2>&1 || {
+    echo "❌ Tasker metrics not accessible at $TASKER_METRICS_URL"
+    exit 1
+}
+
+# Get current metrics from Tasker
+echo "📈 Fetching current Tasker metrics..."
+TASKER_METRICS=$(curl -s "$TASKER_METRICS_URL")
+METRIC_COUNT=$(echo "$TASKER_METRICS" | grep -c "^[a-zA-Z]" || true)
+
+echo "✅ Tasker exposing $METRIC_COUNT metrics"
+
+# Validate specific metrics exist
+EXPECTED_METRICS=(
+    "tasker_tasks_total"
+    "tasker_steps_total"
+    "tasker_workflow_duration_seconds"
+    "tasker_active_connections"
+    "tasker_cache_operations_total"
+)
+
+echo "🔍 Validating expected metrics..."
+for metric in "${EXPECTED_METRICS[@]}"; do
+    if echo "$TASKER_METRICS" | grep -q "^$metric"; then
+        echo "✅ Found metric: $metric"
+    else
+        echo "⚠️  Missing metric: $metric"
+    fi
+done
+
+# Query Prometheus for Tasker metrics
+echo "🔍 Querying Prometheus for Tasker metrics..."
+PROM_METRICS=$(curl -s "$PROMETHEUS_URL/api/v1/label/__name__/values" | jq -r '.data[] | select(contains("tasker"))')
+
+if [ -z "$PROM_METRICS" ]; then
+    echo "⚠️  No Tasker metrics found in Prometheus"
+    echo "🔧 Check if Prometheus is scraping the /tasker/metrics endpoint"
+    exit 1
+fi
+
+PROM_METRIC_COUNT=$(echo "$PROM_METRICS" | wc -l)
+echo "✅ Prometheus has $PROM_METRIC_COUNT Tasker metrics"
+
+# Validate metric values
+echo "📊 Validating metric values..."
+for metric in "${EXPECTED_METRICS[@]}"; do
+    if echo "$PROM_METRICS" | grep -q "$metric"; then
+        # Get latest value
+        QUERY_RESULT=$(curl -s "$PROMETHEUS_URL/api/v1/query?query=$metric" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "null")
+        if [ "$QUERY_RESULT" != "null" ]; then
+            echo "✅ $metric = $QUERY_RESULT"
+        else
+            echo "⚠️  $metric has no current value"
+        fi
+    fi
+done
+
+# Check scrape health
+echo "🔍 Checking scrape health..."
+SCRAPE_HEALTH=$(curl -s "$PROMETHEUS_URL/api/v1/query?query=up{job=\"tasker-metrics\"}" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "0")
+
+if [ "$SCRAPE_HEALTH" = "1" ]; then
+    echo "✅ Tasker metrics scrape is healthy"
+else
+    echo "❌ Tasker metrics scrape is down"
+    exit 1
+fi
+
+echo "🎉 Prometheus validation completed successfully!"
+```
+
+#### 3. End-to-End Telemetry Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_e2e_telemetry.sh
+
+set -e
+
+echo "🚀 Running end-to-end telemetry validation..."
+
+# Generate test workload
+echo "📝 Generating test workload..."
+curl -X POST http://localhost:3000/tasker/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { createTask(input: { namedTaskName: \"test_workflow\", context: \"{\\\"test\\\": true}\" }) { task { id status } } }"
+  }' > /dev/null
+
+sleep 5  # Allow time for telemetry to propagate
+
+# Validate traces
+echo "🔍 Validating traces..."
+./scripts/validate_jaeger_traces.sh
+
+# Validate metrics
+echo "📊 Validating metrics..."
+./scripts/validate_prometheus_metrics.sh
+
+# Cross-validate correlation
+echo "🔗 Cross-validating trace-metric correlation..."
+RECENT_TASKS=$(curl -s "http://localhost:16686/api/traces?service=tasker&operation=task.created&lookback=5m" | jq '.data | length')
+TASK_METRIC=$(curl -s "http://localhost:9090/api/v1/query?query=increase(tasker_tasks_total[5m])" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "0")
+
+echo "📈 Recent task traces: $RECENT_TASKS"
+echo "📊 Task metric increase: $TASK_METRIC"
+
+if [ "$RECENT_TASKS" -gt 0 ] && [ "$(echo "$TASK_METRIC > 0" | bc)" -eq 1 ]; then
+    echo "✅ Trace-metric correlation validated"
+else
+    echo "⚠️  Trace-metric correlation issue detected"
+fi
+
+echo "🎉 End-to-end telemetry validation completed!"
+```
+
+#### 4. Performance Telemetry Validation
+
+```bash
+#!/bin/bash
+# scripts/validate_performance_telemetry.sh
+
+set -e
+
+echo "⚡ Validating performance telemetry..."
+
+# Generate load
+echo "🔄 Generating performance test load..."
+for i in {1..10}; do
+    curl -X POST http://localhost:3000/tasker/graphql \
+      -H "Content-Type: application/json" \
+      -d '{
+        "query": "mutation { createTask(input: { namedTaskName: \"performance_test\", context: \"{\\\"iteration\\\": '$i'}\" }) { task { id } } }"
+      }' > /dev/null &
+done
+
+wait  # Wait for all requests to complete
+sleep 10  # Allow telemetry to propagate
+
+# Validate performance metrics
+echo "📊 Validating performance metrics..."
+
+# Check request duration percentiles
+DURATION_P95=$(curl -s "http://localhost:9090/api/v1/query?query=histogram_quantile(0.95, tasker_workflow_duration_seconds_bucket)" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "null")
+
+# Check throughput
+THROUGHPUT=$(curl -s "http://localhost:9090/api/v1/query?query=rate(tasker_tasks_total[1m])" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "null")
+
+# Check error rate
+ERROR_RATE=$(curl -s "http://localhost:9090/api/v1/query?query=rate(tasker_tasks_total{status=\"error\"}[1m])" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "0")
+
+echo "📈 Performance Metrics:"
+echo "  ⏱️  95th percentile duration: ${DURATION_P95}s"
+echo "  🚀 Throughput: ${THROUGHPUT} tasks/sec"
+echo "  ❌ Error rate: ${ERROR_RATE} errors/sec"
+
+# Validate trace performance data
+SLOW_TRACES=$(curl -s "http://localhost:16686/api/traces?service=tasker&minDuration=1s&lookback=5m" | jq '.data | length')
+echo "  🐌 Slow traces (>1s): $SLOW_TRACES"
+
+if [ "$SLOW_TRACES" -gt 5 ]; then
+    echo "⚠️  High number of slow traces detected"
+else
+    echo "✅ Performance telemetry looks healthy"
+fi
+
+echo "🎉 Performance telemetry validation completed!"
+```
+
+### Integration Testing in CI/CD
+
+```yaml
+# .github/workflows/telemetry-validation.yml
+name: Telemetry Validation
+
+on:
+  pull_request:
+    paths:
+      - 'lib/tasker/telemetry/**'
+      - 'spec/lib/tasker/telemetry/**'
+
+jobs:
+  validate-telemetry:
+    runs-on: ubuntu-latest
+
+    services:
+      jaeger:
+        image: jaegertracing/all-in-one:1.47
+        ports:
+          - 16686:16686
+          - 14250:14250
+        options: >-
+          --health-cmd "curl -f http://localhost:16686/api/services"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      prometheus:
+        image: prom/prometheus:v2.45.0
+        ports:
+          - 9090:9090
+        volumes:
+          - ${{ github.workspace }}/config/prometheus.yml:/etc/prometheus/prometheus.yml
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Setup test database
+        run: |
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+
+      - name: Start Rails server
+        run: |
+          bundle exec rails server -p 3000 &
+          sleep 10
+
+      - name: Run telemetry validation
+        run: |
+          chmod +x scripts/validate_*.sh
+          ./scripts/validate_e2e_telemetry.sh
+
+      - name: Upload telemetry artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: telemetry-logs
+          path: |
+            log/test.log
+            tmp/telemetry_validation.log
+```
+
+### Testing Strategies
+
+#### 1. Non-Failing Test Integration
+
+```ruby
+# spec/integration/telemetry_export_spec.rb
+RSpec.describe 'Telemetry Export Integration', type: :integration do
+  before(:all) do
+    # Start background metrics export
+    @export_thread = Thread.new do
+      loop do
+        Tasker::Telemetry::MetricsBackend.instance.sync_to_cache!
+        sleep 30
+      end
+    end
+  end
+
+  after(:all) do
+    @export_thread&.kill
+  end
+
+  it 'exports metrics to Prometheus format', :prometheus do
+    # Generate test metrics
+    backend = Tasker::Telemetry::MetricsBackend.instance
+    backend.counter('test_counter').increment(5)
+    backend.gauge('test_gauge').set(42)
+
+    # Export metrics
+    result = backend.export
+
+    # Validate Prometheus format
+    prometheus_exporter = Tasker::Telemetry::PrometheusExporter.new
+    export_result = prometheus_exporter.safe_export(result)
+
+    expect(export_result[:success]).to be true
+    expect(export_result[:data]).to include('test_counter 5')
+    expect(export_result[:data]).to include('test_gauge 42')
+
+    # Optional: Send to real Prometheus if available
+    if ENV['PROMETHEUS_PUSHGATEWAY_URL']
+      send_to_prometheus(export_result[:data])
+    end
+  end
+
+  private
+
+  def send_to_prometheus(metrics_data)
+    uri = URI("#{ENV['PROMETHEUS_PUSHGATEWAY_URL']}/metrics/job/tasker-test")
+    Net::HTTP.post(uri, metrics_data, 'Content-Type' => 'text/plain')
+  end
+end
+```
+
+#### 2. Docker Compose Test Environment
+
+```yaml
+# docker-compose.test.yml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    environment:
+      - RAILS_ENV=test
+      - DATABASE_URL=postgresql://postgres:password@db:5432/tasker_test
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - PROMETHEUS_PUSHGATEWAY_URL=http://prometheus:9091
+    depends_on:
+      - db
+      - jaeger
+      - prometheus
+    volumes:
+      - .:/app
+    networks:
+      - test-network
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tasker_test
+    networks:
+      - test-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - test-network
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=1h'
+    volumes:
+      - ./config/prometheus.test.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
+```
+
+This comprehensive validation approach ensures that Tasker's telemetry system works correctly with real-world observability infrastructure, providing confidence in production deployments.
+
+---
+
+## Next Steps
+
+With Phase 4.2.2.3.1 complete, the next phases will focus on:
+
+- **Phase 4.2.2.3.2**: Adaptive Sync Implementation (TTL-aware scheduling)
+- **Phase 4.2.2.3.3**: Export Job Coordination (distributed locking)
+- **Phase 4.2.2.3.4**: Production Testing & Validation
+
+The plugin architecture foundation is now ready for extending Tasker's metrics capabilities while maintaining clean framework boundaries.

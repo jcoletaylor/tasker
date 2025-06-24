@@ -53,7 +53,7 @@ module Tasker
       log_job_started
 
       # Get metrics data from coordinator
-      coordinator = Tasker::Telemetry::ExportCoordinator.new
+      coordinator = Tasker::Telemetry::ExportCoordinator.instance
       export_result = coordinator.execute_coordinated_export(
         format: @format,
         include_instances: @include_instances
@@ -152,7 +152,7 @@ module Tasker
       safety_margin = 1.minute
       extension_duration = retry_delay + safety_margin
 
-      coordinator = Tasker::Telemetry::ExportCoordinator.new
+      coordinator = Tasker::Telemetry::ExportCoordinator.instance
       result = coordinator.extend_cache_ttl(extension_duration)
 
       log_ttl_extension_for_retry(extension_duration, result)

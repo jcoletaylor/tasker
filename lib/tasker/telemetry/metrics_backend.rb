@@ -193,11 +193,16 @@ module Tasker
           return { success: false, error: "Unknown sync strategy: #{@sync_strategy}" }
         end
 
-        result.merge(
+        final_result = result.merge(
           duration: Time.current - start_time,
           timestamp: Time.current.iso8601,
           instance_id: @instance_id
         )
+
+        # Coordinate with export system
+        coordinate_cache_sync(final_result)
+
+        final_result
       rescue StandardError => e
         log_sync_error(e)
         { success: false, error: e.message, timestamp: Time.current.iso8601 }
@@ -1292,6 +1297,21 @@ module Tasker
           "#{stats[:metrics_serialized]} metrics in #{stats[:snapshots]} snapshots " \
           "(#{stats[:size_bytes]} bytes) in #{(duration * 1000).round(2)}ms"
         )
+      end
+
+      # Coordinate cache sync with export system
+      #
+      # @param sync_result [Hash] Result from cache sync operation
+      def coordinate_cache_sync(sync_result)
+        return unless defined?(Tasker::Telemetry::ExportCoordinator)
+
+        begin
+          coordinator = Tasker::Telemetry::ExportCoordinator.instance
+          coordinator.coordinate_cache_sync(sync_result)
+        rescue StandardError => e
+          # Don't fail sync operation due to coordination errors
+          Rails.logger&.warn("Export coordination failed: #{e.message}")
+        end
       end
     end
   end
