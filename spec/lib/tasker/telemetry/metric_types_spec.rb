@@ -35,12 +35,12 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
 
     describe '#increment' do
       it 'increments by 1 by default' do
-        expect { counter.increment }.to change { counter.value }.from(0).to(1)
+        expect { counter.increment }.to change(counter, :value).from(0).to(1)
       end
 
       it 'increments by specified amount' do
-        expect { counter.increment(5) }.to change { counter.value }.from(0).to(5)
-        expect { counter.increment(3) }.to change { counter.value }.from(5).to(8)
+        expect { counter.increment(5) }.to change(counter, :value).from(0).to(5)
+        expect { counter.increment(3) }.to change(counter, :value).from(5).to(8)
       end
 
       it 'returns the new value' do
@@ -50,13 +50,13 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
 
       it 'requires non-negative integer amounts' do
         expect { counter.increment(-1) }.to raise_error(ArgumentError, /must be positive/)
-        expect { counter.increment(0) }.not_to raise_error  # Zero increment is allowed
+        expect { counter.increment(0) }.not_to raise_error # Zero increment is allowed
       end
 
       it 'requires integer amounts' do
-        expect(counter.increment('invalid')).to eq(false)
-        expect(counter.increment(1.5)).to eq(false)
-        expect(counter.increment(nil)).to eq(false)
+        expect(counter.increment('invalid')).to be(false)
+        expect(counter.increment(1.5)).to be(false)
+        expect(counter.increment(nil)).to be(false)
       end
 
       it 'is thread-safe' do
@@ -77,7 +77,7 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
     describe '#reset!' do
       it 'resets counter to zero' do
         counter.increment(42)
-        expect { counter.reset! }.to change { counter.value }.from(42).to(0)
+        expect { counter.reset! }.to change(counter, :value).from(42).to(0)
       end
     end
 
@@ -146,7 +146,7 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
 
     describe '#set' do
       it 'sets gauge to specific value' do
-        expect { gauge.set(100.5) }.to change { gauge.value }.from(0).to(100.5)
+        expect { gauge.set(100.5) }.to change(gauge, :value).from(0).to(100.5)
       end
 
       it 'returns the new value' do
@@ -160,15 +160,14 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
       end
 
       it 'handles negative values' do
-        expect { gauge.set(-50) }.to change { gauge.value }.to(-50)
+        expect { gauge.set(-50) }.to change(gauge, :value).to(-50)
       end
 
       it 'is thread-safe' do
-        threads = []
         values = (1..100).to_a
 
-        values.each do |value|
-          threads << Thread.new { gauge.set(value) }
+        threads = values.map do |value|
+          Thread.new { gauge.set(value) }
         end
 
         threads.each(&:join)
@@ -180,15 +179,15 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
       before { gauge.set(10) }
 
       it 'increments by 1 by default' do
-        expect { gauge.increment }.to change { gauge.value }.from(10).to(11)
+        expect { gauge.increment }.to change(gauge, :value).from(10).to(11)
       end
 
       it 'increments by specified amount' do
-        expect { gauge.increment(5.5) }.to change { gauge.value }.from(10).to(15.5)
+        expect { gauge.increment(5.5) }.to change(gauge, :value).from(10).to(15.5)
       end
 
       it 'handles negative increments' do
-        expect { gauge.increment(-3) }.to change { gauge.value }.from(10).to(7)
+        expect { gauge.increment(-3) }.to change(gauge, :value).from(10).to(7)
       end
 
       it 'returns the new value' do
@@ -220,11 +219,11 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
       before { gauge.set(20) }
 
       it 'decrements by 1 by default' do
-        expect { gauge.decrement }.to change { gauge.value }.from(20).to(19)
+        expect { gauge.decrement }.to change(gauge, :value).from(20).to(19)
       end
 
       it 'decrements by specified amount' do
-        expect { gauge.decrement(7.5) }.to change { gauge.value }.from(20).to(12.5)
+        expect { gauge.decrement(7.5) }.to change(gauge, :value).from(20).to(12.5)
       end
 
       it 'returns the new value' do
@@ -313,7 +312,7 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
 
     describe '#observe' do
       it 'records observations and updates statistics' do
-        expect { histogram.observe(0.5) }.to change { histogram.count }.from(0).to(1)
+        expect { histogram.observe(0.5) }.to change(histogram, :count).from(0).to(1)
         expect(histogram.sum).to eq(0.5)
       end
 
@@ -408,7 +407,7 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
       end
 
       it 'resets all statistics' do
-        expect { histogram.reset! }.to change { histogram.count }.from(2).to(0)
+        expect { histogram.reset! }.to change(histogram, :count).from(2).to(0)
         expect(histogram.sum).to eq(0.0)
         expect(histogram.average).to eq(0.0)
         expect(histogram.buckets.values.sum).to eq(0)
@@ -462,21 +461,22 @@ RSpec.describe Tasker::Telemetry::MetricTypes do
     let(:histogram) { described_class::Histogram.new('perf_histogram') }
 
     it 'performs counter operations efficiently' do
-      expect {
+      expect do
         10_000.times { counter.increment }
-      }.to take_less_than(0.1)
+      end.to take_less_than(0.1)
     end
 
     it 'performs gauge operations efficiently' do
-      expect {
+      expect do
         10_000.times { |i| gauge.set(i) }
-      }.to take_less_than(0.1)
+      end.to take_less_than(0.1)
     end
 
     it 'performs histogram observations efficiently' do
-      expect {
+      # Histograms are more complex
+      expect do
         10_000.times { |i| histogram.observe(i * 0.001) }
-      }.to take_less_than(0.5)  # Histograms are more complex
+      end.to take_less_than(0.5)
     end
   end
 end

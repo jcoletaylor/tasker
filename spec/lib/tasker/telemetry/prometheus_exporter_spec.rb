@@ -49,44 +49,44 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
       end
 
       it 'returns empty string' do
-        expect(exporter.export).to eq("")
+        expect(exporter.export).to eq('')
       end
     end
 
     context 'when no metrics are available' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 0,
-          metrics: {}
-        })
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 0,
+                                                        metrics: {}
+                                                      })
       end
 
       it 'returns empty string' do
-        expect(exporter.export).to eq("")
+        expect(exporter.export).to eq('')
       end
     end
 
     context 'with counter metrics' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 2,
-          metrics: {
-            'task_completed_total' => {
-              name: 'task_completed_total',
-              type: :counter,
-              value: 125,
-              labels: { status: 'success', handler: 'ProcessOrder' }
-            },
-            'api_requests_total' => {
-              name: 'api_requests_total',
-              type: :counter,
-              value: 847,
-              labels: { endpoint: '/tasks', method: 'POST' }
-            }
-          }
-        })
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 2,
+                                                        metrics: {
+                                                          'task_completed_total' => {
+                                                            name: 'task_completed_total',
+                                                            type: :counter,
+                                                            value: 125,
+                                                            labels: { status: 'success', handler: 'ProcessOrder' }
+                                                          },
+                                                          'api_requests_total' => {
+                                                            name: 'api_requests_total',
+                                                            type: :counter,
+                                                            value: 847,
+                                                            labels: { endpoint: '/tasks', method: 'POST' }
+                                                          }
+                                                        }
+                                                      })
       end
 
       it 'exports counters in Prometheus format' do
@@ -116,17 +116,17 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
     context 'with gauge metrics' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 1,
-          metrics: {
-            'active_connections' => {
-              name: 'active_connections',
-              type: :gauge,
-              value: 42,
-              labels: { database: 'primary' }
-            }
-          }
-        })
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 1,
+                                                        metrics: {
+                                                          'active_connections' => {
+                                                            name: 'active_connections',
+                                                            type: :gauge,
+                                                            value: 42,
+                                                            labels: { database: 'primary' }
+                                                          }
+                                                        }
+                                                      })
       end
 
       it 'exports gauges in Prometheus format' do
@@ -141,19 +141,20 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
     context 'with histogram metrics' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 1,
-          metrics: {
-            'request_duration_seconds' => {
-              name: 'request_duration_seconds',
-              type: :histogram,
-              count: 156,
-              sum: 78.3,
-              buckets: { 0.1 => 45, 0.5 => 120, 1.0 => 156, 'Inf' => 156 },
-              labels: { endpoint: '/tasks' }
-            }
-          }
-        })
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 1,
+                                                        metrics: {
+                                                          'request_duration_seconds' => {
+                                                            name: 'request_duration_seconds',
+                                                            type: :histogram,
+                                                            count: 156,
+                                                            sum: 78.3,
+                                                            buckets: { 0.1 => 45, 0.5 => 120, 1.0 => 156,
+                                                                       'Inf' => 156 },
+                                                            labels: { endpoint: '/tasks' }
+                                                          }
+                                                        }
+                                                      })
       end
 
       it 'exports histograms in Prometheus format' do
@@ -177,31 +178,31 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
     context 'with mixed metric types' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 3,
-          metrics: {
-            'tasks_total' => {
-              name: 'tasks_total',
-              type: :counter,
-              value: 500,
-              labels: {}
-            },
-            'current_queue_size' => {
-              name: 'current_queue_size',
-              type: :gauge,
-              value: 15,
-              labels: {}
-            },
-            'task_duration_seconds' => {
-              name: 'task_duration_seconds',
-              type: :histogram,
-              count: 100,
-              sum: 250.0,
-              buckets: { 1.0 => 80, 5.0 => 95, 'Inf' => 100 },
-              labels: {}
-            }
-          }
-        })
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 3,
+                                                        metrics: {
+                                                          'tasks_total' => {
+                                                            name: 'tasks_total',
+                                                            type: :counter,
+                                                            value: 500,
+                                                            labels: {}
+                                                          },
+                                                          'current_queue_size' => {
+                                                            name: 'current_queue_size',
+                                                            type: :gauge,
+                                                            value: 15,
+                                                            labels: {}
+                                                          },
+                                                          'task_duration_seconds' => {
+                                                            name: 'task_duration_seconds',
+                                                            type: :histogram,
+                                                            count: 100,
+                                                            sum: 250.0,
+                                                            buckets: { 1.0 => 80, 5.0 => 95, 'Inf' => 100 },
+                                                            labels: {}
+                                                          }
+                                                        }
+                                                      })
       end
 
       it 'exports all metric types in correct order' do
@@ -244,9 +245,9 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
         allow(Rails).to receive(:logger).and_return(logger)
         expect(logger).to receive(:error) do |json_string|
           parsed = JSON.parse(json_string)
-          expect(parsed["message"]).to eq("Prometheus export failed")
-          expect(parsed["error"]).to eq("Backend failure")
-          expect(parsed["component"]).to eq("prometheus_exporter")
+          expect(parsed['message']).to eq('Prometheus export failed')
+          expect(parsed['error']).to eq('Backend failure')
+          expect(parsed['component']).to eq('prometheus_exporter')
         end
 
         exporter.export
@@ -258,19 +259,19 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
     context 'when export succeeds' do
       before do
         allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 1,
-          metrics: {
-            'test_metric' => {
-              name: 'test_metric',
-              type: :counter,
-              value: 1,
-              labels: {}
-            }
-          }
-        })
-                 # Mock metrics count via export
-         # (backend.export already returns total_metrics: 1)
+                                                        timestamp: '2023-06-23T10:39:42Z',
+                                                        total_metrics: 1,
+                                                        metrics: {
+                                                          'test_metric' => {
+                                                            name: 'test_metric',
+                                                            type: :counter,
+                                                            value: 1,
+                                                            labels: {}
+                                                          }
+                                                        }
+                                                      })
+        # Mock metrics count via export
+        # (backend.export already returns total_metrics: 1)
       end
 
       it 'returns success response with data' do
@@ -302,27 +303,27 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
   describe 'label escaping' do
     before do
       allow(backend).to receive(:export).and_return({
-        timestamp: '2023-06-23T10:39:42Z',
-        total_metrics: 1,
-        metrics: {
-          'test_metric' => {
-            name: 'test_metric',
-            type: :counter,
-            value: 1,
-            labels: {
-              'label_with_quotes' => 'value "with quotes"',
-              'label_with_backslash' => 'value\\with\\backslash'
-            }
-          }
-        }
-      })
+                                                      timestamp: '2023-06-23T10:39:42Z',
+                                                      total_metrics: 1,
+                                                      metrics: {
+                                                        'test_metric' => {
+                                                          name: 'test_metric',
+                                                          type: :counter,
+                                                          value: 1,
+                                                          labels: {
+                                                            'label_with_quotes' => 'value "with quotes"',
+                                                            'label_with_backslash' => 'value\\with\\backslash'
+                                                          }
+                                                        }
+                                                      }
+                                                    })
     end
 
     it 'properly escapes label values' do
       result = exporter.export
 
       expect(result).to include('label_with_quotes="value \\"with quotes\\""')
-              expect(result).to include('label_with_backslash="value\\with\\backslash"')
+      expect(result).to include('label_with_backslash="value\\with\\backslash"')
     end
   end
 

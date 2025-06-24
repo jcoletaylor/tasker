@@ -51,7 +51,7 @@ module Tasker
         # @param labels [Hash] Optional labels for dimensional metrics
         # @raise [ArgumentError] If name is nil or empty
         def initialize(name, labels: {})
-          raise ArgumentError, "Metric name cannot be nil or empty" if name.nil? || name.strip.empty?
+          raise ArgumentError, 'Metric name cannot be nil or empty' if name.nil? || name.strip.empty?
 
           @name = name.to_s.freeze
           @labels = labels.freeze
@@ -66,7 +66,7 @@ module Tasker
         # @raise [ArgumentError] If amount is negative or not an integer
         def increment(amount = 1)
           return false unless amount.is_a?(Integer)
-          raise ArgumentError, "Counter increment amount must be positive, got: #{amount}" if amount < 0
+          raise ArgumentError, "Counter increment amount must be positive, got: #{amount}" if amount.negative?
 
           @value.update { |current| current + amount }
         end
@@ -74,9 +74,7 @@ module Tasker
         # Get the current counter value (thread-safe read)
         #
         # @return [Integer] Current counter value
-        def value
-          @value.value
-        end
+        delegate :value, to: :@value
 
         # Reset the counter to zero (primarily for testing)
         #
@@ -102,7 +100,7 @@ module Tasker
         #
         # @return [String] Human-readable description
         def description
-          label_str = labels.empty? ? "" : "#{labels.inspect}"
+          label_str = labels.empty? ? '' : labels.inspect
           "#{name}#{label_str} = #{value} (counter)"
         end
       end
@@ -136,8 +134,12 @@ module Tasker
         # @param initial_value [Numeric] Initial gauge value
         # @raise [ArgumentError] If name is nil or empty, or initial_value is not numeric
         def initialize(name, labels: {}, initial_value: 0)
-          raise ArgumentError, "Metric name cannot be nil or empty" if name.nil? || name.strip.empty?
-          raise ArgumentError, "Initial value must be numeric, got: #{initial_value.class}" unless initial_value.is_a?(Numeric)
+          raise ArgumentError, 'Metric name cannot be nil or empty' if name.nil? || name.strip.empty?
+
+          unless initial_value.is_a?(Numeric)
+            raise ArgumentError,
+                  "Initial value must be numeric, got: #{initial_value.class}"
+          end
 
           @name = name.to_s.freeze
           @labels = labels.freeze
@@ -163,7 +165,10 @@ module Tasker
         # @return [Numeric] The new gauge value
         # @raise [ArgumentError] If amount is not numeric
         def increment(amount = 1)
-          raise ArgumentError, "Gauge increment amount must be numeric, got: #{amount.class}" unless amount.is_a?(Numeric)
+          unless amount.is_a?(Numeric)
+            raise ArgumentError,
+                  "Gauge increment amount must be numeric, got: #{amount.class}"
+          end
 
           @value.update { |current| current + amount }
         end
@@ -174,8 +179,11 @@ module Tasker
         # @return [Numeric] The new gauge value
         # @raise [ArgumentError] If amount is not numeric or is negative
         def decrement(amount = 1)
-          raise ArgumentError, "Gauge decrement amount must be numeric, got: #{amount.class}" unless amount.is_a?(Numeric)
-          raise ArgumentError, "Gauge decrement amount must be positive, got: #{amount}" if amount < 0
+          unless amount.is_a?(Numeric)
+            raise ArgumentError,
+                  "Gauge decrement amount must be numeric, got: #{amount.class}"
+          end
+          raise ArgumentError, "Gauge decrement amount must be positive, got: #{amount}" if amount.negative?
 
           increment(-amount)
         end
@@ -204,7 +212,7 @@ module Tasker
         #
         # @return [String] Human-readable description
         def description
-          label_str = labels.empty? ? "" : "#{labels.inspect}"
+          label_str = labels.empty? ? '' : labels.inspect
           "#{name}#{label_str} = #{value} (gauge)"
         end
       end
@@ -245,9 +253,9 @@ module Tasker
         # @param buckets [Array<Numeric>] Bucket boundaries (must be sorted ascending)
         # @raise [ArgumentError] If name is nil/empty or buckets are invalid
         def initialize(name, labels: {}, buckets: DEFAULT_BUCKETS)
-          raise ArgumentError, "Metric name cannot be nil or empty" if name.nil? || name.strip.empty?
-          raise ArgumentError, "Buckets must be an array" unless buckets.is_a?(Array)
-          raise ArgumentError, "Buckets cannot be empty" if buckets.empty?
+          raise ArgumentError, 'Metric name cannot be nil or empty' if name.nil? || name.strip.empty?
+          raise ArgumentError, 'Buckets must be an array' unless buckets.is_a?(Array)
+          raise ArgumentError, 'Buckets cannot be empty' if buckets.empty?
 
           @name = name.to_s.freeze
           @labels = labels.freeze
@@ -277,9 +285,7 @@ module Tasker
 
           # Increment all buckets where value <= boundary (cumulative histogram)
           @bucket_boundaries.each_with_index do |boundary, index|
-            if value <= boundary
-              @bucket_counts[index].increment
-            end
+            @bucket_counts[index].increment if value <= boundary
           end
 
           # Always increment the infinity bucket (total count)
@@ -319,7 +325,8 @@ module Tasker
         # @return [Float] Average value, or 0.0 if no observations
         def average
           current_count = count
-          return 0.0 if current_count == 0
+          return 0.0 if current_count.zero?
+
           sum.to_f / current_count
         end
 
@@ -343,7 +350,7 @@ module Tasker
         #
         # @return [String] Human-readable description
         def description
-          label_str = labels.empty? ? "" : "#{labels.inspect}"
+          label_str = labels.empty? ? '' : labels.inspect
           "#{name}#{label_str} = #{count} observations, avg: #{average.round(3)} (histogram)"
         end
 

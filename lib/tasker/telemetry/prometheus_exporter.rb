@@ -29,15 +29,15 @@ module Tasker
       #
       # @return [String] Prometheus format text
       def export
-        return "" unless telemetry_enabled?
+        return '' unless telemetry_enabled?
 
         metrics_data = @backend.export
-        return "" if metrics_data[:metrics].empty?
+        return '' if metrics_data[:metrics].empty?
 
         output = []
         output << export_metadata(metrics_data)
         output << export_metrics(metrics_data[:metrics])
-        output.flatten.compact.join("\n") + "\n"
+        "#{output.flatten.compact.join("\n")}\n"
       rescue StandardError => e
         # Log error but don't fail the export
         log_export_error(e)
@@ -71,10 +71,10 @@ module Tasker
       # @return [Array<String>] Prometheus metadata lines
       def export_metadata(metadata)
         lines = []
-        lines << "# Tasker metrics export"
+        lines << '# Tasker metrics export'
         lines << "# GENERATED #{metadata[:timestamp]}"
         lines << "# TOTAL_METRICS #{metadata[:total_metrics]}"
-        lines << ""
+        lines << ''
         lines
       end
 
@@ -104,7 +104,7 @@ module Tasker
       def export_counters(counters)
         lines = []
         counters.each do |name, data|
-          lines << ""
+          lines << ''
           lines << "# HELP #{name} #{help_text_for(name, :counter)}"
           lines << "# TYPE #{name} counter"
           lines << format_metric_line(name, data[:value], data[:labels])
@@ -119,7 +119,7 @@ module Tasker
       def export_gauges(gauges)
         lines = []
         gauges.each do |name, data|
-          lines << ""
+          lines << ''
           lines << "# HELP #{name} #{help_text_for(name, :gauge)}"
           lines << "# TYPE #{name} gauge"
           lines << format_metric_line(name, data[:value], data[:labels])
@@ -134,7 +134,7 @@ module Tasker
       def export_histograms(histograms)
         lines = []
         histograms.each do |name, data|
-          lines << ""
+          lines << ''
           lines << "# HELP #{name} #{help_text_for(name, :histogram)}"
           lines << "# TYPE #{name} histogram"
 
@@ -186,23 +186,23 @@ module Tasker
       def help_text_for(name, type)
         case name
         when /task.*total/
-          "Total number of tasks processed"
+          'Total number of tasks processed'
         when /task.*duration/
-          "Task execution duration in seconds"
+          'Task execution duration in seconds'
         when /step.*total/
-          "Total number of steps executed"
+          'Total number of steps executed'
         when /step.*duration/
-          "Step execution duration in seconds"
+          'Step execution duration in seconds'
         when /workflow.*total/
-          "Total number of workflow orchestrations"
+          'Total number of workflow orchestrations'
         when /event.*total/
-          "Total number of events published"
+          'Total number of events published'
         when /error.*total/
-          "Total number of errors encountered"
+          'Total number of errors encountered'
         when /queue.*size/
-          "Current queue size"
+          'Current queue size'
         when /active.*connections/
-          "Number of active connections"
+          'Number of active connections'
         else
           "Tasker #{type} metric: #{name}"
         end
@@ -213,6 +213,7 @@ module Tasker
       # @return [Boolean] True if telemetry is enabled
       def telemetry_enabled?
         return false unless defined?(Tasker.configuration)
+
         Tasker.configuration.telemetry.metrics_enabled
       end
 
@@ -223,7 +224,7 @@ module Tasker
         return unless defined?(Rails) && Rails.logger
 
         Rails.logger.error({
-          message: "Prometheus export failed",
+          message: 'Prometheus export failed',
           error: error.message,
           backtrace: error.backtrace&.first(5),
           timestamp: Time.current.iso8601,

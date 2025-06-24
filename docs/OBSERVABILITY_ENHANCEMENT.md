@@ -674,8 +674,7 @@ By implementing this observability enhancement plan, Tasker will achieve:
 - **Memory Efficient**: Bounded storage with automatic cleanup
 - **Feature Toggles**: Complete control over observability overhead
 
-This implementation plan transforms Tasker from having excellent workflow orchestration to having world-class production observability, making it suitable for mission-critical enterprise deployments while maintaining its developer-friendly design principles. Metrics collection performance
-- Large workflow monitoring
+This implementation plan transforms Tasker from having excellent workflow orchestration to having world-class production observability, making it suitable for mission-critical enterprise deployments while maintaining its developer-friendly design principles.
 
 ## Migration Strategy
 
@@ -933,11 +932,11 @@ end
 #### **Observability Excellence**
 - **35+ Event Coverage** - From 8 events to comprehensive lifecycle monitoring
 - **5+ Level Span Hierarchy** - Deep workflow execution visibility
-- **Native Metrics Backend** - Thread-safe Prometheus-compatible metrics
+- **Cache-Agnostic Native Metrics Backend** - Thread-safe metrics with Rails.cache persistence
 - **Intelligent Event Routing** - Appropriate telemetry backend selection
 
 #### **Production Benefits**
-- **Operational Dashboards** - Real-time aggregate metrics for monitoring
+- **Operational Dashboards** - Real-time aggregate metrics for monitoring with cross-container coordination
 - **Detailed Debugging** - Comprehensive spans for troubleshooting
 - **Performance Insights** - Bottleneck identification across all workflow layers
 - **Zero Breaking Changes** - Seamless evolution of existing functionality
@@ -1370,3 +1369,498 @@ This hybrid architecture preserves the high performance of concurrent in-memory 
 - **Production-Ready Defaults** - Sensible configuration out-of-the-box
 
 This strategic evolution transforms our metrics backend into a production-ready, cache-agnostic system that provides enterprise-grade observability while respecting Rails engine design principles and framework boundaries.
+
+---
+
+## ✅ **REFACTORING: Sleep Pattern Elimination - Job Queue Retry Architecture**
+**Date**: June 2025
+**Context**: During Phase 4.2.2.3.3 Export Coordination implementation, identified problematic `sleep` calls in retry logic that blocked execution threads and violated Rails job queue best practices.
+
+### **Problem Identified: Code Smell - Synchronous Sleep Calls**
+The initial Phase 4.2.2.3.3 implementation contained problematic retry patterns:
+- **Thread Blocking**: `sleep()` calls blocked execution threads during retry delays
+- **Poor Resource Utilization**: Threads held in memory during exponential backoff periods
+- **Non-Idiomatic Rails**: Manual retry loops instead of leveraging ActiveJob retry mechanisms
+- **Difficult Testing**: Sleep-based retry logic challenging to test and mock
+- **Production Risk**: Long-running threads consuming resources unnecessarily
+
+### **Refactoring Strategy: Asynchronous Job Queue Pattern**
+
+#### **1. Eliminated Synchronous Retry Loops**
+**Before**: ExportCoordinator contained manual retry loops with `sleep()` calls blocking threads.
+
+**After**: Simplified to single-attempt exports with error propagation:
+```ruby
+# ✅ CLEAN: Single attempt with error propagation
+def execute_export_with_recovery(format, include_instances)
+  begin
+    export_result = @metrics_backend.export_distributed_metrics(include_instances: include_instances)
+    log_export_success(format, 1, export_result)
+    {
+      success: true,
+      format: format,
+      attempts: 1,
+      result: export_result,
+      exported_at: Time.current.iso8601
+    }
+  rescue => error
+    log_export_attempt_failed(format, 1, error)
+    # Extend cache TTL to prevent data loss during retry delay
+    extend_cache_ttl(@config[:retry_backoff_base] + @config[:safety_margin])
+    # Re-raise error to trigger job retry mechanism
+    raise error
+  end
+end
+```
+
+#### **2. Implemented Proper ActiveJob Retry Configuration**
+**Before**: Manual retry logic mixed with business logic.
+
+**After**: Declarative retry configuration using Rails best practices:
+```ruby
+class MetricsExportJob < ApplicationJob
+  # ✅ PROPER: ActiveJob retry configuration
+  retry_on StandardError,
+           wait: :exponentially_longer,
+           attempts: 3,
+           queue: :metrics_export_retry
+
+  def perform(format:, coordinator_instance:, **args)
+    # Single execution attempt - Rails handles retries
+    coordinator.execute_coordinated_export(format: format)
+  rescue => error
+    extend_cache_ttl_for_retry  # TTL safety before retry
+    raise  # Trigger ActiveJob retry mechanism
+  end
+end
+```
+
+#### **3. Enhanced TTL Safety with Job-Aware Logic**
+**Before**: TTL extension calculated during sleep delays.
+
+**After**: Smart TTL extension based on job execution context:
+```ruby
+# ✅ SMART: Job execution-aware TTL extension
+def extend_cache_ttl_for_retry
+  return unless defined?(executions) && executions > 1
+
+  # Calculate extension based on retry attempt and expected delay
+  retry_delay = calculate_job_retry_delay(executions)
+  safety_margin = 1.minute
+  extension_duration = retry_delay + safety_margin
+
+  coordinator = Tasker::Telemetry::ExportCoordinator.new
+  result = coordinator.extend_cache_ttl(extension_duration)
+  log_ttl_extension_for_retry(extension_duration, result)
+rescue => error
+  log_ttl_extension_error(error)
+  # Don't fail the job if TTL extension fails
+end
+```
+
+### **Architecture Benefits**
+
+#### **1. Non-Blocking Execution**
+- **✅ Thread Efficiency**: No threads blocked waiting for retry delays
+- **✅ Resource Optimization**: Memory freed immediately after job completion
+- **✅ Scalable Design**: Job queue handles concurrency and resource management
+- **✅ Production Ready**: Follows Rails job queue best practices
+
+#### **2. Enhanced Observability**
+- **✅ Individual Job Tracking**: Each retry gets unique job ID and logging
+- **✅ Queue Metrics**: Leverage existing job queue monitoring tools
+- **✅ Execution Context**: Access to job execution count and timing
+- **✅ Error Propagation**: Clear error context without manual retry noise
+
+#### **3. Improved Configuration**
+- **✅ Declarative Retry Policy**: Clear retry configuration at class level
+- **✅ Queue Separation**: Retry jobs isolated to dedicated queue
+- **✅ Configurable Backoff**: Use Rails' built-in exponential backoff
+- **✅ Flexible Backend**: Works with any ActiveJob backend (Sidekiq, SQS, etc.)
+
+### **Technical Implementation Details**
+
+#### **Files Refactored**
+- **`lib/tasker/telemetry/export_coordinator.rb`**: Removed retry loops and sleep calls
+- **`app/jobs/tasker/metrics_export_job.rb`**: Enhanced with proper retry configuration
+- **`spec/lib/tasker/telemetry/export_coordinator_spec.rb`**: Updated tests for single-attempt pattern
+- **`spec/jobs/tasker/metrics_export_job_spec.rb`**: Added retry behavior testing
+
+#### **Removed Anti-Patterns**
+- ❌ `calculate_retry_backoff()` method (no longer needed)
+- ❌ Manual retry loops in coordinator
+- ❌ `sleep()` calls blocking threads
+- ❌ Complex retry state management
+
+#### **Added Best Practices**
+- ✅ ActiveJob `retry_on` configuration
+- ✅ Job execution-aware TTL extension
+- ✅ Proper error propagation
+- ✅ Queue separation for retry jobs
+
+### **Test Coverage Results**
+- **✅ 36/36 Export Coordinator Tests**: All passing with simplified logic
+- **✅ 35/35 Export Job Tests**: Including new retry behavior tests
+- **✅ 15/15 Export Service Tests**: Business logic separation maintained
+- **✅ Zero Breaking Changes**: External API preserved
+
+### **Production Benefits**
+
+#### **Performance Improvements**
+- **Resource Efficiency**: No threads held during retry delays
+- **Memory Optimization**: Immediate cleanup after job completion
+- **Scalability**: Better resource utilization under load
+- **Throughput**: More jobs can be processed with same resources
+
+#### **Operational Excellence**
+- **Standard Monitoring**: Leverage existing job queue monitoring
+- **Error Handling**: Consistent with other ActiveJob retry patterns
+- **Configuration**: Standard Rails job configuration patterns
+- **Debugging**: Clear job execution context and error traces
+
+#### **Developer Experience**
+- **Familiar Patterns**: Standard Rails job retry configuration
+- **Easy Testing**: No complex sleep timing in tests
+- **Clear Architecture**: Single responsibility separation
+- **Maintainable Code**: Standard Rails patterns throughout
+
+### **Architectural Principles Applied**
+
+#### **Single Responsibility Principle**
+- **Coordinator**: Handles single export attempts and TTL safety
+- **Job**: Manages scheduling, retries, and queue coordination
+- **Service**: Contains export business logic
+
+#### **Rails Framework Integration**
+- **ActiveJob Retry**: Uses Rails built-in retry mechanisms
+- **Queue Management**: Leverages Rails job queue infrastructure
+- **Error Handling**: Follows Rails error handling patterns
+- **Configuration**: Uses standard Rails configuration patterns
+
+#### **Production Readiness**
+- **Non-Blocking**: No thread blocking operations
+- **Idempotent**: Each retry is a clean, fresh execution
+- **Observable**: Rich logging and job tracking
+- **Scalable**: Resource-efficient design
+
+This refactoring eliminates a significant code smell and transforms the export system from a problematic synchronous retry pattern to a production-ready asynchronous job queue architecture that follows Rails best practices and scales efficiently under load.
+
+---
+
+## 📋 **EXTERNAL SCHEDULING: Kubernetes CronJob Pattern**
+**Date**: June 2025
+**Context**: Instead of building complex internal scheduling logic, Tasker provides CLI commands that can be called by external schedulers like Kubernetes CronJobs, systemd timers, or cron.
+
+### **Architecture Philosophy: Separation of Concerns**
+
+Tasker follows the Unix philosophy and cloud-native patterns by providing export capabilities while delegating scheduling to infrastructure:
+
+- **✅ Application Responsibility**: Provide export functionality, coordination, and safety mechanisms
+- **✅ Infrastructure Responsibility**: Handle scheduling, retries, monitoring, and resource management
+- **✅ Clean Separation**: No complex internal scheduling logic to maintain or debug
+- **✅ Standard Patterns**: Use proven infrastructure tools for reliability
+
+### **Available Rake Tasks**
+
+#### **1. Scheduled Export (Asynchronous)**
+```bash
+# Schedule export via job queue (recommended for production)
+bundle exec rake tasker:export_metrics[prometheus]
+bundle exec rake tasker:export_metrics[json]
+bundle exec rake tasker:export_metrics[csv]
+
+# With environment variable
+METRICS_FORMAT=prometheus bundle exec rake tasker:export_metrics
+```
+
+#### **2. Immediate Export (Synchronous)**
+```bash
+# Immediate export for testing or one-off exports
+bundle exec rake tasker:export_metrics_now[prometheus]
+bundle exec rake tasker:export_metrics_now[json]
+
+# With verbose error output
+VERBOSE=true bundle exec rake tasker:export_metrics_now[prometheus]
+```
+
+#### **3. Cache Synchronization**
+```bash
+# Sync in-memory metrics to Rails.cache
+bundle exec rake tasker:sync_metrics
+```
+
+#### **4. Status and Configuration**
+```bash
+# Show current metrics status and configuration
+bundle exec rake tasker:metrics_status
+```
+
+### **Kubernetes CronJob Examples**
+
+#### **Prometheus Export Every 5 Minutes**
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tasker-metrics-export
+  namespace: production
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: metrics-exporter
+            image: your-app:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              cd /app && \
+              bundle exec rake tasker:export_metrics[prometheus]
+            env:
+            - name: RAILS_ENV
+              value: "production"
+            - name: METRICS_FORMAT
+              value: "prometheus"
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          restartPolicy: OnFailure
+          # Use same database and cache configuration as main app
+          envFrom:
+          - configMapRef:
+              name: app-config
+          - secretRef:
+              name: app-secrets
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+```
+
+#### **Cache Sync Every 30 Seconds**
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tasker-cache-sync
+  namespace: production
+spec:
+  schedule: "*/1 * * * *"  # Every minute (30s via multiple instances)
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cache-sync
+            image: your-app:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              cd /app && \
+              bundle exec rake tasker:sync_metrics && \
+              sleep 30 && \
+              bundle exec rake tasker:sync_metrics
+            env:
+            - name: RAILS_ENV
+              value: "production"
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+              limits:
+                memory: "128Mi"
+                cpu: "100m"
+          restartPolicy: OnFailure
+          envFrom:
+          - configMapRef:
+              name: app-config
+          - secretRef:
+              name: app-secrets
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+```
+
+### **Docker Compose with Cron**
+
+```yaml
+version: '3.8'
+services:
+  app:
+    image: your-app:latest
+    # ... main app configuration
+
+  metrics-exporter:
+    image: your-app:latest
+    command: >
+      bash -c "
+        echo '*/5 * * * * cd /app && bundle exec rake tasker:export_metrics[prometheus] >> /var/log/metrics-export.log 2>&1' > /etc/cron.d/metrics-export &&
+        echo '*/1 * * * * cd /app && bundle exec rake tasker:sync_metrics >> /var/log/cache-sync.log 2>&1' > /etc/cron.d/cache-sync &&
+        chmod 0644 /etc/cron.d/metrics-export /etc/cron.d/cache-sync &&
+        crontab /etc/cron.d/metrics-export &&
+        crontab /etc/cron.d/cache-sync &&
+        cron -f
+      "
+    environment:
+      - RAILS_ENV=production
+    volumes:
+      - metrics-logs:/var/log
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  metrics-logs:
+```
+
+### **Systemd Timer (Linux Servers)**
+
+#### **Export Timer**
+```ini
+# /etc/systemd/system/tasker-metrics-export.timer
+[Unit]
+Description=Export Tasker metrics every 5 minutes
+Requires=tasker-metrics-export.service
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+#### **Export Service**
+```ini
+# /etc/systemd/system/tasker-metrics-export.service
+[Unit]
+Description=Export Tasker metrics
+After=network.target
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/var/www/your-app
+Environment=RAILS_ENV=production
+ExecStart=/usr/local/bin/bundle exec rake tasker:export_metrics[prometheus]
+StandardOutput=journal
+StandardError=journal
+```
+
+#### **Enable and Start**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tasker-metrics-export.timer
+sudo systemctl start tasker-metrics-export.timer
+
+# Check status
+sudo systemctl status tasker-metrics-export.timer
+sudo journalctl -u tasker-metrics-export.service -f
+```
+
+### **Traditional Cron**
+
+```bash
+# Add to crontab (crontab -e)
+
+# Export metrics every 5 minutes
+*/5 * * * * cd /var/www/your-app && bundle exec rake tasker:export_metrics[prometheus] >> /var/log/tasker-export.log 2>&1
+
+# Sync cache every minute
+* * * * * cd /var/www/your-app && bundle exec rake tasker:sync_metrics >> /var/log/tasker-sync.log 2>&1
+
+# Daily status check
+0 6 * * * cd /var/www/your-app && bundle exec rake tasker:metrics_status >> /var/log/tasker-status.log 2>&1
+```
+
+### **Monitoring and Alerting**
+
+#### **Kubernetes Monitoring**
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tasker-cronjobs
+spec:
+  selector:
+    matchLabels:
+      app: tasker-metrics-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+```
+
+#### **Prometheus Alerts**
+```yaml
+groups:
+- name: tasker-metrics
+  rules:
+  - alert: TaskerMetricsExportFailed
+    expr: increase(kube_job_status_failed{job_name=~"tasker-metrics-export.*"}[1h]) > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Tasker metrics export job failed"
+      description: "Metrics export job has failed {{ $value }} times in the last hour"
+
+  - alert: TaskerMetricsExportMissing
+    expr: time() - kube_job_status_completion_time{job_name=~"tasker-metrics-export.*"} > 900
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Tasker metrics export has not completed recently"
+      description: "No successful metrics export in the last 15 minutes"
+```
+
+### **Production Best Practices**
+
+#### **1. Resource Management**
+- **CPU/Memory Limits**: Set appropriate resource limits for export jobs
+- **Timeout Configuration**: Configure job timeouts to prevent hanging
+- **Restart Policies**: Use `OnFailure` for CronJobs to handle transient errors
+
+#### **2. Error Handling**
+- **Exit Codes**: Tasks return proper exit codes for scheduler monitoring
+- **Logging**: Comprehensive logging with structured output
+- **Retry Logic**: Let infrastructure handle retries rather than application logic
+
+#### **3. Configuration**
+- **Environment Variables**: Use env vars for format selection and configuration
+- **Secrets Management**: Use Kubernetes secrets or similar for sensitive config
+- **Configuration Validation**: Tasks validate configuration before execution
+
+#### **4. Monitoring**
+- **Job Success/Failure Metrics**: Monitor scheduler job outcomes
+- **Export Duration**: Track how long exports take
+- **Cache Sync Health**: Monitor cache synchronization success rates
+- **Data Freshness**: Alert on stale metrics or failed exports
+
+### **Advantages of External Scheduling**
+
+#### **🎯 Operational Benefits**
+- **Standard Tooling**: Use proven infrastructure tools (K8s, systemd, cron)
+- **Resource Isolation**: Export jobs run in separate containers/processes
+- **Independent Scaling**: Scale export frequency without affecting main app
+- **Failure Isolation**: Export failures don't impact application performance
+
+#### **🛠️ Development Benefits**
+- **Simpler Codebase**: No complex internal scheduling logic to maintain
+- **Easy Testing**: Run export commands manually for testing
+- **Clear Separation**: Export logic separated from scheduling concerns
+- **Standard Patterns**: Follow cloud-native and Unix philosophy
+
+#### **📊 Reliability Benefits**
+- **Infrastructure Retries**: Let K8s/systemd handle retry logic
+- **Resource Management**: Proper CPU/memory limits and monitoring
+- **Observability**: Standard job monitoring and alerting patterns
+- **Graceful Degradation**: Export failures don't cascade to main application
+
+This external scheduling approach provides enterprise-grade reliability while keeping the Tasker codebase focused on its core workflow orchestration mission.

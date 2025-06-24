@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Telemetry::ExportCoordinator
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Telemetry::ExportCoordinator";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (E)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Telemetry.html" title="Tasker::Telemetry (module)">Telemetry</a></span></span>
+     &raquo; 
+    <span class="title">ExportCoordinator</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Telemetry::ExportCoordinator
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Telemetry::ExportCoordinator</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/telemetry/export_coordinator.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Coordinates metric exports with TTL-aware scheduling and distributed locking</p>
+
+<p><strong>Phase 4.2.2.3.3</strong>: Export coordination prevents data loss during cache TTL expiration while maintaining efficient scheduling and cross-container coordination.</p>
+
+<p>Key Features: - Dynamic TTL-aware export scheduling with safety margins - Distributed locking using Rails.cache atomic operations - Job runner architecture separating collection from export - Configurable retry limits with TTL extension recovery</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_coordinator'>coordinator</span> <span class='op'>=</span> <span class='const'>ExportCoordinator</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Telemetry::ExportCoordinator#initialize (method)">new</a></span></span>
+<span class='id identifier rubyid_coordinator'>coordinator</span><span class='period'>.</span><span class='id identifier rubyid_schedule_export'>schedule_export</span><span class='lparen'>(</span><span class='label'>format:</span> <span class='symbol'>:prometheus</span><span class='comma'>,</span> <span class='label'>safety_margin:</span> <span class='int'>1</span><span class='period'>.</span><span class='id identifier rubyid_minute'>minute</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>With custom configuration</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_coordinator'>coordinator</span> <span class='op'>=</span> <span class='const'>ExportCoordinator</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Telemetry::ExportCoordinator#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>retention_window:</span> <span class='int'>10</span><span class='period'>.</span><span class='id identifier rubyid_minutes'>minutes</span><span class='comma'>,</span>
+  <span class='label'>max_retries:</span> <span class='int'>5</span><span class='comma'>,</span>
+  <span class='label'>export_timeout:</span> <span class='int'>2</span><span class='period'>.</span><span class='id identifier rubyid_minutes'>minutes</span>
+<span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="ExportCoordinator/DistributedLockTimeoutError.html" title="Tasker::Telemetry::ExportCoordinator::DistributedLockTimeoutError (class)">DistributedLockTimeoutError</a></span>
+    
+  
+</p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="DEFAULT_CONFIG-constant" class="">DEFAULT_CONFIG =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Default configuration values</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbrace'>{</span>
+  <span class='label'>retention_window:</span> <span class='int'>5</span><span class='period'>.</span><span class='id identifier rubyid_minutes'>minutes</span><span class='comma'>,</span>
+  <span class='label'>safety_margin:</span> <span class='int'>1</span><span class='period'>.</span><span class='id identifier rubyid_minute'>minute</span><span class='comma'>,</span>
+  <span class='label'>export_timeout:</span> <span class='int'>2</span><span class='period'>.</span><span class='id identifier rubyid_minutes'>minutes</span><span class='comma'>,</span>
+  <span class='label'>max_retries:</span> <span class='int'>3</span><span class='comma'>,</span>
+  <span class='label'>retry_backoff_base:</span> <span class='int'>30</span><span class='period'>.</span><span class='id identifier rubyid_seconds'>seconds</span><span class='comma'>,</span>
+  <span class='label'>lock_timeout:</span> <span class='int'>5</span><span class='period'>.</span><span class='id identifier rubyid_minutes'>minutes</span>
+<span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+  
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">Concerns::StructuredLogging::CORRELATION_ID_KEY</a></span></p>
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cache_capabilities-instance_method" title="#cache_capabilities (instance method)">#<strong>cache_capabilities</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute cache_capabilities.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#config-instance_method" title="#config (instance method)">#<strong>config</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute config.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#instance_id-instance_method" title="#instance_id (instance method)">#<strong>instance_id</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute instance_id.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#execute_coordinated_export-instance_method" title="#execute_coordinated_export (instance method)">#<strong>execute_coordinated_export</strong>(format:, include_instances: false)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Execute export with distributed coordination.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#extend_cache_ttl-instance_method" title="#extend_cache_ttl (instance method)">#<strong>extend_cache_ttl</strong>(extension_duration)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Extend cache TTL for all metrics to prevent data loss.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(config = {})  &#x21d2; ExportCoordinator </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Initialize export coordinator with configuration.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#schedule_export-instance_method" title="#schedule_export (instance method)">#<strong>schedule_export</strong>(format: :prometheus, safety_margin: nil, priority: :normal)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Schedule export with dynamic TTL-aware timing.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id (method)">#correlation_id</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id=-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id= (method)">#correlation_id=</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_exception-instance_method" title="Tasker::Concerns::StructuredLogging#log_exception (method)">#log_exception</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_orchestration_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_orchestration_event (method)">#log_orchestration_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_performance_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_performance_event (method)">#log_performance_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_step_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_step_event (method)">#log_step_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_structured-instance_method" title="Tasker::Concerns::StructuredLogging#log_structured (method)">#log_structured</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_task_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_task_event (method)">#log_task_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#with_correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#with_correlation_id (method)">#with_correlation_id</a></span></p>
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(config = {})  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Telemetry::ExportCoordinator (class)">ExportCoordinator</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Initialize export coordinator with configuration</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>config</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export coordination configuration</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+  
+    
+    
+    <p class="tag_title">Options Hash (<tt>config</tt>):</p>
+    <ul class="option">
+      
+        <li>
+          <span class="name">:retention_window</span>
+          <span class="type">(<tt>Duration</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Cache retention time</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:safety_margin</span>
+          <span class="type">(<tt>Duration</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Time buffer before TTL expiry</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:export_timeout</span>
+          <span class="type">(<tt>Duration</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Maximum export job duration</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:max_retries</span>
+          <span class="type">(<tt>Integer</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Maximum retry attempts</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:retry_backoff_base</span>
+          <span class="type">(<tt>Duration</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Base delay for exponential backoff</p>
+</div>
+          
+        </li>
+      
+        <li>
+          <span class="name">:lock_timeout</span>
+          <span class="type">(<tt>Duration</tt>)</span>
+          <span class="default">
+            
+          </span>
+          
+            &mdash; <div class='inline'>
+<p>Distributed lock timeout</p>
+</div>
+          
+        </li>
+      
+    </ul>
+  
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51
+52
+53
+54
+55
+56
+57
+58</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 51</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="#DEFAULT_CONFIG-constant" title="Tasker::Telemetry::ExportCoordinator::DEFAULT_CONFIG (constant)">DEFAULT_CONFIG</a></span></span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+  <span class='ivar'>@instance_id</span> <span class='op'>=</span> <span class='id identifier rubyid_generate_instance_id'>generate_instance_id</span>
+  <span class='ivar'>@metrics_backend</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="MetricsBackend.html" title="Tasker::Telemetry::MetricsBackend (class)">MetricsBackend</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span>
+  <span class='ivar'>@cache_capabilities</span> <span class='op'>=</span> <span class='id identifier rubyid_detect_cache_capabilities'>detect_cache_capabilities</span>
+
+  <span class='id identifier rubyid_log_coordinator_initialization'>log_coordinator_initialization</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="cache_capabilities-instance_method">
+  
+    #<strong>cache_capabilities</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute cache_capabilities.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+40
+41
+42</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 40</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cache_capabilities'>cache_capabilities</span>
+  <span class='ivar'>@cache_capabilities</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="config-instance_method">
+  
+    #<strong>config</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute config.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+40
+41
+42</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 40</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
+  <span class='ivar'>@config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="instance_id-instance_method">
+  
+    #<strong>instance_id</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute instance_id.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+40
+41
+42</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 40</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_instance_id'>instance_id</span>
+  <span class='ivar'>@instance_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="execute_coordinated_export-instance_method">
+  
+    #<strong>execute_coordinated_export</strong>(format:, include_instances: false)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Execute export with distributed coordination</p>
+
+<p>Handles the actual export execution with distributed locking to prevent concurrent exports from multiple containers. Uses capability-aware locking.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>format</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export format</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_instances</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Include per-instance breakdown</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export result with metrics and status</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 104</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_execute_coordinated_export'>execute_coordinated_export</span><span class='lparen'>(</span><span class='label'>format:</span><span class='comma'>,</span> <span class='label'>include_instances:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_with_distributed_export_lock'>with_distributed_export_lock</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_execute_export_with_recovery'>execute_export_with_recovery</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_include_instances'>include_instances</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="ExportCoordinator/DistributedLockTimeoutError.html" title="Tasker::Telemetry::ExportCoordinator::DistributedLockTimeoutError (class)">DistributedLockTimeoutError</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_export_lock_timeout'>log_export_lock_timeout</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Export lock timeout - another container is exporting</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_export_execution_error'>log_export_execution_error</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='id identifier rubyid_format'>format</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="extend_cache_ttl-instance_method">
+  
+    #<strong>extend_cache_ttl</strong>(extension_duration)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Extend cache TTL for all metrics to prevent data loss</p>
+
+<p>Used when export jobs are delayed or failed, extending the TTL to provide additional time for successful export completion.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>extension_duration</span>
+      
+      
+        <span class='type'>(<tt>Duration</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>How much to extend TTL</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Extension result with affected metrics count</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 123</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_extend_cache_ttl'>extend_cache_ttl</span><span class='lparen'>(</span><span class='id identifier rubyid_extension_duration'>extension_duration</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>reason:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>TTL extension not supported</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='id identifier rubyid_ttl_extension_supported?'>ttl_extension_supported?</span>
+
+  <span class='id identifier rubyid_metrics_extended'>metrics_extended</span> <span class='op'>=</span> <span class='int'>0</span>
+
+  <span class='ivar'>@metrics_backend</span><span class='period'>.</span><span class='id identifier rubyid_all_metrics'>all_metrics</span><span class='period'>.</span><span class='id identifier rubyid_each_key'>each_key</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_key'>key</span><span class='op'>|</span>
+    <span class='id identifier rubyid_cache_key'>cache_key</span> <span class='op'>=</span> <span class='ivar'>@metrics_backend</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='symbol'>:build_cache_key</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_current_data'>current_data</span> <span class='op'>=</span> <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_cache'>cache</span><span class='period'>.</span><span class='id identifier rubyid_read'>read</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_key'>cache_key</span><span class='rparen'>)</span>
+
+    <span class='kw'>next</span> <span class='kw'>unless</span> <span class='id identifier rubyid_current_data'>current_data</span>
+
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_cache'>cache</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_key'>cache_key</span><span class='comma'>,</span> <span class='id identifier rubyid_current_data'>current_data</span><span class='comma'>,</span>
+                      <span class='label'>expires_in:</span> <span class='ivar'>@config</span><span class='lbracket'>[</span><span class='symbol'>:retention_window</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_extension_duration'>extension_duration</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_metrics_extended'>metrics_extended</span> <span class='op'>+=</span> <span class='int'>1</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_log_ttl_extension'>log_ttl_extension</span><span class='lparen'>(</span><span class='id identifier rubyid_extension_duration'>extension_duration</span><span class='comma'>,</span> <span class='id identifier rubyid_metrics_extended'>metrics_extended</span><span class='rparen'>)</span>
+
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>extension_duration:</span> <span class='id identifier rubyid_extension_duration'>extension_duration</span><span class='comma'>,</span> <span class='label'>metrics_extended:</span> <span class='id identifier rubyid_metrics_extended'>metrics_extended</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="schedule_export-instance_method">
+  
+    #<strong>schedule_export</strong>(format: :prometheus, safety_margin: nil, priority: :normal)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Schedule export with dynamic TTL-aware timing</p>
+
+<p>Calculates optimal export timing based on cache TTL and safety margins, ensuring exports complete before metrics expire from cache.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>format</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:prometheus</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export format (:prometheus, :json, :csv)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>safety_margin</span>
+      
+      
+        <span class='type'>(<tt>Duration</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Override default safety margin</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>priority</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:normal</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Job priority (:low, :normal, :high)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Scheduling result with timing information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/export_coordinator.rb', line 69</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_schedule_export'>schedule_export</span><span class='lparen'>(</span><span class='label'>format:</span> <span class='symbol'>:prometheus</span><span class='comma'>,</span> <span class='label'>safety_margin:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>priority:</span> <span class='symbol'>:normal</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_safety_margin'>safety_margin</span> <span class='op'>||=</span> <span class='ivar'>@config</span><span class='lbracket'>[</span><span class='symbol'>:safety_margin</span><span class='rbracket'>]</span>
+
+  <span class='comment'># Calculate dynamic export timing
+</span>  <span class='id identifier rubyid_timing'>timing</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_export_timing'>calculate_export_timing</span><span class='lparen'>(</span><span class='id identifier rubyid_safety_margin'>safety_margin</span><span class='rparen'>)</span>
+
+  <span class='comment'># Check if TTL extension is needed
+</span>  <span class='id identifier rubyid_extend_cache_ttl'>extend_cache_ttl</span><span class='lparen'>(</span><span class='id identifier rubyid_timing'>timing</span><span class='lbracket'>[</span><span class='symbol'>:extension_duration</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_timing'>timing</span><span class='lbracket'>[</span><span class='symbol'>:needs_ttl_extension</span><span class='rbracket'>]</span>
+
+  <span class='comment'># Schedule the export job
+</span>  <span class='id identifier rubyid_job_result'>job_result</span> <span class='op'>=</span> <span class='id identifier rubyid_schedule_export_job'>schedule_export_job</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_timing'>timing</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_log_export_scheduled'>log_export_scheduled</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_timing'>timing</span><span class='comma'>,</span> <span class='id identifier rubyid_job_result'>job_result</span><span class='rparen'>)</span>
+
+  <span class='lbrace'>{</span>
+    <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span>
+    <span class='label'>format:</span> <span class='id identifier rubyid_format'>format</span><span class='comma'>,</span>
+    <span class='label'>scheduled_at:</span> <span class='id identifier rubyid_timing'>timing</span><span class='lbracket'>[</span><span class='symbol'>:export_time</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>job_id:</span> <span class='id identifier rubyid_job_result'>job_result</span><span class='lbracket'>[</span><span class='symbol'>:job_id</span><span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>timing:</span> <span class='id identifier rubyid_timing'>timing</span><span class='comma'>,</span>
+    <span class='label'>coordinator_instance:</span> <span class='ivar'>@instance_id</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_export_scheduling_error'>log_export_scheduling_error</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='id identifier rubyid_format'>format</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Mon Jun 23 21:45:57 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

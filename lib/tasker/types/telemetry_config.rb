@@ -148,6 +148,12 @@ module Tasker
       #   @return [Integer] Retention period in hours
       attribute :metrics_retention_hours, Types::Integer.default(24)
 
+      # Prometheus export configuration
+      #
+      # @!attribute [r] prometheus
+      #   @return [Hash] Prometheus export configuration
+      attribute :prometheus, Types::Hash.default(proc { default_prometheus_config }.freeze, shared: true)
+
       # Advanced telemetry configuration options
       #
       # @!attribute [r] config
@@ -163,6 +169,40 @@ module Tasker
         else
           %i[passw email secret token _key crypt salt certificate otp ssn]
         end
+      end
+
+      # Get default Prometheus configuration
+      #
+      # @return [Hash] Default Prometheus export configuration
+      def self.default_prometheus_config
+        {
+          # Prometheus remote write endpoint (nil disables Prometheus export)
+          endpoint: nil, # e.g., 'http://localhost:9090/api/v1/write'
+
+          # Basic authentication for Prometheus endpoint
+          username: nil,
+          password: nil,
+
+          # Job configuration
+          job_timeout: 5.minutes,
+          export_timeout: 2.minutes,
+          retry_attempts: 3,
+
+          # Export scheduling
+          retention_window: 5.minutes,
+          safety_margin: 1.minute,
+
+          # Metric naming
+          metric_prefix: 'tasker',
+          include_instance_labels: true,
+
+          # Performance tuning
+          compression: 'snappy', # 'snappy', 'gzip', or nil
+          batch_size: 1000,
+
+          # Test/development mode
+          skip_if_unavailable: true # Don't fail if Prometheus is unreachable
+        }.freeze
       end
 
       # Get default telemetry configuration

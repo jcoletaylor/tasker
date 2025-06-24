@@ -1,0 +1,2398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Telemetry::MetricsBackend
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Telemetry::MetricsBackend";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (M)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Telemetry.html" title="Tasker::Telemetry (module)">Telemetry</a></span></span>
+     &raquo; 
+    <span class="title">MetricsBackend</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Telemetry::MetricsBackend
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Telemetry::MetricsBackend</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd>Singleton</dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/telemetry/metrics_backend.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>MetricsBackend provides thread-safe, high-performance native metrics collection</p>
+
+<p>This class implements Tasker’s core metrics storage system with thread-safe operations, automatic EventRouter integration, and zero-overhead metric collection. It follows the singleton pattern consistent with HandlerFactory and Events::Publisher.</p>
+
+<p><strong>Phase 4.2.2.3 Enhancement: Hybrid Rails Cache Architecture</strong> The backend now supports cache-agnostic dual storage combining in-memory performance with Rails.cache persistence and cross-container coordination.</p>
+
+<p>The backend supports three core metric types: - Counter: Monotonically increasing values (requests, errors, completions) - Gauge: Values that can go up/down (active connections, queue depth) - Histogram: Statistical distributions (latencies, sizes, durations)</p>
+
+<p><strong>Cache Store Compatibility:</strong> - Redis/Memcached: Full coordination with atomic operations and locking - File/Memory stores: Local-only mode with clear degradation messaging - Automatic feature detection with appropriate strategy selection</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_backend'>backend</span> <span class='op'>=</span> <span class='const'>MetricsBackend</span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span>
+<span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>api_requests_total</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span>
+<span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>active_tasks</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='int'>42</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task_duration_seconds</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='float'>1.45</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>EventRouter integration</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='comment'># Automatic metric collection based on event routing
+</span><span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span> <span class='label'>duration:</span> <span class='float'>2.1</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>success</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Cache synchronization</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_sync_to_cache!'>sync_to_cache!</span>  <span class='comment'># Periodic background sync
+</span><span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_export_distributed_metrics'>export_distributed_metrics</span>  <span class='comment'># Cross-container export</span></code></pre>
+    
+  </div>
+
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cache_capabilities-instance_method" title="#cache_capabilities (instance method)">#<strong>cache_capabilities</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Cache capabilities detected at initialization.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#created_at-instance_method" title="#created_at (instance method)">#<strong>created_at</strong>  &#x21d2; Time </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Backend creation timestamp for monitoring.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#event_router-instance_method" title="#event_router (instance method)">#<strong>event_router</strong>  &#x21d2; EventRouter </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>EventRouter instance for intelligent event routing.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#instance_id-instance_method" title="#instance_id (instance method)">#<strong>instance_id</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Unique instance identifier for distributed coordination.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#metrics-instance_method" title="#metrics (instance method)">#<strong>metrics</strong>  &#x21d2; Concurrent::Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Core metric registry storing all active metrics Using ConcurrentHash for thread-safe operations without locks.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sync_config-instance_method" title="#sync_config (instance method)">#<strong>sync_config</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Configuration for cache synchronization.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sync_strategy-instance_method" title="#sync_strategy (instance method)">#<strong>sync_strategy</strong>  &#x21d2; Symbol </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Selected sync strategy based on cache capabilities.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_metrics-instance_method" title="#all_metrics (instance method)">#<strong>all_metrics</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get all registered metrics.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#clear!-instance_method" title="#clear! (instance method)">#<strong>clear!</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Clear all metrics (primarily for testing).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#counter-instance_method" title="#counter (instance method)">#<strong>counter</strong>(name, **labels)  &#x21d2; MetricTypes::Counter </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get or create a counter metric.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#export-instance_method" title="#export (instance method)">#<strong>export</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Export all metrics to a format suitable for monitoring systems.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#export_distributed_metrics-instance_method" title="#export_distributed_metrics (instance method)">#<strong>export_distributed_metrics</strong>(include_instances: false)  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Export metrics with distributed coordination when supported.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#gauge-instance_method" title="#gauge (instance method)">#<strong>gauge</strong>(name, **labels)  &#x21d2; MetricTypes::Gauge </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get or create a gauge metric.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handle_event-instance_method" title="#handle_event (instance method)">#<strong>handle_event</strong>(event_name, payload = {})  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Handle an event from EventRouter and collect appropriate metrics.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#histogram-instance_method" title="#histogram (instance method)">#<strong>histogram</strong>(name, buckets: nil, **labels)  &#x21d2; MetricTypes::Histogram </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get or create a histogram metric.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>  &#x21d2; MetricsBackend </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Initialize the metrics backend.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#register_event_router-instance_method" title="#register_event_router (instance method)">#<strong>register_event_router</strong>(router)  &#x21d2; EventRouter </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Register the EventRouter for intelligent routing.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stats-instance_method" title="#stats (instance method)">#<strong>stats</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get summary statistics about the metrics backend.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sync_to_cache!-instance_method" title="#sync_to_cache! (instance method)">#<strong>sync_to_cache!</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Synchronize in-memory metrics to Rails.cache using detected strategy.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Telemetry::MetricsBackend (class)">MetricsBackend</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Initialize the metrics backend</p>
+
+<p>Sets up thread-safe storage, integrates with EventRouter, and configures cache capabilities for hybrid architecture. Called automatically via singleton pattern.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 80</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
+  <span class='ivar'>@metrics</span> <span class='op'>=</span> <span class='const'>Concurrent</span><span class='op'>::</span><span class='const'>Hash</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='ivar'>@event_router</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='comment'># Will be set by EventRouter during configuration
+</span>  <span class='ivar'>@created_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
+  <span class='ivar'>@metric_creation_lock</span> <span class='op'>=</span> <span class='const'>Mutex</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+
+  <span class='comment'># Phase 4.2.2.3.1: Cache Detection System
+</span>  <span class='ivar'>@instance_id</span> <span class='op'>=</span> <span class='id identifier rubyid_generate_instance_id'>generate_instance_id</span>
+  <span class='ivar'>@cache_capabilities</span> <span class='op'>=</span> <span class='id identifier rubyid_detect_cache_capabilities'>detect_cache_capabilities</span>
+  <span class='ivar'>@sync_strategy</span> <span class='op'>=</span> <span class='id identifier rubyid_select_sync_strategy'>select_sync_strategy</span>
+  <span class='ivar'>@sync_config</span> <span class='op'>=</span> <span class='id identifier rubyid_configure_sync_parameters'>configure_sync_parameters</span>
+
+  <span class='comment'># Log cache strategy for operational visibility
+</span>  <span class='id identifier rubyid_log_cache_strategy_selection'>log_cache_strategy_selection</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="cache_capabilities-instance_method">
+  
+    #<strong>cache_capabilities</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Cache capabilities detected at initialization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Detected Rails.cache capabilities</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+61
+62
+63</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 61</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cache_capabilities'>cache_capabilities</span>
+  <span class='ivar'>@cache_capabilities</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="created_at-instance_method">
+  
+    #<strong>created_at</strong>  &#x21d2; <tt>Time</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Backend creation timestamp for monitoring</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Time</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>When this backend was initialized</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+57
+58
+59</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 57</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_created_at'>created_at</span>
+  <span class='ivar'>@created_at</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="event_router-instance_method">
+  
+    #<strong>event_router</strong>  &#x21d2; <tt><span class='object_link'><a href="EventRouter.html" title="Tasker::Telemetry::EventRouter (class)">EventRouter</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>EventRouter instance for intelligent event routing</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="EventRouter.html" title="Tasker::Telemetry::EventRouter (class)">EventRouter</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The configured event router</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53
+54
+55</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 53</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_event_router'>event_router</span>
+  <span class='ivar'>@event_router</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="instance_id-instance_method">
+  
+    #<strong>instance_id</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Unique instance identifier for distributed coordination</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Hostname-PID identifier for this instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+69
+70
+71</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 69</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_instance_id'>instance_id</span>
+  <span class='ivar'>@instance_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="metrics-instance_method">
+  
+    #<strong>metrics</strong>  &#x21d2; <tt>Concurrent::Hash</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Core metric registry storing all active metrics Using ConcurrentHash for thread-safe operations without locks</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Concurrent::Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Thread-safe metric storage</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+49
+50
+51</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 49</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_metrics'>metrics</span>
+  <span class='ivar'>@metrics</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="sync_config-instance_method">
+  
+    #<strong>sync_config</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Configuration for cache synchronization</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Sync configuration parameters</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+73
+74
+75</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 73</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sync_config'>sync_config</span>
+  <span class='ivar'>@sync_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="sync_strategy-instance_method">
+  
+    #<strong>sync_strategy</strong>  &#x21d2; <tt>Symbol</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Selected sync strategy based on cache capabilities</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>One of :distributed_atomic, :distributed_basic, :local_only</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+65
+66
+67</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 65</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sync_strategy'>sync_strategy</span>
+  <span class='ivar'>@sync_strategy</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="all_metrics-instance_method">
+  
+    #<strong>all_metrics</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get all registered metrics</p>
+
+<p>Returns a thread-safe snapshot of all current metrics for export to monitoring systems like Prometheus.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>All metrics keyed by metric key</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+304
+305
+306
+307
+308</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 304</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_metrics'>all_metrics</span>
+  <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_each_with_object'>each_with_object</span><span class='lparen'>(</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_metric'>metric</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='op'>|</span>
+    <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_metric'>metric</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="clear!-instance_method">
+  
+    #<strong>clear!</strong>  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Clear all metrics (primarily for testing)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Number of metrics cleared</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+344
+345
+346
+347
+348</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 344</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_clear!'>clear!</span>
+  <span class='id identifier rubyid_cleared_count'>cleared_count</span> <span class='op'>=</span> <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
+  <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_clear'>clear</span>
+  <span class='id identifier rubyid_cleared_count'>cleared_count</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="counter-instance_method">
+  
+    #<strong>counter</strong>(name, **labels)  &#x21d2; <tt><span class='object_link'><a href="MetricTypes/Counter.html" title="Tasker::Telemetry::MetricTypes::Counter (class)">MetricTypes::Counter</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get or create a counter metric</p>
+
+<p>Counters are thread-safe and support only increment operations. They’re ideal for counting events, requests, errors, etc.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_counter'>counter</span> <span class='op'>=</span> <span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>http_requests_total</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>endpoint:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>/api/tasks</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_counter'>counter</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span><span class='lparen'>(</span><span class='int'>5</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The metric name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>labels</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional dimensional labels</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="MetricTypes/Counter.html" title="Tasker::Telemetry::MetricTypes::Counter (class)">MetricTypes::Counter</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The counter instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If name is invalid</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+120
+121
+122
+123
+124</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 120</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_or_create_metric'>get_or_create_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_labels'>labels</span><span class='comma'>,</span> <span class='symbol'>:counter</span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='const'><span class='object_link'><a href="MetricTypes.html" title="Tasker::Telemetry::MetricTypes (module)">MetricTypes</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="MetricTypes/Counter.html" title="Tasker::Telemetry::MetricTypes::Counter (class)">Counter</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="MetricTypes/Counter.html#initialize-instance_method" title="Tasker::Telemetry::MetricTypes::Counter#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>labels:</span> <span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="export-instance_method">
+  
+    #<strong>export</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Export all metrics to a format suitable for monitoring systems</p>
+
+<p>Provides a comprehensive export of all metric data including metadata, current values, and statistical information.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Comprehensive metric export data</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+316
+317
+318
+319
+320
+321
+322
+323</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 316</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_export'>export</span>
+  <span class='lbrace'>{</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+    <span class='label'>backend_created_at:</span> <span class='ivar'>@created_at</span><span class='comma'>,</span>
+    <span class='label'>total_metrics:</span> <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>metrics:</span> <span class='id identifier rubyid_all_metrics'>all_metrics</span><span class='period'>.</span><span class='id identifier rubyid_transform_values'>transform_values</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:to_h</span><span class='rparen'>)</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="export_distributed_metrics-instance_method">
+  
+    #<strong>export_distributed_metrics</strong>(include_instances: false)  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Export metrics with distributed coordination when supported</p>
+
+<p>This method aggregates metrics across containers when possible, falls back to local export for limited cache stores.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>include_instances</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether to include per-instance metrics</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export data with aggregated metrics when available</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 213</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_export_distributed_metrics'>export_distributed_metrics</span><span class='lparen'>(</span><span class='label'>include_instances:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='kw'>case</span> <span class='ivar'>@sync_strategy</span>
+  <span class='kw'>when</span> <span class='symbol'>:distributed_atomic</span><span class='comma'>,</span> <span class='symbol'>:distributed_basic</span>
+    <span class='id identifier rubyid_aggregate_from_distributed_cache'>aggregate_from_distributed_cache</span><span class='lparen'>(</span><span class='label'>include_instances:</span> <span class='id identifier rubyid_include_instances'>include_instances</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='symbol'>:local_only</span>
+    <span class='id identifier rubyid_export_local_metrics_with_warning'>export_local_metrics_with_warning</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_export'>export</span> <span class='comment'># Fallback to standard local export
+</span>  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="gauge-instance_method">
+  
+    #<strong>gauge</strong>(name, **labels)  &#x21d2; <tt><span class='object_link'><a href="MetricTypes/Gauge.html" title="Tasker::Telemetry::MetricTypes::Gauge (class)">MetricTypes::Gauge</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get or create a gauge metric</p>
+
+<p>Gauges are thread-safe and support set, increment, and decrement operations. They’re ideal for values that fluctuate like connections, queue depth, etc.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_gauge'>gauge</span> <span class='op'>=</span> <span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>active_connections</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>service:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>api</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_gauge'>gauge</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='int'>100</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_gauge'>gauge</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span><span class='lparen'>(</span><span class='int'>5</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The metric name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>labels</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional dimensional labels</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="MetricTypes/Gauge.html" title="Tasker::Telemetry::MetricTypes::Gauge (class)">MetricTypes::Gauge</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The gauge instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If name is invalid</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+140
+141
+142
+143
+144</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 140</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_or_create_metric'>get_or_create_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_labels'>labels</span><span class='comma'>,</span> <span class='symbol'>:gauge</span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='const'><span class='object_link'><a href="MetricTypes.html" title="Tasker::Telemetry::MetricTypes (module)">MetricTypes</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="MetricTypes/Gauge.html" title="Tasker::Telemetry::MetricTypes::Gauge (class)">Gauge</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="MetricTypes/Gauge.html#initialize-instance_method" title="Tasker::Telemetry::MetricTypes::Gauge#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>labels:</span> <span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="handle_event-instance_method">
+  
+    #<strong>handle_event</strong>(event_name, payload = {})  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Handle an event from EventRouter and collect appropriate metrics</p>
+
+<p>This method is called by EventRouter when an event should be routed to the metrics backend. It automatically creates and updates metrics based on event type and payload.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Automatic usage via EventRouter</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='comment'># EventRouter calls this automatically:
+</span><span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task.completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span>
+  <span class='label'>task_id:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>123</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+  <span class='label'>duration:</span> <span class='float'>2.45</span><span class='comma'>,</span>
+  <span class='label'>status:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>success</span><span class='tstring_end'>&#39;</span></span>
+<span class='rbrace'>}</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>event_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The lifecycle event name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>payload</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Event payload with metric data</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>True if metrics were collected successfully</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 242</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_payload'>payload</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
+
+  <span class='kw'>case</span> <span class='id identifier rubyid_event_name'>event_name</span>
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\.started$</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># Task/Step started events -&gt; increment counter
+</span>    <span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_extract_entity_type'>extract_entity_type</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>_started_total</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_extract_labels'>extract_labels</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span>
+
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\.completed$</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># Task/Step completed events -&gt; counter + duration histogram
+</span>    <span class='id identifier rubyid_entity_type'>entity_type</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_entity_type'>extract_entity_type</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_labels'>labels</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_labels'>extract_labels</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>_completed_total</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span>
+
+    <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_duration'>extract_duration</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>_duration_seconds</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\.failed$</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># Task/Step failed events -&gt; error counter + duration histogram
+</span>    <span class='id identifier rubyid_entity_type'>entity_type</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_entity_type'>extract_entity_type</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_labels'>labels</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_labels'>extract_labels</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>_failed_total</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span>
+
+    <span class='kw'>if</span> <span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span> <span class='op'>=</span> <span class='id identifier rubyid_extract_duration'>extract_duration</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>_duration_seconds</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\.cancelled$</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># Task/Step cancelled events -&gt; cancellation counter
+</span>    <span class='id identifier rubyid_counter'>counter</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_extract_entity_type'>extract_entity_type</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'>_cancelled_total</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_extract_labels'>extract_labels</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_increment'>increment</span>
+
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>workflow\.iteration</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># Workflow iteration events -&gt; gauge for active tasks
+</span>    <span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>workflow_active_tasks</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:active_task_count</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:active_task_count</span><span class='rbracket'>]</span>
+
+    <span class='kw'>if</span> <span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:iteration_duration</span><span class='rbracket'>]</span>
+      <span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>workflow_iteration_duration_seconds</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:iteration_duration</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+
+  <span class='kw'>when</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>system\.health</span><span class='regexp_end'>/</span></span>
+    <span class='comment'># System health events -&gt; health gauges
+</span>    <span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>system_healthy_tasks</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:healthy_task_count</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:healthy_task_count</span><span class='rbracket'>]</span>
+
+    <span class='id identifier rubyid_gauge'>gauge</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>system_failed_tasks</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:failed_task_count</span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_payload'>payload</span><span class='lbracket'>[</span><span class='symbol'>:failed_task_count</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>true</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='comment'># Fail gracefully - metrics collection should never break the application
+</span>  <span class='id identifier rubyid_warn'>warn</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>MetricsBackend failed to handle event </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_name'>event_name</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>false</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="histogram-instance_method">
+  
+    #<strong>histogram</strong>(name, buckets: nil, **labels)  &#x21d2; <tt><span class='object_link'><a href="MetricTypes/Histogram.html" title="Tasker::Telemetry::MetricTypes::Histogram (class)">MetricTypes::Histogram</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get or create a histogram metric</p>
+
+<p>Histograms are thread-safe and provide statistical analysis of observed values. They’re ideal for measuring durations, sizes, and distributions.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_histogram'>histogram</span> <span class='op'>=</span> <span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>request_duration_seconds</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>method:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>POST</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_histogram'>histogram</span><span class='period'>.</span><span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='float'>0.145</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The metric name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>labels</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional dimensional labels</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>buckets</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Numeric&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optional custom bucket boundaries</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="MetricTypes/Histogram.html" title="Tasker::Telemetry::MetricTypes::Histogram (class)">MetricTypes::Histogram</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The histogram instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If name is invalid or buckets are malformed</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+160
+161
+162
+163
+164
+165
+166
+167
+168</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 160</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_histogram'>histogram</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>buckets:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_or_create_metric'>get_or_create_metric</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_labels'>labels</span><span class='comma'>,</span> <span class='symbol'>:histogram</span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_buckets'>buckets</span>
+      <span class='const'><span class='object_link'><a href="MetricTypes.html" title="Tasker::Telemetry::MetricTypes (module)">MetricTypes</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="MetricTypes/Histogram.html" title="Tasker::Telemetry::MetricTypes::Histogram (class)">Histogram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="MetricTypes/Histogram.html#initialize-instance_method" title="Tasker::Telemetry::MetricTypes::Histogram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>labels:</span> <span class='id identifier rubyid_labels'>labels</span><span class='comma'>,</span> <span class='label'>buckets:</span> <span class='id identifier rubyid_buckets'>buckets</span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='const'><span class='object_link'><a href="MetricTypes.html" title="Tasker::Telemetry::MetricTypes (module)">MetricTypes</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="MetricTypes/Histogram.html" title="Tasker::Telemetry::MetricTypes::Histogram (class)">Histogram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="MetricTypes/Histogram.html#initialize-instance_method" title="Tasker::Telemetry::MetricTypes::Histogram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>labels:</span> <span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="register_event_router-instance_method">
+  
+    #<strong>register_event_router</strong>(router)  &#x21d2; <tt><span class='object_link'><a href="EventRouter.html" title="Tasker::Telemetry::EventRouter (class)">EventRouter</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Register the EventRouter for intelligent routing</p>
+
+<p>This method is called by EventRouter during configuration to enable automatic metric collection based on routing decisions.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>router</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="EventRouter.html" title="Tasker::Telemetry::EventRouter (class)">EventRouter</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The configured event router</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="EventRouter.html" title="Tasker::Telemetry::EventRouter (class)">EventRouter</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The registered router</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+103
+104
+105</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 103</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_register_event_router'>register_event_router</span><span class='lparen'>(</span><span class='id identifier rubyid_router'>router</span><span class='rparen'>)</span>
+  <span class='ivar'>@event_router</span> <span class='op'>=</span> <span class='id identifier rubyid_router'>router</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="stats-instance_method">
+  
+    #<strong>stats</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get summary statistics about the metrics backend</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Backend statistics and health information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 328</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stats'>stats</span>
+  <span class='id identifier rubyid_metric_types'>metric_types</span> <span class='op'>=</span> <span class='id identifier rubyid_all_metrics'>all_metrics</span><span class='period'>.</span><span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_group_by'>group_by</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_m'>m</span><span class='op'>|</span> <span class='id identifier rubyid_m'>m</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
+
+  <span class='lbrace'>{</span>
+    <span class='label'>total_metrics:</span> <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+    <span class='label'>counter_metrics:</span> <span class='id identifier rubyid_metric_types'>metric_types</span><span class='lbracket'>[</span><span class='symbol'>:counter</span><span class='rbracket'>]</span><span class='op'>&amp;.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>||</span> <span class='int'>0</span><span class='comma'>,</span>
+    <span class='label'>gauge_metrics:</span> <span class='id identifier rubyid_metric_types'>metric_types</span><span class='lbracket'>[</span><span class='symbol'>:gauge</span><span class='rbracket'>]</span><span class='op'>&amp;.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>||</span> <span class='int'>0</span><span class='comma'>,</span>
+    <span class='label'>histogram_metrics:</span> <span class='id identifier rubyid_metric_types'>metric_types</span><span class='lbracket'>[</span><span class='symbol'>:histogram</span><span class='rbracket'>]</span><span class='op'>&amp;.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>||</span> <span class='int'>0</span><span class='comma'>,</span>
+    <span class='label'>backend_uptime:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='ivar'>@created_at</span><span class='comma'>,</span>
+    <span class='label'>created_at:</span> <span class='ivar'>@created_at</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="sync_to_cache!-instance_method">
+  
+    #<strong>sync_to_cache!</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Synchronize in-memory metrics to Rails.cache using detected strategy</p>
+
+<p>This method implements the core cache synchronization logic that adapts to the available Rails.cache store capabilities.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Periodic sync (typically called from background job)</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_backend'>backend</span><span class='period'>.</span><span class='id identifier rubyid_sync_to_cache!'>sync_to_cache!</span>
+<span class='comment'># =&gt; { success: true, synced_metrics: 42, strategy: :distributed_atomic }</span></code></pre>
+    
+  </div>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Sync result with success status and metrics count</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 180</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sync_to_cache!'>sync_to_cache!</span>
+  <span class='kw'>return</span> <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Rails.cache not available</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='id identifier rubyid_rails_cache_available?'>rails_cache_available?</span>
+
+  <span class='id identifier rubyid_start_time'>start_time</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+
+  <span class='kw'>case</span> <span class='ivar'>@sync_strategy</span>
+  <span class='kw'>when</span> <span class='symbol'>:distributed_atomic</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_sync_with_atomic_operations'>sync_with_atomic_operations</span>
+  <span class='kw'>when</span> <span class='symbol'>:distributed_basic</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_sync_with_read_modify_write'>sync_with_read_modify_write</span>
+  <span class='kw'>when</span> <span class='symbol'>:local_only</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_sync_to_local_cache'>sync_to_local_cache</span>
+  <span class='kw'>else</span>
+    <span class='kw'>return</span> <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unknown sync strategy: </span><span class='embexpr_beg'>#{</span><span class='ivar'>@sync_strategy</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>duration:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span><span class='comma'>,</span>
+    <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
+    <span class='label'>instance_id:</span> <span class='ivar'>@instance_id</span>
+  <span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_sync_error'>log_sync_error</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Mon Jun 23 21:45:56 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

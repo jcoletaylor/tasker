@@ -40,6 +40,37 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       backend.instance_variable_set(:@event_router, nil)
       expect(backend.event_router).to be_nil
     end
+
+    # Phase 4.2.2.3.1: Cache Detection System Tests
+    it 'detects cache capabilities on initialization' do
+      expect(backend.cache_capabilities).to be_a(Hash)
+      expect(backend.cache_capabilities).to include(
+        :distributed,
+        :atomic_increment,
+        :locking,
+        :ttl_inspection,
+        :store_class
+      )
+    end
+
+    it 'selects appropriate sync strategy based on capabilities' do
+      expect(backend.sync_strategy).to be_in(%i[distributed_atomic distributed_basic local_only])
+    end
+
+    it 'generates unique instance ID' do
+      expect(backend.instance_id).to be_a(String)
+      expect(backend.instance_id).to include('-') # hostname-pid format
+    end
+
+    it 'configures sync parameters' do
+      expect(backend.sync_config).to be_a(Hash)
+      expect(backend.sync_config).to include(
+        :retention_window,
+        :export_safety_margin,
+        :sync_interval,
+        :export_interval
+      )
+    end
   end
 
   describe '#register_event_router' do
@@ -47,7 +78,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
 
     it 'registers an event router' do
       expect { backend.register_event_router(mock_router) }
-        .to change { backend.event_router }.to(mock_router)
+        .to change(backend, :event_router).to(mock_router)
     end
 
     it 'returns the registered router' do
@@ -282,10 +313,10 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
         expect(counter).to be_a(Tasker::Telemetry::MetricTypes::Counter)
         expect(counter.value).to eq(1)
         expect(counter.labels).to eq({
-          'status' => 'success',
-          'handler' => 'ValidateOrder',
-          'namespace' => 'ecommerce'
-        })
+                                       'status' => 'success',
+                                       'handler' => 'ValidateOrder',
+                                       'namespace' => 'ecommerce'
+                                     })
       end
 
       it 'handles step.failed events' do
@@ -350,7 +381,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
 
       it 'handles unknown event types gracefully' do
         result = backend.handle_event('unknown.event', { data: 'test' })
-        expect(result).to be(true)  # No error, just no action taken
+        expect(result).to be(true) # No error, just no action taken
       end
 
       it 'gracefully handles metric creation errors' do
@@ -383,11 +414,8 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       expect(metrics).to be_a(Hash)
       expect(metrics.size).to eq(3)
 
-      expect(metrics.values.map(&:class)).to match_array([
-        Tasker::Telemetry::MetricTypes::Counter,
-        Tasker::Telemetry::MetricTypes::Gauge,
-        Tasker::Telemetry::MetricTypes::Histogram
-      ])
+      expect(metrics.values.map(&:class)).to contain_exactly(Tasker::Telemetry::MetricTypes::Counter,
+                                                             Tasker::Telemetry::MetricTypes::Gauge, Tasker::Telemetry::MetricTypes::Histogram)
     end
 
     it 'returns a snapshot that does not affect the original registry' do
@@ -430,7 +458,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
     it 'exports data in monitoring system compatible format' do
       export = backend.export
 
-      export[:metrics].each do |key, metric_data|
+      export[:metrics].each_value do |metric_data|
         expect(metric_data).to have_key(:name)
         expect(metric_data).to have_key(:type)
         expect(metric_data).to have_key(:created_at)
@@ -454,7 +482,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       backend.clear!
       2.times { |i| backend.counter("counter_#{i}").increment }
       3.times { |i| backend.gauge("gauge_#{i}").set(i) }
-      1.times { |i| backend.histogram("histogram_#{i}").observe(i) }
+      backend.histogram('histogram_0').observe(0)
     end
 
     it 'returns comprehensive backend statistics' do
@@ -476,7 +504,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       stats = backend.stats
       uptime = stats[:backend_uptime]
 
-      sleep 0.001  # Small delay
+      sleep 0.001 # Small delay
       later_stats = backend.stats
       later_uptime = later_stats[:backend_uptime]
 
@@ -555,22 +583,686 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
     it 'handles high-volume metric operations efficiently' do
       backend.clear!
 
-            # Test metric creation performance
-      expect {
+      # Test metric creation performance
+      expect do
         1000.times { |i| backend.counter("perf_counter_#{i}") }
-      }.to take_less_than(0.5)
+      end.to take_less_than(0.5)
 
       # Test metric updates performance
       counter = backend.counter('perf_test_counter')
-      expect {
+      expect do
         10_000.times { counter.increment }
-      }.to take_less_than(0.1)
+      end.to take_less_than(0.1)
 
       # Test histogram observations performance
       histogram = backend.histogram('perf_test_histogram')
-      expect {
+      expect do
         10_000.times { |i| histogram.observe(i * 0.001) }
-      }.to take_less_than(1.0)
+      end.to take_less_than(1.0)
+    end
+  end
+
+  # Phase 4.2.2.3.1: Cache Detection and Synchronization Tests
+  describe 'Cache detection system' do
+    describe 'cache capability detection' do
+      context 'with Rails.cache available' do
+        let(:mock_redis_store) { double('RedisCacheStore') }
+        let(:mock_memcache_store) { double('MemCacheStore') }
+        let(:mock_memory_store) { double('MemoryStore') }
+
+        before do
+          allow(Rails).to receive(:cache).and_return(mock_redis_store)
+        end
+
+        it 'detects Redis store capabilities correctly' do
+          # Mock all respond_to? calls that rails_cache_available? makes
+          allow(mock_redis_store).to receive(:respond_to?).with(:read).and_return(true)
+          allow(mock_redis_store).to receive(:respond_to?).with(:write).and_return(true)
+
+          # Mock capability detection methods
+          allow(mock_redis_store).to receive(:is_a?).with(ActiveSupport::Cache::RedisCacheStore).and_return(true)
+          allow(mock_redis_store).to receive(:is_a?).with(ActiveSupport::Cache::MemCacheStore).and_return(false)
+          allow(mock_redis_store).to receive(:respond_to?).with(:increment).and_return(true)
+          allow(mock_redis_store).to receive(:respond_to?).with(:with_lock).and_return(true)
+          allow(mock_redis_store).to receive(:respond_to?).with(:options).and_return(true)
+          allow(mock_redis_store).to receive_messages(options: { namespace: 'test', compress: true },
+                                                      class: double(name: 'ActiveSupport::Cache::RedisCacheStore'))
+
+          backend = described_class.send(:new) # Create new instance for testing
+          capabilities = backend.send(:detect_cache_capabilities)
+
+          expect(capabilities[:distributed]).to be true
+          expect(capabilities[:atomic_increment]).to be true
+          expect(capabilities[:locking]).to be true
+          expect(capabilities[:ttl_inspection]).to be true
+          expect(capabilities[:store_class]).to eq('ActiveSupport::Cache::RedisCacheStore')
+        end
+
+        it 'detects Memcached store capabilities correctly' do
+          allow(Rails).to receive(:cache).and_return(mock_memcache_store)
+
+          # Mock all respond_to? calls that rails_cache_available? makes
+          allow(mock_memcache_store).to receive(:respond_to?).with(:read).and_return(true)
+          allow(mock_memcache_store).to receive(:respond_to?).with(:write).and_return(true)
+
+          # Mock capability detection methods
+          allow(mock_memcache_store).to receive(:is_a?).with(ActiveSupport::Cache::RedisCacheStore).and_return(false)
+          allow(mock_memcache_store).to receive(:is_a?).with(ActiveSupport::Cache::MemCacheStore).and_return(true)
+          allow(mock_memcache_store).to receive(:respond_to?).with(:increment).and_return(true)
+          allow(mock_memcache_store).to receive(:respond_to?).with(:with_lock).and_return(false)
+          allow(mock_memcache_store).to receive(:respond_to?).with(:options).and_return(true)
+          allow(mock_memcache_store).to receive_messages(options: { namespace: 'test', compress: true },
+                                                         class: double(name: 'ActiveSupport::Cache::MemCacheStore'))
+
+          backend = described_class.send(:new)
+          capabilities = backend.send(:detect_cache_capabilities)
+
+          expect(capabilities[:distributed]).to be true
+          expect(capabilities[:atomic_increment]).to be true
+          expect(capabilities[:locking]).to be false
+          expect(capabilities[:ttl_inspection]).to be true
+          expect(capabilities[:store_class]).to eq('ActiveSupport::Cache::MemCacheStore')
+        end
+
+        it 'detects memory store capabilities correctly' do
+          allow(Rails).to receive(:cache).and_return(mock_memory_store)
+
+          # Mock all respond_to? calls that rails_cache_available? makes
+          allow(mock_memory_store).to receive(:respond_to?).with(:read).and_return(true)
+          allow(mock_memory_store).to receive(:respond_to?).with(:write).and_return(true)
+
+          # Mock capability detection methods
+          allow(mock_memory_store).to receive(:respond_to?).with(:increment).and_return(false)
+          allow(mock_memory_store).to receive(:respond_to?).with(:with_lock).and_return(false)
+          allow(mock_memory_store).to receive(:respond_to?).with(:options).and_return(false)
+          allow(mock_memory_store).to receive_messages(is_a?: false,
+                                                       class: double(name: 'ActiveSupport::Cache::MemoryStore'))
+
+          backend = described_class.send(:new)
+          capabilities = backend.send(:detect_cache_capabilities)
+
+          expect(capabilities[:distributed]).to be false
+          expect(capabilities[:atomic_increment]).to be false
+          expect(capabilities[:locking]).to be false
+          expect(capabilities[:ttl_inspection]).to be false
+          expect(capabilities[:store_class]).to eq('ActiveSupport::Cache::MemoryStore')
+        end
+      end
+
+      context 'without Rails.cache available' do
+        it 'returns default capabilities when Rails.cache unavailable' do
+          # Mock Rails.cache to not be available
+          allow(Rails).to receive(:cache).and_raise(StandardError.new('Cache not available'))
+
+          backend = described_class.send(:new)
+          capabilities = backend.send(:detect_cache_capabilities)
+
+          expect(capabilities[:distributed]).to be false
+          expect(capabilities[:atomic_increment]).to be false
+          expect(capabilities[:locking]).to be false
+          expect(capabilities[:ttl_inspection]).to be false
+          expect(capabilities[:store_class]).to eq('Unknown')
+        end
+      end
+    end
+
+    describe 'sync strategy selection' do
+      it 'selects distributed_atomic for full-featured Redis' do
+        backend = described_class.send(:new)
+        backend.instance_variable_set(:@cache_capabilities, {
+                                        distributed: true,
+                                        atomic_increment: true,
+                                        locking: true,
+                                        ttl_inspection: true
+                                      })
+
+        strategy = backend.send(:select_sync_strategy)
+        expect(strategy).to eq(:distributed_atomic)
+      end
+
+      it 'selects distributed_basic for basic distributed cache' do
+        backend = described_class.send(:new)
+        backend.instance_variable_set(:@cache_capabilities, {
+                                        distributed: true,
+                                        atomic_increment: true,
+                                        locking: false,
+                                        ttl_inspection: true
+                                      })
+
+        strategy = backend.send(:select_sync_strategy)
+        expect(strategy).to eq(:distributed_basic)
+      end
+
+      it 'selects local_only for memory store' do
+        backend = described_class.send(:new)
+        backend.instance_variable_set(:@cache_capabilities, {
+                                        distributed: false,
+                                        atomic_increment: false,
+                                        locking: false,
+                                        ttl_inspection: false
+                                      })
+
+        strategy = backend.send(:select_sync_strategy)
+        expect(strategy).to eq(:local_only)
+      end
+    end
+
+    describe 'instance ID generation' do
+      it 'generates hostname-pid format' do
+        backend = described_class.send(:new)
+        instance_id = backend.send(:generate_instance_id)
+
+        expect(instance_id).to match(/\A.+-\d+\z/) # hostname-pid pattern
+        expect(instance_id).to include('-')
+      end
+
+      it 'handles hostname detection failure gracefully' do
+        allow(Socket).to receive(:gethostname).and_raise(StandardError.new('hostname fail'))
+        allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
+
+        backend = described_class.send(:new)
+        instance_id = backend.send(:generate_instance_id)
+
+        expect(instance_id).to start_with('unknown-')
+        expect(instance_id).to end_with(Process.pid.to_s)
+      end
+    end
+  end
+
+  describe 'Cache synchronization' do
+    before do
+      backend.clear!
+      backend.counter('sync_counter').increment(5)
+      backend.gauge('sync_gauge').set(10)
+      backend.histogram('sync_histogram').observe(2.5)
+    end
+
+    describe '#sync_to_cache!' do
+      context 'when Rails.cache is unavailable' do
+        before do
+          allow(backend).to receive(:rails_cache_available?).and_return(false)
+        end
+
+        it 'returns failure result' do
+          result = backend.sync_to_cache!
+
+          expect(result[:success]).to be false
+          expect(result[:error]).to eq('Rails.cache not available')
+        end
+      end
+
+      context 'with distributed_atomic strategy' do
+        before do
+          backend.instance_variable_set(:@sync_strategy, :distributed_atomic)
+          allow(backend).to receive(:rails_cache_available?).and_return(true)
+          allow(Rails.cache).to receive(:increment)
+          allow(Rails.cache).to receive(:write)
+        end
+
+        it 'syncs using atomic operations' do
+          expect(backend).to receive(:sync_with_atomic_operations).and_return({
+                                                                                success: true, synced_metrics: 3, strategy: :distributed_atomic
+                                                                              })
+
+          result = backend.sync_to_cache!
+
+          expect(result[:success]).to be true
+          expect(result[:synced_metrics]).to eq(3)
+          expect(result[:strategy]).to eq(:distributed_atomic)
+          expect(result[:instance_id]).to eq(backend.instance_id)
+        end
+      end
+
+      context 'with distributed_basic strategy' do
+        before do
+          backend.instance_variable_set(:@sync_strategy, :distributed_basic)
+          allow(backend).to receive(:rails_cache_available?).and_return(true)
+          allow(Rails.cache).to receive(:read)
+          allow(Rails.cache).to receive(:write)
+        end
+
+        it 'syncs using read-modify-write operations' do
+          expect(backend).to receive(:sync_with_read_modify_write).and_return({
+                                                                                success: true, synced_metrics: 3, strategy: :distributed_basic
+                                                                              })
+
+          result = backend.sync_to_cache!
+
+          expect(result[:success]).to be true
+          expect(result[:strategy]).to eq(:distributed_basic)
+        end
+      end
+
+      context 'with local_only strategy' do
+        before do
+          backend.instance_variable_set(:@sync_strategy, :local_only)
+          allow(backend).to receive(:rails_cache_available?).and_return(true)
+          allow(Rails.cache).to receive(:write)
+        end
+
+        it 'creates local cache snapshot' do
+          expect(backend).to receive(:sync_to_local_cache).and_return({
+                                                                        success: true, synced_metrics: 3, strategy: :local_only
+                                                                      })
+
+          result = backend.sync_to_cache!
+
+          expect(result[:success]).to be true
+          expect(result[:strategy]).to eq(:local_only)
+        end
+      end
+
+      it 'handles sync errors gracefully' do
+        backend.instance_variable_set(:@sync_strategy, :distributed_atomic)
+        allow(backend).to receive(:rails_cache_available?).and_return(true)
+        allow(backend).to receive(:sync_with_atomic_operations).and_raise(StandardError.new('sync failed'))
+
+        result = backend.sync_to_cache!
+
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('sync failed')
+        expect(result[:timestamp]).to be_present
+      end
+    end
+
+    describe '#export_distributed_metrics' do
+      context 'with distributed strategies' do
+        before do
+          backend.instance_variable_set(:@sync_strategy, :distributed_atomic)
+        end
+
+        it 'attempts distributed aggregation' do
+          result = backend.export_distributed_metrics
+
+          expect(result[:distributed]).to be true
+          expect(result[:sync_strategy]).to eq(:distributed_atomic)
+          expect(result[:note]).to include('Phase 4.2.2.3.3')
+        end
+      end
+
+      context 'with local_only strategy' do
+        before do
+          backend.instance_variable_set(:@sync_strategy, :local_only)
+        end
+
+        it 'exports with warning about local-only mode' do
+          result = backend.export_distributed_metrics
+
+          expect(result[:distributed]).to be false
+          expect(result[:sync_strategy]).to eq(:local_only)
+          expect(result[:warning]).to include('local-only')
+        end
+      end
+    end
+  end
+
+  # **Phase 4.2.2.3.2 Adaptive Sync Operations Tests**
+  # ===================================================
+
+  describe 'Phase 4.2.2.3.2 Enhanced Sync Operations' do
+    before do
+      backend.clear!
+      # Create test metrics of different types
+      backend.counter('test_counter', service: 'api').increment(10)
+      backend.counter('another_counter', service: 'worker').increment(5)
+      backend.gauge('test_gauge', env: 'prod').set(42.5)
+      backend.histogram('test_histogram', operation: 'db_query').observe(1.5)
+      backend.histogram('test_histogram', operation: 'db_query').observe(2.5)
+    end
+
+    describe '#sync_with_atomic_operations' do
+      before do
+        backend.instance_variable_set(:@sync_strategy, :distributed_atomic)
+        backend.instance_variable_set(:@cache_capabilities, {
+                                        distributed: true,
+                                        atomic_increment: true,
+                                        locking: true,
+                                        ttl_inspection: true
+                                      })
+        allow(Rails.cache).to receive(:increment)
+        allow(Rails.cache).to receive(:write)
+      end
+
+      it 'returns detailed sync result with performance metrics' do
+        result = backend.send(:sync_with_atomic_operations)
+
+        expect(result[:success]).to be true
+        expect(result[:strategy]).to eq(:distributed_atomic)
+        expect(result[:synced_metrics]).to be > 0
+        expect(result[:duration_ms]).to be > 0
+        expect(result[:performance]).to be_a(Hash)
+        expect(result[:timestamp]).to be_present
+      end
+
+      it 'groups metrics by type for batch processing' do
+        expect(backend).to receive(:group_metrics_by_type).and_call_original
+        expect(backend).to receive(:sync_atomic_counters).and_return({ counters: 2, conflicts: 0 })
+        expect(backend).to receive(:sync_distributed_gauges).and_return({ gauges: 1, conflicts: 0 })
+        expect(backend).to receive(:sync_distributed_histograms).and_return({ histograms: 1, conflicts: 0 })
+
+        result = backend.send(:sync_with_atomic_operations)
+        expect(result[:synced_metrics]).to eq(4) # 2 counters + 1 gauge + 1 histogram
+      end
+
+      it 'handles sync errors gracefully with partial results' do
+        allow(backend).to receive(:group_metrics_by_type).and_raise(StandardError.new('grouping failed'))
+
+        result = backend.send(:sync_with_atomic_operations)
+
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('grouping failed')
+        expect(result[:partial_results]).to be_a(Hash)
+        expect(result[:timestamp]).to be_present
+      end
+
+      it 'logs successful atomic sync operations' do
+        expect(Rails.logger).to receive(:info).with(
+          a_string_matching(/Atomic sync completed.*metrics.*conflicts.*batches/)
+        )
+
+        backend.send(:sync_with_atomic_operations)
+      end
+    end
+
+    describe '#sync_with_read_modify_write' do
+      before do
+        backend.instance_variable_set(:@sync_strategy, :distributed_basic)
+        backend.instance_variable_set(:@cache_capabilities, {
+                                        distributed: true,
+                                        atomic_increment: true,
+                                        locking: false,
+                                        ttl_inspection: true
+                                      })
+        allow(Rails.cache).to receive(:read)
+        allow(Rails.cache).to receive(:write)
+      end
+
+      it 'returns detailed sync result with retry statistics' do
+        # Mock the optimistic concurrency method to return successful stats
+        allow(backend).to receive(:sync_with_optimistic_concurrency).and_return({
+                                                                                  counters: 2, gauges: 1, histograms: 1, retries: 1, conflicts: 0, failed: 0
+                                                                                })
+
+        result = backend.send(:sync_with_read_modify_write)
+
+        expect(result[:success]).to be true
+        expect(result[:strategy]).to eq(:distributed_basic)
+        expect(result[:synced_metrics]).to be > 0
+        expect(result[:duration_ms]).to be > 0
+        expect(result[:performance]).to include(:retries, :conflicts, :failed)
+        expect(result[:timestamp]).to be_present
+      end
+
+      it 'uses optimistic concurrency control' do
+        expect(backend).to receive(:sync_with_optimistic_concurrency).and_return({
+                                                                                   counters: 2, gauges: 1, histograms: 1, retries: 1, conflicts: 0, failed: 0
+                                                                                 })
+
+        result = backend.send(:sync_with_read_modify_write)
+        expect(result[:performance][:retries]).to eq(1)
+      end
+
+      it 'logs successful read-modify-write operations' do
+        expect(Rails.logger).to receive(:info).with(
+          a_string_matching(/Read-modify-write sync completed.*retries.*failed/)
+        )
+
+        backend.send(:sync_with_read_modify_write)
+      end
+    end
+
+    describe '#sync_to_local_cache' do
+      before do
+        backend.instance_variable_set(:@sync_strategy, :local_only)
+        allow(Rails.cache).to receive(:write).and_return(true)
+      end
+
+      it 'returns detailed sync result with snapshot information' do
+        result = backend.send(:sync_to_local_cache)
+
+        expect(result[:success]).to be true
+        expect(result[:strategy]).to eq(:local_only)
+        expect(result[:synced_metrics]).to be > 0
+        expect(result[:duration_ms]).to be > 0
+        expect(result[:performance]).to include(:snapshots, :metrics_serialized, :size_bytes)
+        expect(result[:snapshot_key]).to be_present
+        expect(result[:timestamp]).to be_present
+      end
+
+      it 'creates versioned snapshots with metadata' do
+        expect(backend).to receive(:create_versioned_snapshot).and_call_original
+
+        result = backend.send(:sync_to_local_cache)
+        expect(result[:success]).to be true
+      end
+
+      it 'handles snapshot creation failures gracefully' do
+        allow(Rails.cache).to receive(:write).and_return(false)
+
+        result = backend.send(:sync_to_local_cache)
+        expect(result[:success]).to be false
+      end
+
+      it 'logs successful local sync operations' do
+        expect(Rails.logger).to receive(:info).with(
+          a_string_matching(/Local snapshot sync completed.*snapshots.*bytes/)
+        )
+
+        backend.send(:sync_to_local_cache)
+      end
+
+      it 'creates timestamped snapshots for history when possible' do
+        expect(Rails.cache).to receive(:write).twice # Primary + timestamped
+        backend.send(:sync_to_local_cache)
+      end
+    end
+
+    describe 'Supporting methods' do
+      describe '#group_metrics_by_type' do
+        it 'groups metrics by counter, gauge, histogram types' do
+          grouped = backend.send(:group_metrics_by_type)
+
+          expect(grouped[:counter].size).to eq(2)  # test_counter, another_counter
+          expect(grouped[:gauge].size).to eq(1)    # test_gauge
+          expect(grouped[:histogram].size).to eq(1) # test_histogram
+        end
+
+        it 'returns arrays of [key, metric_data] pairs' do
+          grouped = backend.send(:group_metrics_by_type)
+
+          key, metric_data = grouped[:counter].first
+          expect(key).to be_a(String)
+          expect(metric_data).to include(:type, :value, :labels)
+          expect(metric_data[:type]).to eq(:counter)
+        end
+      end
+
+      describe '#sync_atomic_counters' do
+        it 'uses atomic increment operations for counters' do
+          counters = backend.send(:group_metrics_by_type)[:counter]
+
+          expect(Rails.cache).to receive(:increment).twice # for each counter
+
+          stats = backend.send(:sync_atomic_counters, counters)
+          expect(stats[:counters]).to eq(2)
+          expect(stats[:conflicts]).to eq(0)
+        end
+
+        it 'handles atomic operation failures with fallback' do
+          counters = backend.send(:group_metrics_by_type)[:counter]
+
+          allow(Rails.cache).to receive(:increment).and_raise(StandardError.new('atomic failed'))
+          expect(Rails.cache).to receive(:write).twice # fallback for each counter
+
+          stats = backend.send(:sync_atomic_counters, counters)
+          expect(stats[:conflicts]).to eq(2)  # Both operations failed and fell back
+        end
+      end
+
+      describe '#sync_distributed_gauges' do
+        it 'adds timestamp and instance ID for conflict resolution' do
+          gauges = backend.send(:group_metrics_by_type)[:gauge]
+
+          expect(Rails.cache).to receive(:write) do |_key, data, _options|
+            expect(data).to include(:last_update, :instance_id)
+            expect(data[:last_update]).to be > 0
+            expect(data[:instance_id]).to eq(backend.instance_id)
+          end
+
+          backend.send(:sync_distributed_gauges, gauges)
+        end
+      end
+
+      describe '#sync_distributed_histograms' do
+        before do
+          backend.instance_variable_set(:@cache_capabilities, {
+                                          distributed: true,
+                                          atomic_increment: true
+                                        })
+        end
+
+        it 'attempts atomic histogram updates first' do
+          histograms = backend.send(:group_metrics_by_type)[:histogram]
+
+          expect(backend).to receive(:attempt_atomic_histogram_update).and_return(true)
+
+          stats = backend.send(:sync_distributed_histograms, histograms)
+          expect(stats[:histograms]).to eq(1)
+          expect(stats[:conflicts]).to eq(0)
+        end
+
+        it 'falls back to merge strategy when atomic operations fail' do
+          histograms = backend.send(:group_metrics_by_type)[:histogram]
+
+          expect(backend).to receive(:attempt_atomic_histogram_update).and_return(false)
+          expect(Rails.cache).to receive(:read)
+          expect(Rails.cache).to receive(:write)
+
+          stats = backend.send(:sync_distributed_histograms, histograms)
+          expect(stats[:conflicts]).to eq(1)  # Fallback was used
+        end
+      end
+
+      describe '#sync_with_optimistic_concurrency' do
+        it 'implements retry logic with exponential backoff' do
+          grouped_metrics = { counter: [[backend.send(:build_metric_key, 'test', {}), { type: :counter, value: 1 }]] }
+
+          # Simulate write failures that trigger retries
+          call_count = 0
+          allow(Rails.cache).to receive(:write) do
+            call_count += 1
+            call_count > 2 # Fail twice, succeed on third try
+          end
+          allow(Rails.cache).to receive(:read).and_return(nil) # Start with empty cache
+
+          allow(backend).to receive(:sleep) # Don't actually sleep in tests
+
+          stats = backend.send(:sync_with_optimistic_concurrency, grouped_metrics)
+          expect(stats[:retries]).to eq(2) # Two retries before success (matches actual implementation)
+          expect(stats[:counters]).to eq(1) # Eventually succeeded (note: plural form)
+        end
+
+        it 'gives up after maximum retries and marks as failed' do
+          grouped_metrics = { counter: [[backend.send(:build_metric_key, 'test', {}),
+                                         { type: :counter, value: 1 }]] }
+
+          allow(Rails.cache).to receive(:write).and_return(false) # Always fail
+          allow(backend).to receive(:sleep)
+
+          stats = backend.send(:sync_with_optimistic_concurrency, grouped_metrics)
+          expect(stats[:failed]).to eq(1)
+          expect(stats[:retries]).to eq(3) # Maximum retries attempted
+        end
+      end
+
+      describe '#create_versioned_snapshot' do
+        it 'creates comprehensive snapshot with metadata' do
+          snapshot = backend.send(:create_versioned_snapshot)
+
+          expect(snapshot[:version]).to eq(Tasker::VERSION)
+          expect(snapshot[:timestamp]).to be_present
+          expect(snapshot[:instance_id]).to eq(backend.instance_id)
+          expect(snapshot[:cache_strategy]).to be_present
+          expect(snapshot[:cache_capabilities]).to be_a(Hash)
+          expect(snapshot[:total_metrics]).to be > 0
+          expect(snapshot[:metrics_by_type]).to include(:counter, :gauge, :histogram)
+          expect(snapshot[:metrics]).to be_a(Hash)
+          expect(snapshot[:sync_config]).to be_a(Hash)
+          expect(snapshot[:hostname]).to be_present
+        end
+
+        it 'includes metrics breakdown by type' do
+          snapshot = backend.send(:create_versioned_snapshot)
+
+          expect(snapshot[:metrics_by_type][:counter]).to eq(2)  # test_counter, another_counter
+          expect(snapshot[:metrics_by_type][:gauge]).to eq(1)    # test_gauge
+          expect(snapshot[:metrics_by_type][:histogram]).to eq(1) # test_histogram
+        end
+      end
+
+      describe '#estimate_snapshot_size' do
+        it 'estimates size in bytes' do
+          snapshot_data = { test: 'data', metrics: { counter: 1 } }
+
+          size = backend.send(:estimate_snapshot_size, snapshot_data)
+          expect(size).to be > 0
+          expect(size).to be_a(Integer)
+        end
+
+        it 'handles estimation errors gracefully' do
+          allow_any_instance_of(Hash).to receive(:to_json).and_raise(StandardError.new('json error'))
+
+          size = backend.send(:estimate_snapshot_size, { test: 'data' })
+          expect(size).to eq(0)
+        end
+      end
+    end
+
+    describe 'Performance characteristics' do
+      it 'completes atomic sync operations quickly' do
+        backend.instance_variable_set(:@sync_strategy, :distributed_atomic)
+        backend.instance_variable_set(:@cache_capabilities, { atomic_increment: true })
+        allow(Rails.cache).to receive(:increment)
+        allow(Rails.cache).to receive(:write)
+
+        # Should complete in under 100ms
+        expect do
+          backend.send(:sync_with_atomic_operations)
+        end.to take_less_than(0.1)
+      end
+
+      it 'includes accurate timing in sync results' do
+        result = backend.send(:sync_with_atomic_operations)
+
+        expect(result[:duration_ms]).to be > 0
+        expect(result[:duration_ms]).to be < 1000 # Should be well under 1 second
+      end
+    end
+
+    describe 'Error resilience' do
+      it 'isolates failures between metric types' do
+        allow(backend).to receive(:sync_atomic_counters).and_raise(StandardError.new('counter sync failed'))
+        allow(backend).to receive_messages(sync_distributed_gauges: { gauges: 1, conflicts: 0 },
+                                           sync_distributed_histograms: {
+                                             histograms: 1, conflicts: 0
+                                           })
+
+        result = backend.send(:sync_with_atomic_operations)
+
+        # Should capture partial results even when some operations fail
+        expect(result[:success]).to be false
+        expect(result[:partial_results]).to be_a(Hash)
+      end
+
+      it 'provides detailed error information' do
+        allow(backend).to receive(:group_metrics_by_type).and_raise(StandardError.new('critical failure'))
+
+        result = backend.send(:sync_with_atomic_operations)
+
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('critical failure')
+        expect(result[:timestamp]).to be_present
+      end
     end
   end
 end

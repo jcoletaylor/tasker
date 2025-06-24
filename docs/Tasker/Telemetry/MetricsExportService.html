@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Telemetry::MetricsExportService
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Telemetry::MetricsExportService";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (M)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Telemetry.html" title="Tasker::Telemetry (module)">Telemetry</a></span></span>
+     &raquo; 
+    <span class="title">MetricsExportService</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Telemetry::MetricsExportService
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Telemetry::MetricsExportService</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/telemetry/metrics_export_service.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Service for exporting metrics in various formats with delivery coordination</p>
+
+<p><strong>Phase 4.2.2.3.3</strong>: Service handles the business logic of metrics export, including format conversion, delivery, and storage. This is called by MetricsExportJob but can also be used independently.</p>
+
+<p>Key Features: - Multiple export formats (Prometheus, JSON, CSV) - Prometheus remote write integration - Configurable storage backends - Comprehensive error handling and logging</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_service'>service</span> <span class='op'>=</span> <span class='const'>MetricsExportService</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Telemetry::MetricsExportService#initialize (method)">new</a></span></span>
+<span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_service'>service</span><span class='period'>.</span><span class='id identifier rubyid_export_metrics'>export_metrics</span><span class='lparen'>(</span><span class='label'>format:</span> <span class='symbol'>:prometheus</span><span class='comma'>,</span> <span class='label'>metrics_data:</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>With custom configuration</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_service'>service</span> <span class='op'>=</span> <span class='const'>MetricsExportService</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Tasker::Telemetry::MetricsExportService#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>prometheus_config:</span> <span class='lbrace'>{</span> <span class='label'>endpoint:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>http://localhost:9090/api/v1/write</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span>
+<span class='rparen'>)</span></code></pre>
+    
+  </div>
+
+
+</div>
+
+
+  <h2>Constant Summary</h2>
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">Concerns::StructuredLogging::CORRELATION_ID_KEY</a></span></p>
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#config-instance_method" title="#config (instance method)">#<strong>config</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Returns the value of attribute config.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#export_metrics-instance_method" title="#export_metrics (instance method)">#<strong>export_metrics</strong>(format:, metrics_data:, context: {})  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Export metrics in specified format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(config = {})  &#x21d2; MetricsExportService </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Initialize metrics export service.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id (method)">#correlation_id</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id=-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id= (method)">#correlation_id=</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_exception-instance_method" title="Tasker::Concerns::StructuredLogging#log_exception (method)">#log_exception</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_orchestration_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_orchestration_event (method)">#log_orchestration_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_performance_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_performance_event (method)">#log_performance_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_step_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_step_event (method)">#log_step_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_structured-instance_method" title="Tasker::Concerns::StructuredLogging#log_structured (method)">#log_structured</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_task_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_task_event (method)">#log_task_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#with_correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#with_correlation_id (method)">#with_correlation_id</a></span></p>
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(config = {})  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Telemetry::MetricsExportService (class)">MetricsExportService</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Initialize metrics export service</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>config</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Service configuration overrides</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+34
+35
+36</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_export_service.rb', line 34</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_default_config'>default_config</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="config-instance_method">
+  
+    #<strong>config</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns the value of attribute config.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+29
+30
+31</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_export_service.rb', line 29</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
+  <span class='ivar'>@config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="export_metrics-instance_method">
+  
+    #<strong>export_metrics</strong>(format:, metrics_data:, context: {})  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Export metrics in specified format</p>
+
+<p>Main entry point for exporting metrics. Handles format routing, data conversion, delivery, and comprehensive error handling.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>format</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export format (:prometheus, :json, :csv)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>metrics_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Raw metrics data to export</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context (job_id, coordinator_instance, etc.)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export result with success status and details</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_export_service.rb', line 47</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_export_metrics'>export_metrics</span><span class='lparen'>(</span><span class='label'>format:</span><span class='comma'>,</span> <span class='label'>metrics_data:</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@export_context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span>
+  <span class='id identifier rubyid_start_time'>start_time</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+
+  <span class='id identifier rubyid_log_export_started'>log_export_started</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+
+  <span class='kw'>case</span> <span class='id identifier rubyid_format'>format</span><span class='period'>.</span><span class='id identifier rubyid_to_sym'>to_sym</span>
+  <span class='kw'>when</span> <span class='symbol'>:prometheus</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_export_prometheus_metrics'>export_prometheus_metrics</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='symbol'>:json</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_export_json_metrics'>export_json_metrics</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='rparen'>)</span>
+  <span class='kw'>when</span> <span class='symbol'>:csv</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_export_csv_metrics'>export_csv_metrics</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='kw'>return</span> <span class='id identifier rubyid_unsupported_format_result'>unsupported_format_result</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_duration'>duration</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span>
+  <span class='id identifier rubyid_log_export_completed'>log_export_completed</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_duration'>duration</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+    <span class='label'>format:</span> <span class='id identifier rubyid_format'>format</span><span class='comma'>,</span>
+    <span class='label'>duration:</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+    <span class='label'>exported_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
+    <span class='label'>context:</span> <span class='id identifier rubyid_context'>context</span>
+  <span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='id identifier rubyid_log_export_error'>log_export_error</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='comma'>,</span> <span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='lbrace'>{</span>
+    <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span>
+    <span class='label'>format:</span> <span class='id identifier rubyid_format'>format</span><span class='comma'>,</span>
+    <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+    <span class='label'>error_type:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>context:</span> <span class='id identifier rubyid_context'>context</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Mon Jun 23 21:45:58 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

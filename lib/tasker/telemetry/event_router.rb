@@ -210,12 +210,10 @@ module Tasker
       def route_event(event_name, payload = {})
         results = {}
         mapping = mapping_for(event_name)
-        return results unless mapping && mapping.active?
+        return results unless mapping&.active?
 
         # Route to metrics backend if configured
-        if mapping.routes_to_metrics?
-          results[:metrics] = MetricsBackend.instance.handle_event(event_name, payload)
-        end
+        results[:metrics] = MetricsBackend.instance.handle_event(event_name, payload) if mapping.routes_to_metrics?
 
         # TODO: Route to trace backend (Phase 4.2.3)
         # TODO: Route to log backend (Phase 4.2.3)
