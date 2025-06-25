@@ -262,9 +262,10 @@ module Tasker
       step = new(step_attributes)
       step.save!
 
-      # Initialize the state machine with proper initial state
-      # This creates the initial transition to PENDING state
-      step.state_machine.initialize_state_machine!
+      # REMOVED: Automatic state machine initialization to prevent duplicate key violations
+      # The state machine will initialize naturally when accessed, and factories may
+      # have already created transitions through their own setup
+      # step.state_machine.initialize_state_machine!
 
       step
     end

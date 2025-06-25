@@ -124,6 +124,93 @@ event_metadata:
         timestamp: { type: "Time", required: true }
       fired_by: ["ViableStepDiscovery", "WorkflowOrchestrator"]
 
+  # Registry system events
+  handler:
+    registered:
+      description: "Fired when a handler is successfully registered"
+      constant_ref: "Tasker::Constants::RegistryEvents::HANDLER_REGISTERED"
+      payload_schema:
+        handler_class: { type: "String", required: true }
+        namespace_name: { type: "String", required: true }
+        version: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["HandlerFactory", "Registry::BaseRegistry"]
+
+    unregistered:
+      description: "Fired when a handler is unregistered"
+      constant_ref: "Tasker::Constants::RegistryEvents::HANDLER_UNREGISTERED"
+      payload_schema:
+        handler_class: { type: "String", required: true }
+        namespace_name: { type: "String", required: true }
+        version: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["HandlerFactory", "Registry::BaseRegistry"]
+
+    validation_failed:
+      description: "Fired when handler validation fails during registration"
+      constant_ref: "Tasker::Constants::RegistryEvents::HANDLER_VALIDATION_FAILED"
+      payload_schema:
+        handler_class: { type: "String", required: true }
+        validation_error: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["HandlerFactory", "Registry::InterfaceValidator"]
+
+  plugin:
+    registered:
+      description: "Fired when a plugin is successfully registered"
+      constant_ref: "Tasker::Constants::RegistryEvents::PLUGIN_REGISTERED"
+      payload_schema:
+        plugin_class: { type: "String", required: true }
+        plugin_format: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PluginRegistry", "ExportCoordinator"]
+
+    unregistered:
+      description: "Fired when a plugin is unregistered"
+      constant_ref: "Tasker::Constants::RegistryEvents::PLUGIN_UNREGISTERED"
+      payload_schema:
+        plugin_class: { type: "String", required: true }
+        plugin_format: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PluginRegistry", "ExportCoordinator"]
+
+    validation_failed:
+      description: "Fired when plugin validation fails during registration"
+      constant_ref: "Tasker::Constants::RegistryEvents::PLUGIN_VALIDATION_FAILED"
+      payload_schema:
+        plugin_class: { type: "String", required: true }
+        validation_error: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["PluginRegistry", "Registry::InterfaceValidator"]
+
+  subscriber:
+    registered:
+      description: "Fired when a subscriber is successfully registered"
+      constant_ref: "Tasker::Constants::RegistryEvents::SUBSCRIBER_REGISTERED"
+      payload_schema:
+        subscriber_class: { type: "String", required: true }
+        events: { type: "Array", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["SubscriberRegistry", "Events::CustomRegistry"]
+
+    unregistered:
+      description: "Fired when a subscriber is unregistered"
+      constant_ref: "Tasker::Constants::RegistryEvents::SUBSCRIBER_UNREGISTERED"
+      payload_schema:
+        subscriber_class: { type: "String", required: true }
+        events: { type: "Array", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["SubscriberRegistry", "Events::CustomRegistry"]
+
+    validation_failed:
+      description: "Fired when subscriber validation fails during registration"
+      constant_ref: "Tasker::Constants::RegistryEvents::SUBSCRIBER_VALIDATION_FAILED"
+      payload_schema:
+        subscriber_class: { type: "String", required: true }
+        validation_error: { type: "String", required: true }
+        timestamp: { type: "Time", required: true }
+      fired_by: ["SubscriberRegistry", "Registry::InterfaceValidator"]
+
 # State machine transition mappings (declarative configuration)
 state_machine_mappings:
   task_transitions:

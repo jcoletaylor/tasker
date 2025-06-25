@@ -131,7 +131,6 @@ Here's an example YAML file for an e-commerce API integration task handler:
 name: api_task/integration_yaml_example
 module_namespace: ApiTask
 task_handler_class: IntegrationYamlExample
-concurrent: true
 
 default_dependent_system: ecommerce_system
 

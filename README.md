@@ -104,7 +104,6 @@ name: order_process
 namespace_name: default
 version: 1.0.0
 task_handler_class: OrderProcess
-concurrent: true
 
 step_templates:
   - name: validate_order

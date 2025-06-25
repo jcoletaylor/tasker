@@ -188,8 +188,7 @@ class PaymentHandler < Tasker::TaskHandler
   register_handler(
     'process_payment',
     namespace_name: 'payments',
-    version: '2.0.0',
-    concurrent: true
+    version: '2.0.0'
   )
 end
 
@@ -758,7 +757,6 @@ namespace_name: payments        # NEW: TaskNamespace organization
 version: 1.2.0                 # NEW: Semantic versioning
 module_namespace: OrderProcess  # Ruby module namespace
 task_handler_class: OrderHandler
-concurrent: true               # Enable parallel step execution
 
 # JSON Schema validation for task context
 schema:
@@ -915,7 +913,6 @@ name: process_order
 namespace_name: payments
 version: 2.0.0                      # Current version
 task_handler_class: Payments::ProcessOrderV2
-concurrent: true                    # New features in v2.0.0
 ```
 
 #### Namespace-Specific Configuration
@@ -962,7 +959,6 @@ namespace_name: payments                   # Optional - defaults to 'default'
 version: 2.1.0                           # Optional - defaults to '0.1.0'
 module_namespace: Payments                # Optional - Ruby module namespace
 task_handler_class: ProcessPaymentHandler # Required
-concurrent: true                          # Optional - defaults to false
 description: "Advanced payment processing" # Optional - for documentation
 
 # Database configuration (optional)

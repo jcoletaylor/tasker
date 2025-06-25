@@ -79,7 +79,6 @@ Edit `config/tasker/tasks/welcome_user/welcome_handler.yaml`:
 name: welcome_user
 module_namespace: WelcomeUser
 task_handler_class: WelcomeHandler
-concurrent: true
 
 schema:
   type: object

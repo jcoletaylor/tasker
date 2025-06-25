@@ -18,6 +18,19 @@ module Tasker
       message: 'is not a valid workflow step state'
     }
 
+    # Validate from_state - allow nil (for initial transitions) but not empty strings
+    validates :from_state, inclusion: {
+      in: %w[pending in_progress complete error cancelled resolved_manually],
+      message: 'is not a valid workflow step state'
+    }, allow_nil: true
+
+    # Prevent empty string states that can cause state machine issues
+    validate :from_state_cannot_be_empty_string
+    validate :to_state_cannot_be_empty_string
+
+    # Clean up any empty string states before validation
+    before_validation :normalize_empty_string_states
+
     # Validate that the workflow step exists before creating transition
     validate :workflow_step_must_exist
 
@@ -291,11 +304,35 @@ module Tasker
       return if workflow_step_id.blank?
 
       unless Tasker::WorkflowStep.exists?(workflow_step_id: workflow_step_id)
-        errors.add(:workflow_step, 'must exist before creating transition')
+        errors.add(:workflow_step_id, 'must reference an existing workflow step')
       end
-    rescue ActiveRecord::StatementInvalid => e
-      # Handle cases where the table might not exist (e.g., during migrations)
-      Rails.logger.warn { "Could not validate workflow step existence: #{e.message}" }
+    end
+
+    # Prevent empty string from_state values that cause state machine failures
+    def from_state_cannot_be_empty_string
+      if from_state == ''
+        errors.add(:from_state, 'cannot be an empty string (use nil for initial transitions)')
+      end
+    end
+
+    # Prevent empty string to_state values
+    def to_state_cannot_be_empty_string
+      if to_state == ''
+        errors.add(:to_state, 'cannot be an empty string')
+      end
+    end
+
+    # Clean up any empty string states before validation
+    # This prevents empty strings from being saved and causing state machine issues
+    def normalize_empty_string_states
+      # Convert empty strings to nil for from_state (initial transitions)
+      self.from_state = nil if from_state == ''
+
+      # For to_state, empty strings are always invalid - convert to nil and let validation catch it
+      if to_state == ''
+        self.to_state = nil
+        errors.add(:to_state, 'cannot be empty - must specify a valid state')
+      end
     end
 
     # Service class to format transition descriptions

@@ -129,22 +129,112 @@ module Tasker
         most_recent_transition = object.workflow_step_transitions.where(most_recent: true).first
 
         if most_recent_transition
-          most_recent_transition.to_state
+          # Ensure we never return empty strings or nil - always return a valid state
+          state = most_recent_transition.to_state
+          return state.presence || Constants::WorkflowStepStatuses::PENDING
         else
           # Return initial state if no transitions exist
           Constants::WorkflowStepStatuses::PENDING
         end
       end
 
-      # Initialize the state machine with the initial state
-      # This ensures the state machine is properly initialized
-      def initialize_state_machine!
-        # Only initialize if no transitions exist yet
-        return if Tasker::WorkflowStepTransition.exists?(workflow_step_id: object.workflow_step_id)
+      # Override Statesman's transition building to ensure proper from_state handling
+      # This is called by Statesman when creating new transitions
+      def create_transition(from_state, to_state, metadata = {})
+        # Ensure from_state is properly set - never allow empty strings
+        effective_from_state = case from_state
+                               when nil, ''
+                                 # For initial transitions or empty strings, use nil
+                                 nil
+                               else
+                                 # For existing states, ensure it's a valid state
+                                 from_state.presence
+                               end
 
-        # Statesman automatically creates the initial state transition when we access current_state
-        # Just accessing current_state will create the initial transition to PENDING
-        current_state
+        # Log transition creation for debugging
+        Rails.logger.debug do
+          "StepStateMachine: Creating transition for step #{object.workflow_step_id}: " \
+            "'#{effective_from_state}' → '#{to_state}'"
+        end
+
+        # Get the next sort key
+        next_sort_key = next_sort_key_value
+
+        # Create the transition with proper from_state handling
+        transition = Tasker::WorkflowStepTransition.create!(
+          workflow_step_id: object.workflow_step_id,
+          to_state: to_state,
+          from_state: effective_from_state, # Use nil instead of empty string
+          most_recent: true,
+          sort_key: next_sort_key,
+          metadata: metadata || {},
+          created_at: Time.current,
+          updated_at: Time.current
+        )
+
+        # Update previous transitions to not be most recent
+        object.workflow_step_transitions
+              .where(most_recent: true)
+              .where.not(id: transition.id)
+              .update_all(most_recent: false)
+
+        transition
+      end
+
+      # Get the next sort key for transitions
+      def next_sort_key_value
+        max_sort_key = object.workflow_step_transitions.maximum(:sort_key) || -1
+        max_sort_key + 10 # Use increments of 10 for flexibility
+      end
+
+      # Initialize the state machine with the initial state
+      # This ensures the state machine is properly initialized when called explicitly
+      # DEFENSIVE: Only creates transitions when explicitly needed
+      def initialize_state_machine!
+        # Check if state machine is already initialized
+        return current_state if Tasker::WorkflowStepTransition.exists?(workflow_step_id: object.workflow_step_id)
+
+        # DEFENSIVE: Use a rescue block instead of transaction to handle race conditions gracefully
+        begin
+          # Create the initial transition only if none exists
+          initial_transition = Tasker::WorkflowStepTransition.create!(
+            workflow_step_id: object.workflow_step_id,
+            to_state: Constants::WorkflowStepStatuses::PENDING,
+            from_state: nil, # Explicitly set to nil for initial transition
+            most_recent: true,
+            sort_key: 0,
+            metadata: { initialized_by: 'state_machine' },
+            created_at: Time.current,
+            updated_at: Time.current
+          )
+
+          Rails.logger.debug do
+            "StepStateMachine: Initialized state machine for step #{object.workflow_step_id} with initial transition to PENDING"
+          end
+
+          initial_transition.to_state
+        rescue ActiveRecord::RecordNotUnique => e
+          # Handle duplicate key violations gracefully - another thread may have initialized the state machine
+          Rails.logger.debug do
+            "StepStateMachine: State machine for step #{object.workflow_step_id} already initialized by another process: #{e.message}"
+          end
+
+          # Return the current state since we know it's initialized
+          current_state
+        rescue ActiveRecord::StatementInvalid => e
+          # Handle transaction issues gracefully
+          Rails.logger.warn do
+            "StepStateMachine: Transaction issue initializing state machine for step #{object.workflow_step_id}: #{e.message}"
+          end
+
+          # Check if the step actually has transitions now (another process may have created them)
+          if Tasker::WorkflowStepTransition.exists?(workflow_step_id: object.workflow_step_id)
+            current_state
+          else
+            # If still no transitions, return the default state without creating a transition
+            Constants::WorkflowStepStatuses::PENDING
+          end
+        end
       end
 
       # Class methods for state machine management

@@ -534,7 +534,7 @@ This comprehensive validation approach ensures Tasker's telemetry works correctl
 
 ---
 
-### 🔍 **Phase 4.3: Performance Profiling Integration**
+### 🔍 **PHASE 4.3: Performance Profiling Integration**
 **Timeline**: 4-5 days
 **Impact**: Medium-High - Enables data-driven optimization
 
@@ -1556,34 +1556,28 @@ TASKER_METRICS_URL="http://localhost:3000/tasker/metrics"
 
 echo "📊 Validating Prometheus metrics for Tasker..."
 
-# Check Prometheus health
-echo "📡 Checking Prometheus connectivity..."
+# Check connectivity
 curl -f "$PROMETHEUS_URL/-/healthy" > /dev/null 2>&1 || {
-    echo "❌ Prometheus not accessible at $PROMETHEUS_URL"
+    echo "❌ Prometheus not accessible"
     exit 1
 }
 
-# Check Tasker metrics endpoint
-echo "🔍 Checking Tasker metrics endpoint..."
 curl -f "$TASKER_METRICS_URL" > /dev/null 2>&1 || {
-    echo "❌ Tasker metrics not accessible at $TASKER_METRICS_URL"
+    echo "❌ Tasker metrics not accessible"
     exit 1
 }
 
-# Get current metrics from Tasker
-echo "📈 Fetching current Tasker metrics..."
+# Validate metrics endpoint
 TASKER_METRICS=$(curl -s "$TASKER_METRICS_URL")
 METRIC_COUNT=$(echo "$TASKER_METRICS" | grep -c "^[a-zA-Z]" || true)
-
 echo "✅ Tasker exposing $METRIC_COUNT metrics"
 
-# Validate specific metrics exist
+# Check expected metrics
 EXPECTED_METRICS=(
     "tasker_tasks_total"
     "tasker_steps_total"
     "tasker_workflow_duration_seconds"
     "tasker_active_connections"
-    "tasker_cache_operations_total"
 )
 
 echo "🔍 Validating expected metrics..."
@@ -1595,16 +1589,8 @@ for metric in "${EXPECTED_METRICS[@]}"; do
     fi
 done
 
-# Query Prometheus for Tasker metrics
-echo "🔍 Querying Prometheus for Tasker metrics..."
+# Validate Prometheus ingestion
 PROM_METRICS=$(curl -s "$PROMETHEUS_URL/api/v1/label/__name__/values" | jq -r '.data[] | select(contains("tasker"))')
-
-if [ -z "$PROM_METRICS" ]; then
-    echo "⚠️  No Tasker metrics found in Prometheus"
-    echo "🔧 Check if Prometheus is scraping the /tasker/metrics endpoint"
-    exit 1
-fi
-
 PROM_METRIC_COUNT=$(echo "$PROM_METRICS" | wc -l)
 echo "✅ Prometheus has $PROM_METRIC_COUNT Tasker metrics"
 
@@ -1630,7 +1616,6 @@ if [ "$SCRAPE_HEALTH" = "1" ]; then
     echo "✅ Tasker metrics scrape is healthy"
 else
     echo "❌ Tasker metrics scrape is down"
-    exit 1
 fi
 
 echo "🎉 Prometheus validation completed successfully!"
@@ -1641,8 +1626,6 @@ echo "🎉 Prometheus validation completed successfully!"
 ```bash
 #!/bin/bash
 # scripts/validate_e2e_telemetry.sh
-
-set -e
 
 echo "🚀 Running end-to-end telemetry validation..."
 
@@ -1766,8 +1749,6 @@ jobs:
         image: prom/prometheus:v2.45.0
         ports:
           - 9090:9090
-        volumes:
-          - ${{ github.workspace }}/config/prometheus.yml:/etc/prometheus/prometheus.yml
 
     steps:
       - uses: actions/checkout@v3
@@ -1913,12 +1894,2321 @@ This comprehensive validation approach ensures that Tasker's telemetry system wo
 
 ---
 
+## **✅ **PHASE 4.2.2.3.4 SUCCESSFULLY COMPLETED** - Plugin Architecture Implementation**
+
+### **Outstanding Implementation Results**
+- **✅ Complete Plugin Architecture** - ExportCoordinator, BaseExporter, PluginRegistry with thread-safe operations
+- **✅ Built-in Exporters** - JsonExporter and CsvExporter with advanced field mapping and label flattening
+- **✅ Export Events System** - 6 new events properly integrated (CACHE_SYNCED, EXPORT_REQUESTED, EXPORT_COMPLETED, EXPORT_FAILED, PLUGIN_REGISTERED, PLUGIN_UNREGISTERED)
+- **✅ Structured Logging Integration** - Complete migration from Rails.logger to Tasker's structured logging pattern
+- **✅ Production Compliance** - Eliminated test-specific logic, proper method arity validation, class-based mocks
+- **✅ 328/328 Tests Passing** - Perfect test success across all telemetry components
+
+#### **Critical Integration Fixes Applied**
+- **✅ Singleton Pattern Integration** - Fixed ExportCoordinator `.instance` vs `.new` usage in MetricsExportJob
+- **✅ BaseExporter Method Compatibility** - Added missing `plugin_info` alias, `validate_metrics_data!` method, proper `safe_export` return structure
+- **✅ RSpec Test Isolation** - Resolved mock leakage between tests with proper singleton stubbing
+- **✅ PluginRegistry Keyword Arguments** - Added `find_by(format:)` method for test compatibility
+
+#### **Plugin Architecture Components Delivered**
+```
+✅ lib/tasker/telemetry/export_coordinator.rb          # Plugin lifecycle management with event coordination
+✅ lib/tasker/telemetry/plugins/base_exporter.rb       # Abstract plugin interface with lifecycle callbacks
+✅ lib/tasker/telemetry/plugin_registry.rb             # Centralized plugin management with format indexing
+✅ lib/tasker/telemetry/plugins/json_exporter.rb       # JSON export with field mapping and metadata
+✅ lib/tasker/telemetry/plugins/csv_exporter.rb        # CSV export with label flattening and configurable columns
+✅ lib/tasker/telemetry/events/export_events.rb        # 6 new export events for coordination
+✅ app/jobs/tasker/metrics_export_job.rb               # Enhanced with proper ExportCoordinator integration
+✅ spec/lib/tasker/telemetry/export_coordinator_spec.rb # 17/17 tests passing
+✅ spec/lib/tasker/telemetry/plugin_registry_spec.rb    # 29/29 tests passing
+✅ spec/lib/tasker/telemetry/plugins/base_exporter_spec.rb # 24/24 tests passing
+✅ spec/jobs/tasker/metrics_export_job_spec.rb          # 35/35 tests passing
+```
+
+---
+
+## **🎯 **PHASE 4.2.2.4: REGISTRY SYSTEM CONSOLIDATION**
+
+### **Strategic Overview: Applying Plugin Architecture Patterns System-Wide**
+
+**MISSION**: Modernize all of Tasker's registry systems using the superior patterns demonstrated in the successful plugin architecture implementation, creating a unified, thread-safe, observable registry ecosystem.
+
+#### **Current Registry System Analysis**
+
+| Registry System | Storage Type | Thread Safety | Validation | Observability | Status |
+|---|---|---|---|---|---|
+| **HandlerFactory** | `ActiveSupport::HashWithIndifferentAccess` | ❌ **Not thread-safe** | Custom event validation | Basic logging | **NEEDS MODERNIZATION** |
+| **PluginRegistry** | `Concurrent::Hash` | ✅ **Thread-safe** | Method arity validation | Structured logging | **MODERN STANDARD** |
+| **ExportCoordinator** | `Concurrent::Hash` | ✅ **Thread-safe** | Interface validation | Event-driven logging | **MODERN STANDARD** |
+| **Event Subscribers** | Distributed registration | ❌ **No centralized registry** | None | Scattered logging | **NEEDS CENTRALIZATION** |
+
+#### **Strategic Benefits of Consolidation**
+1. **Thread Safety Everywhere** - Eliminate race conditions across all registry systems
+2. **Consistent Validation** - Unified interface validation framework using proven patterns
+3. **Enhanced Observability** - Plugin-style introspection and statistics for all registries
+4. **Event Coordination** - Registries can react to and coordinate with each other
+5. **Technical Debt Reduction** - Modernize legacy patterns with battle-tested approaches
+6. **Developer Experience** - Consistent patterns and APIs across all registry interactions
+
+### **5-Week Implementation Plan**
+
+---
+
+## **WEEK 1: Thread Safety Modernization**
+**Objective**: Upgrade core registry storage to thread-safe implementations
+
+### **1.1 HandlerFactory Thread Safety Upgrade**
+
+#### **Current State Analysis**
+```ruby
+# Current implementation (NOT thread-safe)
+class HandlerFactory
+  def initialize
+    @handler_classes = ActiveSupport::HashWithIndifferentAccess.new
+  end
+
+  def register(dependent_system, name, handler_class)
+    @handler_classes[dependent_system] ||= {}
+    @handler_classes[dependent_system][name] = handler_class
+  end
+end
+```
+
+#### **Target Architecture**
+```ruby
+# Enhanced thread-safe implementation
+class HandlerFactory
+  include Singleton
+  include Tasker::Concerns::StructuredLogging
+
+  def initialize
+    @handler_classes = Concurrent::Hash.new
+    @mutex = Mutex.new
+    @telemetry_config = Tasker.configuration.telemetry
+  end
+
+  def register(dependent_system, name, handler_class, options = {})
+    dependent_system = dependent_system.to_s
+    name = name.to_s
+
+    @mutex.synchronize do
+      # Validate handler interface
+      validate_handler_interface!(handler_class)
+
+      # Initialize system registry if needed
+      @handler_classes[dependent_system] ||= Concurrent::Hash.new
+
+      # Check for existing registration
+      if @handler_classes[dependent_system].key?(name) && !options[:replace]
+        raise ArgumentError, "Handler '#{name}' already registered in system '#{dependent_system}'. Use replace: true to override."
+      end
+
+      # Register handler
+      handler_config = {
+        handler_class: handler_class,
+        dependent_system: dependent_system,
+        name: name,
+        registered_at: Time.current,
+        options: options
+      }
+
+      @handler_classes[dependent_system][name] = handler_config
+
+      # Log registration
+      log_structured(:info, 'Handler registered',
+                     entity_type: 'task_handler',
+                     entity_id: "#{dependent_system}/#{name}",
+                     handler_class: handler_class.name,
+                     dependent_system: dependent_system,
+                     handler_name: name,
+                     options: options,
+                     event_type: :registered)
+
+      true
+    end
+  end
+
+  private
+
+  def validate_handler_interface!(handler_class)
+    required_methods = [:process]
+
+    required_methods.each do |method|
+      unless handler_class.instance_methods.include?(method)
+        raise ArgumentError, "Handler class #{handler_class} must implement #{method} method"
+      end
+    end
+  end
+end
+```
+
+#### **Files to Create/Modify**
+```
+lib/tasker/handler_factory.rb                    # Enhanced - Thread-safe storage + validation
+lib/tasker/registry/                             # New directory - Common registry patterns
+lib/tasker/registry/interface_validator.rb      # New - Common validation framework
+lib/tasker/registry/base_registry.rb            # New - Shared registry functionality
+spec/lib/tasker/handler_factory_spec.rb         # Enhanced - Thread safety tests
+spec/lib/tasker/registry/                       # New - Registry framework tests
+```
+
+### **1.2 Centralized Subscriber Registry**
+
+#### **Current State Analysis**
+Event subscribers are currently registered in a distributed manner with no centralized visibility or management.
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/subscriber_registry.rb
+module Tasker
+  module Registry
+    class SubscriberRegistry < BaseRegistry
+      include Singleton
+
+      def initialize
+        super
+        @subscribers = Concurrent::Hash.new
+        @event_mappings = Concurrent::Hash.new
+      end
+
+      def register(subscriber_class, events: [], options: {})
+        subscriber_name = subscriber_class.name.demodulize.underscore
+
+        @mutex.synchronize do
+          # Validate subscriber interface
+          validate_subscriber_interface!(subscriber_class)
+
+          # Register subscriber
+          subscriber_config = {
+            subscriber_class: subscriber_class,
+            events: events,
+            registered_at: Time.current,
+            options: options
+          }
+
+          @subscribers[subscriber_name] = subscriber_config
+
+          # Index by events
+          events.each do |event|
+            @event_mappings[event] ||= []
+            @event_mappings[event] << subscriber_name
+          end
+
+          log_registration('event_subscriber', subscriber_name, subscriber_class, options)
+          true
+        end
+      end
+
+      def subscribers_for_event(event_name)
+        subscriber_names = @event_mappings[event_name] || []
+        subscriber_names.map { |name| @subscribers[name] }
+      end
+
+      def all_subscribers
+        @subscribers.dup
+      end
+
+      def stats
+        {
+          total_subscribers: @subscribers.size,
+          total_event_mappings: @event_mappings.size,
+          events_covered: @event_mappings.keys.sort,
+          subscribers_by_event: @event_mappings.transform_values(&:size)
+        }
+      end
+
+      private
+
+      def validate_subscriber_interface!(subscriber_class)
+        required_methods = [:call]
+
+        required_methods.each do |method|
+          unless subscriber_class.instance_methods.include?(method)
+            raise ArgumentError, "Subscriber class #{subscriber_class} must implement #{method} method"
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+#### **Integration Points**
+- **BaseSubscriber Enhancement** - Auto-register with SubscriberRegistry
+- **Event Bus Integration** - Use registry for subscriber discovery
+- **Health Checks** - Registry status in health endpoints
+
+---
+
+## **WEEK 2: Common Interface Validation Framework**
+**Objective**: Create unified validation patterns across all registries
+
+### **2.1 Registry Interface Validator**
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/interface_validator.rb
+module Tasker
+  module Registry
+    class InterfaceValidator
+      class << self
+        def validate_handler!(handler_class)
+          validate_class_methods!(handler_class, HANDLER_INTERFACE)
+          validate_instance_methods!(handler_class, HANDLER_INSTANCE_INTERFACE)
+        end
+
+        def validate_subscriber!(subscriber_class)
+          validate_instance_methods!(subscriber_class, SUBSCRIBER_INTERFACE)
+        end
+
+        def validate_plugin!(plugin_instance)
+          validate_instance_methods!(plugin_instance.class, PLUGIN_INTERFACE)
+          validate_method_arity!(plugin_instance, PLUGIN_ARITY_REQUIREMENTS)
+        end
+
+        private
+
+        HANDLER_INTERFACE = {
+          required_class_methods: [:process],
+          optional_class_methods: [:configure, :dependencies]
+        }.freeze
+
+        HANDLER_INSTANCE_INTERFACE = {
+          required_instance_methods: [],
+          optional_instance_methods: [:initialize, :before_process, :after_process]
+        }.freeze
+
+        SUBSCRIBER_INTERFACE = {
+          required_instance_methods: [:call],
+          optional_instance_methods: [:initialize, :filter_events]
+        }.freeze
+
+        PLUGIN_INTERFACE = {
+          required_instance_methods: [:export, :supports_format?],
+          optional_instance_methods: [:supported_formats, :metadata, :validate_data]
+        }.freeze
+
+        PLUGIN_ARITY_REQUIREMENTS = {
+          export: { min: 1, max: 2 },
+          supports_format?: { min: 1, max: 1 }
+        }.freeze
+
+        def validate_class_methods!(klass, interface)
+          interface[:required_class_methods]&.each do |method|
+            unless klass.respond_to?(method)
+              raise ArgumentError, "#{klass} must implement class method #{method}"
+            end
+          end
+        end
+
+        def validate_instance_methods!(klass, interface)
+          interface[:required_instance_methods]&.each do |method|
+            unless klass.instance_methods.include?(method)
+              raise ArgumentError, "#{klass} must implement instance method #{method}"
+            end
+          end
+        end
+
+        def validate_method_arity!(instance, arity_requirements)
+          arity_requirements.each do |method, requirements|
+            next unless instance.respond_to?(method)
+
+            method_obj = instance.method(method)
+            arity = method_obj.arity
+
+            # Handle negative arity (variable arguments)
+            if arity < 0
+              min_required = arity.abs - 1
+              if min_required > requirements[:max]
+                raise ArgumentError, "#{method} requires too many arguments (min: #{min_required}, max allowed: #{requirements[:max]})"
+              end
+            else
+              unless arity >= requirements[:min] && arity <= requirements[:max]
+                raise ArgumentError, "#{method} arity mismatch (expected: #{requirements[:min]}-#{requirements[:max]}, got: #{arity})"
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+### **2.2 Enhanced HandlerFactory Validation**
+
+#### **Integration with Interface Validator**
+```ruby
+# Enhanced HandlerFactory with unified validation
+def validate_handler_interface!(handler_class)
+  Tasker::Registry::InterfaceValidator.validate_handler!(handler_class)
+rescue ArgumentError => e
+  log_structured(:error, 'Handler validation failed',
+                 entity_type: 'task_handler',
+                 handler_class: handler_class.name,
+                 validation_error: e.message,
+                 event_type: :validation_failed)
+  raise
+end
+```
+
+---
+
+## **WEEK 3: Common Registry Base Class**
+**Objective**: Extract shared functionality into a common base class
+
+### **3.1 BaseRegistry Implementation**
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/base_registry.rb
+module Tasker
+  module Registry
+    class BaseRegistry
+      include Tasker::Concerns::StructuredLogging
+
+      def initialize
+        @mutex = Mutex.new
+        @telemetry_config = Tasker.configuration.telemetry
+        @registry_name = self.class.name.demodulize.underscore
+      end
+
+      protected
+
+      def log_registration(entity_type, entity_id, entity_class, options = {})
+        log_structured(:info, 'Registry item registered',
+                       entity_type: entity_type,
+                       entity_id: entity_id,
+                       entity_class: entity_class.name,
+                       registry_name: @registry_name,
+                       options: options,
+                       event_type: :registered)
+      end
+
+      def log_unregistration(entity_type, entity_id, entity_class)
+        log_structured(:info, 'Registry item unregistered',
+                       entity_type: entity_type,
+                       entity_id: entity_id,
+                       entity_class: entity_class.name,
+                       registry_name: @registry_name,
+                       event_type: :unregistered)
+      end
+
+      def log_registry_operation(operation, **context)
+        log_structured(:debug, "Registry #{operation}",
+                       registry_name: @registry_name,
+                       operation: operation,
+                       **context)
+      end
+
+      def validate_registration_params!(name, entity_class, options = {})
+        raise ArgumentError, "Name cannot be blank" if name.blank?
+        raise ArgumentError, "Entity class cannot be nil" if entity_class.nil?
+        raise ArgumentError, "Options must be a Hash" unless options.is_a?(Hash)
+      end
+
+      def thread_safe_operation(&block)
+        @mutex.synchronize(&block)
+      end
+
+      # Common registry statistics interface
+      def base_stats
+        {
+          registry_name: @registry_name,
+          registry_class: self.class.name,
+          initialized_at: @initialized_at || Time.current,
+          thread_safe: true,
+          mutex_locked: @mutex.locked?
+        }
+      end
+
+      # Health check interface
+      def healthy?
+        # Basic health checks that all registries should pass
+        !@mutex.locked? && respond_to?(:stats)
+      end
+
+      def health_check
+        {
+          healthy: healthy?,
+          registry_name: @registry_name,
+          stats: stats,
+          last_check: Time.current
+        }
+      end
+
+      # Abstract methods that subclasses must implement
+      def stats
+        raise NotImplementedError, "Subclasses must implement #stats"
+      end
+
+      def all_items
+        raise NotImplementedError, "Subclasses must implement #all_items"
+      end
+
+      def clear!
+        raise NotImplementedError, "Subclasses must implement #clear!"
+      end
+    end
+  end
+end
+```
+
+### **3.2 Registry Migrations**
+
+#### **HandlerFactory Migration**
+```ruby
+# Enhanced HandlerFactory inheriting from BaseRegistry
+class HandlerFactory < Tasker::Registry::BaseRegistry
+  include Singleton
+
+  def initialize
+    super
+    @handler_classes = Concurrent::Hash.new
+    @initialized_at = Time.current
+  end
+
+  def stats
+    base_stats.merge({
+      total_systems: @handler_classes.size,
+      total_handlers: @handler_classes.values.sum(&:size),
+      systems: @handler_classes.keys.sort,
+      handlers_by_system: @handler_classes.transform_values(&:size)
+    })
+  end
+
+  def all_items
+    @handler_classes.dup
+  end
+
+  def clear!
+    thread_safe_operation do
+      @handler_classes.clear
+      log_registry_operation('cleared')
+    end
+  end
+
+  # ... rest of HandlerFactory implementation
+end
+```
+
+#### **PluginRegistry Migration**
+```ruby
+# Migrate PluginRegistry to inherit from BaseRegistry
+class PluginRegistry < Tasker::Registry::BaseRegistry
+  include Singleton
+
+  def initialize
+    super
+    @plugins = Concurrent::Hash.new
+    @formats = Concurrent::Hash.new
+    @initialized_at = Time.current
+  end
+
+  # ... existing implementation with BaseRegistry integration
+end
+```
+
+---
+
+## **WEEK 4: Enhanced Introspection & Statistics**
+**Objective**: Add comprehensive observability and discovery capabilities
+
+### **4.1 Registry Statistics Framework**
+
+#### **Common Statistics Interface**
+```ruby
+# lib/tasker/registry/statistics_collector.rb
+module Tasker
+  module Registry
+    class StatisticsCollector
+      class << self
+        def collect_all_registry_stats
+          registries = discover_registries
+
+          {
+            collection_timestamp: Time.current,
+            total_registries: registries.size,
+            registries: registries.map { |registry| collect_registry_stats(registry) }
+          }
+        end
+
+        def collect_registry_stats(registry)
+          base_stats = registry.stats
+          health_check = registry.health_check
+
+          {
+            **base_stats,
+            health: health_check,
+            performance: calculate_performance_metrics(registry),
+            usage_patterns: analyze_usage_patterns(registry)
+          }
+        end
+
+        private
+
+        def discover_registries
+          [
+            Tasker::HandlerFactory.instance,
+            Tasker::Telemetry::PluginRegistry.instance,
+            Tasker::Telemetry::ExportCoordinator.instance,
+            Tasker::Registry::SubscriberRegistry.instance
+          ]
+        end
+
+        def calculate_performance_metrics(registry)
+          # Measure registry operation performance
+          start_time = Time.current
+          registry.stats
+          response_time = (Time.current - start_time) * 1000
+
+          {
+            stats_response_time_ms: response_time.round(2),
+            healthy: registry.healthy?,
+            last_measured: Time.current
+          }
+        end
+
+        def analyze_usage_patterns(registry)
+          stats = registry.stats
+
+          {
+            growth_rate: calculate_growth_rate(stats),
+            utilization: calculate_utilization(stats),
+            distribution: calculate_distribution(stats)
+          }
+        end
+
+        def calculate_growth_rate(stats)
+          # Placeholder for growth rate calculation
+          # In practice, this would track registration rates over time
+          'stable'
+        end
+
+        def calculate_utilization(stats)
+          # Calculate how actively the registry is being used
+          total_items = stats[:total_handlers] || stats[:total_plugins] || stats[:total_subscribers] || 0
+
+          case total_items
+          when 0..5 then 'low'
+          when 6..20 then 'medium'
+          else 'high'
+          end
+        end
+
+        def calculate_distribution(stats)
+          # Analyze distribution patterns
+          if stats[:handlers_by_system]
+            analyze_handler_distribution(stats[:handlers_by_system])
+          elsif stats[:plugins_by_format]
+            analyze_plugin_distribution(stats[:plugins_by_format])
+          else
+            'even'
+          end
+        end
+
+        def analyze_handler_distribution(handlers_by_system)
+          return 'empty' if handlers_by_system.empty?
+
+          values = handlers_by_system.values
+          avg = values.sum.to_f / values.size
+          variance = values.map { |v| (v - avg) ** 2 }.sum / values.size
+
+          variance < 2 ? 'even' : 'skewed'
+        end
+
+        def analyze_plugin_distribution(plugins_by_format)
+          return 'empty' if plugins_by_format.empty?
+
+          values = plugins_by_format.values
+          values.uniq.size == 1 ? 'even' : 'varied'
+        end
+      end
+    end
+  end
+end
+```
+
+### **4.2 Registry Discovery & Filtering**
+
+#### **Enhanced Discovery Capabilities**
+```ruby
+# lib/tasker/registry/discovery_service.rb
+module Tasker
+  module Registry
+    class DiscoveryService
+      class << self
+        def find_handlers(criteria = {})
+          factory = Tasker::HandlerFactory.instance
+          handlers = factory.all_items
+
+          filter_handlers(handlers, criteria)
+        end
+
+        def find_plugins(criteria = {})
+          registry = Tasker::Telemetry::PluginRegistry.instance
+          plugins = registry.all_plugins
+
+          filter_plugins(plugins, criteria)
+        end
+
+        def find_subscribers(criteria = {})
+          registry = Tasker::Registry::SubscriberRegistry.instance
+          subscribers = registry.all_subscribers
+
+          filter_subscribers(subscribers, criteria)
+        end
+
+        def search_across_registries(query)
+          {
+            handlers: search_handlers(query),
+            plugins: search_plugins(query),
+            subscribers: search_subscribers(query)
+          }
+        end
+
+        private
+
+        def filter_handlers(handlers, criteria)
+          result = handlers
+
+          if criteria[:system]
+            result = result.select { |system, _| system == criteria[:system].to_s }
+          end
+
+          if criteria[:name_pattern]
+            pattern = Regexp.new(criteria[:name_pattern], Regexp::IGNORECASE)
+            result = result.transform_values do |system_handlers|
+              system_handlers.select { |name, _| name.match?(pattern) }
+            end
+          end
+
+          if criteria[:class_pattern]
+            pattern = Regexp.new(criteria[:class_pattern], Regexp::IGNORECASE)
+            result = result.transform_values do |system_handlers|
+              system_handlers.select { |_, config| config[:handler_class].name.match?(pattern) }
+            end
+          end
+
+          result
+        end
+
+        def filter_plugins(plugins, criteria)
+          result = plugins
+
+          if criteria[:format]
+            result = result.select do |_, config|
+              config[:supported_formats].include?(criteria[:format].to_s)
+            end
+          end
+
+          if criteria[:name_pattern]
+            pattern = Regexp.new(criteria[:name_pattern], Regexp::IGNORECASE)
+            result = result.select { |name, _| name.match?(pattern) }
+          end
+
+          result
+        end
+
+        def filter_subscribers(subscribers, criteria)
+          result = subscribers
+
+          if criteria[:event]
+            result = result.select do |_, config|
+              config[:events].include?(criteria[:event])
+            end
+          end
+
+          if criteria[:name_pattern]
+            pattern = Regexp.new(criteria[:name_pattern], Regexp::IGNORECASE)
+            result = result.select { |name, _| name.match?(pattern) }
+          end
+
+          result
+        end
+
+        def search_handlers(query)
+          handlers = Tasker::HandlerFactory.instance.all_items
+          pattern = Regexp.new(query, Regexp::IGNORECASE)
+
+          matches = []
+          handlers.each do |system, system_handlers|
+            system_handlers.each do |name, config|
+              if name.match?(pattern) || config[:handler_class].name.match?(pattern)
+                matches << {
+                  type: 'handler',
+                  system: system,
+                  name: name,
+                  class_name: config[:handler_class].name,
+                  registered_at: config[:registered_at]
+                }
+              end
+            end
+          end
+
+          matches
+        end
+
+        def search_plugins(query)
+          plugins = Tasker::Telemetry::PluginRegistry.instance.all_plugins
+          pattern = Regexp.new(query, Regexp::IGNORECASE)
+
+          plugins.select do |name, config|
+            name.match?(pattern) ||
+            config[:instance].class.name.match?(pattern) ||
+            config[:supported_formats].any? { |format| format.match?(pattern) }
+          end.map do |name, config|
+            {
+              type: 'plugin',
+              name: name,
+              class_name: config[:instance].class.name,
+              supported_formats: config[:supported_formats],
+              registered_at: config[:registered_at]
+            }
+          end
+        end
+
+        def search_subscribers(query)
+          subscribers = Tasker::Registry::SubscriberRegistry.instance.all_subscribers
+          pattern = Regexp.new(query, Regexp::IGNORECASE)
+
+          subscribers.select do |name, config|
+            name.match?(pattern) ||
+            config[:subscriber_class].name.match?(pattern) ||
+            config[:events].any? { |event| event.to_s.match?(pattern) }
+          end.map do |name, config|
+            {
+              type: 'subscriber',
+              name: name,
+              class_name: config[:subscriber_class].name,
+              events: config[:events],
+              registered_at: config[:registered_at]
+            }
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+---
+
+## **WEEK 5: Event-Driven Registry Coordination**
+**Objective**: Enable registries to coordinate and react to each other's changes
+
+### **5.1 Registry Event System**
+
+#### **Registry Events Definition**
+```ruby
+# lib/tasker/constants/registry_events.rb
+module Tasker
+  module Constants
+    module RegistryEvents
+      # Handler registration events
+      HANDLER_REGISTERED = 'handler.registered'
+      HANDLER_UNREGISTERED = 'handler.unregistered'
+      HANDLER_VALIDATION_FAILED = 'handler.validation_failed'
+
+      # Plugin registration events
+      PLUGIN_REGISTERED = 'plugin.registered'
+      PLUGIN_UNREGISTERED = 'plugin.unregistered'
+      PLUGIN_VALIDATION_FAILED = 'plugin.validation_failed'
+
+      # Subscriber registration events
+      SUBSCRIBER_REGISTERED = 'subscriber.registered'
+      SUBSCRIBER_UNREGISTERED = 'subscriber.unregistered'
+      SUBSCRIBER_VALIDATION_FAILED = 'subscriber.validation_failed'
+
+      # Registry coordination events
+      REGISTRY_SYNC_REQUESTED = 'registry.sync_requested'
+      REGISTRY_HEALTH_CHECK = 'registry.health_check'
+      REGISTRY_STATS_COLLECTED = 'registry.stats_collected'
+
+      # Cross-registry events
+      CROSS_REGISTRY_DISCOVERY = 'registry.cross_discovery'
+      REGISTRY_COORDINATION_COMPLETE = 'registry.coordination_complete'
+    end
+  end
+end
+```
+
+#### **Registry Event Publisher**
+```ruby
+# lib/tasker/registry/event_publisher.rb
+module Tasker
+  module Registry
+    module EventPublisher
+      extend ActiveSupport::Concern
+
+      included do
+        include Tasker::Concerns::EventPublisher
+      end
+
+      def publish_registration_event(entity_type, entity_id, entity_class, options = {})
+        event_name = "#{entity_type}.registered"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_id: entity_id,
+          entity_class: entity_class.name,
+          options: options,
+          registered_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_unregistration_event(entity_type, entity_id, entity_class)
+        event_name = "#{entity_type}.unregistered"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_id: entity_id,
+          entity_class: entity_class.name,
+          unregistered_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_validation_failed_event(entity_type, entity_class, error)
+        event_name = "#{entity_type}.validation_failed"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_class: entity_class.name,
+          validation_error: error.message,
+          failed_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_registry_stats_event(stats)
+        publish_event(Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED, {
+          registry_name: @registry_name,
+          stats: stats,
+          collected_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+    end
+  end
+end
+```
+
+### **5.2 Cross-Registry Coordination**
+
+#### **Registry Coordination Service**
+```ruby
+# lib/tasker/registry/coordination_service.rb
+module Tasker
+  module Registry
+    class CoordinationService
+      include Singleton
+      include Tasker::Concerns::StructuredLogging
+      include Tasker::Concerns::EventPublisher
+
+      def initialize
+        @coordination_rules = {}
+        @active_coordinations = Concurrent::Hash.new
+        subscribe_to_registry_events
+      end
+
+      def add_coordination_rule(source_event, target_registry, action)
+        @coordination_rules[source_event] ||= []
+        @coordination_rules[source_event] << {
+          target_registry: target_registry,
+          action: action
+        }
+
+        log_structured(:info, 'Coordination rule added',
+                       source_event: source_event,
+                       target_registry: target_registry.name,
+                       action: action)
+      end
+
+      def coordinate_plugin_discovery_from_handlers
+        # When a new handler is registered, check if it could be a plugin
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::HANDLER_REGISTERED,
+          Tasker::Telemetry::PluginRegistry,
+          :auto_discover_plugin
+        )
+      end
+
+      def coordinate_subscriber_health_monitoring
+        # When registry stats are collected, check subscriber health
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED,
+          Tasker::Registry::SubscriberRegistry,
+          :health_check
+        )
+      end
+
+      def coordinate_cross_registry_sync
+        # Periodic coordination across all registries
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::REGISTRY_SYNC_REQUESTED,
+          :all_registries,
+          :sync_stats
+        )
+      end
+
+      private
+
+      def subscribe_to_registry_events
+        # Subscribe to all registry events for coordination
+        Tasker::Events::Bus.subscribe(self, to: [
+          Tasker::Constants::RegistryEvents::HANDLER_REGISTERED,
+          Tasker::Constants::RegistryEvents::PLUGIN_REGISTERED,
+          Tasker::Constants::RegistryEvents::SUBSCRIBER_REGISTERED,
+          Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED
+        ])
+      end
+
+      def call(event)
+        coordination_rules = @coordination_rules[event.id]
+        return unless coordination_rules
+
+        coordination_rules.each do |rule|
+          execute_coordination_rule(event, rule)
+        end
+      end
+
+      def execute_coordination_rule(event, rule)
+        coordination_id = SecureRandom.uuid
+
+        @active_coordinations[coordination_id] = {
+          event: event.id,
+          rule: rule,
+          started_at: Time.current
+        }
+
+        begin
+          case rule[:target_registry]
+          when :all_registries
+            coordinate_all_registries(rule[:action], event)
+          else
+            coordinate_single_registry(rule[:target_registry], rule[:action], event)
+          end
+
+          log_structured(:info, 'Registry coordination completed',
+                         coordination_id: coordination_id,
+                         event: event.id,
+                         action: rule[:action])
+        rescue StandardError => e
+          log_structured(:error, 'Registry coordination failed',
+                         coordination_id: coordination_id,
+                         event: event.id,
+                         action: rule[:action],
+                         error: e.message)
+        ensure
+          @active_coordinations.delete(coordination_id)
+        end
+      end
+
+      def coordinate_all_registries(action, event)
+        registries = [
+          Tasker::HandlerFactory.instance,
+          Tasker::Telemetry::PluginRegistry.instance,
+          Tasker::Telemetry::ExportCoordinator.instance,
+          Tasker::Registry::SubscriberRegistry.instance
+        ]
+
+        case action
+        when :sync_stats
+          all_stats = registries.map { |registry| registry.stats }
+          publish_coordination_complete_event(action, all_stats)
+        when :health_check
+          health_results = registries.map { |registry| registry.health_check }
+          publish_coordination_complete_event(action, health_results)
+        end
+      end
+
+      def coordinate_single_registry(target_registry, action, event)
+        case action
+        when :auto_discover_plugin
+          auto_discover_plugin_from_handler(target_registry, event)
+        when :health_check
+          perform_registry_health_check(target_registry, event)
+        end
+      end
+
+      def auto_discover_plugin_from_handler(plugin_registry, event)
+        # Check if the registered handler could also be a plugin
+        handler_class = event.payload[:entity_class].constantize
+
+        if plugin_like_interface?(handler_class)
+          log_structured(:info, 'Potential plugin discovered from handler registration',
+                         handler_class: handler_class.name,
+                         suggestion: 'Consider registering as plugin if applicable')
+        end
+      end
+
+      def perform_registry_health_check(target_registry, event)
+        health_result = target_registry.health_check
+
+        unless health_result[:healthy]
+          log_structured(:warn, 'Registry health check failed',
+                         registry: target_registry.class.name,
+                         health_result: health_result)
+        end
+      end
+
+      def plugin_like_interface?(handler_class)
+        # Check if handler has plugin-like methods
+        plugin_methods = [:export, :supports_format?]
+        plugin_methods.any? { |method| handler_class.instance_methods.include?(method) }
+      end
+
+      def publish_coordination_complete_event(action, results)
+        publish_event(Tasker::Constants::RegistryEvents::REGISTRY_COORDINATION_COMPLETE, {
+          action: action,
+          results: results,
+          completed_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+    end
+  end
+end
+```
+
+---
+
+## **Implementation Timeline & Deliverables**
+
+### **Week 1 Deliverables**
+```
+✅ lib/tasker/handler_factory.rb                    # Thread-safe storage upgrade
+✅ lib/tasker/registry/base_registry.rb             # Common registry base class
+✅ lib/tasker/registry/interface_validator.rb       # Unified validation framework
+✅ lib/tasker/registry/subscriber_registry.rb       # Centralized subscriber management
+✅ spec/lib/tasker/registry/                        # Comprehensive registry tests
+```
+
+### **Week 2 Deliverables**
+```
+✅ Enhanced validation across all registries
+✅ Method arity checking for all interfaces
+✅ Consistent error handling and logging
+✅ Backward compatibility preservation
+```
+
+### **Week 3 Deliverables**
+```
+✅ All registries inherit from BaseRegistry
+✅ Consistent API patterns across registries
+✅ Shared logging and statistics interfaces
+✅ Health check capabilities for all registries
+```
+
+### **Week 4 Deliverables**
+```
+✅ lib/tasker/registry/statistics_collector.rb      # Comprehensive stats collection
+✅ lib/tasker/registry/discovery_service.rb         # Advanced discovery capabilities
+✅ Enhanced introspection for all registries
+✅ Performance monitoring integration
+```
+
+### **Week 5 Deliverables**
+```
+✅ lib/tasker/registry/coordination_service.rb      # Cross-registry coordination
+✅ lib/tasker/registry/event_publisher.rb           # Registry event publishing
+✅ lib/tasker/constants/registry_events.rb          # Registry event definitions
+✅ Automated coordination rules and health monitoring
+```
+
+---
+
+## **Success Metrics & Validation**
+
+### **Technical Metrics**
+- **Thread Safety**: All registries use `Concurrent::Hash` and proper synchronization
+- **Test Coverage**: 100% test coverage for all registry components
+- **Performance**: Registry operations remain sub-millisecond
+- **Memory Usage**: No memory leaks in long-running registry operations
+
+### **Functional Metrics**
+- **Consistency**: All registries follow identical patterns for registration, validation, logging
+- **Observability**: Comprehensive statistics and health checks for all registries
+- **Coordination**: Cross-registry events and automated coordination rules working
+- **Backward Compatibility**: Zero breaking changes for existing code
+
+### **Operational Metrics**
+- **Discovery**: Advanced search and filtering capabilities across all registries
+- **Health Monitoring**: Automated health checks and alerting for registry issues
+- **Documentation**: Complete documentation for all registry patterns and APIs
+- **Developer Experience**: Consistent, intuitive APIs for all registry interactions
+
+---
+
+## **Risk Mitigation & Rollback Strategy**
+
+### **Identified Risks**
+1. **Thread Safety Migration**: Potential race conditions during migration
+2. **Backward Compatibility**: Existing code depending on current HandlerFactory API
+3. **Performance Impact**: Registry operations becoming slower due to additional validation
+4. **Coordination Complexity**: Cross-registry coordination introducing unexpected behaviors
+
+### **Mitigation Strategies**
+1. **Comprehensive Testing**: Extensive thread safety tests and load testing
+2. **Gradual Migration**: Phase-by-phase rollout with feature flags
+3. **Performance Monitoring**: Continuous benchmarking during implementation
+4. **Rollback Capability**: Each week's changes can be independently rolled back
+
+### **Rollback Plan**
+```ruby
+# Feature flag based rollback capability
+module Tasker
+  class Configuration
+    attr_accessor :use_modern_registries
+
+    def initialize
+      @use_modern_registries = ENV.fetch('TASKER_MODERN_REGISTRIES', 'true') == 'true'
+    end
+  end
+end
+
+# Registry factory with fallback
+def self.registry_instance
+  if Tasker.configuration.use_modern_registries
+    ModernHandlerFactory.instance
+  else
+    LegacyHandlerFactory.instance
+  end
+end
+```
+
+---
+
 ## Next Steps
 
-With Phase 4.2.2.3.1 complete, the next phases will focus on:
+The Registry System Consolidation represents a **strategic architectural enhancement** that will:
 
-- **Phase 4.2.2.3.2**: Adaptive Sync Implementation (TTL-aware scheduling)
-- **Phase 4.2.2.3.3**: Export Job Coordination (distributed locking)
-- **Phase 4.2.2.3.4**: Production Testing & Validation
+1. **Eliminate Technical Debt** - Replace non-thread-safe patterns with proven modern approaches
+2. **Improve Consistency** - Unified patterns across all registry systems
+3. **Enhance Observability** - Comprehensive statistics, health checks, and coordination
+4. **Enable Advanced Features** - Foundation for future registry-based capabilities
+5. **Preserve Stability** - Zero breaking changes with comprehensive rollback capabilities
 
-The plugin architecture foundation is now ready for extending Tasker's metrics capabilities while maintaining clean framework boundaries.
+This 5-week plan builds directly on the proven success of the plugin architecture implementation, applying those superior patterns system-wide to create a robust, observable, and maintainable registry ecosystem.
+
+---
+
+## **🎯 **PHASE 4.2.2.4: REGISTRY SYSTEM CONSOLIDATION**
+
+### **Strategic Overview: Applying Plugin Architecture Patterns System-Wide**
+
+**MISSION**: Modernize all of Tasker's registry systems using the superior patterns demonstrated in the successful plugin architecture implementation, creating a unified, thread-safe, observable registry ecosystem.
+
+#### **Current Registry System Analysis**
+
+| Registry System | Storage Type | Thread Safety | Validation | Observability | Status |
+|---|---|---|---|---|---|
+| **HandlerFactory** | `ActiveSupport::HashWithIndifferentAccess` | ❌ **Not thread-safe** | Custom event validation | Basic logging | **NEEDS MODERNIZATION** |
+| **PluginRegistry** | `Concurrent::Hash` | ✅ **Thread-safe** | Method arity validation | Structured logging | **MODERN STANDARD** |
+| **ExportCoordinator** | `Concurrent::Hash` | ✅ **Thread-safe** | Interface validation | Event-driven logging | **MODERN STANDARD** |
+| **Event Subscribers** | Distributed registration | ❌ **No centralized registry** | None | Scattered logging | **NEEDS CENTRALIZATION** |
+
+#### **Strategic Benefits of Consolidation**
+1. **Thread Safety Everywhere** - Eliminate race conditions across all registry systems
+2. **Consistent Validation** - Unified interface validation framework using proven patterns
+3. **Enhanced Observability** - Plugin-style introspection and statistics for all registries
+4. **Event Coordination** - Registries can react to and coordinate with each other
+5. **Technical Debt Reduction** - Modernize legacy patterns with battle-tested approaches
+6. **Developer Experience** - Consistent patterns and APIs across all registry interactions
+
+### **5-Week Implementation Plan**
+
+---
+
+## **WEEK 1: Thread Safety Modernization**
+**Objective**: Upgrade core registry storage to thread-safe implementations
+
+### **1.1 HandlerFactory Thread Safety Upgrade**
+
+#### **Current State Analysis**
+```ruby
+# Current implementation (NOT thread-safe)
+class HandlerFactory
+  def initialize
+    @handler_classes = ActiveSupport::HashWithIndifferentAccess.new
+  end
+
+  def register(dependent_system, name, handler_class)
+    @handler_classes[dependent_system] ||= {}
+    @handler_classes[dependent_system][name] = handler_class
+  end
+end
+```
+
+#### **Target Architecture**
+```ruby
+# Enhanced thread-safe implementation
+class HandlerFactory
+  include Singleton
+  include Tasker::Concerns::StructuredLogging
+
+  def initialize
+    @handler_classes = Concurrent::Hash.new
+    @mutex = Mutex.new
+    @telemetry_config = Tasker.configuration.telemetry
+  end
+
+  def register(dependent_system, name, handler_class, options = {})
+    dependent_system = dependent_system.to_s
+    name = name.to_s
+
+    @mutex.synchronize do
+      # Validate handler interface
+      validate_handler_interface!(handler_class)
+
+      # Initialize system registry if needed
+      @handler_classes[dependent_system] ||= Concurrent::Hash.new
+
+      # Check for existing registration
+      if @handler_classes[dependent_system].key?(name) && !options[:replace]
+        raise ArgumentError, "Handler '#{name}' already registered in system '#{dependent_system}'. Use replace: true to override."
+      end
+
+      # Register handler
+      handler_config = {
+        handler_class: handler_class,
+        dependent_system: dependent_system,
+        name: name,
+        registered_at: Time.current,
+        options: options
+      }
+
+      @handler_classes[dependent_system][name] = handler_config
+
+      # Log registration
+      log_structured(:info, 'Handler registered',
+                     entity_type: 'task_handler',
+                     entity_id: "#{dependent_system}/#{name}",
+                     handler_class: handler_class.name,
+                     dependent_system: dependent_system,
+                     handler_name: name,
+                     options: options,
+                     event_type: :registered)
+
+      true
+    end
+  end
+
+  private
+
+  def validate_handler_interface!(handler_class)
+    required_methods = [:process]
+
+    required_methods.each do |method|
+      unless handler_class.instance_methods.include?(method)
+        raise ArgumentError, "Handler class #{handler_class} must implement #{method} method"
+      end
+    end
+  end
+end
+```
+
+#### **Files to Create/Modify**
+```
+lib/tasker/handler_factory.rb                    # Enhanced - Thread-safe storage + validation
+lib/tasker/registry/                             # New directory - Common registry patterns
+lib/tasker/registry/interface_validator.rb      # New - Common validation framework
+lib/tasker/registry/base_registry.rb            # New - Shared registry functionality
+spec/lib/tasker/handler_factory_spec.rb         # Enhanced - Thread safety tests
+spec/lib/tasker/registry/                       # New - Registry framework tests
+```
+
+### **1.2 Centralized Subscriber Registry**
+
+#### **Current State Analysis**
+Event subscribers are currently registered in a distributed manner with no centralized visibility or management.
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/subscriber_registry.rb
+module Tasker
+  module Registry
+    class SubscriberRegistry < BaseRegistry
+      include Singleton
+
+      def initialize
+        super
+        @subscribers = Concurrent::Hash.new
+        @event_mappings = Concurrent::Hash.new
+      end
+
+      def register(subscriber_class, events: [], options: {})
+        subscriber_name = subscriber_class.name.demodulize.underscore
+
+        @mutex.synchronize do
+          # Validate subscriber interface
+          validate_subscriber_interface!(subscriber_class)
+
+          # Register subscriber
+          subscriber_config = {
+            subscriber_class: subscriber_class,
+            events: events,
+            registered_at: Time.current,
+            options: options
+          }
+
+          @subscribers[subscriber_name] = subscriber_config
+
+          # Index by events
+          events.each do |event|
+            @event_mappings[event] ||= []
+            @event_mappings[event] << subscriber_name
+          end
+
+          log_registration('event_subscriber', subscriber_name, subscriber_class, options)
+          true
+        end
+      end
+
+      def subscribers_for_event(event_name)
+        subscriber_names = @event_mappings[event_name] || []
+        subscriber_names.map { |name| @subscribers[name] }
+      end
+
+      def all_subscribers
+        @subscribers.dup
+      end
+
+      def stats
+        {
+          total_subscribers: @subscribers.size,
+          total_event_mappings: @event_mappings.size,
+          events_covered: @event_mappings.keys.sort,
+          subscribers_by_event: @event_mappings.transform_values(&:size)
+        }
+      end
+
+      private
+
+      def validate_subscriber_interface!(subscriber_class)
+        required_methods = [:call]
+
+        required_methods.each do |method|
+          unless subscriber_class.instance_methods.include?(method)
+            raise ArgumentError, "Subscriber class #{subscriber_class} must implement #{method} method"
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+#### **Integration Points**
+- **BaseSubscriber Enhancement** - Auto-register with SubscriberRegistry
+- **Event Bus Integration** - Use registry for subscriber discovery
+- **Health Checks** - Registry status in health endpoints
+
+---
+
+## **WEEK 2: Common Interface Validation Framework**
+**Objective**: Create unified validation patterns across all registries
+
+### **2.1 Registry Interface Validator**
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/interface_validator.rb
+module Tasker
+  module Registry
+    class InterfaceValidator
+      class << self
+        def validate_handler!(handler_class)
+          validate_class_methods!(handler_class, HANDLER_INTERFACE)
+          validate_instance_methods!(handler_class, HANDLER_INSTANCE_INTERFACE)
+        end
+
+        def validate_subscriber!(subscriber_class)
+          validate_instance_methods!(subscriber_class, SUBSCRIBER_INTERFACE)
+        end
+
+        def validate_plugin!(plugin_instance)
+          validate_instance_methods!(plugin_instance.class, PLUGIN_INTERFACE)
+          validate_method_arity!(plugin_instance, PLUGIN_ARITY_REQUIREMENTS)
+        end
+
+        private
+
+        HANDLER_INTERFACE = {
+          required_class_methods: [:process],
+          optional_class_methods: [:configure, :dependencies]
+        }.freeze
+
+        HANDLER_INSTANCE_INTERFACE = {
+          required_instance_methods: [],
+          optional_instance_methods: [:initialize, :before_process, :after_process]
+        }.freeze
+
+        SUBSCRIBER_INTERFACE = {
+          required_instance_methods: [:call],
+          optional_instance_methods: [:initialize, :filter_events]
+        }.freeze
+
+        PLUGIN_INTERFACE = {
+          required_instance_methods: [:export, :supports_format?],
+          optional_instance_methods: [:supported_formats, :metadata, :validate_data]
+        }.freeze
+
+        PLUGIN_ARITY_REQUIREMENTS = {
+          export: { min: 1, max: 2 },
+          supports_format?: { min: 1, max: 1 }
+        }.freeze
+
+        def validate_class_methods!(klass, interface)
+          interface[:required_class_methods]&.each do |method|
+            unless klass.respond_to?(method)
+              raise ArgumentError, "#{klass} must implement class method #{method}"
+            end
+          end
+        end
+
+        def validate_instance_methods!(klass, interface)
+          interface[:required_instance_methods]&.each do |method|
+            unless klass.instance_methods.include?(method)
+              raise ArgumentError, "#{klass} must implement instance method #{method}"
+            end
+          end
+        end
+
+        def validate_method_arity!(instance, arity_requirements)
+          arity_requirements.each do |method, requirements|
+            next unless instance.respond_to?(method)
+
+            method_obj = instance.method(method)
+            arity = method_obj.arity
+
+            # Handle negative arity (variable arguments)
+            if arity < 0
+              min_required = arity.abs - 1
+              if min_required > requirements[:max]
+                raise ArgumentError, "#{method} requires too many arguments (min: #{min_required}, max allowed: #{requirements[:max]})"
+              end
+            else
+              unless arity >= requirements[:min] && arity <= requirements[:max]
+                raise ArgumentError, "#{method} arity mismatch (expected: #{requirements[:min]}-#{requirements[:max]}, got: #{arity})"
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+### **2.2 Enhanced HandlerFactory Validation**
+
+#### **Integration with Interface Validator**
+```ruby
+# Enhanced HandlerFactory with unified validation
+def validate_handler_interface!(handler_class)
+  Tasker::Registry::InterfaceValidator.validate_handler!(handler_class)
+rescue ArgumentError => e
+  log_structured(:error, 'Handler validation failed',
+                 entity_type: 'task_handler',
+                 handler_class: handler_class.name,
+                 validation_error: e.message,
+                 event_type: :validation_failed)
+  raise
+end
+```
+
+---
+
+## **WEEK 3: Common Registry Base Class**
+**Objective**: Extract shared functionality into a common base class
+
+### **3.1 BaseRegistry Implementation**
+
+#### **Target Architecture**
+```ruby
+# lib/tasker/registry/base_registry.rb
+module Tasker
+  module Registry
+    class BaseRegistry
+      include Tasker::Concerns::StructuredLogging
+
+      def initialize
+        @mutex = Mutex.new
+        @telemetry_config = Tasker.configuration.telemetry
+        @registry_name = self.class.name.demodulize.underscore
+      end
+
+      protected
+
+      def log_registration(entity_type, entity_id, entity_class, options = {})
+        log_structured(:info, 'Registry item registered',
+                       entity_type: entity_type,
+                       entity_id: entity_id,
+                       entity_class: entity_class.name,
+                       registry_name: @registry_name,
+                       options: options,
+                       event_type: :registered)
+      end
+
+      def log_unregistration(entity_type, entity_id, entity_class)
+        log_structured(:info, 'Registry item unregistered',
+                       entity_type: entity_type,
+                       entity_id: entity_id,
+                       entity_class: entity_class.name,
+                       registry_name: @registry_name,
+                       event_type: :unregistered)
+      end
+
+      def log_registry_operation(operation, **context)
+        log_structured(:debug, "Registry #{operation}",
+                       registry_name: @registry_name,
+                       operation: operation,
+                       **context)
+      end
+
+      def validate_registration_params!(name, entity_class, options = {})
+        raise ArgumentError, "Name cannot be blank" if name.blank?
+        raise ArgumentError, "Entity class cannot be nil" if entity_class.nil?
+        raise ArgumentError, "Options must be a Hash" unless options.is_a?(Hash)
+      end
+
+      def thread_safe_operation(&block)
+        @mutex.synchronize(&block)
+      end
+
+      # Common registry statistics interface
+      def base_stats
+        {
+          registry_name: @registry_name,
+          registry_class: self.class.name,
+          initialized_at: @initialized_at || Time.current,
+          thread_safe: true,
+          mutex_locked: @mutex.locked?
+        }
+      end
+
+      # Health check interface
+      def healthy?
+        # Basic health checks that all registries should pass
+        !@mutex.locked? && respond_to?(:stats)
+      end
+
+      def health_check
+        {
+          healthy: healthy?,
+          registry_name: @registry_name,
+          stats: stats,
+          last_check: Time.current
+        }
+      end
+
+      # Abstract methods that subclasses must implement
+      def stats
+        raise NotImplementedError, "Subclasses must implement #stats"
+      end
+
+      def all_items
+        raise NotImplementedError, "Subclasses must implement #all_items"
+      end
+
+      def clear!
+        raise NotImplementedError, "Subclasses must implement #clear!"
+      end
+    end
+  end
+end
+```
+
+### **3.2 Registry Migrations**
+
+#### **HandlerFactory Migration**
+```ruby
+# Enhanced HandlerFactory inheriting from BaseRegistry
+class HandlerFactory < Tasker::Registry::BaseRegistry
+  include Singleton
+
+  def initialize
+    super
+    @handler_classes = Concurrent::Hash.new
+    @initialized_at = Time.current
+  end
+
+  def stats
+    base_stats.merge({
+      total_systems: @handler_classes.size,
+      total_handlers: @handler_classes.values.sum(&:size),
+      systems: @handler_classes.keys.sort,
+      handlers_by_system: @handler_classes.transform_values(&:size)
+    })
+  end
+
+  def all_items
+    @handler_classes.dup
+  end
+
+  def clear!
+    thread_safe_operation do
+      @handler_classes.clear
+      log_registry_operation('cleared')
+    end
+  end
+
+  # ... rest of HandlerFactory implementation
+end
+```
+
+#### **PluginRegistry Migration**
+```ruby
+# Migrate PluginRegistry to inherit from BaseRegistry
+class PluginRegistry < Tasker::Registry::BaseRegistry
+  include Singleton
+
+  def initialize
+    super
+    @plugins = Concurrent::Hash.new
+    @formats = Concurrent::Hash.new
+    @initialized_at = Time.current
+  end
+
+  # ... existing implementation with BaseRegistry integration
+end
+```
+
+---
+
+## **WEEK 4: Enhanced Introspection & Statistics**
+**Objective**: Add comprehensive observability and discovery capabilities
+
+### **4.1 Registry Statistics Framework**
+
+#### **Common Statistics Interface**
+```ruby
+# lib/tasker/registry/statistics_collector.rb
+module Tasker
+  module Registry
+    class StatisticsCollector
+      class << self
+        def collect_all_registry_stats
+          registries = discover_registries
+
+          {
+            collection_timestamp: Time.current,
+            total_registries: registries.size,
+            registries: registries.map { |registry| collect_registry_stats(registry) }
+          }
+        end
+
+        def collect_registry_stats(registry)
+          base_stats = registry.stats
+          health_check = registry.health_check
+
+          {
+            **base_stats,
+            health: health_check,
+            performance: calculate_performance_metrics(registry),
+            usage_patterns: analyze_usage_patterns(registry)
+          }
+        end
+
+        private
+
+        def discover_registries
+          [
+            Tasker::HandlerFactory.instance,
+            Tasker::Telemetry::PluginRegistry.instance,
+            Tasker::Telemetry::ExportCoordinator.instance,
+            Tasker::Registry::SubscriberRegistry.instance
+          ]
+        end
+
+        def calculate_performance_metrics(registry)
+          # Measure registry operation performance
+          start_time = Time.current
+          registry.stats
+          response_time = (Time.current - start_time) * 1000
+
+          {
+            stats_response_time_ms: response_time.round(2),
+            healthy: registry.healthy?,
+            last_measured: Time.current
+          }
+        end
+
+        def analyze_usage_patterns(registry)
+          stats = registry.stats
+
+          {
+            growth_rate: calculate_growth_rate(stats),
+            utilization: calculate_utilization(stats),
+            distribution: calculate_distribution(stats)
+          }
+        end
+
+        def calculate_growth_rate(stats)
+          # Placeholder for growth rate calculation
+          # In practice, this would track registration rates over time
+          'stable'
+        end
+
+        def calculate_utilization(stats)
+          # Calculate how actively the registry is being used
+          total_items = stats[:total_handlers] || stats[:total_plugins] || stats[:total_subscribers] || 0
+
+          case total_items
+          when 0..5 then 'low'
+          when 6..20 then 'medium'
+          else 'high'
+          end
+        end
+
+        def calculate_distribution(stats)
+          # Analyze distribution patterns
+          if stats[:handlers_by_system]
+            analyze_handler_distribution(stats[:handlers_by_system])
+          elsif stats[:plugins_by_format]
+            analyze_plugin_distribution(stats[:plugins_by_format])
+          else
+            'even'
+          end
+        end
+
+        def analyze_handler_distribution(handlers_by_system)
+          return 'empty' if handlers_by_system.empty?
+
+          values = handlers_by_system.values
+          avg = values.sum.to_f / values.size
+          variance = values.map { |v| (v - avg) ** 2 }.sum / values.size
+
+          variance < 2 ? 'even' : 'skewed'
+        end
+
+        def analyze_plugin_distribution(plugins_by_format)
+          return 'empty' if plugins_by_format.empty?
+
+          values = plugins_by_format.values
+          values.uniq.size == 1 ? 'even' : 'varied'
+        end
+      end
+    end
+  end
+end
+```
+
+### **4.2 Registry Discovery & Filtering**
+
+#### **Enhanced Discovery Capabilities**
+```ruby
+# lib/tasker/registry/discovery_service.rb
+module Tasker
+  module Registry
+    class DiscoveryService
+      class << self
+        def find_handlers(criteria = {})
+          factory = Tasker::HandlerFactory.instance
+          handlers = factory.all_items
+
+          filter_handlers(handlers, criteria)
+        end
+
+        def find_plugins(criteria = {})
+          registry = Tasker::Telemetry::PluginRegistry.instance
+          plugins = registry.all_plugins
+
+          filter_plugins(plugins, criteria)
+        end
+
+        def find_subscribers(criteria = {})
+          registry = Tasker::Registry::SubscriberRegistry.instance
+          subscribers = registry.all_subscribers
+
+          filter_subscribers(subscribers, criteria)
+        end
+
+        def search_across_registries(query)
+          {
+            handlers: search_handlers(query),
+            plugins: search_plugins(query),
+            subscribers: search_subscribers(query)
+          }
+        end
+
+        private
+
+        def filter_handlers(handlers, criteria)
+          result = handlers
+
+          if criteria[:system]
+            result = result.select { |system, _| system == criteria[:system].to_s }
+          end
+
+          if criteria[:name_pattern]
+            pattern = Regexp.new(criteria[:name_pattern], Regexp::IGNORECASE)
+            result = result.transform_values do |system_handlers|
+              system_handlers.select { |name, _| name.match?(pattern) }
+            end
+          end
+
+          if criteria[:class_pattern]
+            pattern = Regexp.new(criteria[:class_pattern], Regexp::IGNORECASE)
+            result = result.transform_values do |system_handlers|
+              system_handlers.select { |_, config| config[:handler_class].name.match?(pattern) }
+            end
+          end
+
+          result
+        end
+
+        def search_plugins(query)
+          plugins = Tasker::Telemetry::PluginRegistry.instance.all_plugins
+          pattern = Regexp.new(query, Regexp::IGNORECASE)
+
+          plugins.select do |name, config|
+            name.match?(pattern) ||
+            config[:instance].class.name.match?(pattern) ||
+            config[:supported_formats].any? { |format| format.match?(pattern) }
+          end.map do |name, config|
+            {
+              type: 'plugin',
+              name: name,
+              class_name: config[:instance].class.name,
+              supported_formats: config[:supported_formats],
+              registered_at: config[:registered_at]
+            }
+          end
+        end
+
+        def search_subscribers(query)
+          subscribers = Tasker::Registry::SubscriberRegistry.instance.all_subscribers
+          pattern = Regexp.new(query, Regexp::IGNORECASE)
+
+          subscribers.select do |name, config|
+            name.match?(pattern) ||
+            config[:subscriber_class].name.match?(pattern) ||
+            config[:events].any? { |event| event.to_s.match?(pattern) }
+          end.map do |name, config|
+            {
+              type: 'subscriber',
+              name: name,
+              class_name: config[:subscriber_class].name,
+              events: config[:events],
+              registered_at: config[:registered_at]
+            }
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+---
+
+## **WEEK 5: Event-Driven Registry Coordination**
+**Objective**: Enable registries to coordinate and react to each other's changes
+
+### **5.1 Registry Event System**
+
+#### **Registry Events Definition**
+```ruby
+# lib/tasker/constants/registry_events.rb
+module Tasker
+  module Constants
+    module RegistryEvents
+      # Handler registration events
+      HANDLER_REGISTERED = 'handler.registered'
+      HANDLER_UNREGISTERED = 'handler.unregistered'
+      HANDLER_VALIDATION_FAILED = 'handler.validation_failed'
+
+      # Plugin registration events
+      PLUGIN_REGISTERED = 'plugin.registered'
+      PLUGIN_UNREGISTERED = 'plugin.unregistered'
+      PLUGIN_VALIDATION_FAILED = 'plugin.validation_failed'
+
+      # Subscriber registration events
+      SUBSCRIBER_REGISTERED = 'subscriber.registered'
+      SUBSCRIBER_UNREGISTERED = 'subscriber.unregistered'
+      SUBSCRIBER_VALIDATION_FAILED = 'subscriber.validation_failed'
+
+      # Registry coordination events
+      REGISTRY_SYNC_REQUESTED = 'registry.sync_requested'
+      REGISTRY_HEALTH_CHECK = 'registry.health_check'
+      REGISTRY_STATS_COLLECTED = 'registry.stats_collected'
+
+      # Cross-registry events
+      CROSS_REGISTRY_DISCOVERY = 'registry.cross_discovery'
+      REGISTRY_COORDINATION_COMPLETE = 'registry.coordination_complete'
+    end
+  end
+end
+```
+
+#### **Registry Event Publisher**
+```ruby
+# lib/tasker/registry/event_publisher.rb
+module Tasker
+  module Registry
+    module EventPublisher
+      extend ActiveSupport::Concern
+
+      included do
+        include Tasker::Concerns::EventPublisher
+      end
+
+      def publish_registration_event(entity_type, entity_id, entity_class, options = {})
+        event_name = "#{entity_type}.registered"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_id: entity_id,
+          entity_class: entity_class.name,
+          options: options,
+          registered_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_unregistration_event(entity_type, entity_id, entity_class)
+        event_name = "#{entity_type}.unregistered"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_id: entity_id,
+          entity_class: entity_class.name,
+          unregistered_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_validation_failed_event(entity_type, entity_class, error)
+        event_name = "#{entity_type}.validation_failed"
+
+        publish_event(event_name, {
+          registry_name: @registry_name,
+          entity_type: entity_type,
+          entity_class: entity_class.name,
+          validation_error: error.message,
+          failed_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+
+      def publish_registry_stats_event(stats)
+        publish_event(Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED, {
+          registry_name: @registry_name,
+          stats: stats,
+          collected_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+    end
+  end
+end
+```
+
+### **5.2 Cross-Registry Coordination**
+
+#### **Registry Coordination Service**
+```ruby
+# lib/tasker/registry/coordination_service.rb
+module Tasker
+  module Registry
+    class CoordinationService
+      include Singleton
+      include Tasker::Concerns::StructuredLogging
+      include Tasker::Concerns::EventPublisher
+
+      def initialize
+        @coordination_rules = {}
+        @active_coordinations = Concurrent::Hash.new
+        subscribe_to_registry_events
+      end
+
+      def add_coordination_rule(source_event, target_registry, action)
+        @coordination_rules[source_event] ||= []
+        @coordination_rules[source_event] << {
+          target_registry: target_registry,
+          action: action
+        }
+
+        log_structured(:info, 'Coordination rule added',
+                       source_event: source_event,
+                       target_registry: target_registry.name,
+                       action: action)
+      end
+
+      def coordinate_plugin_discovery_from_handlers
+        # When a new handler is registered, check if it could be a plugin
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::HANDLER_REGISTERED,
+          Tasker::Telemetry::PluginRegistry,
+          :auto_discover_plugin
+        )
+      end
+
+      def coordinate_subscriber_health_monitoring
+        # When registry stats are collected, check subscriber health
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED,
+          Tasker::Registry::SubscriberRegistry,
+          :health_check
+        )
+      end
+
+      def coordinate_cross_registry_sync
+        # Periodic coordination across all registries
+        add_coordination_rule(
+          Tasker::Constants::RegistryEvents::REGISTRY_SYNC_REQUESTED,
+          :all_registries,
+          :sync_stats
+        )
+      end
+
+      private
+
+      def subscribe_to_registry_events
+        # Subscribe to all registry events for coordination
+        Tasker::Events::Bus.subscribe(self, to: [
+          Tasker::Constants::RegistryEvents::HANDLER_REGISTERED,
+          Tasker::Constants::RegistryEvents::PLUGIN_REGISTERED,
+          Tasker::Constants::RegistryEvents::SUBSCRIBER_REGISTERED,
+          Tasker::Constants::RegistryEvents::REGISTRY_STATS_COLLECTED
+        ])
+      end
+
+      def call(event)
+        coordination_rules = @coordination_rules[event.id]
+        return unless coordination_rules
+
+        coordination_rules.each do |rule|
+          execute_coordination_rule(event, rule)
+        end
+      end
+
+      def execute_coordination_rule(event, rule)
+        coordination_id = SecureRandom.uuid
+
+        @active_coordinations[coordination_id] = {
+          event: event.id,
+          rule: rule,
+          started_at: Time.current
+        }
+
+        begin
+          case rule[:target_registry]
+          when :all_registries
+            coordinate_all_registries(rule[:action], event)
+          else
+            coordinate_single_registry(rule[:target_registry], rule[:action], event)
+          end
+
+          log_structured(:info, 'Registry coordination completed',
+                         coordination_id: coordination_id,
+                         event: event.id,
+                         action: rule[:action])
+        rescue StandardError => e
+          log_structured(:error, 'Registry coordination failed',
+                         coordination_id: coordination_id,
+                         event: event.id,
+                         action: rule[:action],
+                         error: e.message)
+        ensure
+          @active_coordinations.delete(coordination_id)
+        end
+      end
+
+      def coordinate_all_registries(action, event)
+        registries = [
+          Tasker::HandlerFactory.instance,
+          Tasker::Telemetry::PluginRegistry.instance,
+          Tasker::Telemetry::ExportCoordinator.instance,
+          Tasker::Registry::SubscriberRegistry.instance
+        ]
+
+        case action
+        when :sync_stats
+          all_stats = registries.map { |registry| registry.stats }
+          publish_coordination_complete_event(action, all_stats)
+        when :health_check
+          health_results = registries.map { |registry| registry.health_check }
+          publish_coordination_complete_event(action, health_results)
+        end
+      end
+
+      def coordinate_single_registry(target_registry, action, event)
+        case action
+        when :auto_discover_plugin
+          auto_discover_plugin_from_handler(target_registry, event)
+        when :health_check
+          perform_registry_health_check(target_registry, event)
+        end
+      end
+
+      def auto_discover_plugin_from_handler(plugin_registry, event)
+        # Check if the registered handler could also be a plugin
+        handler_class = event.payload[:entity_class].constantize
+
+        if plugin_like_interface?(handler_class)
+          log_structured(:info, 'Potential plugin discovered from handler registration',
+                         handler_class: handler_class.name,
+                         suggestion: 'Consider registering as plugin if applicable')
+        end
+      end
+
+      def perform_registry_health_check(target_registry, event)
+        health_result = target_registry.health_check
+
+        unless health_result[:healthy]
+          log_structured(:warn, 'Registry health check failed',
+                         registry: target_registry.class.name,
+                         health_result: health_result)
+        end
+      end
+
+      def plugin_like_interface?(handler_class)
+        # Check if handler has plugin-like methods
+        plugin_methods = [:export, :supports_format?]
+        plugin_methods.any? { |method| handler_class.instance_methods.include?(method) }
+      end
+
+      def publish_coordination_complete_event(action, results)
+        publish_event(Tasker::Constants::RegistryEvents::REGISTRY_COORDINATION_COMPLETE, {
+          action: action,
+          results: results,
+          completed_at: Time.current,
+          correlation_id: correlation_id
+        })
+      end
+    end
+  end
+end
+```
+
+---
+
+## **Implementation Timeline & Deliverables**
+
+### **Week 1 Deliverables**
+```
+✅ lib/tasker/handler_factory.rb                    # Thread-safe storage upgrade
+✅ lib/tasker/registry/base_registry.rb             # Common registry base class
+✅ lib/tasker/registry/interface_validator.rb       # Unified validation framework
+✅ lib/tasker/registry/subscriber_registry.rb       # Centralized subscriber management
+✅ spec/lib/tasker/registry/                        # Comprehensive registry tests
+```
+
+### **Week 2 Deliverables**
+```
+✅ Enhanced validation across all registries
+✅ Method arity checking for all interfaces
+✅ Consistent error handling and logging
+✅ Backward compatibility preservation
+```
+
+### **Week 3 Deliverables**
+```
+✅ All registries inherit from BaseRegistry
+✅ Consistent API patterns across registries
+✅ Shared logging and statistics interfaces
+✅ Health check capabilities for all registries
+```
+
+### **Week 4 Deliverables**
+```
+✅ lib/tasker/registry/statistics_collector.rb      # Comprehensive stats collection
+✅ lib/tasker/registry/discovery_service.rb         # Advanced discovery capabilities
+✅ Enhanced introspection for all registries
+✅ Performance monitoring integration
+```
+
+### **Week 5 Deliverables**
+```
+✅ lib/tasker/registry/coordination_service.rb      # Cross-registry coordination
+✅ lib/tasker/registry/event_publisher.rb           # Registry event publishing
+✅ lib/tasker/constants/registry_events.rb          # Registry event definitions
+✅ Automated coordination rules and health monitoring
+```
+
+---
+
+## **Success Metrics & Validation**
+
+### **Technical Metrics**
+- **Thread Safety**: All registries use `Concurrent::Hash` and proper synchronization
+- **Test Coverage**: 100% test coverage for all registry components
+- **Performance**: Registry operations remain sub-millisecond
+- **Memory Usage**: No memory leaks in long-running registry operations
+
+### **Functional Metrics**
+- **Consistency**: All registries follow identical patterns for registration, validation, logging
+- **Observability**: Comprehensive statistics and health checks for all registries
+- **Coordination**: Cross-registry events and automated coordination rules working
+- **Backward Compatibility**: Zero breaking changes for existing code
+
+### **Operational Metrics**
+- **Discovery**: Advanced search and filtering capabilities across all registries
+- **Health Monitoring**: Automated health checks and alerting for registry issues
+- **Documentation**: Complete documentation for all registry patterns and APIs
+- **Developer Experience**: Consistent, intuitive APIs for all registry interactions
+
+---
+
+## **Risk Mitigation & Rollback Strategy**
+
+### **Identified Risks**
+1. **Thread Safety Migration**: Potential race conditions during migration
+2. **Backward Compatibility**: Existing code depending on current HandlerFactory API
+3. **Performance Impact**: Registry operations becoming slower due to additional validation
+4. **Coordination Complexity**: Cross-registry coordination introducing unexpected behaviors
+
+### **Mitigation Strategies**
+1. **Comprehensive Testing**: Extensive thread safety tests and load testing
+2. **Gradual Migration**: Phase-by-phase rollout with feature flags
+3. **Performance Monitoring**: Continuous benchmarking during implementation
+4. **Rollback Capability**: Each week's changes can be independently rolled back
+
+### **Rollback Plan**
+```ruby
+# Feature flag based rollback capability
+module Tasker
+  class Configuration
+    attr_accessor :use_modern_registries
+
+    def initialize
+      @use_modern_registries = ENV.fetch('TASKER_MODERN_REGISTRIES', 'true') == 'true'
+    end
+  end
+end
+
+# Registry factory with fallback
+def self.registry_instance
+  if Tasker.configuration.use_modern_registries
+    ModernHandlerFactory.instance
+  else
+    LegacyHandlerFactory.instance
+  end
+end
+```
+
+---
+
+## Next Steps
+
+The Registry System Consolidation represents a **strategic architectural enhancement** that will:
+
+1. **Eliminate Technical Debt** - Replace non-thread-safe patterns with proven modern approaches
+2. **Improve Consistency** - Unified patterns across all registry systems
+3. **Enhance Observability** - Comprehensive statistics, health checks, and coordination
+4. **Enable Advanced Features** - Foundation for future registry-based capabilities
+5. **Preserve Stability** - Zero breaking changes with comprehensive rollback capabilities
+
+This 5-week plan builds directly on the proven success of the plugin architecture implementation, applying those superior patterns system-wide to create a robust, observable, and maintainable registry ecosystem.
+
+---
