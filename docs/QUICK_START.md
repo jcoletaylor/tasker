@@ -4,6 +4,8 @@
 
 This guide will get you from zero to a working Tasker workflow in 15 minutes. You'll build a simple "Welcome Email" process that demonstrates core concepts like step dependencies, error handling, and result passing. This guide is done as an example - you don't have to actually have a User model or a welcome email process.
 
+**🚀 New in Tasker 2.3.0**: This guide now benefits from our enterprise-grade registry system with thread-safe operations, structured logging with correlation IDs, and comprehensive validation - all working automatically behind the scenes for maximum reliability.
+
 *Note*: This guide being an example, the step that gets a user from the database is unlikely to need to be retried - steps are generally best decomposed into units that need distinct idempotency and retryability guarantees.
 
 ## Prerequisites (2 minutes)

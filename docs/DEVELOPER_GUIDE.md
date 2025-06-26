@@ -161,10 +161,11 @@ handler_default = Tasker::HandlerFactory.instance.get('process_payment')
 
 #### HandlerFactory Registry Architecture
 
-The HandlerFactory now uses a **3-level registry** for precise task identification:
+The HandlerFactory now uses a **thread-safe 3-level registry** with enterprise-grade capabilities:
 
 ```ruby
 # Registry Structure: namespace_name → handler_name → version → handler_class
+# Thread-safe storage: Concurrent::Hash for all levels
 # Example internal structure:
 {
   payments: {
@@ -181,6 +182,14 @@ The HandlerFactory now uses a **3-level registry** for precise task identificati
 }
 ```
 
+**Enterprise Features**:
+- **Thread-Safe Operations**: `Concurrent::Hash` storage eliminates race conditions
+- **Structured Logging**: Every operation logged with correlation IDs
+- **Interface Validation**: Fail-fast validation with detailed error messages
+- **Conflict Resolution**: `replace: true` parameter for graceful updates
+- **Health Monitoring**: Built-in statistics and health checks
+- **Event Integration**: Registry operations trigger 56-event system
+
 **Registration Examples**:
 ```ruby
 # Class-based registration with namespace + version
@@ -191,6 +200,18 @@ class PaymentHandler < Tasker::TaskHandler
     version: '2.0.0'
   )
 end
+
+# Thread-safe manual registration with conflict resolution
+Tasker::HandlerFactory.instance.register(
+  'payment_processor',
+  PaymentHandler,
+  namespace_name: 'payments',
+  version: '2.1.0',
+  replace: true  # Gracefully handles conflicts
+)
+
+# Automatic structured logging output:
+# {"correlation_id":"tsk_abc123","component":"handler_factory","message":"Registry item registered","entity_id":"payments/payment_processor/2.1.0","event_type":"registered"}
 
 # YAML-based registration
 # config/tasker/tasks/payments/process_payment.yaml
