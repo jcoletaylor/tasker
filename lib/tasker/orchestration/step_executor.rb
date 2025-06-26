@@ -2,6 +2,7 @@
 
 require 'concurrent'
 require_relative '../concerns/idempotent_state_transitions'
+require_relative '../concerns/structured_logging'
 require_relative '../concerns/event_publisher'
 require_relative '../types/step_sequence'
 
@@ -12,9 +13,12 @@ module Tasker
     # This class provides the implementation for step execution while preserving
     # the original concurrent processing capabilities using concurrent-ruby.
     # It fires lifecycle events for observability.
+    #
+    # Enhanced with structured logging and performance monitoring for production observability.
     class StepExecutor
       include Tasker::Concerns::IdempotentStateTransitions
       include Tasker::Concerns::EventPublisher
+      include Tasker::Concerns::StructuredLogging
 
       # ⚠️  PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion
       MAX_CONCURRENT_STEPS = 3
@@ -22,7 +26,7 @@ module Tasker
       # Execute a collection of viable steps
       #
       # This method preserves the original concurrent processing logic while
-      # adding observability through lifecycle events.
+      # adding observability through lifecycle events and structured logging.
       #
       # @param task [Tasker::Task] The task containing the steps
       # @param sequence [Tasker::Types::StepSequence] The step sequence
@@ -32,8 +36,16 @@ module Tasker
       def execute_steps(task, sequence, viable_steps, task_handler)
         return [] if viable_steps.empty?
 
+        execution_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
         # Determine processing mode
         processing_mode = determine_processing_mode(task_handler)
+
+        log_orchestration_event('step_batch_execution', :started,
+                                task_id: task.task_id,
+                                step_count: viable_steps.size,
+                                processing_mode: processing_mode,
+                                step_names: viable_steps.map(&:name))
 
         # Fire observability event through orchestrator
         publish_steps_execution_started(
@@ -42,21 +54,40 @@ module Tasker
           processing_mode: processing_mode
         )
 
-        # PRESERVE: Original concurrent processing logic
+        # PRESERVE: Original concurrent processing logic with monitoring
         processed_steps = if processing_mode == 'concurrent'
-                            execute_steps_concurrently(task, sequence, viable_steps, task_handler)
+                            execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
                           else
-                            execute_steps_sequentially(task, sequence, viable_steps, task_handler)
+                            execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
                           end
+
+        execution_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - execution_start_time
+        successful_count = processed_steps.count do |s|
+          s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
+        end
+
+        # Log performance metrics
+        log_performance_event('step_batch_execution', execution_duration,
+                              task_id: task.task_id,
+                              step_count: viable_steps.size,
+                              processed_count: processed_steps.size,
+                              successful_count: successful_count,
+                              failure_count: processed_steps.size - successful_count,
+                              processing_mode: processing_mode)
 
         # Fire completion event through orchestrator
         publish_steps_execution_completed(
           task,
           processed_count: processed_steps.size,
-          successful_count: processed_steps.count do |s|
-            s&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE
-          end
+          successful_count: successful_count
         )
+
+        log_orchestration_event('step_batch_execution', :completed,
+                                task_id: task.task_id,
+                                processed_count: processed_steps.size,
+                                successful_count: successful_count,
+                                failure_count: processed_steps.size - successful_count,
+                                duration_ms: (execution_duration * 1000).round(2))
 
         processed_steps.compact
       end
@@ -73,15 +104,24 @@ module Tasker
 
         return [] if step_ids.empty?
 
-        task = Tasker::Task.find(task_id)
-        task_handler = Tasker::HandlerFactory.instance.get(task.name)
-        sequence = Tasker::Orchestration::StepSequenceFactory.get_sequence(task, task_handler)
-        viable_steps = task.workflow_steps.where(workflow_step_id: step_ids)
+        with_correlation_id(event[:correlation_id]) do
+          log_orchestration_event('event_driven_execution', :started,
+                                  task_id: task_id,
+                                  step_ids: step_ids,
+                                  trigger: 'viable_steps_discovered')
 
-        execute_steps(task, sequence, viable_steps, task_handler)
+          task = Tasker::Task.find(task_id)
+          task_handler = Tasker::HandlerFactory.instance.get(task.name)
+          sequence = Tasker::Orchestration::StepSequenceFactory.get_sequence(task, task_handler)
+          viable_steps = task.workflow_steps.where(workflow_step_id: step_ids)
+
+          execute_steps(task, sequence, viable_steps, task_handler)
+        end
       end
 
       # Execute a single step with state machine transitions and error handling
+      #
+      # Enhanced with structured logging and performance monitoring.
       #
       # @param task [Tasker::Task] The task containing the step
       # @param sequence [Tasker::Types::StepSequence] The step sequence
@@ -89,63 +129,205 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Tasker::WorkflowStep, nil] The executed step or nil if failed
       def execute_single_step(task, sequence, step, task_handler)
-        # Guard clauses - fail fast if preconditions aren't met
-        return nil unless validate_step_preconditions(step)
-        return nil unless ensure_step_has_initial_state(step)
-        return nil unless step_ready_for_execution?(step)
+        step_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Main execution workflow
-        execute_step_workflow(task, sequence, step, task_handler)
+        log_step_event(step, :execution_starting,
+                       task_id: task.task_id,
+                       step_status: step.status,
+                       attempt_count: step.attempts)
+
+        # Guard clauses - fail fast if preconditions aren't met
+        return nil unless validate_step_preconditions_with_logging(step)
+        return nil unless ensure_step_has_initial_state_with_logging(step)
+        return nil unless step_ready_for_execution_with_logging?(step)
+
+        # Main execution workflow with monitoring
+        result = execute_step_workflow_with_monitoring(task, sequence, step, task_handler, step_start_time)
+
+        step_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - step_start_time
+
+        if result
+          log_performance_event('single_step_execution', step_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                step_name: step.name,
+                                result: 'success',
+                                attempt_count: step.attempts)
+        else
+          log_performance_event('single_step_execution', step_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                step_name: step.name,
+                                result: 'failure',
+                                attempt_count: step.attempts)
+        end
+
+        result
       rescue StandardError => e
+        step_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - step_start_time
+
         # Log unexpected errors that occur outside the normal workflow
         step_id = step&.workflow_step_id
+        log_exception(e, context: {
+                        step_id: step_id,
+                        task_id: task&.task_id,
+                        operation: 'single_step_execution',
+                        duration: step_duration
+                      })
+
         Rails.logger.error("StepExecutor: Unexpected error in execute_single_step for step #{step_id}: #{e.message}")
         nil
       end
 
       private
 
+      # Execute steps concurrently with monitoring
+      #
+      # @param task [Tasker::Task] The task containing the steps
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
+      # @param task_handler [Object] The task handler instance
+      # @return [Array<Tasker::WorkflowStep>] Successfully processed steps
+      def execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
+        log_orchestration_event('concurrent_execution', :started,
+                                task_id: task.task_id,
+                                step_count: viable_steps.size,
+                                max_concurrency: MAX_CONCURRENT_STEPS)
+
+        concurrent_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        # Use the original concurrent execution logic without thread_pool
+        results = execute_steps_concurrently(task, sequence, viable_steps, task_handler)
+
+        concurrent_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - concurrent_start_time
+        successful_count = results.count { |r| r&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
+
+        log_performance_event('concurrent_execution', concurrent_duration,
+                              task_id: task.task_id,
+                              step_count: viable_steps.size,
+                              successful_count: successful_count,
+                              failure_count: results.size - successful_count)
+
+        log_orchestration_event('concurrent_execution', :completed,
+                                task_id: task.task_id,
+                                step_count: viable_steps.size,
+                                successful_count: successful_count,
+                                duration_ms: (concurrent_duration * 1000).round(2))
+
+        results
+      end
+
+      # Execute steps sequentially with monitoring
+      #
+      # @param task [Tasker::Task] The task containing the steps
+      # @param sequence [Tasker::Types::StepSequence] The step sequence
+      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
+      # @param task_handler [Object] The task handler instance
+      # @return [Array<Tasker::WorkflowStep>] Successfully processed steps
+      def execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
+        log_orchestration_event('sequential_execution', :started,
+                                task_id: task.task_id,
+                                step_count: viable_steps.size,
+                                step_names: viable_steps.map(&:name))
+
+        sequential_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        # Use the original sequential execution logic
+        results = execute_steps_sequentially(task, sequence, viable_steps, task_handler)
+
+        sequential_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - sequential_start_time
+        successful_count = results.count { |r| r&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
+
+        log_performance_event('sequential_execution', sequential_duration,
+                              task_id: task.task_id,
+                              step_count: viable_steps.size,
+                              successful_count: successful_count,
+                              failure_count: results.size - successful_count)
+
+        log_orchestration_event('sequential_execution', :completed,
+                                task_id: task.task_id,
+                                step_count: viable_steps.size,
+                                successful_count: successful_count,
+                                duration_ms: (sequential_duration * 1000).round(2))
+
+        results
+      end
+
       # Validate that the step and database connection are ready
-      def validate_step_preconditions(step)
+      def validate_step_preconditions_with_logging(step)
         unless ActiveRecord::Base.connection.active?
+          log_step_event(step, :validation_failed,
+                         reason: 'database_connection_inactive',
+                         step_status: step&.status)
           Rails.logger.error("StepExecutor: Database connection inactive for step #{step&.workflow_step_id}")
           return false
         end
 
         step = step.reload if step&.persisted?
         unless step
+          log_structured(:error, 'Step validation failed',
+                         reason: 'step_nil_or_not_persisted',
+                         entity_type: 'step')
           Rails.logger.error('StepExecutor: Step is nil or not persisted')
           return false
         end
 
+        log_step_event(step, :validation_passed,
+                       step_status: step.status,
+                       step_attempts: step.attempts)
+
         true
       rescue ActiveRecord::ConnectionNotEstablished, PG::ConnectionBad => e
+        log_exception(e, context: {
+                        step_id: step&.workflow_step_id,
+                        operation: 'step_precondition_validation'
+                      })
         Rails.logger.error("StepExecutor: Database connection error for step #{step&.workflow_step_id}: #{e.message}")
         false
       rescue StandardError => e
+        log_exception(e, context: {
+                        step_id: step&.workflow_step_id,
+                        operation: 'step_precondition_validation'
+                      })
         Rails.logger.error("StepExecutor: Unexpected error checking step #{step&.workflow_step_id}: #{e.message}")
         false
       end
 
       # Ensure step has an initial state, set to pending if blank
-      def ensure_step_has_initial_state(step) # rubocop:disable Naming/PredicateMethod
+      def ensure_step_has_initial_state_with_logging(step) # rubocop:disable Naming/PredicateMethod
         current_state = step.state_machine.current_state
         return true if current_state.present?
 
+        log_step_event(step, :state_initialization,
+                       current_state: current_state,
+                       target_state: Tasker::Constants::WorkflowStepStatuses::PENDING)
+
         Rails.logger.debug { "StepExecutor: Step #{step.workflow_step_id} has no state, setting to pending" }
         unless safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
+          log_step_event(step, :state_initialization_failed,
+                         current_state: current_state,
+                         target_state: Tasker::Constants::WorkflowStepStatuses::PENDING)
           Rails.logger.error("StepExecutor: Failed to initialize step #{step.workflow_step_id} to pending state")
           return false
         end
 
         step.reload
+        log_step_event(step, :state_initialized,
+                       new_state: step.state_machine.current_state)
         true
       end
 
       # Check if step is in the correct state for execution
-      def step_ready_for_execution?(step)
+      def step_ready_for_execution_with_logging?(step)
         current_state = step.state_machine.current_state
-        return true if current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
+        is_ready = current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
+
+        log_step_event(step, :readiness_check,
+                       current_state: current_state,
+                       is_ready: is_ready,
+                       expected_state: Tasker::Constants::WorkflowStepStatuses::PENDING)
+
+        return true if is_ready
 
         Rails.logger.debug do
           "StepExecutor: Skipping step #{step.workflow_step_id} - not pending (current: '#{current_state}')"
@@ -153,23 +335,86 @@ module Tasker
         false
       end
 
-      # Execute the main step workflow: transition -> execute -> complete
-      def execute_step_workflow(task, sequence, step, task_handler)
+      # Execute the main step workflow with monitoring: transition -> execute -> complete
+      def execute_step_workflow_with_monitoring(task, sequence, step, task_handler, step_start_time)
         publish_execution_started_event(task, step)
+
+        log_step_event(step, :workflow_starting,
+                       task_id: task.task_id,
+                       step_status: step.status,
+                       elapsed_time_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - step_start_time) * 1000).round(2))
 
         # Execute step handler and handle both success and error cases
         begin
           # Transition to in_progress first - if this fails, it should be treated as an error
+          transition_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           transition_step_to_in_progress!(step)
+          transition_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - transition_start_time
 
+          log_performance_event('step_state_transition', transition_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                from_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
+                                to_state: Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
+
+          # Execute the actual step handler with timing
+          handler_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           execute_step_handler(task, sequence, step, task_handler)
-          complete_step_execution(task, step)
+          handler_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - handler_start_time
+
+          log_performance_event('step_handler_execution', handler_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                step_name: step.name,
+                                result: 'success')
+
+          # Complete step execution with timing
+          completion_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          result = complete_step_execution(task, step)
+          completion_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - completion_start_time
+
+          log_performance_event('step_completion', completion_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                final_status: result&.status)
+
+          total_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - step_start_time
+          log_step_event(step, :workflow_completed,
+                         task_id: task.task_id,
+                         final_status: result&.status,
+                         total_duration_ms: (total_duration * 1000).round(2),
+                         handler_duration_ms: (handler_duration * 1000).round(2))
+
+          result
         rescue StandardError => e
+          error_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - step_start_time
+
+          log_step_event(step, :workflow_failed,
+                         task_id: task.task_id,
+                         error: e.message,
+                         error_class: e.class.name,
+                         duration_ms: (error_duration * 1000).round(2))
+
+          log_performance_event('step_handler_execution', error_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                step_name: step.name,
+                                result: 'failure',
+                                error_class: e.class.name)
+
           # Store error data in step.results like legacy code
           store_step_error_data(step, e)
 
           # Complete error step execution with persistence (similar to complete_step_execution but for errors)
-          complete_error_step_execution(task, step)
+          error_completion_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          result = complete_error_step_execution(task, step)
+          error_completion_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - error_completion_start_time
+
+          log_performance_event('step_error_completion', error_completion_duration,
+                                task_id: task.task_id,
+                                step_id: step.workflow_step_id,
+                                final_status: result&.status)
+
           nil
         end
       end
@@ -384,13 +629,8 @@ module Tasker
       #
       # @param task_handler [Object] The task handler instance
       # @return [String] Processing mode ('concurrent' or 'sequential')
-      def determine_processing_mode(task_handler)
-        if task_handler.respond_to?(:use_concurrent_processing?) &&
-           task_handler.use_concurrent_processing?
-          'concurrent'
-        else
-          'sequential'
-        end
+      def determine_processing_mode(_task_handler)
+        'concurrent'
       end
     end
   end

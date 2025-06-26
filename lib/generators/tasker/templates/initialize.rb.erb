@@ -26,13 +26,65 @@ Tasker.configuration do |config|
   #   db.name = :tasker
   # end
 
-  # Telemetry configuration
+  # Telemetry and observability configuration
+  # Tasker provides two complementary observability systems:
+  # 1. TelemetrySubscriber (event-driven OpenTelemetry spans for detailed tracing)
+  # 2. MetricsBackend (native metrics collection for dashboards and alerting)
   # config.telemetry do |tel|
-  #   tel.enabled = true
+  #   # === OPENTELEMETRY SPANS (Event-Driven Tracing) ===
+  #   tel.enabled = true                              # Enable TelemetrySubscriber
   #   tel.service_name = 'my_app_tasker'
   #   tel.service_version = '1.2.3'
+  #
+  #   # === STRUCTURED LOGGING ===
+  #   tel.structured_logging_enabled = true
+  #   tel.correlation_id_header = 'X-Correlation-ID'  # HTTP header for correlation ID propagation
+  #   tel.log_level = 'info'                          # debug, info, warn, error, fatal
+  #   tel.log_format = 'json'                         # json, pretty_json, logfmt
+  #
+  #   # === SENSITIVE DATA FILTERING ===
   #   tel.filter_mask = '***REDACTED***'
   #   tel.filter_parameters = [:password, :api_key, 'credit_card.number', /token/i]
+  #
+  #   # === NATIVE METRICS COLLECTION (Direct Collection) ===
+  #   tel.metrics_enabled = true                      # Enable MetricsBackend
+  #   tel.metrics_format = 'prometheus'               # 'prometheus', 'json', 'csv'
+  #
+  #   # Prometheus export configuration (matches TelemetryConfig.default_prometheus_config)
+  #   tel.prometheus = {
+  #     endpoint: ENV['PROMETHEUS_ENDPOINT'],         # Prometheus remote write endpoint (nil disables)
+  #
+  #     # Basic authentication for Prometheus endpoint
+  #     username: ENV['PROMETHEUS_USERNAME'],
+  #     password: ENV['PROMETHEUS_PASSWORD'],
+  #
+  #     # Job configuration
+  #     job_timeout: 5.minutes,
+  #     export_timeout: 2.minutes,
+  #     retry_attempts: 3,
+  #
+  #     # Export scheduling
+  #     retention_window: 5.minutes,                 # How long metrics are retained before TTL expiry
+  #     safety_margin: 1.minute,                     # Export before TTL expires (safety buffer)
+  #
+  #     # Metric naming
+  #     metric_prefix: 'tasker',
+  #     include_instance_labels: true,
+  #
+  #     # Performance tuning
+  #     compression: 'snappy',                       # 'snappy', 'gzip', or nil
+  #     batch_size: 1000,
+  #
+  #     # Test/development mode
+  #     skip_if_unavailable: true                    # Don't fail if Prometheus is unreachable
+  #   }
+  #
+  #   # === PERFORMANCE MONITORING ===
+  #   tel.performance_monitoring_enabled = true
+  #   tel.slow_query_threshold_seconds = 1.0         # Detect slow operations
+  #   tel.memory_threshold_mb = 100                   # Memory spike detection
+  #   tel.event_sampling_rate = 1.0                   # 1.0 = 100%, 0.1 = 10% sampling
+  #   tel.filtered_events = []                        # Events to exclude from collection
   # end
 
   # Dependency graph and bottleneck analysis configuration

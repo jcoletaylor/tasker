@@ -31,6 +31,10 @@ group :test do
   gem 'rspec-sidekiq', '~> 4.0'
   gem 'rswag-specs', '~> 2.16'
   gem 'simplecov', '~> 0.22', require: false
+
+  # Cache store testing support
+  gem 'dalli', '~> 3.2', require: false  # For MemCacheStore testing
+  gem 'redis', '~> 5.0', require: false  # For RedisCacheStore testing
 end
 
 group :development, :test do

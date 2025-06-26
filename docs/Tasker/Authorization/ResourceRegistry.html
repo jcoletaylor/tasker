@@ -210,6 +210,12 @@
       <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span>
     <span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Handler discovery and metadata</span><span class='tstring_end'>&#39;</span></span>
+  <span class='rbrace'>}</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#METRICS-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::METRICS (constant)">METRICS</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
+    <span class='label'>actions:</span> <span class='lbracket'>[</span>
+      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span>
+    <span class='rbracket'>]</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Prometheus metrics endpoint</span><span class='tstring_end'>&#39;</span></span>
   <span class='rbrace'>}</span>
 <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
       
@@ -469,14 +475,14 @@
       <pre class="lines">
 
 
-94
-95
-96
-97
-98</pre>
+100
+101
+102
+103
+104</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 94</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 100</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_action_exists?'>action_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_action'>action</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -552,14 +558,14 @@
       <pre class="lines">
 
 
-113
-114
-115
-116
-117</pre>
+119
+120
+121
+122
+123</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 113</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 119</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_actions_for_resource'>actions_for_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -615,14 +621,14 @@
       <pre class="lines">
 
 
-103
-104
-105
-106
-107</pre>
+109
+110
+111
+112
+113</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 103</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 109</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_permissions'>all_permissions</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_flat_map'>flat_map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
@@ -698,14 +704,14 @@
       <pre class="lines">
 
 
-123
-124
-125
-126
-127</pre>
+129
+130
+131
+132
+133</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 123</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 129</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resource_description'>resource_description</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -781,12 +787,12 @@
       <pre class="lines">
 
 
-85
-86
-87</pre>
+91
+92
+93</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 91</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -840,12 +846,12 @@
       <pre class="lines">
 
 
-77
-78
-79</pre>
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 77</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 83</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resources'>resources</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span>
@@ -860,7 +866,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 22 08:31:55 2025 by
+  Generated on Wed Jun 25 22:48:42 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

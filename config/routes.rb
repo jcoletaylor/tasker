@@ -10,6 +10,9 @@ Tasker::Engine.routes.draw do
     get :status, to: 'health#status'
   end
 
+  # Metrics endpoint
+  get '/metrics', to: 'metrics#index'
+
   # Handler discovery endpoints
   get '/handlers', to: 'handlers#index' # List namespaces
   get '/handlers/:namespace', to: 'handlers#show_namespace' # List handlers in namespace

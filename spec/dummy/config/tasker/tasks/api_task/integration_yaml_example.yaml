@@ -2,7 +2,6 @@
 name: api_task/integration_yaml_example
 module_namespace: ApiTask
 task_handler_class: IntegrationYamlExample
-concurrent: true
 namespace_name: api_tests
 version: 0.1.0
 

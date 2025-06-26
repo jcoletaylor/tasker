@@ -129,12 +129,8 @@ module Tasker
       let(:valid_context) { { test_id: 123 } }
 
       before do
-        Tasker::HandlerFactory.instance.register(ConcurrentTestTask::TASK_NAME, ConcurrentTestTask)
+        Tasker::HandlerFactory.instance.register(ConcurrentTestTask::TASK_NAME, ConcurrentTestTask, replace: true)
         TestStepHandler.reset_executions
-      end
-
-      it 'enables concurrent processing' do
-        expect(task_handler.use_concurrent_processing?).to be true
       end
 
       it 'processes independent steps concurrently' do
@@ -209,46 +205,6 @@ module Tasker
 
         # If different thread IDs were used, then parallel execution occurred
         expect(thread_ids.size).to be > 1
-      end
-
-      context 'when concurrent processing is disabled' do
-        before do
-          Tasker::HandlerFactory.instance.register(SequentialTestTask::TASK_NAME, SequentialTestTask)
-        end
-
-        let(:sequential_handler) { factory.get(SequentialTestTask::TASK_NAME) }
-
-        it 'processes steps sequentially' do
-          # Create a task with two steps
-          task_request = Tasker::Types::TaskRequest.new(
-            name: SequentialTestTask::TASK_NAME,
-            context: valid_context,
-            initiator: 'test_user',
-            source_system: 'test_system',
-            reason: 'testing sequential processing'
-          )
-          task = sequential_handler.initialize_task!(task_request)
-
-          # Set longer sleep to make concurrent vs sequential more obvious
-          TestStepHandler.set_sleep_duration(0.3)
-
-          # Process the task
-          sequential_handler.handle(task)
-
-          # Get execution details
-          executions = TestStepHandler.executions
-
-          # Find step executions
-          step_one = executions.find { |e| e[:step_name] == SequentialTestTask::STEP_ONE }
-          step_two = executions.find { |e| e[:step_name] == SequentialTestTask::STEP_TWO }
-
-          # Verify both steps were executed
-          expect(step_one).not_to be_nil
-          expect(step_two).not_to be_nil
-
-          # In sequential processing, step-two should start after step-one ends
-          expect(step_two[:start_time]).to be > step_one[:end_time]
-        end
       end
     end
   end

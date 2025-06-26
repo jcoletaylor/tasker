@@ -65,4 +65,125 @@ namespace :tasker do
       Rake::Task['tasker:setup'].invoke
     end
   end
+
+  desc 'Export metrics to configured storage backends'
+  task :export_metrics, [:format] => :environment do |_task, args|
+    format = (args[:format] || ENV['METRICS_FORMAT'] || 'prometheus').to_sym
+
+    puts "Starting metrics export (format: #{format})"
+
+    begin
+      coordinator = Tasker::Telemetry::ExportCoordinator.new
+      result = coordinator.schedule_export(format: format)
+
+      if result[:success]
+        puts '✅ Metrics export scheduled successfully'
+        puts "   Job ID: #{result[:job_id]}"
+        puts "   Export time: #{result[:export_time]}"
+        puts "   Format: #{result[:format]}"
+      else
+        puts "❌ Metrics export scheduling failed: #{result[:error]}"
+        exit 1
+      end
+    rescue StandardError => e
+      puts "❌ Metrics export error: #{e.message}"
+      puts e.backtrace.first(5).join("\n") if ENV['VERBOSE']
+      exit 1
+    end
+  end
+
+  desc 'Export metrics immediately (synchronous)'
+  task :export_metrics_now, [:format] => :environment do |_task, args|
+    format = (args[:format] || ENV['METRICS_FORMAT'] || 'prometheus').to_sym
+
+    puts "Starting immediate metrics export (format: #{format})"
+
+    begin
+      coordinator = Tasker::Telemetry::ExportCoordinator.new
+      result = coordinator.execute_coordinated_export(format: format)
+
+      if result[:success]
+        puts '✅ Metrics exported successfully'
+        puts "   Format: #{result[:format]}"
+        puts "   Metrics count: #{result[:metrics_count] || 'unknown'}"
+        puts "   Duration: #{result[:duration]&.round(3)}s"
+      else
+        puts "❌ Metrics export failed: #{result[:error]}"
+        exit 1
+      end
+    rescue StandardError => e
+      puts "❌ Metrics export error: #{e.message}"
+      puts e.backtrace.first(5).join("\n") if ENV['VERBOSE']
+      exit 1
+    end
+  end
+
+  desc 'Sync metrics to cache storage'
+  task sync_metrics: :environment do
+    puts 'Starting metrics cache synchronization'
+
+    begin
+      backend = Tasker::Telemetry::MetricsBackend.instance
+      result = backend.sync_to_cache!
+
+      if result[:success]
+        puts '✅ Metrics synchronized successfully'
+        puts "   Strategy: #{result[:strategy]}"
+        puts "   Synced metrics: #{result[:synced_metrics] || result[:total_synced]}"
+        puts "   Duration: #{result[:duration]&.round(3)}s"
+      else
+        puts "❌ Metrics sync failed: #{result[:error]}"
+        exit 1
+      end
+    rescue StandardError => e
+      puts "❌ Metrics sync error: #{e.message}"
+      puts e.backtrace.first(5).join("\n") if ENV['VERBOSE']
+      exit 1
+    end
+  end
+
+  desc 'Show metrics export status and configuration'
+  task metrics_status: :environment do
+    puts 'Tasker Metrics Export Status'
+    puts '=' * 40
+
+    begin
+      backend = Tasker::Telemetry::MetricsBackend.instance
+      Tasker::Telemetry::ExportCoordinator.new
+
+      # Backend status
+      puts 'Backend Status:'
+      puts "  Instance ID: #{backend.instance_id}"
+      puts "  Sync Strategy: #{backend.sync_strategy}"
+      puts "  Cache Store: #{backend.cache_capabilities[:store_class]}"
+      puts "  Metrics Count: #{backend.all_metrics.size}"
+
+      # Cache capabilities
+      puts "\nCache Capabilities:"
+      backend.cache_capabilities.each do |key, value|
+        puts "  #{key}: #{value}"
+      end
+
+      # Configuration
+      config = Tasker.configuration.telemetry
+      puts "\nTelemetry Configuration:"
+      puts "  Enabled: #{config.enabled}"
+      puts "  Metrics Enabled: #{config.metrics_enabled}"
+      puts "  Metrics Format: #{config.metrics_format}"
+      puts "  Metrics Endpoint: #{config.metrics_endpoint}"
+      puts "  Auth Required: #{config.metrics_auth_required}"
+
+      # Prometheus config
+      if config.prometheus
+        puts "\nPrometheus Configuration:"
+        puts "  Endpoint: #{config.prometheus[:endpoint] || 'not configured'}"
+        puts "  Retention Window: #{config.prometheus[:retention_window]}"
+        puts "  Safety Margin: #{config.prometheus[:safety_margin]}"
+        puts "  Export Timeout: #{config.prometheus[:export_timeout]}"
+      end
+    rescue StandardError => e
+      puts "❌ Status check error: #{e.message}"
+      exit 1
+    end
+  end
 end

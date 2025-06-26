@@ -67,6 +67,12 @@ module Tasker
             ResourceConstants::ACTIONS::SHOW
           ],
           description: 'Handler discovery and metadata'
+        },
+        ResourceConstants::RESOURCES::METRICS => {
+          actions: [
+            ResourceConstants::ACTIONS::INDEX
+          ],
+          description: 'Prometheus metrics endpoint'
         }
       }.freeze
 

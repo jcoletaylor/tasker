@@ -48,42 +48,50 @@ module FactoryWorkflowHelpers
     # Handle dependencies first - complete any parent steps that aren't already complete
     complete_step_dependencies(step)
 
+    # REMOVED: Automatic state machine initialization to prevent duplicate key violations
+    # State machine will initialize naturally when accessed
+
     # Use safe transitions to avoid state machine errors
     # Include IdempotentStateTransitions concern for safe_transition_to
     step.extend(Tasker::Concerns::IdempotentStateTransitions)
 
     # Get current state - be defensive about state transitions
     current_state = step.state_machine.current_state
-    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+    Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} current state: '#{current_state}'" }
 
-    # Only transition if not already complete
-    completion_states = [
-      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
-      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-    ]
-
-    unless completion_states.include?(current_state)
-      # Handle error state - must transition to pending first, then in_progress
-      if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
-        step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::PENDING)
-        current_state = Tasker::Constants::WorkflowStepStatuses::PENDING
-      end
-
-      # Transition to in_progress if not already there
-      unless current_state == Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS
-        step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS)
-      end
-
-      # Transition to complete
-      step.safe_transition_to(step, Tasker::Constants::WorkflowStepStatuses::COMPLETE)
+    # Handle error states by transitioning back to pending first
+    if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
+      Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} in error state, transitioning to pending first" }
+      step.state_machine.transition_to!(:pending)
+      current_state = step.state_machine.current_state
     end
 
-    # Always ensure step data is properly set for completed state
+    # Transition to in_progress if needed
+    unless [
+      Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+    ].include?(current_state)
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} to in_progress" }
+      step.state_machine.transition_to!(:in_progress)
+    end
+
+    # Transition to complete if not already complete
+    unless [
+      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
+      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
+    ].include?(current_state)
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} to complete" }
+      step.state_machine.transition_to!(:complete)
+    end
+
+    # Update step attributes to show processing completed
     step.update_columns(
       processed: true,
       processed_at: Time.current,
       results: { dummy: true, other: true }
     )
+
     step
   end
 
@@ -136,20 +144,25 @@ module FactoryWorkflowHelpers
 
   # Set step to in_progress (replacement for step.update!({ in_process: true }))
   def set_step_in_progress(step)
+    # REMOVED: Automatic state machine initialization to prevent duplicate key violations
+    # State machine will initialize naturally when accessed
+
     current_state = step.state_machine.current_state
-    current_state = Tasker::Constants::WorkflowStepStatuses::PENDING if current_state.blank?
+    Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} current state before in_progress: '#{current_state}'" }
 
     # Only transition if not already in progress or beyond
-    unless [
+    if [
       Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
       Tasker::Constants::WorkflowStepStatuses::COMPLETE,
       Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY,
       Tasker::Constants::WorkflowStepStatuses::ERROR
     ].include?(current_state)
+      Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} already in advanced state '#{current_state}' - skipping" }
+    else
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} from '#{current_state}' to in_progress" }
       step.state_machine.transition_to!(:in_progress)
     end
 
-    step.update_columns(in_process: true)
     step
   end
 
@@ -205,17 +218,6 @@ module FactoryWorkflowHelpers
     step
   end
 
-  # Set step to error with max retries (replacement for complex error setup)
-  def set_step_to_max_retries_error(step)
-    step.state_machine.transition_to!(:in_progress)
-    step.state_machine.transition_to!(:error)
-    step.update_columns(
-      attempts: step.retry_limit + 1,
-      results: { error: 'Max retries reached' }
-    )
-    step
-  end
-
   # Set step to error state with custom error message (for API integration testing)
   def set_step_to_error(step, error_message = 'Test error')
     # Reload step to ensure we have the current state (prevents stale state issues)
@@ -226,26 +228,54 @@ module FactoryWorkflowHelpers
 
     # Reload again after dependency completion to ensure we have current state
     step.reload
+
+    # REMOVED: Automatic state machine initialization to prevent duplicate key violations
+    # State machine will initialize naturally when accessed
+
+    # Get current state after initialization
     current_state = step.state_machine.current_state
+    Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} current state before error transition: '#{current_state}'" }
 
-    # Only proceed if the step hasn't been completed by dependency resolution
-    completion_states = [
-      Tasker::Constants::WorkflowStepStatuses::COMPLETE,
-      Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
-    ]
-
-    if completion_states.include?(current_state)
-      Rails.logger.warn "Test Helper: Step #{step.workflow_step_id} was completed during dependency resolution - cannot set to error"
-      return step
+    # Use the state machine's transition_to! method which now properly handles from_state
+    if current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
+      Rails.logger.debug { "Test Helper: Transitioning step #{step.workflow_step_id} from pending to in_progress" }
+      step.state_machine.transition_to!(:in_progress)
+      # Reload to get the updated state after transition
+      step.reload
+      current_state = step.state_machine.current_state
+      Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} current state after in_progress: '#{current_state}'" }
     end
 
-    # Now transition to in_progress if still in pending state
-    step.state_machine.transition_to!(:in_progress) if current_state == 'pending'
+    # Transition to error state
+    Rails.logger.debug { "Test Helper: Transitioning step #{step.workflow_step_id} to error state" }
     step.state_machine.transition_to!(:error)
+
+    # Update step attributes
     step.update_columns(
       processed: false,
       results: { error: error_message }
     )
+
+    # Verify final state
+    final_state = step.state_machine.current_state
+    Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} final state: '#{final_state}'" }
+
+    step
+  end
+
+  # Set step to error state with max retries exhausted (for retry testing)
+  def set_step_to_max_retries_error(step, error_message = 'Max retries exhausted')
+    # Set retry attributes first
+    step.update_columns(
+      attempts: step.retry_limit || 3, # Set to retry limit
+      retryable: true,
+      retry_limit: step.retry_limit || 3,
+      last_attempted_at: 1.hour.ago
+    )
+
+    # Use the existing error setting logic
+    set_step_to_error(step, error_message)
+
     step
   end
 
@@ -268,7 +298,7 @@ module FactoryWorkflowHelpers
   # Register task handler (replacement for factory.register in tests)
   def register_task_handler(task_name, handler_class)
     factory = Tasker::HandlerFactory.instance
-    factory.register(task_name, handler_class)
+    factory.register(task_name, handler_class, replace: true)
   end
 
   # Create task handler with connection stubbing (for API integration tests)
@@ -578,7 +608,7 @@ module FactoryWorkflowHelpers
       # @return [void]
       def register_dummy_task_handler
         factory = Tasker::HandlerFactory.instance
-        factory.register(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+        factory.register(DummyTask::TASK_REGISTRY_NAME, DummyTask, replace: true)
       end
 
       # Create task from request parameters

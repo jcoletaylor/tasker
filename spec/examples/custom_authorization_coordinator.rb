@@ -47,6 +47,8 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_diagram_action(action, context)
     when RESOURCES::HEALTH_STATUS
       authorize_health_status_action(action, context)
+    when RESOURCES::METRICS
+      authorize_metrics_action(action, context)
     else
       false
     end
@@ -131,6 +133,24 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when :index
       # Health status reading: admin or explicit permission
       user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::HEALTH_STATUS}:#{action}")
+    else
+      false
+    end
+  end
+
+  # Authorization logic for metrics operations
+  #
+  # Implements the following rules:
+  # - Admin users can always access metrics
+  # - Regular users need explicit metrics.index permission
+  # - Metrics are read-only (no create/update/delete operations)
+  def authorize_metrics_action(action, _context)
+    return false unless user.respond_to?(:has_tasker_permission?)
+
+    case action
+    when :index
+      # Metrics reading: admin or explicit permission
+      user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::METRICS}:#{action}")
     else
       false
     end

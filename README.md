@@ -15,6 +15,8 @@ Tasker is a **production-ready Rails engine** that transforms complex, multi-ste
 - **Complete Observability**: Event-driven architecture with comprehensive telemetry
 - **Enterprise Security**: Authentication & authorization with GraphQL operation-level permissions
 - **High Performance**: SQL-function based orchestration with 4x performance gains
+- **Thread-Safe Registry Systems**: Enterprise-grade registry architecture with structured logging
+- **Advanced Plugin Architecture**: Extensible plugin system with format-based discovery
 
 Perfect for processes that involve multiple interdependent steps, require automatic retries, need visibility into progress and errors, and must handle transient failures gracefully.
 
@@ -24,7 +26,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.3.0'
+  gem 'tasker', '~> 2.4.0'
 end
 ```
 
@@ -104,7 +106,6 @@ name: order_process
 namespace_name: default
 version: 1.0.0
 task_handler_class: OrderProcess
-concurrent: true
 
 step_templates:
   - name: validate_order
@@ -279,6 +280,36 @@ end
 
 Compatible with Jaeger, Zipkin, Honeycomb, and other OpenTelemetry-compatible tools.
 
+### Registry System Architecture
+
+Tasker features enterprise-grade registry systems with thread-safe operations and comprehensive observability:
+
+**Thread-Safe Registries**:
+- **HandlerFactory**: Thread-safe task handler registration with `Concurrent::Hash` storage
+- **PluginRegistry**: Format-based plugin discovery with auto-discovery capabilities
+- **SubscriberRegistry**: Event subscriber management with structured logging
+
+**Advanced Features**:
+- **Structured Logging**: Correlation IDs and JSON formatting for comprehensive observability
+- **Interface Validation**: Fail-fast validation with detailed error messages
+- **Replace Operations**: Conflict resolution with `replace: true` parameter
+- **Event Integration**: Registry operations fully integrated with the 56-event system
+
+**Production Benefits**:
+```ruby
+# Thread-safe operations with structured logging
+Tasker::HandlerFactory.instance.register(
+  'order_processor',
+  OrderHandler,
+  namespace_name: 'payments',
+  version: '2.1.0',
+  replace: true  # Handles conflicts gracefully
+)
+
+# Automatic structured logging with correlation IDs
+# {"timestamp":"2024-01-15T10:30:45Z","correlation_id":"tsk_abc123","component":"handler_factory","message":"Registry item registered","entity_id":"payments/order_processor/2.1.0","event_type":"registered"}
+```
+
 ### Health Monitoring & Production Readiness
 
 Tasker provides enterprise-grade health endpoints for production deployments:
@@ -325,6 +356,8 @@ end
 - **Observable**: Complete event system with telemetry integration
 - **Secure**: Enterprise-grade authentication and authorization
 - **Performant**: SQL-function based orchestration with proven performance
+- **Thread-Safe**: Concurrent registry operations with structured logging and correlation IDs
+- **Reliable**: 100% test coverage with comprehensive validation and error handling
 
 ### For Business
 - **Reliable**: Automatic retry with exponential backoff
@@ -341,6 +374,7 @@ end
 
 ### 🔧 Advanced Topics
 - **[REST API Guide](docs/REST_API.md)** - Complete REST API documentation with handler discovery
+- **[Registry Systems](docs/REGISTRY_SYSTEMS.md)** - Thread-safe registry architecture and structured logging
 - **[Authentication & Authorization](docs/AUTH.md)** - Complete security system
 - **[Health Monitoring](docs/HEALTH.md)** - Production health endpoints and monitoring
 - **[Event System](docs/EVENT_SYSTEM.md)** - Observability and integrations

@@ -92,9 +92,8 @@ module Tasker
       #
       # @param task_handler [Object] The task handler instance
       # @return [Boolean] True if concurrent processing is enabled
-      def supports_concurrent_processing?(task_handler)
-        task_handler.respond_to?(:use_concurrent_processing?) &&
-          task_handler.use_concurrent_processing?
+      def supports_concurrent_processing?(_task_handler)
+        true
       end
 
       # Get task handler instance for a task

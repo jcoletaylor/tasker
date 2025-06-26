@@ -108,7 +108,6 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
       "namespace": "payments",
       "version": "2.1.0",
       "description": "Process customer payment with validation and confirmation",
-      "concurrent": true,
       "step_count": 4,
       "step_names": ["validate_payment", "charge_card", "update_order", "send_confirmation"]
     },
@@ -117,7 +116,6 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
       "namespace": "payments",
       "version": "1.5.0",
       "description": "Process customer refund with validation",
-      "concurrent": false,
       "step_count": 3,
       "step_names": ["validate_refund", "process_refund", "notify_customer"]
     }
@@ -149,7 +147,6 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   "namespace": "payments",
   "version": "2.1.0",
   "description": "Process customer payment with validation and confirmation",
-  "concurrent": true,
   "step_templates": [
     {
       "name": "validate_payment",

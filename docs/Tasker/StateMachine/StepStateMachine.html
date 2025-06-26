@@ -470,6 +470,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#create_transition-instance_method" title="#create_transition (instance method)">#<strong>create_transition</strong>(from_state, to_state, metadata = {})  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Override Statesman’s transition building to ensure proper from_state handling This is called by Statesman when creating new transitions.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#current_state-instance_method" title="#current_state (instance method)">#<strong>current_state</strong>  &#x21d2; Object </a>
     
 
@@ -509,7 +533,31 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Initialize the state machine with the initial state This ensures the state machine is properly initialized.</p>
+<p>Initialize the state machine with the initial state This ensures the state machine is properly initialized when called explicitly DEFENSIVE: Only creates transitions when explicitly needed.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#next_sort_key_value-instance_method" title="#next_sort_key_value (instance method)">#<strong>next_sort_key_value</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get the next sort key for transitions.</p>
 </div></span>
   
 </li>
@@ -617,44 +665,44 @@
       <pre class="lines">
 
 
-340
-341
-342
-343
-344
-345
-346
-347
-348
-349
-350
-351
-352
-353
-354
-355
-356
-357
-358
-359
-360
-361
-362
-363
-364
-365
-366
-367
-368
-369
-370
-371
-372
-373
-374</pre>
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 340</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 430</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_build_standardized_payload'>build_standardized_payload</span><span class='lparen'>(</span><span class='id identifier rubyid__event_name'>_event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='comment'># Base payload with core identifiers
@@ -760,25 +808,25 @@
       <pre class="lines">
 
 
-318
-319
-320
-321
-322
-323
-324
-325
-326
-327
-328
-329
-330
-331
-332
-333</pre>
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 318</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 408</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_determine_event_type_from_name'>determine_event_type_from_name</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='id identifier rubyid_event_name'>event_name</span>
@@ -881,23 +929,23 @@
       <pre class="lines">
 
 
-381
-382
-383
-384
-385
-386
-387
-388
-389
-390
-391
-392
-393
-394</pre>
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 381</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 471</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_determine_transition_event_name'>determine_transition_event_name</span><span class='lparen'>(</span><span class='id identifier rubyid_from_state'>from_state</span><span class='comma'>,</span> <span class='id identifier rubyid_to_state'>to_state</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_transition_key'>transition_key</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='id identifier rubyid_from_state'>from_state</span><span class='comma'>,</span> <span class='id identifier rubyid_to_state'>to_state</span><span class='rbracket'>]</span>
@@ -982,13 +1030,13 @@
       <pre class="lines">
 
 
-178
-179
-180
-181</pre>
+268
+269
+270
+271</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 178</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 268</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_effective_current_state'>effective_current_state</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_state'>current_state</span> <span class='op'>=</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_current_state'>current_state</span>
@@ -1063,20 +1111,20 @@
       <pre class="lines">
 
 
-302
-303
-304
-305
-306
-307
-308
-309
-310
-311
-312</pre>
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 302</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 392</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_extract_step_from_context'>extract_step_from_context</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_step_id'>step_id</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='symbol'>:step_id</span><span class='rbracket'>]</span>
@@ -1174,22 +1222,22 @@
       <pre class="lines">
 
 
-160
-161
-162
-163
-164
-165
-166
-167
-168
-169
-170
-171
-172</pre>
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 160</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 250</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_idempotent_transition?'>idempotent_transition?</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_current_state'>current_state</span> <span class='op'>=</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_state_machine'>state_machine</span><span class='period'>.</span><span class='id identifier rubyid_current_state'>current_state</span>
@@ -1271,15 +1319,15 @@
       <pre class="lines">
 
 
-200
-201
-202
-203
-204
-205</pre>
+290
+291
+292
+293
+294
+295</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 200</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 290</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_dependencies_not_met'>log_dependencies_not_met</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='rparen'>)</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
@@ -1386,15 +1434,15 @@
       <pre class="lines">
 
 
-189
-190
-191
-192
-193
-194</pre>
+279
+280
+281
+282
+283
+284</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 189</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 279</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_invalid_from_state'>log_invalid_from_state</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_current_state'>current_state</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
   <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
@@ -1501,20 +1549,20 @@
       <pre class="lines">
 
 
-213
-214
-215
-216
-217
-218
-219
-220
-221
-222
-223</pre>
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 213</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 303</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_transition_result'>log_transition_result</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_target_state'>target_state</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_reason'>reason</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span>
@@ -1596,32 +1644,32 @@
       <pre class="lines">
 
 
-274
-275
-276
-277
-278
-279
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296</pre>
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 274</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 364</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_safe_fire_event'>safe_fire_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='comment'># Use EventPayloadBuilder for consistent payload structure
@@ -1715,48 +1763,48 @@
       <pre class="lines">
 
 
-229
-230
-231
-232
-233
-234
-235
-236
-237
-238
-239
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
-253
-254
-255
-256
-257
-258
-259
-260
-261
-262
-263
-264
-265
-266
-267</pre>
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 229</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 319</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_step_dependencies_met?'>step_dependencies_met?</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='comment'># Handle cases where step doesn&#39;t have parents association or it&#39;s not loaded
@@ -1809,7 +1857,122 @@
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="current_state-instance_method">
+  <h3 class="signature first" id="create_transition-instance_method">
+  
+    #<strong>create_transition</strong>(from_state, to_state, metadata = {})  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Override Statesman’s transition building to ensure proper from_state handling This is called by Statesman when creating new transitions</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 143</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_create_transition'>create_transition</span><span class='lparen'>(</span><span class='id identifier rubyid_from_state'>from_state</span><span class='comma'>,</span> <span class='id identifier rubyid_to_state'>to_state</span><span class='comma'>,</span> <span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='comment'># Ensure from_state is properly set - never allow empty strings
+</span>  <span class='id identifier rubyid_effective_from_state'>effective_from_state</span> <span class='op'>=</span> <span class='kw'>case</span> <span class='id identifier rubyid_from_state'>from_state</span>
+                         <span class='kw'>when</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span>
+                           <span class='comment'># For initial transitions or empty strings, use nil
+</span>                           <span class='kw'>nil</span>
+                         <span class='kw'>else</span>
+                           <span class='comment'># For existing states, ensure it&#39;s a valid state
+</span>                           <span class='id identifier rubyid_from_state'>from_state</span><span class='period'>.</span><span class='id identifier rubyid_presence'>presence</span>
+                         <span class='kw'>end</span>
+
+  <span class='comment'># Log transition creation for debugging
+</span>  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepStateMachine: Creating transition for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='tstring_end'>&quot;</span></span> \
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>&#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_effective_from_state'>effective_from_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39; → &#39;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_to_state'>to_state</span><span class='embexpr_end'>}</span><span class='tstring_content'>&#39;</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Get the next sort key
+</span>  <span class='id identifier rubyid_next_sort_key'>next_sort_key</span> <span class='op'>=</span> <span class='id identifier rubyid_next_sort_key_value'>next_sort_key_value</span>
+
+  <span class='comment'># Create the transition with proper from_state handling
+</span>  <span class='id identifier rubyid_transition'>transition</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStepTransition.html" title="Tasker::WorkflowStepTransition (class)">WorkflowStepTransition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create!'>create!</span><span class='lparen'>(</span>
+    <span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+    <span class='label'>to_state:</span> <span class='id identifier rubyid_to_state'>to_state</span><span class='comma'>,</span>
+    <span class='label'>from_state:</span> <span class='id identifier rubyid_effective_from_state'>effective_from_state</span><span class='comma'>,</span> <span class='comment'># Use nil instead of empty string
+</span>    <span class='label'>most_recent:</span> <span class='kw'>true</span><span class='comma'>,</span>
+    <span class='label'>sort_key:</span> <span class='id identifier rubyid_next_sort_key'>next_sort_key</span><span class='comma'>,</span>
+    <span class='label'>metadata:</span> <span class='id identifier rubyid_metadata'>metadata</span> <span class='op'>||</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span>
+    <span class='label'>created_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+    <span class='label'>updated_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+  <span class='rparen'>)</span>
+
+  <span class='comment'># Update previous transitions to not be most recent
+</span>  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_transitions'>workflow_step_transitions</span>
+        <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>most_recent:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+        <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='period'>.</span><span class='id identifier rubyid_not'>not</span><span class='lparen'>(</span><span class='label'>id:</span> <span class='id identifier rubyid_transition'>transition</span><span class='period'>.</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
+        <span class='period'>.</span><span class='id identifier rubyid_update_all'>update_all</span><span class='lparen'>(</span><span class='label'>most_recent:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_transition'>transition</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="current_state-instance_method">
   
     #<strong>current_state</strong>  &#x21d2; <tt>Object</tt> 
   
@@ -1843,7 +2006,9 @@
 134
 135
 136
-137</pre>
+137
+138
+139</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 128</span>
@@ -1852,7 +2017,9 @@
   <span class='id identifier rubyid_most_recent_transition'>most_recent_transition</span> <span class='op'>=</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_transitions'>workflow_step_transitions</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>most_recent:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
 
   <span class='kw'>if</span> <span class='id identifier rubyid_most_recent_transition'>most_recent_transition</span>
-    <span class='id identifier rubyid_most_recent_transition'>most_recent_transition</span><span class='period'>.</span><span class='id identifier rubyid_to_state'>to_state</span>
+    <span class='comment'># Ensure we never return empty strings or nil - always return a valid state
+</span>    <span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='id identifier rubyid_most_recent_transition'>most_recent_transition</span><span class='period'>.</span><span class='id identifier rubyid_to_state'>to_state</span>
+    <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_presence'>presence</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html#PENDING-constant" title="Tasker::Constants::WorkflowStepStatuses::PENDING (constant)">PENDING</a></span></span>
   <span class='kw'>else</span>
     <span class='comment'># Return initial state if no transitions exist
 </span>    <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html#PENDING-constant" title="Tasker::Constants::WorkflowStepStatuses::PENDING (constant)">PENDING</a></span></span>
@@ -1875,7 +2042,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Initialize the state machine with the initial state This ensures the state machine is properly initialized</p>
+<p>Initialize the state machine with the initial state This ensures the state machine is properly initialized when called explicitly DEFENSIVE: Only creates transitions when explicitly needed</p>
 
 
   </div>
@@ -1889,26 +2056,145 @@
       <pre class="lines">
 
 
-141
-142
-143
-144
-145
-146
-147
-148</pre>
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 141</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 193</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize_state_machine!'>initialize_state_machine!</span>
-  <span class='comment'># Only initialize if no transitions exist yet
-</span>  <span class='kw'>return</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStepTransition.html" title="Tasker::WorkflowStepTransition (class)">WorkflowStepTransition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='rparen'>)</span>
+  <span class='comment'># Check if state machine is already initialized
+</span>  <span class='kw'>return</span> <span class='id identifier rubyid_current_state'>current_state</span> <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStepTransition.html" title="Tasker::WorkflowStepTransition (class)">WorkflowStepTransition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='rparen'>)</span>
 
-  <span class='comment'># Statesman automatically creates the initial state transition when we access current_state
-</span>  <span class='comment'># Just accessing current_state will create the initial transition to PENDING
-</span>  <span class='id identifier rubyid_current_state'>current_state</span>
+  <span class='comment'># DEFENSIVE: Use a rescue block instead of transaction to handle race conditions gracefully
+</span>  <span class='kw'>begin</span>
+    <span class='comment'># Create the initial transition only if none exists
+</span>    <span class='id identifier rubyid_initial_transition'>initial_transition</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStepTransition.html" title="Tasker::WorkflowStepTransition (class)">WorkflowStepTransition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create!'>create!</span><span class='lparen'>(</span>
+      <span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+      <span class='label'>to_state:</span> <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html#PENDING-constant" title="Tasker::Constants::WorkflowStepStatuses::PENDING (constant)">PENDING</a></span></span><span class='comma'>,</span>
+      <span class='label'>from_state:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='comment'># Explicitly set to nil for initial transition
+</span>      <span class='label'>most_recent:</span> <span class='kw'>true</span><span class='comma'>,</span>
+      <span class='label'>sort_key:</span> <span class='int'>0</span><span class='comma'>,</span>
+      <span class='label'>metadata:</span> <span class='lbrace'>{</span> <span class='label'>initialized_by:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>state_machine</span><span class='tstring_end'>&#39;</span></span> <span class='rbrace'>}</span><span class='comma'>,</span>
+      <span class='label'>created_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+      <span class='label'>updated_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+    <span class='rparen'>)</span>
+
+    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepStateMachine: Initialized state machine for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> with initial transition to PENDING</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+
+    <span class='id identifier rubyid_initial_transition'>initial_transition</span><span class='period'>.</span><span class='id identifier rubyid_to_state'>to_state</span>
+  <span class='kw'>rescue</span> <span class='const'>ActiveRecord</span><span class='op'>::</span><span class='const'>RecordNotUnique</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+    <span class='comment'># Handle duplicate key violations gracefully - another thread may have initialized the state machine
+</span>    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepStateMachine: State machine for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> already initialized by another process: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+
+    <span class='comment'># Return the current state since we know it&#39;s initialized
+</span>    <span class='id identifier rubyid_current_state'>current_state</span>
+  <span class='kw'>rescue</span> <span class='const'>ActiveRecord</span><span class='op'>::</span><span class='const'>StatementInvalid</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+    <span class='comment'># Handle transaction issues gracefully
+</span>    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_warn'>warn</span> <span class='kw'>do</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepStateMachine: Transaction issue initializing state machine for step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+
+    <span class='comment'># Check if the step actually has transitions now (another process may have created them)
+</span>    <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../WorkflowStepTransition.html" title="Tasker::WorkflowStepTransition (class)">WorkflowStepTransition</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exists?'>exists?</span><span class='lparen'>(</span><span class='label'>workflow_step_id:</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_current_state'>current_state</span>
+    <span class='kw'>else</span>
+      <span class='comment'># If still no transitions, return the default state without creating a transition
+</span>      <span class='const'><span class='object_link'><a href="../Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html" title="Tasker::Constants::WorkflowStepStatuses (module)">WorkflowStepStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Constants/WorkflowStepStatuses.html#PENDING-constant" title="Tasker::Constants::WorkflowStepStatuses::PENDING (constant)">PENDING</a></span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="next_sort_key_value-instance_method">
+  
+    #<strong>next_sort_key_value</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the next sort key for transitions</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+185
+186
+187
+188</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/state_machine/step_state_machine.rb', line 185</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_next_sort_key_value'>next_sort_key_value</span>
+  <span class='id identifier rubyid_max_sort_key'>max_sort_key</span> <span class='op'>=</span> <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_transitions'>workflow_step_transitions</span><span class='period'>.</span><span class='id identifier rubyid_maximum'>maximum</span><span class='lparen'>(</span><span class='symbol'>:sort_key</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='op'>-</span><span class='int'>1</span>
+  <span class='id identifier rubyid_max_sort_key'>max_sort_key</span> <span class='op'>+</span> <span class='int'>10</span> <span class='comment'># Use increments of 10 for flexibility
+</span><span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -1919,7 +2205,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 22 08:31:55 2025 by
+  Generated on Wed Jun 25 22:48:42 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

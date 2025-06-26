@@ -64,14 +64,14 @@ module Tasker
       handler_factory = Tasker::HandlerFactory.instance
 
       # Default namespace handlers
-      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '0.1.0')
-      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '1.0.0')
-      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '2.0.0')
+      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '0.1.0', replace: true)
+      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '1.0.0', replace: true)
+      handler_factory.register('test_handler', test_handler_class, namespace_name: :default, version: '2.0.0', replace: true)
 
       # Payment namespace handlers
-      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '0.1.0')
-      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '1.0.0')
-      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '1.1.0')
+      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '0.1.0', replace: true)
+      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '1.0.0', replace: true)
+      handler_factory.register('process_payment', payment_handler_class, namespace_name: :payments, version: '1.1.0', replace: true)
 
       # Register dummy task for consistency
       register_task_handler(DummyTask::TASK_REGISTRY_NAME, DummyTask)

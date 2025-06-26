@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Tasker::Concerns::StructuredLogging
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Concerns::StructuredLogging";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (S)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Concerns.html" title="Tasker::Concerns (module)">Concerns</a></span></span>
+     &raquo; 
+    <span class="title">StructuredLogging</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Tasker::Concerns::StructuredLogging
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  <dl>
+      <dt>Extended by:</dt>
+      <dd>ActiveSupport::Concern</dd>
+  </dl>
+  
+  
+  
+  
+
+  
+  <dl>
+    <dt>Included in:</dt>
+    <dd><span class='object_link'><a href="../MetricsExportJob.html" title="Tasker::MetricsExportJob (class)">MetricsExportJob</a></span>, <span class='object_link'><a href="../Orchestration/StepExecutor.html" title="Tasker::Orchestration::StepExecutor (class)">Orchestration::StepExecutor</a></span>, <span class='object_link'><a href="../Orchestration/WorkflowCoordinator.html" title="Tasker::Orchestration::WorkflowCoordinator (class)">Orchestration::WorkflowCoordinator</a></span>, <span class='object_link'><a href="../Registry/BaseRegistry.html" title="Tasker::Registry::BaseRegistry (class)">Registry::BaseRegistry</a></span>, <span class='object_link'><a href="../Registry/StatisticsCollector.html" title="Tasker::Registry::StatisticsCollector (class)">Registry::StatisticsCollector</a></span>, <span class='object_link'><a href="../TaskRunnerJob.html" title="Tasker::TaskRunnerJob (class)">TaskRunnerJob</a></span>, <span class='object_link'><a href="../Telemetry/ExportCoordinator.html" title="Tasker::Telemetry::ExportCoordinator (class)">Telemetry::ExportCoordinator</a></span>, <span class='object_link'><a href="../Telemetry/MetricsExportService.html" title="Tasker::Telemetry::MetricsExportService (class)">Telemetry::MetricsExportService</a></span>, <span class='object_link'><a href="../Telemetry/Plugins/BaseExporter.html" title="Tasker::Telemetry::Plugins::BaseExporter (class)">Telemetry::Plugins::BaseExporter</a></span></dd>
+  </dl>
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/concerns/structured_logging.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>StructuredLogging provides correlation ID tracking and consistent JSON formatting</p>
+
+<p>This concern builds on Tasker’s existing event system to add production-grade structured logging with correlation IDs for distributed tracing across workflows.</p>
+
+<p>Key Features: - Automatic correlation ID generation and propagation - JSON structured logging with consistent format - Integration with existing telemetry configuration - Parameter filtering for sensitive data - Performance-optimized with minimal overhead</p>
+
+<p>Usage: include Tasker::Concerns::StructuredLogging</p>
+
+<p># Basic structured logging log_structured(:info, “Task started”, task_id: task.task_id)</p>
+
+<p># Domain-specific helpers log_task_event(task, :started, execution_mode: ‘async’) log_step_event(step, :completed, duration: 1.5)</p>
+
+<p># Correlation ID propagation with_correlation_id(request_id) do # All logging within this block includes the correlation ID log_structured(:info, “Processing workflow”) end</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="CORRELATION_ID_KEY-constant" class="">CORRELATION_ID_KEY =
+          <div class="docstring">
+  <div class="discussion">
+    
+<p>Thread-local storage for correlation ID to ensure thread safety</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='symbol'>:tasker_correlation_id</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#correlation_id-instance_method" title="#correlation_id (instance method)">#<strong>correlation_id</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get the current correlation ID, generating one if needed.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#correlation_id=-instance_method" title="#correlation_id= (instance method)">#<strong>correlation_id=</strong>(id)  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Set a specific correlation ID for the current execution context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_exception-instance_method" title="#log_exception (instance method)">#<strong>log_exception</strong>(exception, context: {}, level: :error)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log exceptions with full context and structured format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_orchestration_event-instance_method" title="#log_orchestration_event (instance method)">#<strong>log_orchestration_event</strong>(operation, event_type, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log orchestration events (workflow coordination, reenqueuing, etc.).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_performance_event-instance_method" title="#log_performance_event (instance method)">#<strong>log_performance_event</strong>(operation, duration, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log performance-related events with timing and resource usage.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_step_event-instance_method" title="#log_step_event (instance method)">#<strong>log_step_event</strong>(step, event_type, duration: nil, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log step-related events with standardized format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_structured-instance_method" title="#log_structured (instance method)">#<strong>log_structured</strong>(level, message, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log with structured JSON format including correlation ID and context.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#log_task_event-instance_method" title="#log_task_event (instance method)">#<strong>log_task_event</strong>(task, event_type, **context)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Log task-related events with standardized format.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#with_correlation_id-instance_method" title="#with_correlation_id (instance method)">#<strong>with_correlation_id</strong>(id) { ... } &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Execute a block with a specific correlation ID.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="correlation_id-instance_method">
+  
+    #<strong>correlation_id</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get the current correlation ID, generating one if needed</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The correlation ID for the current execution context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+81
+82
+83</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 81</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
+  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_generate_correlation_id'>generate_correlation_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="correlation_id=-instance_method">
+  
+    #<strong>correlation_id=</strong>(id)  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Set a specific correlation ID for the current execution context</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The correlation ID to use</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The correlation ID that was set</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+89
+90
+91</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 89</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_correlation_id='>correlation_id=</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
+  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_id'>id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_exception-instance_method">
+  
+    #<strong>log_exception</strong>(exception, context: {}, level: :error)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log exceptions with full context and structured format</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='label'>operation:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>step_execution</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>step_id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>step_123</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='label'>operation:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>task_finalization</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>task_id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>task_456</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>level:</span> <span class='symbol'>:fatal</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>exception</span>
+      
+      
+        <span class='type'>(<tt>Exception</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The exception to log</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context about when/where the exception occurred</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>level</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:error</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Log level (defaults to :error)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 227</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='label'>level:</span> <span class='symbol'>:error</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exception_context'>exception_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>exception</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+    <span class='label'>exception_class:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>exception_message:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+    <span class='label'>backtrace:</span> <span class='id identifier rubyid_extract_relevant_backtrace'>extract_relevant_backtrace</span><span class='lparen'>(</span><span class='id identifier rubyid_exception'>exception</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='op'>**</span><span class='id identifier rubyid_context'>context</span>
+  <span class='rbrace'>}</span>
+
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Exception occurred: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_exception_context'>exception_context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_orchestration_event-instance_method">
+  
+    #<strong>log_orchestration_event</strong>(operation, event_type, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log orchestration events (workflow coordination, reenqueuing, etc.)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_orchestration_event'>log_orchestration_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>workflow_coordination</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='symbol'>:started</span><span class='comma'>,</span> <span class='label'>task_id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>task_123</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_orchestration_event'>log_orchestration_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>step_execution_batch</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='symbol'>:completed</span><span class='comma'>,</span>
+  <span class='label'>step_count:</span> <span class='int'>3</span><span class='comma'>,</span> <span class='label'>total_duration:</span> <span class='float'>5.2</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>operation</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The orchestration operation name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>event_type</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The type of event (:started, :completed, :failed, etc.)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context to include in the log</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+180
+181
+182
+183
+184
+185
+186</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 180</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_orchestration_event'>log_orchestration_event</span><span class='lparen'>(</span><span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:debug</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Orchestration </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_type'>event_type</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+                 <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>orchestration</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                 <span class='label'>operation:</span> <span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span>
+                 <span class='label'>event_type:</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span>
+                 <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_performance_event-instance_method">
+  
+    #<strong>log_performance_event</strong>(operation, duration, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log performance-related events with timing and resource usage</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_performance_event'>log_performance_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>dependency_graph_analysis</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='float'>0.85</span><span class='comma'>,</span>
+  <span class='label'>node_count:</span> <span class='int'>25</span><span class='comma'>,</span> <span class='label'>complexity:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>medium</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_performance_event'>log_performance_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>sql_query</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='float'>2.1</span><span class='comma'>,</span>
+  <span class='label'>query_type:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>select</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>table:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>workflow_steps</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>operation</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The operation being measured</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>duration</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Duration in seconds</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional performance context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 200</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_performance_event'>log_performance_event</span><span class='lparen'>(</span><span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_performance_context'>performance_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>performance</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+    <span class='label'>operation:</span> <span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span>
+    <span class='label'>duration_ms:</span> <span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='label'>performance_category:</span> <span class='id identifier rubyid_categorize_duration'>categorize_duration</span><span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='label'>is_slow:</span> <span class='id identifier rubyid_duration'>duration</span> <span class='op'>&gt;</span> <span class='id identifier rubyid_telemetry_config'>telemetry_config</span><span class='period'>.</span><span class='id identifier rubyid_slow_query_threshold_seconds'>slow_query_threshold_seconds</span>
+  <span class='rbrace'>}</span>
+
+  <span class='id identifier rubyid_level'>level</span> <span class='op'>=</span> <span class='id identifier rubyid_performance_context'>performance_context</span><span class='lbracket'>[</span><span class='symbol'>:is_slow</span><span class='rbracket'>]</span> <span class='op'>?</span> <span class='symbol'>:warn</span> <span class='op'>:</span> <span class='symbol'>:debug</span>
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Performance measurement</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_performance_context'>performance_context</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_step_event-instance_method">
+  
+    #<strong>log_step_event</strong>(step, event_type, duration: nil, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log step-related events with standardized format</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_step_event'>log_step_event</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='symbol'>:started</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_step_event'>log_step_event</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='symbol'>:completed</span><span class='comma'>,</span> <span class='label'>duration:</span> <span class='float'>2.5</span><span class='comma'>,</span> <span class='label'>records_processed:</span> <span class='int'>150</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_step_event'>log_step_event</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='symbol'>:failed</span><span class='comma'>,</span> <span class='label'>duration:</span> <span class='float'>1.2</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Connection timeout</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>step</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../WorkflowStep.html" title="Tasker::WorkflowStep (class)">Tasker::WorkflowStep</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The step object</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>event_type</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The type of event (:started, :completed, :failed, etc.)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>duration</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Execution duration in seconds</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context to include in the log</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 149</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_step_event'>log_step_event</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='label'>duration:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_step_context'>step_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+    <span class='label'>entity_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+    <span class='label'>entity_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>event_type:</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span>
+    <span class='label'>step_status:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span>
+    <span class='label'>task_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>task_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+  <span class='rbrace'>}</span>
+
+  <span class='comment'># Add performance data if provided
+</span>  <span class='kw'>if</span> <span class='id identifier rubyid_duration'>duration</span>
+    <span class='id identifier rubyid_step_context'>step_context</span><span class='lbracket'>[</span><span class='symbol'>:duration_ms</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_step_context'>step_context</span><span class='lbracket'>[</span><span class='symbol'>:performance_category</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_categorize_duration'>categorize_duration</span><span class='lparen'>(</span><span class='id identifier rubyid_duration'>duration</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_type'>event_type</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_step_context'>step_context</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_structured-instance_method">
+  
+    #<strong>log_structured</strong>(level, message, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log with structured JSON format including correlation ID and context</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Basic usage</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Task execution started</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>task_id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>task_123</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>task_name:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>order_processing</span><span class='tstring_end'>&quot;</span></span>
+<span class='rparen'>)</span></code></pre>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>With performance data</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:debug</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Step completed successfully</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>step_id:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>step_456</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>duration_ms:</span> <span class='float'>250.5</span><span class='comma'>,</span>
+  <span class='label'>memory_delta_mb:</span> <span class='float'>12.3</span>
+<span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>level</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Log level (:debug, :info, :warn, :error, :fatal)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>message</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Human-readable log message</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional structured context data</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 61</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_log?'>should_log?</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_structured_data'>structured_data</span> <span class='op'>=</span> <span class='id identifier rubyid_build_structured_log_entry'>build_structured_log_entry</span><span class='lparen'>(</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_filtered_data'>filtered_data</span> <span class='op'>=</span> <span class='id identifier rubyid_apply_parameter_filtering'>apply_parameter_filtering</span><span class='lparen'>(</span><span class='id identifier rubyid_structured_data'>structured_data</span><span class='rparen'>)</span>
+
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_public_send'>public_send</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_format_log_output'>format_log_output</span><span class='lparen'>(</span><span class='id identifier rubyid_filtered_data'>filtered_data</span><span class='rparen'>)</span><span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='comment'># Failsafe logging - never let logging errors break application flow
+</span>  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_error'>error</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Structured logging failed: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_public_send'>public_send</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span> <span class='comment'># Fallback to simple logging
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_task_event-instance_method">
+  
+    #<strong>log_task_event</strong>(task, event_type, **context)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p>
+<p>Log task-related events with standardized format</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_log_task_event'>log_task_event</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:started</span><span class='comma'>,</span> <span class='label'>execution_mode:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>async</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>priority:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>high</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_task_event'>log_task_event</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:completed</span><span class='comma'>,</span> <span class='label'>duration:</span> <span class='float'>120.5</span><span class='comma'>,</span> <span class='label'>step_count:</span> <span class='int'>5</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_log_task_event'>log_task_event</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='symbol'>:failed</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_exception'>exception</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>task</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Task.html" title="Tasker::Task (class)">Tasker::Task</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The task object</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>event_type</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The type of event (:started, :completed, :failed, etc.)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context to include in the log</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+127
+128
+129
+130
+131
+132
+133
+134
+135</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 127</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_task_event'>log_task_event</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_type'>event_type</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+                 <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>task</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                 <span class='label'>entity_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+                 <span class='label'>entity_name:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+                 <span class='label'>event_type:</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span>
+                 <span class='label'>task_status:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_status'>status</span><span class='comma'>,</span>
+                 <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="with_correlation_id-instance_method">
+  
+    #<strong>with_correlation_id</strong>(id) { ... } &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Execute a block with a specific correlation ID</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='id identifier rubyid_with_correlation_id'>with_correlation_id</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>req_abc123</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_process_workflow'>process_workflow</span>
+  <span class='comment'># All logging within this block will include req_abc123
+</span><span class='kw'>end</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The correlation ID to use during block execution</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yields:</p>
+<ul class="yield">
+  
+    <li>
+      
+      
+        <span class='type'></span>
+      
+      
+      
+        
+        <div class='inline'>
+<p>Block to execute with the correlation ID</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The result of the yielded block</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+104
+105
+106
+107
+108
+109
+110</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 104</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_with_correlation_id'>with_correlation_id</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_previous_id'>previous_id</span> <span class='op'>=</span> <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span>
+  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_id'>id</span>
+  <span class='kw'>yield</span>
+<span class='kw'>ensure</span>
+  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_previous_id'>previous_id</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 25 22:48:37 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

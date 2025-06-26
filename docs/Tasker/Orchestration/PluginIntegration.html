@@ -236,7 +236,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#supports_concurrent_processing%3F-instance_method" title="#supports_concurrent_processing? (instance method)">#<strong>supports_concurrent_processing?</strong>(task_handler)  &#x21d2; Boolean </a>
+      <a href="#supports_concurrent_processing%3F-instance_method" title="#supports_concurrent_processing? (instance method)">#<strong>supports_concurrent_processing?</strong>(_task_handler)  &#x21d2; Boolean </a>
     
 
     
@@ -711,13 +711,13 @@
       <pre class="lines">
 
 
+118
 119
 120
-121
-122</pre>
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/plugin_integration.rb', line 119</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/plugin_integration.rb', line 118</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_task_handler_class'>get_task_handler_class</span><span class='lparen'>(</span><span class='id identifier rubyid_task_name'>task_name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_handler_factory'>handler_factory</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span>
@@ -792,17 +792,17 @@
       <pre class="lines">
 
 
+103
 104
 105
 106
 107
 108
 109
-110
-111</pre>
+110</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/plugin_integration.rb', line 104</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/plugin_integration.rb', line 103</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_task_handler_for_task'>get_task_handler_for_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_handler_factory'>handler_factory</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span>
@@ -820,7 +820,7 @@
       <div class="method_details ">
   <h3 class="signature " id="supports_concurrent_processing?-instance_method">
   
-    #<strong>supports_concurrent_processing?</strong>(task_handler)  &#x21d2; <tt>Boolean</tt> 
+    #<strong>supports_concurrent_processing?</strong>(_task_handler)  &#x21d2; <tt>Boolean</tt> 
   
 
   
@@ -885,15 +885,13 @@
 
 95
 96
-97
-98</pre>
+97</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/plugin_integration.rb', line 95</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_supports_concurrent_processing?'>supports_concurrent_processing?</span><span class='lparen'>(</span><span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_task_handler'>task_handler</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:use_concurrent_processing?</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span>
-    <span class='id identifier rubyid_task_handler'>task_handler</span><span class='period'>.</span><span class='id identifier rubyid_use_concurrent_processing?'>use_concurrent_processing?</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_supports_concurrent_processing?'>supports_concurrent_processing?</span><span class='lparen'>(</span><span class='id identifier rubyid__task_handler'>_task_handler</span><span class='rparen'>)</span>
+  <span class='kw'>true</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1119,7 +1117,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 22 08:31:52 2025 by
+  Generated on Wed Jun 25 22:48:37 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

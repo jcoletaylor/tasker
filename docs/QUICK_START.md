@@ -4,6 +4,8 @@
 
 This guide will get you from zero to a working Tasker workflow in 15 minutes. You'll build a simple "Welcome Email" process that demonstrates core concepts like step dependencies, error handling, and result passing. This guide is done as an example - you don't have to actually have a User model or a welcome email process.
 
+**🚀 New in Tasker 2.3.0**: This guide now benefits from our enterprise-grade registry system with thread-safe operations, structured logging with correlation IDs, and comprehensive validation - all working automatically behind the scenes for maximum reliability.
+
 *Note*: This guide being an example, the step that gets a user from the database is unlikely to need to be retried - steps are generally best decomposed into units that need distinct idempotency and retryability guarantees.
 
 ## Prerequisites (2 minutes)
@@ -20,7 +22,7 @@ Before starting, ensure you have:
 ```ruby
 # Gemfile
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.3.0'
+  gem 'tasker', '~> 2.4.0'
 end
 ```
 
@@ -79,7 +81,6 @@ Edit `config/tasker/tasks/welcome_user/welcome_handler.yaml`:
 name: welcome_user
 module_namespace: WelcomeUser
 task_handler_class: WelcomeHandler
-concurrent: true
 
 schema:
   type: object
@@ -481,7 +482,8 @@ For complete API documentation, see **[REST API Guide](REST_API.md)**.
 - **[REST API Guide](REST_API.md)** - Complete API documentation with handler discovery
 - **[Authentication](AUTH.md)** - Secure your workflows
 - **[Event Subscribers](EVENT_SYSTEM.md)** - Add monitoring and alerting
-- **[Telemetry](TELEMETRY.md)** - OpenTelemetry integration
+- **[Telemetry](TELEMETRY.md)** - OpenTelemetry spans for detailed tracing
+- **[Metrics](METRICS.md)** - Native metrics collection for dashboards and alerting
 
 ### 📚 Explore Advanced Topics
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete implementation guide with API integration
