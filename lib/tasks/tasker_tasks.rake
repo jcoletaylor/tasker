@@ -149,7 +149,7 @@ namespace :tasker do
 
     begin
       backend = Tasker::Telemetry::MetricsBackend.instance
-      Tasker::Telemetry::ExportCoordinator.new
+      Tasker::Telemetry::ExportCoordinator.instance
 
       # Backend status
       puts 'Backend Status:'
