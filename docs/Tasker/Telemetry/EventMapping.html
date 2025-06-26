@@ -569,7 +569,7 @@
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='op'>*</span><span class='rparen'>)</span>
   <span class='kw'>super</span>
   <span class='id identifier rubyid_backends'>backends</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span>
-  <span class='comment'># Don&#39;t freeze here - BaseConfig already freezes the object
+  <span class='comment'># Ensure backends array is frozen here as an additional safeguard, even though BaseConfig also freezes the object
 </span><span class='kw'>end</span></pre>
     </td>
   </tr>
