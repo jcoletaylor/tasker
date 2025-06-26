@@ -160,7 +160,9 @@ RSpec.describe 'Metrics API', type: :request do
 
         before do
           # Mock PrometheusExporter to raise exception
-          allow_any_instance_of(Tasker::Telemetry::PrometheusExporter).to receive(:safe_export).and_raise(StandardError, 'Controller error')
+          mock_exporter = instance_double(Tasker::Telemetry::PrometheusExporter)
+          allow(mock_exporter).to receive(:safe_export).and_raise(StandardError, 'Controller error')
+          allow(Tasker::Telemetry::PrometheusExporter).to receive(:new).and_return(mock_exporter)
         end
 
         after do |example|
