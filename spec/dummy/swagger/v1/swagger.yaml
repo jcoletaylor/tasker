@@ -68,6 +68,56 @@ paths:
           description: successful - complex handler with dependencies
         '404':
           description: namespace not found
+  "/tasker/health/ready":
+    get:
+      summary: readiness check
+      tags:
+      - Health
+      description: Check if the system is ready to accept requests. This endpoint
+        never requires authentication.
+      operationId: checkReadiness
+      responses:
+        '200':
+          description: system is ready
+        '503':
+          description: exception during health check
+  "/tasker/health/live":
+    get:
+      summary: liveness check
+      tags:
+      - Health
+      description: Check if the system is alive and responding. This endpoint never
+        requires authentication.
+      operationId: checkLiveness
+      responses:
+        '200':
+          description: system is alive
+  "/tasker/health/status":
+    get:
+      summary: detailed health status
+      tags:
+      - Health
+      description: Get detailed system health status including metrics and database
+        information. May require authorization depending on configuration.
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: healthy system status
+        '503':
+          description: status check exception
+  "/tasker/metrics":
+    get:
+      summary: export metrics
+      tags:
+      - Metrics
+      description: Export system metrics in Prometheus format. Authentication requirements
+        depend on configuration.
+      operationId: exportMetrics
+      responses:
+        '200':
+          description: empty metrics export
+        '503':
+          description: controller exception
   "/tasker/tasks/{task_id}/task_diagrams":
     parameters:
     - name: task_id
