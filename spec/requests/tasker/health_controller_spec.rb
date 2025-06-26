@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require 'swagger_helper'
 require_relative '../../examples/test_authenticator'
 require_relative '../../examples/custom_authorization_coordinator'
 
-RSpec.describe Tasker::HealthController, type: :request do
+RSpec.describe 'Health API', type: :request do
   around do |example|
     # Store original configuration
     original_config = Tasker.configuration.dup
@@ -26,52 +26,206 @@ RSpec.describe Tasker::HealthController, type: :request do
     Tasker.instance_variable_set(:@configuration, original_config)
   end
 
-  describe 'GET /health/ready' do
-    it 'returns ready status when system is healthy' do
-      allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_return({
-        ready: true,
-        checks: { database: { status: 'ok' } },
-        timestamp: Time.current
-      })
+  path '/tasker/health/ready' do
+    get('readiness check') do
+      tags 'Health'
+      description 'Check if the system is ready to accept requests. This endpoint never requires authentication.'
+      operationId 'checkReadiness'
+      produces 'application/json'
 
-      get '/tasker/health/ready'
+      response(200, 'system is ready') do
+        before do
+          allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_return({
+            ready: true,
+            checks: { database: { status: 'ok' } },
+            timestamp: Time.current
+          })
+        end
 
-      expect(response).to have_http_status(:ok)
-      expect(response.content_type).to eq('application/json; charset=utf-8')
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
 
-      json_response = JSON.parse(response.body)
-      expect(json_response['ready']).to be true
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
+
+          json_response = JSON.parse(response.body)
+          expect(json_response['ready']).to be true
+        end
+      end
+
+      response(503, 'system is not ready') do
+        before do
+          allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_return({
+            ready: false,
+            checks: { database: { status: 'error', message: 'Connection failed' } },
+            timestamp: Time.current
+          })
+        end
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
+
+          json_response = JSON.parse(response.body)
+          expect(json_response['ready']).to be false
+        end
+      end
+
+      response(503, 'exception during health check') do
+        before do
+          allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_raise(StandardError.new('Unexpected error'))
+        end
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          json_response = JSON.parse(response.body)
+          expect(json_response['ready']).to be false
+          expect(json_response['error']).to eq('Health check failed')
+          expect(json_response['message']).to include('Unexpected error')
+        end
+      end
     end
+  end
 
-    it 'returns not ready status when system is unhealthy' do
-      allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_return({
-        ready: false,
-        checks: { database: { status: 'error', message: 'Connection failed' } },
-        timestamp: Time.current
-      })
+  path '/tasker/health/live' do
+    get('liveness check') do
+      tags 'Health'
+      description 'Check if the system is alive and responding. This endpoint never requires authentication.'
+      operationId 'checkLiveness'
+      produces 'application/json'
 
-      get '/tasker/health/ready'
+      response(200, 'system is alive') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
 
-      expect(response).to have_http_status(:service_unavailable)
-      expect(response.content_type).to eq('application/json; charset=utf-8')
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
 
-      json_response = JSON.parse(response.body)
-      expect(json_response['ready']).to be false
+          json_response = JSON.parse(response.body)
+          expect(json_response['alive']).to be true
+          expect(json_response['service']).to eq('tasker')
+          expect(json_response['timestamp']).to be_present
+        end
+      end
     end
+  end
 
-    it 'handles exceptions gracefully' do
-      allow(Tasker::Health::ReadinessChecker).to receive(:ready?).and_raise(StandardError.new('Unexpected error'))
+  path '/tasker/health/status' do
+    get('detailed health status') do
+      tags 'Health'
+      description 'Get detailed system health status including metrics and database information. May require authorization depending on configuration.'
+      operationId 'getHealthStatus'
+      produces 'application/json'
 
-      get '/tasker/health/ready'
+      response(200, 'healthy system status') do
+        before do
+          allow(Tasker::Health::StatusChecker).to receive(:status).and_return({
+            healthy: true,
+            timestamp: Time.current,
+            metrics: { tasks: { total: 0 } },
+            database: { active_connections: 1, max_connections: 10, connection_utilization: 10.0 }
+          })
+        end
 
-      expect(response).to have_http_status(:service_unavailable)
-      json_response = JSON.parse(response.body)
-      expect(json_response['ready']).to be false
-      expect(json_response['error']).to eq('Health check failed')
-      expect(json_response['message']).to include('Unexpected error')
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
+
+          json_response = JSON.parse(response.body)
+          expect(json_response['healthy']).to be true
+        end
+      end
+
+      response(503, 'unhealthy system status') do
+        before do
+          allow(Tasker::Health::StatusChecker).to receive(:status).and_return({
+            healthy: false,
+            timestamp: Time.current,
+            error: 'Database connection failed'
+          })
+        end
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
+
+          json_response = JSON.parse(response.body)
+          expect(json_response['healthy']).to be false
+          expect(json_response['error']).to include('Database connection failed')
+        end
+      end
+
+      response(503, 'status check exception') do
+        before do
+          allow(Tasker::Health::StatusChecker).to receive(:status).and_raise(StandardError.new('Status error'))
+        end
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          json_response = JSON.parse(response.body)
+          expect(json_response['healthy']).to be false
+          expect(json_response['error']).to eq('Status check failed')
+          expect(json_response['message']).to include('Status error')
+        end
+      end
     end
+  end
 
-    it 'never requires authentication or authorization' do
+  # Test authentication scenarios as separate contexts
+  describe 'authentication scenarios' do
+    it 'never requires authentication for ready endpoint' do
       original_config = Tasker.configuration.dup
 
       # Configure authentication and authorization as enabled
@@ -98,22 +252,8 @@ RSpec.describe Tasker::HealthController, type: :request do
       # Restore configuration
       Tasker.instance_variable_set(:@configuration, original_config)
     end
-  end
 
-  describe 'GET /health/live' do
-    it 'returns alive status' do
-      get '/tasker/health/live'
-
-      expect(response).to have_http_status(:ok)
-      expect(response.content_type).to eq('application/json; charset=utf-8')
-
-      json_response = JSON.parse(response.body)
-      expect(json_response['alive']).to be true
-      expect(json_response['service']).to eq('tasker')
-      expect(json_response['timestamp']).to be_present
-    end
-
-    it 'never requires authentication or authorization' do
+    it 'never requires authentication for live endpoint' do
       original_config = Tasker.configuration.dup
 
       # Configure authentication and authorization as enabled
@@ -134,73 +274,8 @@ RSpec.describe Tasker::HealthController, type: :request do
       # Restore configuration
       Tasker.instance_variable_set(:@configuration, original_config)
     end
-  end
 
-  describe 'GET /health/status' do
-    context 'when authorization is disabled' do
-      around do |example|
-        original_config = Tasker.configuration.dup
-
-        Tasker.configure do |config|
-          config.auth do |auth|
-            auth.authorization_enabled = false
-          end
-        end
-
-        example.run
-
-        Tasker.instance_variable_set(:@configuration, original_config)
-      end
-
-      it 'returns healthy status when system is healthy' do
-        allow(Tasker::Health::StatusChecker).to receive(:status).and_return({
-          healthy: true,
-          timestamp: Time.current,
-          metrics: { tasks: { total: 0 } },
-          database: { active_connections: 1, max_connections: 10, connection_utilization: 10.0 }
-        })
-
-        get '/tasker/health/status'
-
-        expect(response).to have_http_status(:ok)
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-
-        json_response = JSON.parse(response.body)
-        expect(json_response['healthy']).to be true
-      end
-
-      it 'returns unhealthy status when system is unhealthy' do
-        allow(Tasker::Health::StatusChecker).to receive(:status).and_return({
-          healthy: false,
-          timestamp: Time.current,
-          error: 'Database connection failed'
-        })
-
-        get '/tasker/health/status'
-
-        expect(response).to have_http_status(:service_unavailable)
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-
-        json_response = JSON.parse(response.body)
-        expect(json_response['healthy']).to be false
-        expect(json_response['error']).to include('Database connection failed')
-      end
-
-      it 'allows access without authentication or authorization' do
-        allow(Tasker::Health::StatusChecker).to receive(:status).and_return({
-          healthy: true,
-          timestamp: Time.current,
-          metrics: { tasks: { total: 0 } },
-          database: { active_connections: 1, max_connections: 10, connection_utilization: 10.0 }
-        })
-
-        get '/tasker/health/status'
-
-        expect(response).to have_http_status(:ok)
-      end
-    end
-
-    context 'when authorization is enabled' do
+    context 'status endpoint with authorization enabled' do
       around do |example|
         original_config = Tasker.configuration.dup
         example.run
@@ -292,34 +367,6 @@ RSpec.describe Tasker::HealthController, type: :request do
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Authorization Configuration Error')
         expect(json_response['message']).to include('Authorization system error')
-      end
-    end
-
-    context 'error handling' do
-      around do |example|
-        original_config = Tasker.configuration.dup
-
-        Tasker.configure do |config|
-          config.auth do |auth|
-            auth.authorization_enabled = false
-          end
-        end
-
-        example.run
-
-        Tasker.instance_variable_set(:@configuration, original_config)
-      end
-
-      it 'handles status checker exceptions gracefully' do
-        allow(Tasker::Health::StatusChecker).to receive(:status).and_raise(StandardError.new('Status error'))
-
-        get '/tasker/health/status'
-
-        expect(response).to have_http_status(:service_unavailable)
-        json_response = JSON.parse(response.body)
-        expect(json_response['healthy']).to be false
-        expect(json_response['error']).to eq('Status check failed')
-        expect(json_response['message']).to include('Status error')
       end
     end
   end

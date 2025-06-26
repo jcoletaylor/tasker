@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require 'swagger_helper'
 require_relative '../../examples/test_authenticator'
 require_relative '../../examples/custom_authorization_coordinator'
 
-RSpec.describe Tasker::MetricsController, type: :request do
+RSpec.describe 'Metrics API', type: :request do
   around do |example|
     # Store original configuration
     original_config = Tasker.configuration.dup
@@ -27,171 +27,191 @@ RSpec.describe Tasker::MetricsController, type: :request do
     Tasker.instance_variable_set(:@configuration, original_config)
   end
 
-  describe 'GET /tasker/metrics' do
-    context 'when metrics are enabled and available' do
-      before do
-        # Mock successful metrics export
-        backend = Tasker::Telemetry::MetricsBackend.instance
-        allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 2,
-          metrics: {
-            'task_completed_total' => {
-              name: 'task_completed_total',
-              type: :counter,
-              value: 125,
-              labels: { status: 'success' }
-            },
-            'active_connections' => {
-              name: 'active_connections',
-              type: :gauge,
-              value: 5,
-              labels: {}
+  path '/tasker/metrics' do
+    get('export metrics') do
+      tags 'Metrics'
+      description 'Export system metrics in Prometheus format. Authentication requirements depend on configuration.'
+      operationId 'exportMetrics'
+
+      response(200, 'successful metrics export') do
+        produces 'text/plain'
+
+        before do
+          # Mock successful metrics export
+          backend = Tasker::Telemetry::MetricsBackend.instance
+          allow(backend).to receive(:export).and_return({
+            timestamp: '2023-06-23T10:39:42Z',
+            total_metrics: 2,
+            metrics: {
+              'task_completed_total' => {
+                name: 'task_completed_total',
+                type: :counter,
+                value: 125,
+                labels: { status: 'success' }
+              },
+              'active_connections' => {
+                name: 'active_connections',
+                type: :gauge,
+                value: 5,
+                labels: {}
+              }
+            }
+          })
+        end
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'text/plain' => {
+              example: response.body
             }
           }
-        })
-        # Total metrics provided by export method
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+          expect(response.content_type).to eq('text/plain; charset=utf-8')
+
+          response_body = response.body
+          expect(response_body).to include('# Tasker metrics export')
+          expect(response_body).to include('# GENERATED 2023-06-23T10:39:42Z')
+          expect(response_body).to include('# TOTAL_METRICS 2')
+          expect(response_body).to include('task_completed_total{status="success"} 125')
+          expect(response_body).to include('active_connections 5')
+        end
       end
 
-      it 'returns metrics in Prometheus format' do
-        get '/tasker/metrics'
+      response(200, 'empty metrics export') do
+        produces 'text/plain'
 
-        expect(response).to have_http_status(:ok)
-        expect(response.content_type).to eq('text/plain; charset=utf-8')
+        before do
+          backend = Tasker::Telemetry::MetricsBackend.instance
+          allow(backend).to receive(:export).and_return({
+            timestamp: '2023-06-23T10:39:42Z',
+            total_metrics: 0,
+            metrics: {}
+          })
+        end
 
-        response_body = response.body
-        expect(response_body).to include('# Tasker metrics export')
-        expect(response_body).to include('# GENERATED 2023-06-23T10:39:42Z')
-        expect(response_body).to include('# TOTAL_METRICS 2')
-        expect(response_body).to include('task_completed_total{status="success"} 125')
-        expect(response_body).to include('active_connections 5')
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to eq("")
+        end
       end
 
-      it 'sets appropriate cache control headers' do
-        get '/tasker/metrics'
+      response(503, 'metrics disabled') do
+        produces 'application/json'
 
-        expect(response.headers['Cache-Control']).to match(/no-cache|no-store/)
-        expect(response.headers['Pragma']).to eq('no-cache')
-        expect(response.headers['Expires']).to eq('0')
-      end
-    end
-
-    context 'when metrics are disabled' do
-      around do |example|
-        Tasker.configure do |config|
-          config.telemetry do |telemetry|
-            telemetry.metrics_enabled = false
+        before do
+          Tasker.configure do |config|
+            config.telemetry do |telemetry|
+              telemetry.metrics_enabled = false
+            end
           end
         end
 
-        example.run
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
+
+          json_response = JSON.parse(response.body)
+          expect(json_response['error']).to eq('Metrics export failed')
+          expect(json_response['message']).to eq('Metrics collection is disabled')
+          expect(json_response['timestamp']).to be_present
+        end
       end
 
-      it 'returns error response' do
-        get '/tasker/metrics'
+      response(503, 'metrics export failed') do
+        produces 'application/json'
 
-        expect(response).to have_http_status(:service_unavailable)
-        expect(response.content_type).to eq('application/json; charset=utf-8')
+        before do
+          backend = Tasker::Telemetry::MetricsBackend.instance
+          allow(backend).to receive(:export).and_raise(StandardError, 'Export error')
+        end
 
-        json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq('Metrics export failed')
-        expect(json_response['message']).to eq('Metrics collection is disabled')
-        expect(json_response['timestamp']).to be_present
-      end
-    end
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
 
-    context 'when metrics export fails' do
-      before do
-        backend = Tasker::Telemetry::MetricsBackend.instance
-        allow(backend).to receive(:export).and_raise(StandardError, 'Export error')
-      end
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          expect(response.content_type).to eq('application/json; charset=utf-8')
 
-      it 'returns error response' do
-        get '/tasker/metrics'
-
-        expect(response).to have_http_status(:service_unavailable)
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-
-        json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq('Metrics export failed')
-        expect(json_response['message']).to eq('Export error')
-        expect(json_response['timestamp']).to be_present
-      end
-    end
-
-    context 'when controller throws exception' do
-      before do
-        # Mock PrometheusExporter to raise exception
-        allow_any_instance_of(Tasker::Telemetry::PrometheusExporter).to receive(:safe_export).and_raise(StandardError, 'Controller error')
+          json_response = JSON.parse(response.body)
+          expect(json_response['error']).to eq('Metrics export failed')
+          expect(json_response['message']).to eq('Export error')
+          expect(json_response['timestamp']).to be_present
+        end
       end
 
-      it 'handles exceptions gracefully' do
-        get '/tasker/metrics'
+      response(503, 'controller exception') do
+        produces 'application/json'
 
-        expect(response).to have_http_status(:service_unavailable)
-        json_response = JSON.parse(response.body)
-        expect(json_response['error']).to eq('Metrics endpoint failed')
-        expect(json_response['message']).to include('Controller error')
-      end
-    end
+        before do
+          # Mock PrometheusExporter to raise exception
+          allow_any_instance_of(Tasker::Telemetry::PrometheusExporter).to receive(:safe_export).and_raise(StandardError, 'Controller error')
+        end
 
-    context 'when no metrics are available' do
-      before do
-        backend = Tasker::Telemetry::MetricsBackend.instance
-        allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 0,
-          metrics: {}
-        })
-        # Total metrics provided by export method
-      end
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
 
-      it 'returns empty metrics export' do
-        get '/tasker/metrics'
-
-        expect(response).to have_http_status(:ok)
-        expect(response.body).to eq("")
+        run_test! do |response|
+          expect(response).to have_http_status(:service_unavailable)
+          json_response = JSON.parse(response.body)
+          expect(json_response['error']).to eq('Metrics endpoint failed')
+          expect(json_response['message']).to include('Controller error')
+        end
       end
     end
   end
 
-  describe 'authentication and authorization' do
-    context 'when authentication is disabled' do
-      around do |example|
-        Tasker.configure do |config|
-          config.auth do |auth|
-            auth.authentication_enabled = false
-            auth.authorization_enabled = false
-          end
-          config.telemetry do |telemetry|
-            telemetry.metrics_auth_required = false
-          end
+  # Test authentication scenarios as separate contexts
+  describe 'authentication scenarios' do
+    it 'allows access without authentication when metrics_auth_required is false' do
+      Tasker.configure do |config|
+        config.auth do |auth|
+          auth.authentication_enabled = false
+          auth.authorization_enabled = false
         end
-
-        example.run
+        config.telemetry do |telemetry|
+          telemetry.metrics_auth_required = false
+        end
       end
 
-      it 'allows access without authentication' do
-        # Mock successful metrics
-        backend = Tasker::Telemetry::MetricsBackend.instance
-        allow(backend).to receive(:export).and_return({
-          timestamp: '2023-06-23T10:39:42Z',
-          total_metrics: 1,
-          metrics: {
-            'test_metric' => {
-              name: 'test_metric',
-              type: :counter,
-              value: 1,
-              labels: {}
-            }
+      # Mock successful metrics
+      backend = Tasker::Telemetry::MetricsBackend.instance
+      allow(backend).to receive(:export).and_return({
+        timestamp: '2023-06-23T10:39:42Z',
+        total_metrics: 1,
+        metrics: {
+          'test_metric' => {
+            name: 'test_metric',
+            type: :counter,
+            value: 1,
+            labels: {}
           }
-        })
-        # Total metrics provided by export method
+        }
+      })
 
-        get '/tasker/metrics'
+      get '/tasker/metrics'
 
-        expect(response).to have_http_status(:ok)
-      end
+      expect(response).to have_http_status(:ok)
     end
 
     context 'when metrics authentication is required' do
@@ -230,7 +250,6 @@ RSpec.describe Tasker::MetricsController, type: :request do
             }
           }
         })
-        # Total metrics provided by export method
       end
 
       it 'requires metrics.index authorization' do
@@ -328,7 +347,6 @@ RSpec.describe Tasker::MetricsController, type: :request do
             }
           }
         })
-        # Total metrics provided by export method
 
         # Should work without any authentication headers
         get '/tasker/metrics'
@@ -355,7 +373,6 @@ RSpec.describe Tasker::MetricsController, type: :request do
           }
         }
       })
-      # Total metrics provided by export method
     end
 
     it 'sets correct content type for successful metrics' do
