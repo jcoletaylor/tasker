@@ -699,7 +699,7 @@ delay = backoff_config.reenqueue_delays[status] || backoff_config.default_reenqu
 ## Observability & Telemetry Architecture
 
 ### **Phase 4 Observability Enhancement**
-**Comprehensive Plan**: See `docs/OBSERVABILITY_ENHANCEMENT.md` for complete architectural documentation
+**Comprehensive Plan**: See `docs/ROADMAP.md` for complete strategic roadmap and architectural documentation
 
 #### **Current Architecture (Phase 4.1 & 4.2.1-4.2.2.2 Complete)**
 - **Structured Logging**: StructuredLogging concern with correlation ID management and JSON formatting

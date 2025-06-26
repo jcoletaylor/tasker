@@ -66,7 +66,7 @@ Every registry operation includes comprehensive structured logging:
   "component": "handler_factory",
   "message": "Registry item registered",
   "environment": "production",
-  "tasker_version": "2.3.0",
+  "tasker_version": "2.4.0",
   "process_id": 12345,
   "thread_id": "abc123",
   "entity_type": "task_handler",
