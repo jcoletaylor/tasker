@@ -298,7 +298,7 @@ module FactoryWorkflowHelpers
   # Register task handler (replacement for factory.register in tests)
   def register_task_handler(task_name, handler_class)
     factory = Tasker::HandlerFactory.instance
-    factory.register(task_name, handler_class)
+    factory.register(task_name, handler_class, replace: true)
   end
 
   # Create task handler with connection stubbing (for API integration tests)
@@ -608,7 +608,7 @@ module FactoryWorkflowHelpers
       # @return [void]
       def register_dummy_task_handler
         factory = Tasker::HandlerFactory.instance
-        factory.register(DummyTask::TASK_REGISTRY_NAME, DummyTask)
+        factory.register(DummyTask::TASK_REGISTRY_NAME, DummyTask, replace: true)
       end
 
       # Create task from request parameters

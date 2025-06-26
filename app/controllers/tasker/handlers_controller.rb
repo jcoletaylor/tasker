@@ -84,7 +84,7 @@ module Tasker
     def find_handler_data(namespace_name, handler_name, version)
       # Get all versions for this handler in the namespace
       namespace_handlers = @handler_factory.list_handlers(namespace: namespace_name)
-      handler_versions = namespace_handlers[handler_name]
+      handler_versions = namespace_handlers[handler_name.to_sym]
 
       return nil unless handler_versions
 

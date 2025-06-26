@@ -9,8 +9,8 @@ RSpec.describe 'Dependency Graph Composition' do
 
   before(:all) do
     # Register the workflow task handlers
-    Tasker::HandlerFactory.instance.register('linear_workflow_task', LinearWorkflowTask)
-    Tasker::HandlerFactory.instance.register('diamond_workflow_task', DiamondWorkflowTask)
+    Tasker::HandlerFactory.instance.register('linear_workflow_task', LinearWorkflowTask, replace: true)
+    Tasker::HandlerFactory.instance.register('diamond_workflow_task', DiamondWorkflowTask, replace: true)
   end
 
   describe 'TaskHandler#dependency_graph (Template Analysis via Composition)' do

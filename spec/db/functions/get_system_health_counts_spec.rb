@@ -185,32 +185,38 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
   end
 
   describe 'performance characteristics' do
-    before do
-      # Create larger dataset for performance testing using workflow factories
-      # This creates realistic workflow structures rather than isolated records
-      @performance_workflows = []
-
-      # Create completed workflows
-      10.times { @performance_workflows << create(:linear_workflow_task) }
-      @performance_workflows.last(10).each do |task|
+    # Use let to create test data once and reuse it
+    let(:completed_workflows) do
+      Array.new(10) do
+        task = create(:linear_workflow_task)
         task.workflow_steps.each do |step|
           complete_step_via_state_machine(step)
         end
+        task
       end
+    end
 
-      # Create pending workflows
-      5.times { @performance_workflows << create(:diamond_workflow_task) }
+    let(:pending_workflows) do
+      Array.new(5) { create(:diamond_workflow_task) }
+    end
 
-      # Create workflows with some errors
-      3.times do
+    let(:error_workflows) do
+      Array.new(3) do
         task = create(:tree_workflow_task)
-        @performance_workflows << task
         # Add some error steps
         task.workflow_steps.limit(2).each do |step|
           set_step_to_error(step, 'Performance test error')
           step.update!(attempts: 1, retry_limit: 3)
         end
+        task
       end
+    end
+
+    before do
+      # Force evaluation of let variables to create test data
+      completed_workflows
+      pending_workflows
+      error_workflows
     end
 
     it 'executes in reasonable time' do
@@ -224,21 +230,25 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
   end
 
   describe 'data consistency' do
-    it 'maintains consistency across multiple calls' do
-      # Create some data using workflow factory
-      consistency_workflows = []
-
-      # Create a few completed workflows
-      3.times do
+    # Use let to create test data once and reuse it
+    let(:consistency_completed_workflows) do
+      Array.new(3) do
         task = create(:linear_workflow_task)
         task.workflow_steps.each do |step|
           complete_step_via_state_machine(step)
         end
-        consistency_workflows << task
+        task
       end
+    end
 
-      # Create some pending workflows
-      2.times { consistency_workflows << create(:diamond_workflow_task) }
+    let(:consistency_pending_workflows) do
+      Array.new(2) { create(:diamond_workflow_task) }
+    end
+
+    it 'maintains consistency across multiple calls' do
+      # Force evaluation of let variables to create test data
+      consistency_completed_workflows
+      consistency_pending_workflows
 
       # Execute multiple times
       results = Array.new(3) { execute_health_counts_function }

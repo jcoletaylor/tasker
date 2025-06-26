@@ -54,7 +54,7 @@ RSpec.describe Tasker::Telemetry::ExportCoordinator do
 
       expect do
         coordinator.register_plugin('invalid', invalid_plugin)
-      end.to raise_error(ArgumentError, /must implement export method/)
+      end.to raise_error(ArgumentError, /must implement instance method export/)
     end
 
     it 'validates export method arity' do
@@ -74,7 +74,7 @@ RSpec.describe Tasker::Telemetry::ExportCoordinator do
 
       expect do
         coordinator.register_plugin('invalid', invalid_plugin_class.new)
-      end.to raise_error(ArgumentError, /must accept at least one argument/)
+      end.to raise_error(ArgumentError, /export arity mismatch/)
     end
 
     it 'allows plugins to be replaced' do
@@ -95,7 +95,7 @@ RSpec.describe Tasker::Telemetry::ExportCoordinator do
       end
 
       new_plugin = new_plugin_class.new
-      result = coordinator.register_plugin('test_plugin', new_plugin)
+      result = coordinator.register_plugin('test_plugin', new_plugin, replace: true)
 
       expect(result).to be true
       expect(coordinator.registered_plugins['test_plugin'][:instance]).to eq(new_plugin)

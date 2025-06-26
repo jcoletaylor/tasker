@@ -47,7 +47,7 @@ RSpec.describe Tasker::Telemetry::PluginRegistry do
 
       expect do
         registry.register('invalid', invalid_plugin)
-      end.to raise_error(ArgumentError, /must implement export method/)
+      end.to raise_error(ArgumentError, /must implement instance method export/)
     end
 
     it 'allows plugins to be replaced' do
@@ -292,9 +292,10 @@ RSpec.describe Tasker::Telemetry::PluginRegistry do
       stats = registry.stats
 
       expect(stats[:total_plugins]).to eq(2)
-      expect(stats[:supported_formats]).to eq(2)
-      expect(stats[:format_distribution]).to eq({ 'json' => 1, 'csv' => 1 })
-      expect(stats[:plugins_by_class]).to include('JsonPlugin' => 1, 'CsvPlugin' => 1)
+      expect(stats[:total_formats]).to eq(2)
+      expect(stats[:supported_formats]).to eq(['csv', 'json'])
+      expect(stats[:plugins_by_format]).to eq({ 'json' => 1, 'csv' => 1 })
+      expect(stats[:average_formats_per_plugin]).to eq(1.0)
     end
   end
 

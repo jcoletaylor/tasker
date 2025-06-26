@@ -15,8 +15,8 @@ module Helpers
     DUMMY_TASK_TWO = 'dummy_task_two'
 
     def initialize
-      factory.register(DUMMY_TASK, DummyTask)
-      factory.register(DUMMY_TASK_TWO, DummyTask)
+      factory.register(DUMMY_TASK, DummyTask, replace: true)
+      factory.register(DUMMY_TASK_TWO, DummyTask, replace: true)
     end
 
     def factory
@@ -83,8 +83,8 @@ module Helpers
     DUMMY_API_TASK_TWO = 'dummy_api_task_two'
 
     def initialize
-      factory.register(DUMMY_API_TASK, DummyApiTask)
-      factory.register(DUMMY_API_TASK_TWO, DummyApiTask)
+      factory.register(DUMMY_API_TASK, DummyApiTask, replace: true)
+      factory.register(DUMMY_API_TASK_TWO, DummyApiTask, replace: true)
     end
 
     def factory

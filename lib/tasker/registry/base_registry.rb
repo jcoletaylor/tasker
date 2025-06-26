@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/structured_logging'
+require 'concurrent-ruby'
 
 module Tasker
   module Registry
@@ -17,7 +18,7 @@ module Tasker
         @mutex = Mutex.new
         @telemetry_config = Tasker.configuration.telemetry
         @registry_name = self.class.name.demodulize.underscore
-        @initialized_at = Time.current
+        @created_at = Time.current
       end
 
       protected
@@ -65,6 +66,34 @@ module Tasker
                        **context)
       end
 
+      # Log registry errors with structured format
+      #
+      # @param operation [String] Operation that failed
+      # @param error [Exception] The error that occurred
+      # @param context [Hash] Additional context for the error
+      def log_registry_error(operation, error, **context)
+        log_structured(:error, "Registry #{operation} failed",
+                       registry_name: @registry_name,
+                       operation: operation,
+                       error: error.message,
+                       error_class: error.class.name,
+                       **context)
+      end
+
+      # Log validation failures with structured format
+      #
+      # @param entity_type [String] Type of entity that failed validation
+      # @param entity_id [String] Unique identifier for the entity
+      # @param validation_error [String] Description of the validation failure
+      def log_validation_failure(entity_type, entity_id, validation_error)
+        log_structured(:error, 'Registry validation failed',
+                       entity_type: entity_type,
+                       entity_id: entity_id,
+                       registry_name: @registry_name,
+                       validation_error: validation_error,
+                       event_type: :validation_failed)
+      end
+
       # Validate registration parameters
       #
       # @param name [String] Name of the entity
@@ -91,10 +120,8 @@ module Tasker
       def base_stats
         {
           registry_name: @registry_name,
-          registry_class: self.class.name,
-          initialized_at: @initialized_at,
-          thread_safe: true,
-          mutex_locked: @mutex.locked?
+          created_at: @created_at,
+          uptime_seconds: (Time.current - @created_at).to_i
         }
       end
 

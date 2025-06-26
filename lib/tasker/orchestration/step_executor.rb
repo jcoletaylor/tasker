@@ -629,13 +629,8 @@ module Tasker
       #
       # @param task_handler [Object] The task handler instance
       # @return [String] Processing mode ('concurrent' or 'sequential')
-      def determine_processing_mode(task_handler)
-        if task_handler.respond_to?(:use_concurrent_processing?) &&
-           task_handler.use_concurrent_processing?
-          'concurrent'
-        else
-          'sequential'
-        end
+      def determine_processing_mode(_task_handler)
+        'concurrent'
       end
     end
   end

@@ -5,12 +5,12 @@ require_relative '../../mocks/configurable_failure_handlers'
 
 RSpec.describe 'Complex Workflows Factory', type: :factory do
   before(:all) do
-    # Register the complex workflow task handlers
-    Tasker::HandlerFactory.instance.register('linear_workflow_task', LinearWorkflowTask)
-    Tasker::HandlerFactory.instance.register('diamond_workflow_task', DiamondWorkflowTask)
-    Tasker::HandlerFactory.instance.register('parallel_merge_workflow_task', ParallelMergeWorkflowTask)
-    Tasker::HandlerFactory.instance.register('tree_workflow_task', TreeWorkflowTask)
-    Tasker::HandlerFactory.instance.register('mixed_workflow_task', MixedWorkflowTask)
+    # Register the complex workflow task handlers with replace: true to handle duplicate registrations
+    Tasker::HandlerFactory.instance.register('linear_workflow_task', LinearWorkflowTask, replace: true)
+    Tasker::HandlerFactory.instance.register('diamond_workflow_task', DiamondWorkflowTask, replace: true)
+    Tasker::HandlerFactory.instance.register('parallel_merge_workflow_task', ParallelMergeWorkflowTask, replace: true)
+    Tasker::HandlerFactory.instance.register('tree_workflow_task', TreeWorkflowTask, replace: true)
+    Tasker::HandlerFactory.instance.register('mixed_workflow_task', MixedWorkflowTask, replace: true)
   end
 
   describe 'step template-based task handlers' do

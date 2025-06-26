@@ -83,7 +83,7 @@ module Tasker
 
       # Register namespaced test handler
       handler_factory = Tasker::HandlerFactory.instance
-      handler_factory.register(DummyTask::TASK_REGISTRY_NAME, namespaced_test_handler, namespace_name: :testing, version: '1.0.0')
+      handler_factory.register(DummyTask::TASK_REGISTRY_NAME, namespaced_test_handler, namespace_name: :testing, version: '1.0.0', replace: true)
     end
 
     path '/tasker/tasks' do
