@@ -40,6 +40,7 @@ end
 group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem 'brakeman', require: false
+  gem 'colorize', '~> 1.1' # For integration validation script output
   gem 'dotenv-rails', '~> 2.8'
   gem 'factory_bot_rails', '~> 6.4'
   gem 'opentelemetry-instrumentation-all', '~> 0.74.0'

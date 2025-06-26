@@ -114,6 +114,7 @@ GEM
     byebug (11.1.3)
     case_transform (0.2)
       activesupport
+    colorize (1.1.0)
     concurrent-ruby (1.3.5)
     concurrent-ruby-ext (1.3.5)
       concurrent-ruby (= 1.3.5)
@@ -654,6 +655,7 @@ PLATFORMS
 DEPENDENCIES
   brakeman
   byebug (~> 11.1)
+  colorize (~> 1.1)
   concurrent-ruby (~> 1.3.5)
   dalli (~> 3.2)
   dotenv-rails (~> 2.8)
