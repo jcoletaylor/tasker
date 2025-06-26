@@ -197,7 +197,7 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
     end
 
     let(:pending_workflows) do
-      Array.new(5) { create(:diamond_workflow_task) }
+      create_list(:diamond_workflow_task, 5)
     end
 
     let(:error_workflows) do
@@ -242,7 +242,7 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
     end
 
     let(:consistency_pending_workflows) do
-      Array.new(2) { create(:diamond_workflow_task) }
+      create_list(:diamond_workflow_task, 2)
     end
 
     it 'maintains consistency across multiple calls' do

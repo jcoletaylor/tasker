@@ -293,7 +293,7 @@ RSpec.describe Tasker::Telemetry::PluginRegistry do
 
       expect(stats[:total_plugins]).to eq(2)
       expect(stats[:total_formats]).to eq(2)
-      expect(stats[:supported_formats]).to eq(['csv', 'json'])
+      expect(stats[:supported_formats]).to eq(%w[csv json])
       expect(stats[:plugins_by_format]).to eq({ 'json' => 1, 'csv' => 1 })
       expect(stats[:average_formats_per_plugin]).to eq(1.0)
     end

@@ -28,6 +28,8 @@ module Tasker
     validate :from_state_cannot_be_empty_string
     validate :to_state_cannot_be_empty_string
 
+    # Ensure metadata is always a hash
+    after_initialize :ensure_metadata_hash
     # Clean up any empty string states before validation
     before_validation :normalize_empty_string_states
 
@@ -38,8 +40,6 @@ module Tasker
     # Custom validation for metadata that allows empty hash but not nil
     validate :metadata_must_be_hash
 
-    # Ensure metadata is always a hash
-    after_initialize :ensure_metadata_hash
     # Ensure metadata defaults to empty hash if not provided
     before_validation :ensure_metadata_presence
 
@@ -303,23 +303,23 @@ module Tasker
     def workflow_step_must_exist
       return if workflow_step_id.blank?
 
-      unless Tasker::WorkflowStep.exists?(workflow_step_id: workflow_step_id)
-        errors.add(:workflow_step_id, 'must reference an existing workflow step')
-      end
+      return if Tasker::WorkflowStep.exists?(workflow_step_id: workflow_step_id)
+
+      errors.add(:workflow_step_id, 'must reference an existing workflow step')
     end
 
     # Prevent empty string from_state values that cause state machine failures
     def from_state_cannot_be_empty_string
-      if from_state == ''
-        errors.add(:from_state, 'cannot be an empty string (use nil for initial transitions)')
-      end
+      return unless from_state == ''
+
+      errors.add(:from_state, 'cannot be an empty string (use nil for initial transitions)')
     end
 
     # Prevent empty string to_state values
     def to_state_cannot_be_empty_string
-      if to_state == ''
-        errors.add(:to_state, 'cannot be an empty string')
-      end
+      return unless to_state == ''
+
+      errors.add(:to_state, 'cannot be an empty string')
     end
 
     # Clean up any empty string states before validation
@@ -329,10 +329,10 @@ module Tasker
       self.from_state = nil if from_state == ''
 
       # For to_state, empty strings are always invalid - convert to nil and let validation catch it
-      if to_state == ''
-        self.to_state = nil
-        errors.add(:to_state, 'cannot be empty - must specify a valid state')
-      end
+      return unless to_state == ''
+
+      self.to_state = nil
+      errors.add(:to_state, 'cannot be empty - must specify a valid state')
     end
 
     # Service class to format transition descriptions

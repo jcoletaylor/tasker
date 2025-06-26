@@ -73,7 +73,7 @@ module Tasker
       namespace_name = namespace_name.to_sym
       replace = options.fetch(:replace, false)
 
-            thread_safe_operation do
+      thread_safe_operation do
         # Validate custom event configuration BEFORE modifying registry state
         # This ensures atomic registration - either fully succeeds or fully fails
         normalized_class = normalize_class_name(class_or_class_name)
@@ -95,13 +95,15 @@ module Tasker
         # Check for existing handler
         entity_id = "#{namespace_name}/#{name_sym}/#{version}"
         if @handler_classes[namespace_name][name_sym].key?(version) && !replace
-          raise ArgumentError, "Handler '#{name_sym}' already registered in namespace '#{namespace_name}' version '#{version}'. Use replace: true to override."
+          raise ArgumentError,
+                "Handler '#{name_sym}' already registered in namespace '#{namespace_name}' version '#{version}'. Use replace: true to override."
         end
 
         # Log replacement if needed
         if @handler_classes[namespace_name][name_sym].key?(version)
           existing_class = @handler_classes[namespace_name][name_sym][version]
-          log_unregistration('task_handler', entity_id, existing_class.is_a?(Class) ? existing_class : existing_class.constantize)
+          log_unregistration('task_handler', entity_id,
+                             existing_class.is_a?(Class) ? existing_class : existing_class.constantize)
         end
 
         # Register handler
@@ -110,8 +112,8 @@ module Tasker
 
         # Log successful registration
         log_registration('task_handler', entity_id,
-                        normalized_class.is_a?(Class) ? normalized_class : normalized_class.constantize,
-                        { namespace_name: namespace_name, version: version, **options })
+                         normalized_class.is_a?(Class) ? normalized_class : normalized_class.constantize,
+                         { namespace_name: namespace_name, version: version, **options })
 
         true
       end

@@ -33,7 +33,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       Tasker::WorkflowStep.delete_all
       Tasker::Task.delete_all
 
-      puts "After cleanup: All data removed"
+      puts 'After cleanup: All data removed'
     end
 
     it 'investigates the transition lifecycle BEFORE guard clause' do
@@ -74,7 +74,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "Direct most_recent query result: #{most_recent_transition.inspect}"
 
       if most_recent_transition
-        puts "Most recent transition details:"
+        puts 'Most recent transition details:'
         puts "  from_state: '#{most_recent_transition.from_state}' (#{most_recent_transition.from_state.class})"
         puts "  to_state: '#{most_recent_transition.to_state}' (#{most_recent_transition.to_state.class})"
         puts "  from_state.blank?: #{most_recent_transition.from_state.blank?}"
@@ -93,7 +93,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       # by calling the private methods if we can access them
       begin
         # Check if we can access Statesman's transition building
-        puts "State machine metadata:"
+        puts 'State machine metadata:'
         puts "  transition_class: #{state_machine.transition_class}"
         puts "  association_name: #{state_machine.association_name}"
 
@@ -110,8 +110,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
         problematic_transitions.each do |t|
           puts "  Problem transition: step_id=#{t.workflow_step_id}, from='#{t.from_state}', to='#{t.to_state}', most_recent=#{t.most_recent}"
         end
-
-      rescue => e
+      rescue StandardError => e
         puts "Error accessing Statesman internals: #{e.message}"
       end
 
@@ -119,31 +118,28 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "\n=== ATTEMPTING FAILING TRANSITION WITH DEBUG ==="
 
       # Override the guard method temporarily to see what it receives
-      original_guard_method = nil
       begin
         # Get the state machine class
-        sm_class = state_machine.class
+        state_machine.class
 
         # Store the original guard_failed_callback if it exists
-        puts "Attempting to intercept guard clause parameters..."
+        puts 'Attempting to intercept guard clause parameters...'
 
         # Try the transition and catch the specific error
         state_machine.transition_to!(:in_progress)
-        puts "Transition succeeded unexpectedly!"
-
+        puts 'Transition succeeded unexpectedly!'
       rescue Statesman::GuardFailedError => e
-        puts "CAUGHT GUARD FAILURE!"
+        puts 'CAUGHT GUARD FAILURE!'
         puts "Error message: #{e.message}"
 
         # Parse the error message to extract the from_state
         if e.message =~ /Guard on transition from: '(.*)' to/
-          extracted_from_state = $1
+          extracted_from_state = Regexp.last_match(1)
           puts "Extracted from_state from error: '#{extracted_from_state}' (length: #{extracted_from_state.length})"
           puts "Is empty string?: #{extracted_from_state == ''}"
           puts "Is blank?: #{extracted_from_state.blank?}"
         end
-
-      rescue => e
+      rescue StandardError => e
         puts "Other error during transition: #{e.class} - #{e.message}"
       end
     end
@@ -152,14 +148,14 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "\n=== REPRODUCING HEALTH COUNT TEST SCENARIO ==="
 
       # Do exactly what the health count test does
-      puts "1. Creating linear workflow task..."
+      puts '1. Creating linear workflow task...'
       task = create(:linear_workflow_task)
       puts "Task created: #{task.task_id}"
 
-      puts "2. Transitioning task to in_progress..."
+      puts '2. Transitioning task to in_progress...'
       task.state_machine.transition_to!(:in_progress)
 
-      puts "3. Getting first step..."
+      puts '3. Getting first step...'
       step = task.workflow_steps.first
       puts "Step: #{step.workflow_step_id} (#{step.name})"
 
@@ -188,8 +184,8 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
 
       begin
         set_step_to_error(step)
-        puts "set_step_to_error completed successfully"
-      rescue => e
+        puts 'set_step_to_error completed successfully'
+      rescue StandardError => e
         puts "ERROR IN set_step_to_error: #{e.class} - #{e.message}"
         puts "Backtrace: #{e.backtrace[0..3].join("\n")}"
       end
@@ -217,9 +213,9 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "\n9. Testing transition to in_progress (should fail in health count test)..."
       begin
         step.state_machine.transition_to!(:in_progress)
-        puts "Transition succeeded (unexpected)"
+        puts 'Transition succeeded (unexpected)'
       rescue Statesman::GuardFailedError => e
-        puts "GUARD FAILURE REPRODUCED!"
+        puts 'GUARD FAILURE REPRODUCED!'
         puts "Error: #{e.message}"
 
         # Let's see what Statesman thinks the current state is
@@ -231,7 +227,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
         if most_recent
           puts "Most recent transition in DB: from='#{most_recent.from_state}' to='#{most_recent.to_state}'"
         end
-      rescue => e
+      rescue StandardError => e
         puts "Other error: #{e.class} - #{e.message}"
       end
     end
@@ -240,7 +236,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "\n=== DEMONSTRATING STATE LEAKAGE ==="
 
       # This test should run AFTER the previous one to show leakage
-      puts "1. Checking for existing problematic transitions at start of test..."
+      puts '1. Checking for existing problematic transitions at start of test...'
       existing_problematic = Tasker::WorkflowStepTransition.where(
         "from_state = '' OR to_state = ''"
       )
@@ -253,7 +249,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
         puts "\n*** STATE LEAKAGE CONFIRMED ***"
         puts "Previous test left #{existing_problematic.count} problematic transitions in the database!"
       else
-        puts "No state leakage detected (good!)"
+        puts 'No state leakage detected (good!)'
       end
 
       # Check total transitions
@@ -261,7 +257,7 @@ RSpec.describe 'State Machine Debug Investigation', type: :model do
       puts "Total transitions in database: #{total_transitions}"
 
       if total_transitions > 0
-        puts "Transitions found (should be 0 if cleanup worked):"
+        puts 'Transitions found (should be 0 if cleanup worked):'
         Tasker::WorkflowStepTransition.limit(10).each do |t|
           puts "  step_id=#{t.workflow_step_id}, from='#{t.from_state}', to='#{t.to_state}'"
         end

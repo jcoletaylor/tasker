@@ -78,7 +78,7 @@ module Tasker
           register_event_mappings(subscriber_name, events)
 
           log_registration('event_subscriber', subscriber_name, subscriber_class,
-                          { events: events, event_count: events.size, **options })
+                           { events: events, event_count: events.size, **options })
 
           true
         end
@@ -250,19 +250,13 @@ module Tasker
         events = []
 
         # Check for EVENTS constant
-        if subscriber_class.const_defined?(:EVENTS)
-          events.concat(Array(subscriber_class::EVENTS))
-        end
+        events.concat(Array(subscriber_class::EVENTS)) if subscriber_class.const_defined?(:EVENTS)
 
         # Check for events class method
-        if subscriber_class.respond_to?(:events)
-          events.concat(Array(subscriber_class.events))
-        end
+        events.concat(Array(subscriber_class.events)) if subscriber_class.respond_to?(:events)
 
         # Check for event_patterns class method
-        if subscriber_class.respond_to?(:event_patterns)
-          events.concat(Array(subscriber_class.event_patterns))
-        end
+        events.concat(Array(subscriber_class.event_patterns)) if subscriber_class.respond_to?(:event_patterns)
 
         events.map(&:to_s).uniq
       end

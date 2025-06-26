@@ -81,7 +81,7 @@ module Tasker
           register_format_mappings(name, supported_formats)
 
           log_registration('telemetry_plugin', name, plugin.class,
-                          { supported_formats: supported_formats, format_count: supported_formats.size, **options })
+                           { supported_formats: supported_formats, format_count: supported_formats.size, **options })
 
           true
         end
@@ -178,29 +178,27 @@ module Tasker
         discovered_count = 0
 
         Dir.glob(File.join(directory, '*_exporter.rb')).each do |file|
-          begin
-            require file
+          require file
 
-            # Extract class name from filename
-            class_name = File.basename(file, '.rb').camelize
-            full_class_name = "Tasker::Telemetry::Plugins::#{class_name}"
+          # Extract class name from filename
+          class_name = File.basename(file, '.rb').camelize
+          full_class_name = "Tasker::Telemetry::Plugins::#{class_name}"
 
-            # Try to instantiate the plugin
-            plugin_class = full_class_name.constantize
-            plugin_instance = plugin_class.new
+          # Try to instantiate the plugin
+          plugin_class = full_class_name.constantize
+          plugin_instance = plugin_class.new
 
-            register(class_name.underscore, plugin_instance, auto_discovered: true)
-            discovered_count += 1
+          register(class_name.underscore, plugin_instance, auto_discovered: true)
+          discovered_count += 1
 
-            log_registry_operation('auto_discovered_plugin',
-                                   plugin_name: class_name,
-                                   plugin_class: full_class_name,
-                                   file_path: file)
-          rescue StandardError => e
-            log_registry_error('auto_discovery_failed', e,
-                               file_path: file,
-                               class_name: File.basename(file, '.rb').camelize)
-          end
+          log_registry_operation('auto_discovered_plugin',
+                                 plugin_name: class_name,
+                                 plugin_class: full_class_name,
+                                 file_path: file)
+        rescue StandardError => e
+          log_registry_error('auto_discovery_failed', e,
+                             file_path: file,
+                             class_name: File.basename(file, '.rb').camelize)
         end
 
         discovered_count

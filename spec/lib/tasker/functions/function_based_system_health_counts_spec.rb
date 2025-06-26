@@ -2,97 +2,16 @@
 
 require 'rails_helper'
 
-def create_test_workflows
-  # Create test data using workflow factory patterns with proper state machine initialization
-  test_workflows = []
-
-  # Create some completed workflows
-  2.times do
-    task = create(:linear_workflow_task)
-    # Ensure all steps have properly initialized state machines
-    task.workflow_steps.each { |step| step.state_machine.initialize_state_machine! }
-
-    # Transition task to in_progress first
-    task.state_machine.transition_to!(:in_progress)
-    task.workflow_steps.each do |step|
-      step.state_machine.transition_to!(:in_progress)
-      step.state_machine.transition_to!(:complete)
-    end
-    # Transition task to complete after all steps are done
-    task.state_machine.transition_to!(:complete)
-    test_workflows << task
-  end
-
-  # Create pending workflow
-  pending_task = create(:diamond_workflow_task)
-  # Ensure all steps have properly initialized state machines
-  pending_task.workflow_steps.each { |step| step.state_machine.initialize_state_machine! }
-  test_workflows << pending_task
-
-  # Create workflow with errors
-  error_task = create(:tree_workflow_task)
-  # Ensure all steps have properly initialized state machines
-  error_task.workflow_steps.each { |step| step.state_machine.initialize_state_machine! }
-
-  # Transition task to in_progress first
-  error_task.state_machine.transition_to!(:in_progress)
-  # Find a step with no dependencies (root step in tree workflow - no parents)
-  error_step = error_task.workflow_steps.find { |step| step.parents.empty? }
-
-  # Use factory helper to properly set step to error state with improved state handling
-  Rails.logger.debug "Health Count Test: Setting step #{error_step.workflow_step_id} to error state"
-  set_step_to_error(error_step)
-  error_step.update!(attempts: 1, retry_limit: 3, retryable: true)
-
-  # Transition task to error state
-  error_task.state_machine.transition_to!(:error)
-  test_workflows << error_task
-
-  Rails.logger.debug "Health Count Test: Created #{test_workflows.size} test workflows"
-  test_workflows
-end
-
 RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model do
   describe 'wrapper functionality' do
-    # Use standard Rails transactional test patterns
-    let(:test_workflows) { create_test_workflows }
-
-    def create_test_workflows
-      # Create a modest set of test workflows using standard factory patterns
-      workflows = []
-
-      # 2 complete tasks with 2 complete steps each (4 total complete steps)
-      2.times do |i|
-        task = create(:linear_workflow_task)
-        workflows << task
-        task.workflow_steps.limit(2).each do |step|
-          complete_step_via_state_machine(step)
-        end
-      end
-
-      # 1 pending task with all steps pending (2 total pending steps)
-      pending_task = create(:linear_workflow_task)
-      workflows << pending_task
-
-      # 1 error task with 1 error step, rest pending (1 error step, 1 pending step)
-      error_task = create(:linear_workflow_task)
-      workflows << error_task
-      first_step = error_task.workflow_steps.first
-      set_step_to_error(first_step, 'Test error')
-      first_step.update!(
-        attempts: 1,
-        retry_limit: 3,
-        retryable: true,
-        last_attempted_at: 30.seconds.ago
-      )
-
-      workflows
+    # Use standard Rails transactional test patterns with before block for data setup
+    before do
+      # Create test data directly in the before block to ensure it's available
+      create_test_workflows_for_health_counts
     end
 
     it 'returns structured health counts data' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result = execute_health_counts_function
 
       expect(result).to be_a(described_class::HealthMetrics)
@@ -112,9 +31,7 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
     end
 
     it 'returns numeric values for all counts' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result = execute_health_counts_function
 
       numeric_fields = %w[
@@ -132,9 +49,7 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
     end
 
     it 'returns consistent results across multiple calls' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result1 = execute_health_counts_function
       result2 = execute_health_counts_function
 
@@ -148,12 +63,11 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
     end
 
     it 'validates that task counts are reasonable' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result = execute_health_counts_function
 
-      # Should have at least the test data we created
+      # Should have at least the test data we created:
+      # 2 complete tasks + 1 pending task + 1 error task = 4 tasks minimum
       expect(result.total_tasks).to be >= 4
       expect(result.complete_tasks).to be >= 2
       expect(result.pending_tasks).to be >= 1
@@ -170,15 +84,17 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
     end
 
     it 'validates that step counts are reasonable' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result = execute_health_counts_function
 
-      # Should have at least the test data we created
-      expect(result.total_steps).to be >= 8
-      expect(result.complete_steps).to be >= 4
-      expect(result.pending_steps).to be >= 3
+      # Should have at least the test data we created:
+      # 2 complete tasks × 6 steps = 12 complete steps
+      # 1 pending task × 6 steps = 6 pending steps
+      # 1 error task: 1 error step + 5 pending steps
+      # Total: 24 steps (12 complete + 11 pending + 1 error)
+      expect(result.total_steps).to be >= 24
+      expect(result.complete_steps).to be >= 12
+      expect(result.pending_steps).to be >= 11
       expect(result.error_steps).to be >= 1
 
       # Totals should be reasonable
@@ -192,9 +108,7 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
     end
 
     it 'validates retry-related counts are consistent' do
-      # Trigger test data creation
-      test_workflows
-
+      # Test data is created in before block
       result = execute_health_counts_function
 
       retryable_errors = result.retryable_error_steps
@@ -268,32 +182,6 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
   describe 'performance characteristics' do
     let(:performance_workflows) { create_performance_test_data }
 
-    def create_performance_test_data
-      workflows = []
-
-      # Create 5 completed workflows
-      5.times do
-        task = create(:linear_workflow_task)
-        workflows << task
-        task.workflow_steps.each { |step| complete_step_via_state_machine(step) }
-      end
-
-      # Create 3 pending workflows
-      3.times { workflows << create(:diamond_workflow_task) }
-
-      # Create 2 workflows with errors
-      2.times do
-        task = create(:tree_workflow_task)
-        workflows << task
-        task.workflow_steps.limit(1).each do |step|
-          set_step_to_error(step, 'Performance test error')
-          step.update!(attempts: 1, retry_limit: 3)
-        end
-      end
-
-      workflows
-    end
-
     it 'executes quickly' do
       # Trigger test data creation
       performance_workflows
@@ -311,7 +199,7 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
       performance_workflows
 
       # Test concurrent execution
-      threads = 3.times.map do
+      threads = Array.new(3) do
         Thread.new { execute_health_counts_function }
       end
 
@@ -324,6 +212,95 @@ RSpec.describe Tasker::Functions::FunctionBasedSystemHealthCounts, type: :model 
 
   private
 
+  # Helper method to create test workflows for health count validation
+  # Creates a controlled set of tasks and steps in various states
+  def create_test_workflows_for_health_counts
+    # Create 2 complete tasks with ALL steps complete (12 total complete steps)
+    2.times do
+      task = create(:linear_workflow_task)
+
+      # Complete ALL steps to allow task to transition to complete
+      task.workflow_steps.each do |step|
+        complete_step_via_state_machine(step)
+      end
+
+      # Manually transition task to complete now that all steps are complete
+      # Tasks must go through in_progress before complete
+      task.state_machine.transition_to!(:in_progress)
+      task.state_machine.transition_to!(:complete)
+    end
+
+    # Create 1 pending task with all steps pending (6 total pending steps)
+    pending_task = create(:linear_workflow_task)
+    # Ensure all steps are properly initialized to pending state
+    pending_task.workflow_steps.each do |step|
+      # Create initial pending state transition if it doesn't exist
+      next if step.workflow_step_transitions.exists?
+
+      create(:workflow_step_transition,
+             workflow_step: step,
+             to_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
+             sort_key: 1,
+             most_recent: true)
+    end
+
+    # Create 1 error task with 1 error step, rest pending (1 error step, 5 pending steps)
+    error_task = create(:linear_workflow_task)
+
+    # Initialize ALL steps to pending first
+    error_task.workflow_steps.each do |step|
+      next if step.workflow_step_transitions.exists?
+
+      create(:workflow_step_transition,
+             workflow_step: step,
+             to_state: Tasker::Constants::WorkflowStepStatuses::PENDING,
+             sort_key: 1,
+             most_recent: true)
+    end
+
+    # Then set the first step to error
+    first_step = error_task.workflow_steps.first
+    set_step_to_error(first_step, 'Test error')
+    first_step.update!(
+      attempts: 1,
+      retry_limit: 3,
+      retryable: true,
+      last_attempted_at: 30.seconds.ago
+    )
+
+    # Manually transition task to error state
+    error_task.state_machine.transition_to!(:error)
+  end
+
+  # Helper method to create performance test data
+  # Creates a larger set of workflows for performance testing
+  def create_performance_test_data
+    workflows = []
+
+    # Create 5 completed workflows
+    5.times do
+      task = create(:linear_workflow_task)
+      workflows << task
+      task.workflow_steps.each { |step| complete_step_via_state_machine(step) }
+    end
+
+    # Create 3 pending workflows
+    3.times { workflows << create(:diamond_workflow_task) }
+
+    # Create 2 workflows with errors
+    2.times do
+      task = create(:tree_workflow_task)
+      workflows << task
+      task.workflow_steps.limit(1).each do |step|
+        set_step_to_error(step, 'Performance test error')
+        step.update!(attempts: 1, retry_limit: 3)
+      end
+    end
+
+    workflows
+  end
+
+  # Simple wrapper for the health counts function
   def execute_health_counts_function
     described_class.call
   end

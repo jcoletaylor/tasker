@@ -1226,14 +1226,14 @@
       <pre class="lines">
 
 
-304
-305
-306
-307
-308</pre>
+309
+310
+311
+312
+313</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 304</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 309</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_metrics'>all_metrics</span>
   <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_each_with_object'>each_with_object</span><span class='lparen'>(</span><span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_metric'>metric</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='op'>|</span>
@@ -1289,14 +1289,14 @@
       <pre class="lines">
 
 
-344
-345
-346
-347
-348</pre>
+349
+350
+351
+352
+353</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 344</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 349</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_clear!'>clear!</span>
   <span class='id identifier rubyid_cleared_count'>cleared_count</span> <span class='op'>=</span> <span class='ivar'>@metrics</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
@@ -1482,17 +1482,17 @@
       <pre class="lines">
 
 
-316
-317
-318
-319
-320
 321
 322
-323</pre>
+323
+324
+325
+326
+327
+328</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 316</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 321</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_export'>export</span>
   <span class='lbrace'>{</span>
@@ -1575,19 +1575,19 @@
       <pre class="lines">
 
 
-213
-214
-215
-216
-217
 218
 219
 220
 221
-222</pre>
+222
+223
+224
+225
+226
+227</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 213</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 218</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_export_distributed_metrics'>export_distributed_metrics</span><span class='lparen'>(</span><span class='label'>include_instances:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>case</span> <span class='ivar'>@sync_strategy</span>
@@ -1834,11 +1834,6 @@
       <pre class="lines">
 
 
-242
-243
-244
-245
-246
 247
 248
 249
@@ -1888,10 +1883,15 @@
 293
 294
 295
-296</pre>
+296
+297
+298
+299
+300
+301</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 242</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 247</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_payload'>payload</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Hash</span><span class='rparen'>)</span>
@@ -2232,21 +2232,21 @@
       <pre class="lines">
 
 
-328
-329
-330
-331
-332
 333
 334
 335
 336
 337
 338
-339</pre>
+339
+340
+341
+342
+343
+344</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 328</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 333</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_stats'>stats</span>
   <span class='id identifier rubyid_metric_types'>metric_types</span> <span class='op'>=</span> <span class='id identifier rubyid_all_metrics'>all_metrics</span><span class='period'>.</span><span class='id identifier rubyid_values'>values</span><span class='period'>.</span><span class='id identifier rubyid_group_by'>group_by</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_m'>m</span><span class='op'>|</span> <span class='id identifier rubyid_m'>m</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span><span class='lbracket'>[</span><span class='symbol'>:type</span><span class='rbracket'>]</span> <span class='rbrace'>}</span>
@@ -2348,7 +2348,12 @@
 201
 202
 203
-204</pre>
+204
+205
+206
+207
+208
+209</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metrics_backend.rb', line 180</span>
@@ -2369,11 +2374,16 @@
     <span class='kw'>return</span> <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Unknown sync strategy: </span><span class='embexpr_beg'>#{</span><span class='ivar'>@sync_strategy</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
   <span class='kw'>end</span>
 
-  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
+  <span class='id identifier rubyid_final_result'>final_result</span> <span class='op'>=</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span>
     <span class='label'>duration:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span><span class='comma'>,</span>
     <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span><span class='comma'>,</span>
     <span class='label'>instance_id:</span> <span class='ivar'>@instance_id</span>
   <span class='rparen'>)</span>
+
+  <span class='comment'># Coordinate with export system
+</span>  <span class='id identifier rubyid_coordinate_cache_sync'>coordinate_cache_sync</span><span class='lparen'>(</span><span class='id identifier rubyid_final_result'>final_result</span><span class='rparen'>)</span>
+
+  <span class='id identifier rubyid_final_result'>final_result</span>
 <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='id identifier rubyid_log_sync_error'>log_sync_error</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span> <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='label'>timestamp:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_iso8601'>iso8601</span> <span class='rbrace'>}</span>
@@ -2388,7 +2398,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 23 21:45:56 2025 by
+  Generated on Wed Jun 25 20:59:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

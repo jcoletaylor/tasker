@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Tasker::Telemetry::Plugins::BaseExporter
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Telemetry::Plugins::BaseExporter";
+  relpath = '../../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../../_index.html">Index (B)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../Telemetry.html" title="Tasker::Telemetry (module)">Telemetry</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Plugins.html" title="Tasker::Telemetry::Plugins (module)">Plugins</a></span></span>
+     &raquo; 
+    <span class="title">BaseExporter</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Tasker::Telemetry::Plugins::BaseExporter
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Tasker::Telemetry::Plugins::BaseExporter</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/telemetry/plugins/base_exporter.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Base class for telemetry export plugins</p>
+
+<p>Provides a standard interface and common functionality for all export plugins. Plugins should inherit from this class and implement the required methods.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+        <h5 class="example_title"><div class='inline'>
+<p>Creating a custom exporter</p>
+</div></h5>
+      
+      <pre class="example code"><code><span class='kw'>class</span> <span class='const'>MyCustomExporter</span> <span class='op'>&lt;</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Telemetry.html" title="Tasker::Telemetry (module)">Telemetry</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Plugins.html" title="Tasker::Telemetry::Plugins (module)">Plugins</a></span></span><span class='op'>::</span><span class='const'>BaseExporter</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_export'>export</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+    <span class='comment'># Implementation here
+</span>    <span class='id identifier rubyid_log_plugin_event'>log_plugin_event</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Custom export completed</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>metrics_count:</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>def</span> <span class='id identifier rubyid_supports_format?'>supports_format?</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_format'>format</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>custom</span><span class='tstring_end'>&#39;</span></span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>def</span> <span class='id identifier rubyid_supported_formats'>supported_formats</span>
+    <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>custom</span><span class='tstring_end'>&#39;</span></span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+
+
+</div><div id="subclasses">
+  <h2>Direct Known Subclasses</h2>
+  <p class="children"><span class='object_link'><a href="CsvExporter.html" title="Tasker::Telemetry::Plugins::CsvExporter (class)">CsvExporter</a></span>, <span class='object_link'><a href="JsonExporter.html" title="Tasker::Telemetry::Plugins::JsonExporter (class)">JsonExporter</a></span></p>
+</div>
+
+
+
+  <h2>Constant Summary</h2>
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="../../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../../Concerns/StructuredLogging.html#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">Concerns::StructuredLogging::CORRELATION_ID_KEY</a></span></p>
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#description-instance_method" title="#description (instance method)">#<strong>description</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Plugin metadata.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#name-instance_method" title="#name (instance method)">#<strong>name</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Plugin metadata.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#version-instance_method" title="#version (instance method)">#<strong>version</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Plugin metadata.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#export-instance_method" title="#export (instance method)">#<strong>export</strong>(metrics_data, options = {})  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Export metrics data (must be implemented by subclasses).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(name: nil, version: &#39;1.0.0&#39;, description: nil)  &#x21d2; BaseExporter </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>A new instance of BaseExporter.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="protected ">
+  <span class="summary_signature">
+    
+      <a href="#log_plugin_event-instance_method" title="#log_plugin_event (instance method)">#<strong>log_plugin_event</strong>(level, message, **context)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  <span class="note title protected">protected</span>
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Structured logging helper for plugin events.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="protected ">
+  <span class="summary_signature">
+    
+      <a href="#log_plugin_exception-instance_method" title="#log_plugin_exception (instance method)">#<strong>log_plugin_exception</strong>(exception, **context)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  <span class="note title protected">protected</span>
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Structured logging helper for plugin errors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="protected ">
+  <span class="summary_signature">
+    
+      <a href="#log_plugin_performance-instance_method" title="#log_plugin_performance (instance method)">#<strong>log_plugin_performance</strong>(operation, duration, **context)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  <span class="note title protected">protected</span>
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Structured logging helper for plugin performance events.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#metadata-instance_method" title="#metadata (instance method)">#<strong>metadata</strong>  &#x21d2; Hash </a>
+    
+
+    
+      (also: #plugin_info)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get plugin metadata.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#on_cache_sync-instance_method" title="#on_cache_sync (instance method)">#<strong>on_cache_sync</strong>(sync_data)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Called when cache sync occurs.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#on_export_complete-instance_method" title="#on_export_complete (instance method)">#<strong>on_export_complete</strong>(completion_data)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Called when export completes.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#on_export_request-instance_method" title="#on_export_request (instance method)">#<strong>on_export_request</strong>(request_data)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Called when export is requested.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#safe_export-instance_method" title="#safe_export (instance method)">#<strong>safe_export</strong>(metrics_data, options = {})  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Safe export wrapper with error handling and timing.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#supported_formats-instance_method" title="#supported_formats (instance method)">#<strong>supported_formats</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Get supported formats (should be implemented by subclasses).</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#supports_format%3F-instance_method" title="#supports_format? (instance method)">#<strong>supports_format?</strong>(format)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Check if plugin supports a specific format (must be implemented by subclasses).</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../../Concerns/StructuredLogging.html#correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id (method)">#correlation_id</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#correlation_id=-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id= (method)">#correlation_id=</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_exception-instance_method" title="Tasker::Concerns::StructuredLogging#log_exception (method)">#log_exception</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_orchestration_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_orchestration_event (method)">#log_orchestration_event</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_performance_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_performance_event (method)">#log_performance_event</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_step_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_step_event (method)">#log_step_event</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_structured-instance_method" title="Tasker::Concerns::StructuredLogging#log_structured (method)">#log_structured</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#log_task_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_task_event (method)">#log_task_event</a></span>, <span class='object_link'><a href="../../Concerns/StructuredLogging.html#with_correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#with_correlation_id (method)">#with_correlation_id</a></span></p>
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(name: nil, version: &#39;1.0.0&#39;, description: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Telemetry::Plugins::BaseExporter (class)">BaseExporter</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Returns a new instance of BaseExporter.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 32</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='label'>description:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='comment'># Safe class name extraction for test environments where class.name might be nil
+</span>  <span class='id identifier rubyid_default_name'>default_name</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+                   <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_demodulize'>demodulize</span><span class='period'>.</span><span class='id identifier rubyid_underscore'>underscore</span>
+                 <span class='kw'>else</span>
+                   <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>anonymous_exporter</span><span class='tstring_end'>&#39;</span></span>
+                 <span class='kw'>end</span>
+
+  <span class='ivar'>@name</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span> <span class='op'>||</span> <span class='id identifier rubyid_default_name'>default_name</span>
+  <span class='ivar'>@version</span> <span class='op'>=</span> <span class='id identifier rubyid_version'>version</span>
+  <span class='ivar'>@description</span> <span class='op'>=</span> <span class='id identifier rubyid_description'>description</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_content'> telemetry exporter</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="description-instance_method">
+  
+    #<strong>description</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Plugin metadata</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+30
+31
+32</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 30</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_description'>description</span>
+  <span class='ivar'>@description</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="name-instance_method">
+  
+    #<strong>name</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Plugin metadata</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+30
+31
+32</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 30</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_name'>name</span>
+  <span class='ivar'>@name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="version-instance_method">
+  
+    #<strong>version</strong>  &#x21d2; <tt>Object</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Plugin metadata</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+30
+31
+32</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 30</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_version'>version</span>
+  <span class='ivar'>@version</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="export-instance_method">
+  
+    #<strong>export</strong>(metrics_data, options = {})  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Export metrics data (must be implemented by subclasses)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>metrics_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Metrics data to export</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export result with :success, :format, :data keys</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>NotImplementedError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If not implemented by subclass</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51
+52
+53</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 51</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_export'>export</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> must implement #export method</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_plugin_event-instance_method">
+  
+    #<strong>log_plugin_event</strong>(level, message, **context)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Structured logging helper for plugin events</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>level</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Log level</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>message</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Log message</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 198</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_plugin_event'>log_plugin_event</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='comment'># Safe class name extraction to avoid demodulize errors
+</span>  <span class='id identifier rubyid_class_name'>class_name</span> <span class='op'>=</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>AnonymousExporter</span><span class='tstring_end'>&#39;</span></span>
+
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+                 <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>telemetry_plugin</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                 <span class='label'>entity_id:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                 <span class='label'>plugin_name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                 <span class='label'>plugin_version:</span> <span class='ivar'>@version</span><span class='comma'>,</span>
+                 <span class='label'>plugin_class:</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='comma'>,</span>
+                 <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='comment'># Fallback logging if structured logging fails
+</span>  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Structured logging failed: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_level'>level</span><span class='period'>.</span><span class='id identifier rubyid_upcase'>upcase</span><span class='embexpr_end'>}</span><span class='tstring_content'>: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_plugin_exception-instance_method">
+  
+    #<strong>log_plugin_exception</strong>(exception, **context)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Structured logging helper for plugin errors</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>exception</span>
+      
+      
+        <span class='type'>(<tt>Exception</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Exception to log</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 233</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_plugin_exception'>log_plugin_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span>
+                <span class='label'>context:</span> <span class='lbrace'>{</span>
+                  <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>telemetry_plugin</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                  <span class='label'>entity_id:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                  <span class='label'>plugin_name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                  <span class='label'>plugin_version:</span> <span class='ivar'>@version</span><span class='comma'>,</span>
+                  <span class='op'>**</span><span class='id identifier rubyid_context'>context</span>
+                <span class='rbrace'>}</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="log_plugin_performance-instance_method">
+  
+    #<strong>log_plugin_performance</strong>(operation, duration, **context)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Structured logging helper for plugin performance events</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>operation</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Operation name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>duration</span>
+      
+      
+        <span class='type'>(<tt>Float</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Duration in seconds</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional context</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+220
+221
+222
+223
+224
+225
+226
+227</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 220</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_log_plugin_performance'>log_plugin_performance</span><span class='lparen'>(</span><span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_log_performance_event'>log_performance_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>plugin_</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_operation'>operation</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+                        <span class='label'>entity_type:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>telemetry_plugin</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                        <span class='label'>entity_id:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                        <span class='label'>plugin_name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+                        <span class='label'>plugin_version:</span> <span class='ivar'>@version</span><span class='comma'>,</span>
+                        <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="metadata-instance_method">
+  
+    #<strong>metadata</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='plugin_info-instance_method'>plugin_info</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get plugin metadata</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Plugin metadata</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 149</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_metadata'>metadata</span>
+  <span class='comment'># Use class constants when available, otherwise use instance variables
+</span>  <span class='id identifier rubyid_version'>version</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_const_defined?'>const_defined?</span><span class='lparen'>(</span><span class='symbol'>:VERSION</span><span class='rparen'>)</span>
+              <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_const_get'>const_get</span><span class='lparen'>(</span><span class='symbol'>:VERSION</span><span class='rparen'>)</span>
+            <span class='kw'>else</span>
+              <span class='ivar'>@version</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='ivar'>@version</span>
+            <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_description'>description</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_const_defined?'>const_defined?</span><span class='lparen'>(</span><span class='symbol'>:DESCRIPTION</span><span class='rparen'>)</span>
+                  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_const_get'>const_get</span><span class='lparen'>(</span><span class='symbol'>:DESCRIPTION</span><span class='rparen'>)</span>
+                <span class='kw'>else</span>
+                  <span class='kw'>nil</span> <span class='comment'># Return nil when no DESCRIPTION constant is defined
+</span>                <span class='kw'>end</span>
+
+  <span class='lbrace'>{</span>
+    <span class='label'>name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+    <span class='label'>version:</span> <span class='id identifier rubyid_version'>version</span><span class='comma'>,</span>
+    <span class='label'>description:</span> <span class='id identifier rubyid_description'>description</span><span class='comma'>,</span>
+    <span class='label'>supported_formats:</span> <span class='id identifier rubyid_supported_formats'>supported_formats</span><span class='comma'>,</span>
+    <span class='label'>class_name:</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+  <span class='rbrace'>}</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="on_cache_sync-instance_method">
+  
+    #<strong>on_cache_sync</strong>(sync_data)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Called when cache sync occurs</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>sync_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Cache sync information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+76
+77
+78</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 76</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_on_cache_sync'>on_cache_sync</span><span class='lparen'>(</span><span class='id identifier rubyid_sync_data'>sync_data</span><span class='rparen'>)</span>
+  <span class='comment'># Default: no action
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="on_export_complete-instance_method">
+  
+    #<strong>on_export_complete</strong>(completion_data)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Called when export completes</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>completion_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export completion information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+90
+91
+92</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 90</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_on_export_complete'>on_export_complete</span><span class='lparen'>(</span><span class='id identifier rubyid_completion_data'>completion_data</span><span class='rparen'>)</span>
+  <span class='comment'># Default: no action
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="on_export_request-instance_method">
+  
+    #<strong>on_export_request</strong>(request_data)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Called when export is requested</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>request_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export request information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+83
+84
+85</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 83</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_on_export_request'>on_export_request</span><span class='lparen'>(</span><span class='id identifier rubyid_request_data'>request_data</span><span class='rparen'>)</span>
+  <span class='comment'># Default: no action
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="safe_export-instance_method">
+  
+    #<strong>safe_export</strong>(metrics_data, options = {})  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Safe export wrapper with error handling and timing</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>metrics_data</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Metrics data to export</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Export result with success/error information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 99</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_safe_export'>safe_export</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_start_time'>start_time</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+
+  <span class='kw'>begin</span>
+    <span class='comment'># Validate metrics data structure
+</span>    <span class='id identifier rubyid_validate_metrics_data!'>validate_metrics_data!</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:validate_metrics_data!</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_export'>export</span><span class='lparen'>(</span><span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_duration'>duration</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='lparen'>(</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span><span class='rparen'>)</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_log_plugin_event'>log_plugin_event</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Plugin export completed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                     <span class='label'>metrics_count:</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+                     <span class='label'>duration_ms:</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+                     <span class='label'>success:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+
+    <span class='lbrace'>{</span>
+      <span class='label'>success:</span> <span class='kw'>true</span><span class='comma'>,</span>
+      <span class='label'>format:</span> <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:format</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>unknown</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+      <span class='label'>data:</span> <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:data</span><span class='rbracket'>]</span><span class='comma'>,</span>
+      <span class='label'>result:</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='comment'># Include the full result for test compatibility
+</span>      <span class='label'>plugin:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='ivar'>@name</span><span class='comma'>,</span> <span class='label'>version:</span> <span class='ivar'>@version</span> <span class='rbrace'>}</span><span class='comma'>,</span> <span class='comment'># Add plugin field for test compatibility
+</span>      <span class='label'>metrics_count:</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+      <span class='label'>duration_ms:</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+      <span class='label'>plugin_name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+      <span class='label'>plugin_version:</span> <span class='ivar'>@version</span>
+    <span class='rbrace'>}</span>
+  <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+    <span class='id identifier rubyid_duration'>duration</span> <span class='op'>=</span> <span class='lparen'>(</span><span class='lparen'>(</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span><span class='rparen'>)</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span>
+
+    <span class='id identifier rubyid_log_plugin_event'>log_plugin_event</span><span class='lparen'>(</span><span class='symbol'>:error</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Plugin export failed</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
+                     <span class='label'>metrics_count:</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+                     <span class='label'>duration_ms:</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+                     <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+                     <span class='label'>success:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+
+    <span class='lbrace'>{</span>
+      <span class='label'>success:</span> <span class='kw'>false</span><span class='comma'>,</span>
+      <span class='label'>error:</span> <span class='id identifier rubyid_e'>e</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+      <span class='label'>metrics_count:</span> <span class='id identifier rubyid_metrics_data'>metrics_data</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span><span class='comma'>,</span>
+      <span class='label'>duration_ms:</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span>
+      <span class='label'>plugin_name:</span> <span class='ivar'>@name</span><span class='comma'>,</span>
+      <span class='label'>plugin_version:</span> <span class='ivar'>@version</span>
+    <span class='rbrace'>}</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="supported_formats-instance_method">
+  
+    #<strong>supported_formats</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Get supported formats (should be implemented by subclasses)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Supported export formats</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+67
+68
+69</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 67</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_supported_formats'>supported_formats</span>
+  <span class='lbracket'>[</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="supports_format?-instance_method">
+  
+    #<strong>supports_format?</strong>(format)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Check if plugin supports a specific format (must be implemented by subclasses)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>format</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Format to check</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Whether format is supported</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>NotImplementedError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>If not implemented by subclass</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+60
+61
+62</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/plugins/base_exporter.rb', line 60</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_supports_format?'>supports_format?</span><span class='lparen'>(</span><span class='id identifier rubyid_format'>format</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> must implement #supports_format? method</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 25 20:59:54 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

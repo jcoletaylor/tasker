@@ -57,11 +57,11 @@ module FactoryWorkflowHelpers
 
     # Get current state - be defensive about state transitions
     current_state = step.state_machine.current_state
-    Rails.logger.debug "Factory Helper: Step #{step.workflow_step_id} current state: '#{current_state}'"
+    Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} current state: '#{current_state}'" }
 
     # Handle error states by transitioning back to pending first
     if current_state == Tasker::Constants::WorkflowStepStatuses::ERROR
-      Rails.logger.debug "Factory Helper: Step #{step.workflow_step_id} in error state, transitioning to pending first"
+      Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} in error state, transitioning to pending first" }
       step.state_machine.transition_to!(:pending)
       current_state = step.state_machine.current_state
     end
@@ -72,7 +72,7 @@ module FactoryWorkflowHelpers
       Tasker::Constants::WorkflowStepStatuses::COMPLETE,
       Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
     ].include?(current_state)
-      Rails.logger.debug "Factory Helper: Transitioning step #{step.workflow_step_id} to in_progress"
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} to in_progress" }
       step.state_machine.transition_to!(:in_progress)
     end
 
@@ -81,7 +81,7 @@ module FactoryWorkflowHelpers
       Tasker::Constants::WorkflowStepStatuses::COMPLETE,
       Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY
     ].include?(current_state)
-      Rails.logger.debug "Factory Helper: Transitioning step #{step.workflow_step_id} to complete"
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} to complete" }
       step.state_machine.transition_to!(:complete)
     end
 
@@ -148,19 +148,19 @@ module FactoryWorkflowHelpers
     # State machine will initialize naturally when accessed
 
     current_state = step.state_machine.current_state
-    Rails.logger.debug "Factory Helper: Step #{step.workflow_step_id} current state before in_progress: '#{current_state}'"
+    Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} current state before in_progress: '#{current_state}'" }
 
     # Only transition if not already in progress or beyond
-    unless [
+    if [
       Tasker::Constants::WorkflowStepStatuses::IN_PROGRESS,
       Tasker::Constants::WorkflowStepStatuses::COMPLETE,
       Tasker::Constants::WorkflowStepStatuses::RESOLVED_MANUALLY,
       Tasker::Constants::WorkflowStepStatuses::ERROR
     ].include?(current_state)
-      Rails.logger.debug "Factory Helper: Transitioning step #{step.workflow_step_id} from '#{current_state}' to in_progress"
-      step.state_machine.transition_to!(:in_progress)
+      Rails.logger.debug { "Factory Helper: Step #{step.workflow_step_id} already in advanced state '#{current_state}' - skipping" }
     else
-      Rails.logger.debug "Factory Helper: Step #{step.workflow_step_id} already in advanced state '#{current_state}' - skipping"
+      Rails.logger.debug { "Factory Helper: Transitioning step #{step.workflow_step_id} from '#{current_state}' to in_progress" }
+      step.state_machine.transition_to!(:in_progress)
     end
 
     step
@@ -234,20 +234,20 @@ module FactoryWorkflowHelpers
 
     # Get current state after initialization
     current_state = step.state_machine.current_state
-    Rails.logger.debug "Test Helper: Step #{step.workflow_step_id} current state before error transition: '#{current_state}'"
+    Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} current state before error transition: '#{current_state}'" }
 
     # Use the state machine's transition_to! method which now properly handles from_state
     if current_state == Tasker::Constants::WorkflowStepStatuses::PENDING
-      Rails.logger.debug "Test Helper: Transitioning step #{step.workflow_step_id} from pending to in_progress"
+      Rails.logger.debug { "Test Helper: Transitioning step #{step.workflow_step_id} from pending to in_progress" }
       step.state_machine.transition_to!(:in_progress)
       # Reload to get the updated state after transition
       step.reload
       current_state = step.state_machine.current_state
-      Rails.logger.debug "Test Helper: Step #{step.workflow_step_id} current state after in_progress: '#{current_state}'"
+      Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} current state after in_progress: '#{current_state}'" }
     end
 
     # Transition to error state
-    Rails.logger.debug "Test Helper: Transitioning step #{step.workflow_step_id} to error state"
+    Rails.logger.debug { "Test Helper: Transitioning step #{step.workflow_step_id} to error state" }
     step.state_machine.transition_to!(:error)
 
     # Update step attributes
@@ -258,7 +258,7 @@ module FactoryWorkflowHelpers
 
     # Verify final state
     final_state = step.state_machine.current_state
-    Rails.logger.debug "Test Helper: Step #{step.workflow_step_id} final state: '#{final_state}'"
+    Rails.logger.debug { "Test Helper: Step #{step.workflow_step_id} final state: '#{final_state}'" }
 
     step
   end

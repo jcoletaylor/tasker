@@ -131,7 +131,7 @@ module Tasker
         if most_recent_transition
           # Ensure we never return empty strings or nil - always return a valid state
           state = most_recent_transition.to_state
-          return state.presence || Constants::WorkflowStepStatuses::PENDING
+          state.presence || Constants::WorkflowStepStatuses::PENDING
         else
           # Return initial state if no transitions exist
           Constants::WorkflowStepStatuses::PENDING

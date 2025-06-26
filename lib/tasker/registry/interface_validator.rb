@@ -49,27 +49,27 @@ module Tasker
         # Interface definitions for different types of registry items
         HANDLER_INTERFACE = {
           required_class_methods: [],
-          optional_class_methods: [:process, :configure, :dependencies]
+          optional_class_methods: %i[process configure dependencies]
         }.freeze
 
         HANDLER_INSTANCE_INTERFACE = {
           required_instance_methods: [],
-          optional_instance_methods: [:initialize, :before_process, :after_process, :step_templates]
+          optional_instance_methods: %i[initialize before_process after_process step_templates]
         }.freeze
 
         SUBSCRIBER_INTERFACE = {
           required_instance_methods: [:call],
-          optional_instance_methods: [:initialize, :filter_events]
+          optional_instance_methods: %i[initialize filter_events]
         }.freeze
 
         PLUGIN_INTERFACE = {
-          required_instance_methods: [:export, :supports_format?],
-          optional_instance_methods: [:supported_formats, :metadata, :validate_data]
+          required_instance_methods: %i[export supports_format?],
+          optional_instance_methods: %i[supported_formats metadata validate_data]
         }.freeze
 
         EXPORT_PLUGIN_INTERFACE = {
-          required_instance_methods: [:export, :supports_format?],
-          optional_instance_methods: [:supported_formats, :on_cache_sync, :on_export_request, :on_export_complete]
+          required_instance_methods: %i[export supports_format?],
+          optional_instance_methods: %i[supported_formats on_cache_sync on_export_request on_export_complete]
         }.freeze
 
         # Method arity requirements for validation
@@ -92,9 +92,7 @@ module Tasker
         # @param interface [Hash] Interface definition with required/optional methods
         def validate_class_methods!(klass, interface)
           interface[:required_class_methods]&.each do |method|
-            unless klass.respond_to?(method)
-              raise ArgumentError, "#{klass} must implement class method #{method}"
-            end
+            raise ArgumentError, "#{klass} must implement class method #{method}" unless klass.respond_to?(method)
           end
         end
 
@@ -122,14 +120,16 @@ module Tasker
             arity = method_obj.arity
 
             # Handle negative arity (variable arguments)
-            if arity < 0
+            if arity.negative?
               min_required = arity.abs - 1
               if min_required > requirements[:max]
-                raise ArgumentError, "#{method} requires too many arguments (min: #{min_required}, max allowed: #{requirements[:max]})"
+                raise ArgumentError,
+                      "#{method} requires too many arguments (min: #{min_required}, max allowed: #{requirements[:max]})"
               end
             else
-              unless arity >= requirements[:min] && arity <= requirements[:max]
-                raise ArgumentError, "#{method} arity mismatch (expected: #{requirements[:min]}-#{requirements[:max]}, got: #{arity})"
+              unless arity.between?(requirements[:min], requirements[:max])
+                raise ArgumentError,
+                      "#{method} arity mismatch (expected: #{requirements[:min]}-#{requirements[:max]}, got: #{arity})"
               end
             end
           end

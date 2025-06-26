@@ -103,7 +103,7 @@ RSpec.describe Tasker::Registry::SubscriberRegistry, type: :model do
 
       registry.register(test_subscriber_class, events: events)
 
-      expect(registry.supported_events).to contain_exactly(*events)
+      expect(registry.supported_events).to match_array(events)
       events.each do |event|
         subscribers = registry.subscribers_for_event(event)
         expect(subscribers.size).to eq(1)
@@ -195,7 +195,7 @@ RSpec.describe Tasker::Registry::SubscriberRegistry, type: :model do
 
     it 'handles string and symbol event names' do
       string_subscribers = registry.subscribers_for_event('shared.event')
-      symbol_subscribers = registry.subscribers_for_event(:shared_event)
+      registry.subscribers_for_event(:shared_event)
 
       # Should handle string event names
       expect(string_subscribers.size).to eq(2)

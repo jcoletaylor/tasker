@@ -316,7 +316,8 @@ module Tasker
       # @return [void]
       def register_handler(name, namespace_name: 'default', version: '0.1.0', concurrent: true)
         # Register the handler with the factory
-        Tasker::HandlerFactory.instance.register(name, self, namespace_name: namespace_name, version: version, replace: true)
+        Tasker::HandlerFactory.instance.register(name, self, namespace_name: namespace_name, version: version,
+                                                             replace: true)
       end
     end
   end

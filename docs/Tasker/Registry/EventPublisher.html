@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Tasker::Registry::EventPublisher
+  
+    &mdash; Documentation by YARD 0.9.37
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Tasker::Registry::EventPublisher";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (E)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Registry.html" title="Tasker::Registry (module)">Registry</a></span></span>
+     &raquo; 
+    <span class="title">EventPublisher</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Tasker::Registry::EventPublisher
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  <dl>
+      <dt>Extended by:</dt>
+      <dd>ActiveSupport::Concern</dd>
+  </dl>
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/tasker/registry/event_publisher.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>Event publishing capabilities for registry systems</p>
+
+<p>Provides standardized event publishing for registration, unregistration, and validation events across all registries.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_registration_event-instance_method" title="#publish_registration_event (instance method)">#<strong>publish_registration_event</strong>(entity_type, entity_id, entity_class, options = {})  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish registration event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_registry_stats_event-instance_method" title="#publish_registry_stats_event (instance method)">#<strong>publish_registry_stats_event</strong>(stats)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish registry statistics collection event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_unregistration_event-instance_method" title="#publish_unregistration_event (instance method)">#<strong>publish_unregistration_event</strong>(entity_type, entity_id, entity_class)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish unregistration event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#publish_validation_failed_event-instance_method" title="#publish_validation_failed_event (instance method)">#<strong>publish_validation_failed_event</strong>(entity_type, entity_class, error)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Publish validation failure event.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="publish_registration_event-instance_method">
+  
+    #<strong>publish_registration_event</strong>(entity_type, entity_id, entity_class, options = {})  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Publish registration event</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>entity_type</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type of entity being registered</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>entity_id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Unique identifier for the entity</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>entity_class</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>, <tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Class of the entity being registered</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Additional registration options</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/registry/event_publisher.rb', line 25</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_registration_event'>publish_registration_event</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_id'>entity_id</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>.registered</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_class_name'>class_name</span> <span class='op'>=</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>:</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
+
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='lbrace'>{</span>
+                  <span class='label'>registry_name:</span> <span class='ivar'>@registry_name</span><span class='comma'>,</span>
+                  <span class='label'>entity_type:</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span>
+                  <span class='label'>entity_id:</span> <span class='id identifier rubyid_entity_id'>entity_id</span><span class='comma'>,</span>
+                  <span class='label'>entity_class:</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='comma'>,</span>
+                  <span class='label'>options:</span> <span class='id identifier rubyid_options'>options</span><span class='comma'>,</span>
+                  <span class='label'>registered_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+                  <span class='label'>correlation_id:</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
+                <span class='rbrace'>}</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_registry_stats_event-instance_method">
+  
+    #<strong>publish_registry_stats_event</strong>(stats)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Publish registry statistics collection event</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>stats</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Registry statistics</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+81
+82
+83
+84
+85
+86
+87
+88</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/registry/event_publisher.rb', line 81</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_registry_stats_event'>publish_registry_stats_event</span><span class='lparen'>(</span><span class='id identifier rubyid_stats'>stats</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>registry.stats_collected</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='lbrace'>{</span>
+                  <span class='label'>registry_name:</span> <span class='ivar'>@registry_name</span><span class='comma'>,</span>
+                  <span class='label'>stats:</span> <span class='id identifier rubyid_stats'>stats</span><span class='comma'>,</span>
+                  <span class='label'>collected_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+                  <span class='label'>correlation_id:</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
+                <span class='rbrace'>}</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_unregistration_event-instance_method">
+  
+    #<strong>publish_unregistration_event</strong>(entity_type, entity_id, entity_class)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Publish unregistration event</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>entity_type</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type of entity being unregistered</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>entity_id</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Unique identifier for the entity</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>entity_class</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>, <tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Class of the entity being unregistered</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/registry/event_publisher.rb', line 45</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_unregistration_event'>publish_unregistration_event</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_id'>entity_id</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>.unregistered</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_class_name'>class_name</span> <span class='op'>=</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>:</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
+
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='lbrace'>{</span>
+                  <span class='label'>registry_name:</span> <span class='ivar'>@registry_name</span><span class='comma'>,</span>
+                  <span class='label'>entity_type:</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span>
+                  <span class='label'>entity_id:</span> <span class='id identifier rubyid_entity_id'>entity_id</span><span class='comma'>,</span>
+                  <span class='label'>entity_class:</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='comma'>,</span>
+                  <span class='label'>unregistered_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+                  <span class='label'>correlation_id:</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
+                <span class='rbrace'>}</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="publish_validation_failed_event-instance_method">
+  
+    #<strong>publish_validation_failed_event</strong>(entity_type, entity_class, error)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Publish validation failure event</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>entity_type</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Type of entity that failed validation</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>entity_class</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>, <tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Class of the entity that failed validation</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>error</span>
+      
+      
+        <span class='type'>(<tt>StandardError</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The validation error that occurred</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/registry/event_publisher.rb', line 64</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_publish_validation_failed_event'>publish_validation_failed_event</span><span class='lparen'>(</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='comma'>,</span> <span class='id identifier rubyid_error'>error</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_entity_type'>entity_type</span><span class='embexpr_end'>}</span><span class='tstring_content'>.validation_failed</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_class_name'>class_name</span> <span class='op'>=</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Class</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>:</span> <span class='id identifier rubyid_entity_class'>entity_class</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
+
+  <span class='id identifier rubyid_publish_event'>publish_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='lbrace'>{</span>
+                  <span class='label'>registry_name:</span> <span class='ivar'>@registry_name</span><span class='comma'>,</span>
+                  <span class='label'>entity_type:</span> <span class='id identifier rubyid_entity_type'>entity_type</span><span class='comma'>,</span>
+                  <span class='label'>entity_class:</span> <span class='id identifier rubyid_class_name'>class_name</span><span class='comma'>,</span>
+                  <span class='label'>validation_error:</span> <span class='id identifier rubyid_error'>error</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span>
+                  <span class='label'>failed_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+                  <span class='label'>correlation_id:</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
+                <span class='rbrace'>}</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jun 25 20:59:49 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.2.4).
+</div>
+
+    </div>
+  </body>
+</html>

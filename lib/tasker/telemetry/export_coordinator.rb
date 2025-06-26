@@ -68,11 +68,11 @@ module Tasker
         result = @plugin_registry.unregister(name)
 
         if result && plugin_info
-            publish_event(Events::ExportEvents::PLUGIN_UNREGISTERED, {
-                            plugin_name: name.to_s,
+          publish_event(Events::ExportEvents::PLUGIN_UNREGISTERED, {
+                          plugin_name: name.to_s,
                           plugin_class: plugin_info.class.name,
-                            timestamp: Time.current.iso8601
-                          })
+                          timestamp: Time.current.iso8601
+                        })
 
           log_structured(:info, 'Export plugin unregistered via coordinator',
                          entity_type: 'export_plugin',
@@ -97,23 +97,19 @@ module Tasker
       # @param format [String, Symbol] Format to search for
       # @return [Array<Object>] Array of plugin instances
       def plugins_for_format(format)
-        @plugin_registry.find_by_format(format)
+        @plugin_registry.find_by(format: format)
       end
 
       # Check if a format is supported by any registered plugin
       #
       # @param format [String, Symbol] Format to check
       # @return [Boolean] True if format is supported
-      def supports_format?(format)
-        @plugin_registry.supports_format?(format)
-      end
+      delegate :supports_format?, to: :@plugin_registry
 
       # Get all supported formats across registered plugins
       #
       # @return [Array<String>] Array of supported format names
-      def supported_formats
-        @plugin_registry.supported_formats
-      end
+      delegate :supported_formats, to: :@plugin_registry
 
       # Coordinate cache sync event
       #
@@ -241,8 +237,8 @@ module Tasker
           duration_ms = ((Time.current - start_time) * 1000).round(2)
 
           if export_result[:success]
-          result = {
-            success: true,
+            result = {
+              success: true,
               format: format,
               data: export_result[:data],
               metrics_count: metrics_data.size,
@@ -253,14 +249,14 @@ module Tasker
             @event_bus.publish(
               Tasker::Telemetry::Events::ExportEvents::EXPORT_COMPLETED,
               result.merge(timestamp: Time.current)
-          )
+            )
 
-          log_structured(
-            :info,
-            'Coordinated export completed successfully',
-            entity_type: 'export_coordination',
-            entity_id: correlation_id,
-            format: format,
+            log_structured(
+              :info,
+              'Coordinated export completed successfully',
+              entity_type: 'export_coordination',
+              entity_id: correlation_id,
+              format: format,
               metrics_count: result[:metrics_count],
               duration_ms: duration_ms
             )
@@ -370,14 +366,14 @@ module Tasker
               Tasker::Telemetry::Events::ExportEvents::CACHE_TTL_EXTENDED,
               {
                 correlation_id: correlation_id,
-            extension_duration: extension_duration,
+                extension_duration: extension_duration,
                 new_ttl: result[:new_ttl],
                 timestamp: Time.current
-          }
+              }
             )
 
-          log_structured(
-            :info,
+            log_structured(
+              :info,
               'Cache TTL extended successfully',
               entity_type: 'cache_coordination',
               entity_id: correlation_id,
@@ -389,10 +385,10 @@ module Tasker
               :warn,
               'Failed to extend cache TTL',
               entity_type: 'cache_coordination',
-            entity_id: correlation_id,
+              entity_id: correlation_id,
               extension_duration: extension_duration,
               error: result[:error]
-          )
+            )
           end
 
           result
@@ -434,17 +430,17 @@ module Tasker
         @plugin_registry.all_plugins.each do |name, plugin_config|
           plugin = plugin_config[:instance]
 
-          if plugin.respond_to?(method_name)
+          next unless plugin.respond_to?(method_name)
+
           begin
             plugin.send(method_name, data)
           rescue StandardError => e
-              log_structured(:warn, 'Plugin notification failed',
-                             plugin_name: name,
+            log_structured(:warn, 'Plugin notification failed',
+                           plugin_name: name,
                            plugin_class: plugin.class.name,
-                             method_name: method_name,
+                           method_name: method_name,
                            error: e.message,
-                             error_class: e.class.name)
-            end
+                           error_class: e.class.name)
           end
         end
       end
@@ -467,30 +463,28 @@ module Tasker
 
         # Try each plugin until one succeeds
         plugins.each do |plugin|
-          begin
-            plugin_result = plugin.export(metrics_data, { correlation_id: correlation_id })
+          plugin_result = plugin.export(metrics_data, { correlation_id: correlation_id })
 
-            if plugin_result[:success]
-              log_structured(:debug, 'Plugin export successful',
-                             plugin_class: plugin.class.name,
-                             format: format,
-                             correlation_id: correlation_id)
-              return plugin_result
-            else
-              log_structured(:warn, 'Plugin export failed',
-                             plugin_class: plugin.class.name,
-                             format: format,
-                             error: plugin_result[:error],
-                             correlation_id: correlation_id)
-            end
-          rescue StandardError => e
-            log_structured(:error, 'Plugin export exception',
+          if plugin_result[:success]
+            log_structured(:debug, 'Plugin export successful',
                            plugin_class: plugin.class.name,
-              format: format,
-              error: e.message,
-                           error_class: e.class.name,
+                           format: format,
+                           correlation_id: correlation_id)
+            return plugin_result
+          else
+            log_structured(:warn, 'Plugin export failed',
+                           plugin_class: plugin.class.name,
+                           format: format,
+                           error: plugin_result[:error],
                            correlation_id: correlation_id)
           end
+        rescue StandardError => e
+          log_structured(:error, 'Plugin export exception',
+                         plugin_class: plugin.class.name,
+                         format: format,
+                         error: e.message,
+                         error_class: e.class.name,
+                         correlation_id: correlation_id)
         end
 
         {
