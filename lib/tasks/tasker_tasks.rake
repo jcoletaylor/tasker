@@ -1,6 +1,116 @@
 # frozen_string_literal: true
 
 namespace :tasker do
+  namespace :install do
+    # @!method database_objects
+    # @description Copies required database views and functions from Tasker gem to host application
+    # @example Install database objects
+    #   rake tasker:install:database_objects
+    desc 'Copy Tasker database views and functions to your application'
+    task database_objects: :environment do
+      require 'fileutils'
+
+      puts 'Installing Tasker database objects...'
+
+      # Find the Tasker gem path using multiple methods for reliability
+      tasker_gem_path = find_tasker_gem_path
+
+      if tasker_gem_path.blank?
+        puts '❌ Could not find Tasker gem path'
+        puts '   Please ensure Tasker gem is properly installed'
+        exit 1
+      end
+
+      puts "📍 Found Tasker gem at: #{tasker_gem_path}"
+
+      # Copy database views
+      copy_database_directory(tasker_gem_path, 'views')
+
+      # Copy database functions
+      copy_database_directory(tasker_gem_path, 'functions')
+
+      puts '✅ Tasker database objects installed successfully!'
+      puts ''
+      puts 'Next steps:'
+      puts '  1. Run migrations: bundle exec rails db:migrate'
+      puts '  2. Setup Tasker: bundle exec rails tasker:setup'
+    end
+
+    private
+
+    # Find Tasker gem path using multiple detection methods
+    #
+    # @return [String, nil] Path to Tasker gem or nil if not found
+    def find_tasker_gem_path
+      # Method 1: Use bundle show (most reliable)
+      tasker_gem_path = `bundle show tasker 2>/dev/null`.strip
+      return tasker_gem_path unless tasker_gem_path.empty?
+
+      # Method 2: Use Bundler specs
+      begin
+        require 'bundler'
+        spec = Bundler.load.specs.find { |s| s.name == 'tasker' }
+        return spec.full_gem_path if spec
+      rescue StandardError => e
+        puts "   ⚠️  Bundler spec detection failed: #{e.message}"
+      end
+
+      # Method 3: Use Tasker::Engine if available
+      begin
+        require 'tasker'
+        return Tasker::Engine.root.to_s if defined?(Tasker::Engine)
+      rescue StandardError => e
+        puts "   ⚠️  Engine detection failed: #{e.message}"
+      end
+
+      # Method 4: Try to find gem in default gem paths
+      begin
+        gem_paths = Gem.path
+        gem_paths.each do |gem_path|
+          potential_path = File.join(gem_path, 'gems')
+          Dir.glob(File.join(potential_path, 'tasker-*')).each do |tasker_dir|
+            return tasker_dir if File.directory?(File.join(tasker_dir, 'db'))
+          end
+        end
+      rescue StandardError => e
+        puts "   ⚠️  Gem path detection failed: #{e.message}"
+      end
+
+      nil
+    end
+
+    # Copy a database directory (views or functions) from gem to application
+    #
+    # @param gem_path [String] Path to Tasker gem
+    # @param directory_name [String] Name of directory to copy ('views' or 'functions')
+    def copy_database_directory(gem_path, directory_name)
+      source_path = File.join(gem_path, 'db', directory_name)
+      target_path = Rails.root.join('db', directory_name)
+
+      if Dir.exist?(source_path)
+        # Create target directory if it doesn't exist
+        FileUtils.mkdir_p(File.dirname(target_path))
+
+        # Copy the entire directory
+        begin
+          FileUtils.cp_r(source_path, Rails.root.join('db').to_s)
+
+          # Count files copied
+          file_count = Dir.glob(File.join(target_path, '**', '*')).count { |f| File.file?(f) }
+
+          puts "   ✓ Copied #{file_count} #{directory_name} files to db/#{directory_name}/"
+        rescue StandardError => e
+          puts "   ❌ Failed to copy #{directory_name} directory: #{e.message}"
+          puts '      Please check file system permissions and available disk space.'
+          exit 1
+        end
+      else
+        puts "   ⚠️  #{directory_name.capitalize} directory not found at #{source_path}"
+        puts '      This may indicate an incomplete Tasker installation'
+      end
+    end
+  end
+
   # @!method setup
   # @description Initializes Tasker by creating the configuration file and necessary directory structure
   # @example Run setup task
@@ -149,7 +259,7 @@ namespace :tasker do
 
     begin
       backend = Tasker::Telemetry::MetricsBackend.instance
-      Tasker::Telemetry::ExportCoordinator.new
+      Tasker::Telemetry::ExportCoordinator.instance
 
       # Backend status
       puts 'Backend Status:'

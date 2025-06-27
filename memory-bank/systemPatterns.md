@@ -806,3 +806,384 @@ end
 ```
 
 This observability architecture provides enterprise-grade monitoring capabilities while maintaining Tasker's developer-friendly design principles and respecting Rails engine infrastructure agnostic requirements.
+
+## Template-Driven Development Architecture
+
+### **Tasker 2.5.0 Template System**
+
+Based on our 2.5.0 strategic initiative, Tasker now implements a comprehensive template-driven development system that enables rapid creation of production-ready workflow applications.
+
+#### **Template Architecture Patterns**
+
+```
+templates/
+├── workflow_handler.rb.template        # Complete workflow handler classes
+├── step_handler_base.rb.template      # Base step handler implementations
+├── step_handler_api.rb.template       # API integration step handlers
+├── workflow_config.yaml.template     # YAML workflow configurations
+├── api_utils.rb.template              # Shared API utility modules
+├── event_subscriber.rb.template      # Custom event subscriber classes
+└── demo_setup/
+    ├── rails_app_template.rb          # Complete Rails app generation
+    ├── initializers/
+    │   ├── tasker.rb.template         # Tasker configuration
+    │   └── opentelemetry.rb.template  # Observability setup
+    └── controllers/
+        └── demo_controller.rb.template # Demo API controllers
+```
+
+#### **Template Substitution Patterns**
+
+**Workflow Handler Template**:
+```ruby
+# templates/workflow_handler.rb.template
+module {{NAMESPACE_MODULE}}
+  class {{HANDLER_CLASS}} < Tasker::TaskHandler::Base
+    def initialize_task!(task_request)
+      task = super(task_request)
+
+      # {{NAMESPACE}}-specific initialization
+      setup_{{NAMESPACE}}_context(task)
+
+      task
+    end
+
+    private
+
+    def setup_{{NAMESPACE}}_context(task)
+      # Template-generated context setup
+    end
+  end
+end
+```
+
+**Step Handler Template with API Integration**:
+```ruby
+# templates/step_handler_api.rb.template
+module {{NAMESPACE_MODULE}}
+  module StepHandler
+    class {{STEP_HANDLER_CLASS}} < Tasker::StepHandler::Api
+      include {{NAMESPACE_MODULE}}::ApiUtils
+
+      def process(task, sequence, step)
+        {{API_ENDPOINT_CALL}}
+      end
+
+      def process_results(step, process_output, initial_results)
+        # Template-generated result processing
+        {{RESULT_PROCESSING_LOGIC}}
+      end
+    end
+  end
+end
+```
+
+#### **Demo Application Architecture Pattern**
+
+**Real-World Workflow Patterns**:
+```
+tasker_demo/
+├── app/tasks/
+│   ├── user_management/           # User lifecycle workflows
+│   │   ├── user_registration_handler.rb
+│   │   ├── user_onboarding_handler.rb
+│   │   └── step_handler/
+│   │       ├── validate_user_data_handler.rb
+│   │       ├── check_user_exists_handler.rb
+│   │       ├── create_user_profile_handler.rb
+│   │       └── send_welcome_email_handler.rb
+│   ├── orders/                    # E-commerce workflows
+│   │   ├── order_processing_handler.rb
+│   │   └── step_handler/
+│   │       ├── validate_order_handler.rb
+│   │       ├── check_inventory_handler.rb
+│   │       ├── calculate_pricing_handler.rb
+│   │       ├── process_payment_handler.rb
+│   │       ├── update_inventory_handler.rb
+│   │       └── send_confirmation_handler.rb
+│   └── inventory/                 # Inventory management workflows
+│       ├── restock_management_handler.rb
+│       └── step_handler/
+│           ├── identify_low_stock_handler.rb
+│           ├── calculate_restock_quantities_handler.rb
+│           ├── generate_purchase_orders_handler.rb
+│           └── notify_suppliers_handler.rb
+```
+
+## Integration Validation Architecture
+
+### **Tasker 2.5.0 Integration Validation System**
+
+Following the successful completion of Week 1 deliverables, Tasker now implements a comprehensive integration validation architecture that proves production readiness through real-world observability testing.
+
+#### **Validation Script Architecture Patterns**
+
+**Core Design Principles**:
+- **Enterprise-Grade Validation**: 5 comprehensive test categories with pass/fail criteria
+- **Production-Ready Diagnostics**: Detailed error analysis and actionable recommendations
+- **Robust Error Handling**: StandardError exception handling with graceful degradation
+- **Comprehensive Reporting**: Colorized output with detailed span analysis
+
+**Jaeger Integration Validator Pattern**:
+```ruby
+class JaegerIntegrationValidator
+  JAEGER_DEFAULT_URL = 'http://localhost:16686'
+  VALIDATION_TIMEOUT = 30 # seconds
+
+  def initialize(jaeger_url = JAEGER_DEFAULT_URL)
+    @jaeger_url = jaeger_url
+    @validation_results = {
+      connection: false,
+      workflow_execution: false,
+      trace_collection: false,
+      span_hierarchy: false,
+      trace_correlation: false,
+      performance_metrics: {},
+      errors: [],
+      recommendations: []
+    }
+    @jaeger_client = build_jaeger_client
+  end
+
+  def validate_integration
+    # Phase 1: Connection Testing
+    validate_jaeger_connection
+
+    # Phase 2: Workflow Execution with Tracing
+    validate_workflow_tracing if @validation_results[:connection]
+
+    # Phase 3: Trace Analysis
+    analyze_collected_traces if @validation_results[:workflow_execution]
+
+    # Phase 4: Performance Analysis
+    analyze_performance_metrics if @validation_results[:span_hierarchy]
+
+    # Phase 5: Generate Report
+    generate_integration_report
+
+    overall_success?
+  end
+end
+```
+
+#### **Enhanced Span Creation Patterns**
+
+**Parent-Child Span Relationships**:
+```ruby
+def simulate_workflow_steps(step_names, parent_span)
+  step_names.each do |step_name|
+    # Create child spans for proper trace hierarchy
+    OpenTelemetry.tracer_provider.tracer('tasker.validation').in_span("step_#{step_name}") do |step_span|
+      step_span.set_attribute('step.name', step_name)
+      step_span.set_attribute('step.type', 'workflow_step')
+
+      parent_span.add_event('step_started', attributes: { 'step.name' => step_name })
+
+      # Simulate step processing time
+      sleep(0.01 + rand(0.05))
+
+      step_span.set_attribute('step.status', 'success')
+      step_span.add_event('step_processing_completed')
+
+      parent_span.add_event('step_completed', attributes: {
+        'step.name' => step_name,
+        'step.status' => 'success'
+      })
+    end
+  end
+end
+```
+
+**Workflow Pattern Testing**:
+```ruby
+# Linear Workflow Pattern
+def execute_linear_test_workflow
+  OpenTelemetry.tracer_provider.tracer('tasker.validation').in_span('jaeger_validation_linear') do |span|
+    span.set_attribute('validation.pattern', 'linear')
+    span.set_attribute('validation.timestamp', Time.current.iso8601)
+
+    simulate_workflow_steps(%w[validate_input process_data generate_output], span)
+
+    span.context.trace_id.unpack1('H*')
+  end
+end
+
+# Diamond Workflow Pattern
+def execute_diamond_test_workflow
+  OpenTelemetry.tracer_provider.tracer('tasker.validation').in_span('jaeger_validation_diamond') do |span|
+    span.set_attribute('validation.pattern', 'diamond')
+
+    simulate_workflow_steps(['validate_input'], span)
+
+    # Parallel branches
+    %w[process_branch_a process_branch_b].each do |branch|
+      span.add_event("starting_#{branch}")
+      simulate_workflow_steps([branch], span)
+      span.add_event("completed_#{branch}")
+    end
+
+    simulate_workflow_steps(['merge_results'], span)
+
+    span.context.trace_id.unpack1('H*')
+  end
+end
+```
+
+#### **Advanced Diagnostic Patterns**
+
+**OpenTelemetry Configuration Analysis**:
+```ruby
+def diagnose_otel_integration
+  puts "  📊 OpenTelemetry Tracer Provider: #{OpenTelemetry.tracer_provider.class.name}"
+  puts "  📊 OpenTelemetry Exporter: #{check_otel_exporter_type}"
+  puts "  📊 Recent traces in Jaeger: #{get_recent_traces_count}"
+  puts "  📊 Services in Jaeger: #{get_services.join(', ')}"
+  puts "  📊 Trace flush status: #{check_trace_flush_status}"
+
+  return unless get_recent_traces_count.zero?
+
+  puts '  ⚠️  No recent traces found - possible export configuration issue'.colorize(:yellow)
+  add_recommendation('Check OpenTelemetry exporter configuration and Jaeger endpoint')
+end
+```
+
+**Span Hierarchy Analysis**:
+```ruby
+def validate_span_hierarchy(spans, pattern)
+  # Check for root spans
+  root_spans = spans.select { |s| s[:parent_span_id].blank? }
+
+  # Validate span relationships
+  parent_child_relationships = spans.count { |s| s[:parent_span_id].present? }
+
+  if parent_child_relationships.positive?
+    @validation_results[:trace_correlation] = true
+    puts "    🔗 Span hierarchy: #{spans.length} spans, #{parent_child_relationships} parent-child relationships"
+
+    # Show detailed span analysis
+    spans.each do |span|
+      parent_info = span[:parent_span_id] ? "→ #{span[:parent_span_id][0..7]}" : 'ROOT'
+      puts "      📋 #{span[:operation_name]} (#{span[:span_id][0..7]}) #{parent_info}"
+    end
+  else
+    puts "    ⚠️  Span hierarchy: #{spans.length} spans, #{parent_child_relationships} parent-child relationships (no correlation)"
+  end
+
+  true
+end
+```
+
+#### **Comprehensive Error Handling Patterns**
+
+**Robust Exception Management**:
+```ruby
+def build_jaeger_client
+  Faraday.new(url: @jaeger_url) do |conn|
+    conn.request :json
+    conn.response :json, content_type: /\bjson$/
+    conn.adapter Faraday.default_adapter
+    conn.options.timeout = 10
+    conn.options.open_timeout = 5
+  end
+rescue StandardError => e
+  add_error('Failed to initialize Jaeger client', e)
+  nil
+end
+
+def validate_jaeger_connection
+  print '📡 Testing Jaeger connection... '
+
+  response = @jaeger_client.get('/api/services')
+
+  if response.success?
+    services = response.body['data'] || []
+    puts "✅ Connected (#{services.length} services discovered)".colorize(:green)
+    @validation_results[:connection] = true
+  else
+    puts "❌ Failed (HTTP #{response.status})".colorize(:red)
+    add_error('Jaeger connection failed', "HTTP #{response.status}: #{response.body}")
+  end
+rescue Faraday::ConnectionFailed => e
+  puts '❌ Connection failed'.colorize(:red)
+  add_error('Cannot connect to Jaeger', e.message)
+  add_recommendation("Ensure Jaeger is running at #{@jaeger_url}")
+rescue StandardError => e
+  puts '❌ Error'.colorize(:red)
+  add_error('Unexpected error during connection test', e)
+end
+```
+
+#### **Performance Analysis Patterns**
+
+**Metrics Collection and Analysis**:
+```ruby
+def analyze_performance_metrics
+  puts "\n📊 Analyzing performance metrics..."
+
+  return unless @validation_results[:trace_ids]&.any?
+
+  total_duration = 0
+  span_count = 0
+
+  @validation_results[:trace_ids].each do |trace_info|
+    trace_data = query_trace_by_id(trace_info[:trace_id])
+    next unless trace_data
+
+    spans = extract_spans_from_trace(trace_data)
+    spans.each do |span|
+      total_duration += span[:duration] || 0
+      span_count += 1
+    end
+  rescue StandardError => e
+    add_error('Performance analysis failed', e)
+  end
+
+  return unless span_count.positive?
+
+  avg_duration = total_duration / span_count
+  @validation_results[:performance_metrics] = {
+    total_spans: span_count,
+    total_duration_us: total_duration,
+    average_duration_us: avg_duration,
+    average_duration_ms: (avg_duration / 1000.0).round(2)
+  }
+
+  puts "  ⏱️  Average span duration: #{@validation_results[:performance_metrics][:average_duration_ms]}ms"
+  puts "  📈 Total spans analyzed: #{span_count}"
+end
+```
+
+### **Integration Validation Success Patterns**
+
+**Comprehensive Reporting Architecture**:
+```ruby
+def generate_integration_report
+  puts "\n📋 Integration Validation Report".colorize(:cyan)
+  puts '=' * 50
+
+  # Overall Status
+  if overall_success?
+    puts '🎉 Overall Status: PASSED'.colorize(:green)
+  else
+    puts '❌ Overall Status: FAILED'.colorize(:red)
+  end
+
+  # Individual Test Results
+  print_test_result('Jaeger Connection', @validation_results[:connection])
+  print_test_result('Workflow Execution', @validation_results[:workflow_execution])
+  print_test_result('Trace Collection', @validation_results[:trace_collection])
+  print_test_result('Span Hierarchy', @validation_results[:span_hierarchy])
+  print_test_result('Trace Correlation', @validation_results[:trace_correlation])
+
+  # Performance Metrics, Errors, Recommendations
+  # ... detailed reporting logic
+end
+```
+
+**Production Readiness Validation**:
+- **100% Test Coverage**: All 5 validation categories must pass
+- **Detailed Diagnostics**: Comprehensive error analysis when issues detected
+- **Actionable Recommendations**: Specific steps to resolve common integration issues
+- **Performance Baselines**: Establish timing expectations for production deployment
+
+This integration validation architecture establishes the foundation for Week 2 Prometheus validation and Week 3-4 demo application development, ensuring enterprise-grade observability throughout the 2.5.0 strategic initiative.

@@ -1,0 +1,71 @@
+---
+name: customer/user_onboarding
+namespace_name: customer
+version: 1.0.0
+module_namespace: Customer
+task_handler_class: UserOnboarding
+description: "User registration and onboarding workflow"
+
+default_dependent_system: customer_system
+
+named_steps:
+  - validate_registration_data
+  - check_duplicate_user
+
+schema:
+  type: object
+  required:
+    - email
+    - username
+  properties:
+    email:
+      type: string
+    username:
+      type: string
+    firstName:
+      type: string
+    lastName:
+      type: string
+
+step_templates:
+  - name: validate_registration_data
+    description: Validate user registration information
+    handler_class: Customer::StepHandlers::ValidateRegistrationDataStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/users/add
+      method: POST
+
+  - name: check_duplicate_user
+    description: Ensure email/username uniqueness
+    depends_on_step: validate_registration_data
+    handler_class: Customer::StepHandlers::CheckDuplicateUserStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/users/search
+      method: GET
+
+environments:
+  development:
+    step_templates:
+      - name: validate_registration_data
+        handler_config:
+          url: <%= @api_base_url %>/users/add
+          params:
+            debug: true
+
+      - name: check_duplicate_user
+        handler_config:
+          url: <%= @api_base_url %>/users/search
+          params:
+            debug: true
+
+  production:
+    step_templates:
+      - name: validate_registration_data
+        handler_config:
+          url: <%= @api_base_url %>/users/add
+
+      - name: check_duplicate_user
+        handler_config:
+          url: <%= @api_base_url %>/users/search

@@ -12,8 +12,6 @@ module Tasker
       class_option :module_namespace, type: :string, default: nil,
                                       desc: 'The module namespace for the task handler ' \
                                             '(defaults to Tasker.configuration.engine.default_module_namespace)'
-      class_option :concurrent, type: :boolean, default: true,
-                                desc: 'Whether the task can be run concurrently'
       class_option :namespace_name, type: :string, default: 'default',
                                     desc: 'The TaskNamespace for organizing the task (e.g., payments, inventory, notifications)'
       class_option :version, type: :string, default: '0.1.0',
@@ -29,7 +27,6 @@ module Tasker
         @module_path = @module_namespace&.underscore
         @task_handler_class = name.camelize
         @task_name = name.underscore
-        @concurrent = options[:concurrent]
         @namespace_name = options[:namespace_name]
         @version = options[:version]
         @description = options[:description]

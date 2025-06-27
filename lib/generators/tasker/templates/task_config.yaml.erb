@@ -10,9 +10,15 @@ description: "<%= @description || "Generated task handler for #{@task_name}" %>"
 
 default_dependent_system: <%= @dependent_system %>
 named_steps:
+<% if @steps && @steps.any? -%>
+<% @steps.each do |step| -%>
+  - <%= step %>
+<% end -%>
+<% else -%>
   - fetch_data
   - process_data
   - complete_task
+<% end -%>
 
 schema:
   type: object
@@ -23,6 +29,16 @@ schema:
       type: integer
 
 step_templates:
+<% if @steps && @steps.any? -%>
+<% @steps.each_with_index do |step, index| -%>
+  - name: <%= step %>
+    description: <%= step.humanize %> step
+    handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::<%= step.classify %>StepHandler
+<% if index > 0 -%>
+    depends_on_step: <%= @steps[index - 1] %>
+<% end -%>
+<% end -%>
+<% else -%>
   - name: fetch_data
     description: Fetch required data from dependent system
     handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::FetchDataStepHandler
@@ -47,31 +63,55 @@ step_templates:
     description: Complete the task with processed data
     depends_on_step: process_data
     handler_class: <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %>::CompleteTaskStepHandler
+<% end -%>
 
 environments:
   development:
     step_templates:
+<% if @steps && @steps.any? -%>
+<% first_step = @steps.first -%>
+      - name: <%= first_step %>
+        handler_config:
+          params:
+            debug: true
+<% else -%>
       - name: fetch_data
         handler_config:
           url: http://localhost:3000/api/data
           params:
             id: 1
             debug: true
+<% end -%>
 
   test:
     step_templates:
+<% if @steps && @steps.any? -%>
+<% first_step = @steps.first -%>
+      - name: <%= first_step %>
+        handler_config:
+          params:
+            test_mode: true
+<% else -%>
       - name: fetch_data
         handler_config:
           url: http://test-api.example.com/data
           params:
             id: 1
             test_mode: true
+<% end -%>
 
   production:
     step_templates:
+<% if @steps && @steps.any? -%>
+<% first_step = @steps.first -%>
+      - name: <%= first_step %>
+        handler_config:
+          params: {}
+<% else -%>
       - name: fetch_data
         handler_config:
           url: https://api.example.com/data
           params:
             id: 1
             api_key: ${API_KEY}
+<% end -%>

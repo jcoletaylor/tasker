@@ -381,3 +381,285 @@ We have achieved **COMPLETE SUCCESS** in solving the lingering Swagger UI mounti
 **Next Milestone**: Version 2.4.1 release → Documentation enhancement → Version 2.5.0 planning
 
 **Achievement Summary**: Successfully solved the Swagger UI mounting challenge for Rails engines, enabling comprehensive API documentation with interactive Swagger UI. This establishes Tasker's monitoring APIs as enterprise-ready with professional documentation standards! 🎉
+
+# Active Context: Tasker 2.5.0 - Production Validation & Real-World Examples 🚀
+
+## **Current Work Focus**
+**MAJOR MILESTONE ACHIEVED**: Week 1 deliverable successfully completed with comprehensive Jaeger integration validation script proving Tasker's production-ready observability capabilities.
+
+## **🎯 Tasker 2.5.0 Strategic Plan - Week 1 & 2 COMPLETED** ✅✅
+
+### **Mission**: Prove Production Readiness Through Real-World Integration
+
+**Core Objective**: Create comprehensive validation scripts and demo applications that demonstrate Tasker's enterprise-grade capabilities with real-world workflows, external API integration, and complete observability stack validation.
+
+**Timeline**: 4-week focused development cycle with clear deliverables
+
+#### **✅ Phase 1: Integration Validation Scripts - COMPLETED WITH BREAKTHROUGH SUCCESS** 🎉
+
+**MAJOR MILESTONE**: Both Week 1 and Week 2 deliverables completed with **100% test success rates** and **critical technical breakthrough** in metrics architecture.
+
+##### **✅ Week 1: Jaeger Integration Validator - EXCELLENCE ACHIEVED**
+- **📊 5 Validation Categories**: All PASS (Connection, Workflow Execution, Trace Collection, Span Hierarchy, Trace Correlation)
+- **🔗 Advanced Span Analysis**: 13 total spans with 10 parent-child relationships across 3 workflow patterns
+- **🚀 Real Workflow Testing**: Linear (4 spans), Diamond (5 spans), Parallel (4 spans) patterns
+- **⚡ Performance**: Average 810ms span duration with comprehensive diagnostics
+- **🏆 Production Ready**: RuboCop compliant with StandardError handling
+
+##### **✅ Week 2: Prometheus Integration Validator - BREAKTHROUGH SUCCESS** 🎉
+- **📊 6 Validation Categories**: All PASS (Prometheus Connection, Metrics Endpoint, Workflow Execution, Metrics Collection, Query Validation, Performance Analysis)
+- **🔧 Critical Discovery**: Found and fixed missing MetricsSubscriber bridge component
+- **📈 Metrics Collection**: 3 total metrics (2 Counter, 1 Histogram) with 22 steps completed across 3 tasks
+- **🎯 PromQL Validation**: 4/4 successful queries proving dashboard compatibility
+- **🚀 Event-Driven Architecture**: Validated complete event flow from Publisher → Subscribers → EventRouter → MetricsBackend
+
+##### **🔧 Critical Technical Breakthrough: MetricsSubscriber Architecture Fix**
+
+**Problem Identified**: Tasker's metrics architecture was incomplete - events were being published and creating OpenTelemetry spans, but **zero metrics were being collected** because there was no bridge between the event system and the EventRouter → MetricsBackend system.
+
+**Solution Implemented**:
+- **Created MetricsSubscriber**: `lib/tasker/events/subscribers/metrics_subscriber.rb` bridges events to EventRouter
+- **Automatic Registration**: Integrated into `Orchestration::Coordinator` alongside TelemetrySubscriber
+- **Production Ready**: Comprehensive error handling with graceful degradation
+- **Immediate Impact**: Metrics collection went from 0 to full functionality with authentic workflow metrics
+
+**Strategic Impact**: This breakthrough ensures Tasker's metrics system works correctly in production environments, providing the observability foundation required for enterprise deployment.
+
+## **📋 Current Priorities**
+
+### **Immediate Next Steps (Week 2)**:
+1. **Prometheus Integration Validator**: Create comprehensive metrics validation script
+2. **Performance Benchmarking**: Establish baseline metrics for demo applications
+3. **Documentation Enhancement**: Update README and developer guides
+
+### **Strategic Focus Areas**:
+- **Integration Validation**: Prove enterprise-grade observability capabilities
+- **Real-World Examples**: Create compelling demo applications
+- **Template System**: Enable rapid development of production-ready workflows
+- **Content Creation**: Foundation for blog posts, videos, and conference talks
+
+## **🎯 Success Metrics - Week 1**
+
+- ✅ **Integration Validation**: 100% test pass rate for Jaeger integration
+- ✅ **Code Quality**: RuboCop compliant with enterprise-grade error handling
+- ✅ **Documentation**: Comprehensive README with realistic examples
+- ✅ **Production Readiness**: Robust diagnostics and error reporting
+- ✅ **Developer Experience**: Clear, actionable validation results
+
+**Week 1 Status**: **COMPLETE & EXCELLENT** - Ready for Week 2 Prometheus integration validation!
+
+# Active Context: Demo Application Builder Development - Week 3-4 Phase 2.5.0 🚀
+
+## **Current Work Focus**
+We are implementing **Week 3-4 of the Tasker 2.5.0 strategic plan** - building a comprehensive demo application builder that showcases Tasker's enterprise capabilities. Following the massive success of registry system consolidation (1,479/1,479 tests passing), we're now creating production-ready demo applications to demonstrate Tasker's real-world value.
+
+## **🎯 MAJOR BREAKTHROUGH: Demo Application Builder 95% Complete**
+
+### **✅ Core Infrastructure - COMPLETED**
+
+**Problem**: Need compelling demo applications to showcase Tasker's enterprise workflow orchestration capabilities
+**Solution**: Comprehensive Ruby script-based demo application builder with Rails integration
+
+**🔧 Infrastructure Achievements**:
+
+1. **Thor CLI Framework**:
+   - Complete `scripts/create_tasker_app.rb` with commands: build, list_templates, validate_environment
+   - Professional command-line interface with structured output and progress indicators
+   - Comprehensive error handling and validation at every step
+
+2. **ERB Template System**:
+   - Complete template ecosystem in `scripts/templates/` directory
+   - Task handlers: API, calculation, database, notification step handlers
+   - Task definitions with YAML configuration templates
+   - Configuration templates for Tasker integration
+   - Test templates and comprehensive documentation templates
+
+3. **Rails Integration Mastery**:
+   - Seamless Rails app generation with PostgreSQL database
+   - Tasker gem installation via git source (solving GitHub Package Registry auth)
+   - All 21 Tasker migrations executed successfully
+   - Automatic database views and functions copying (critical discovery!)
+   - Routes mounting and Tasker setup integration
+
+4. **Production-Ready Features**:
+   - Template validation with helpful error messages
+   - Database collision detection and cleanup
+   - Multiple gem path detection methods with robust fallbacks
+   - Structured logging with emojis and clear progress indicators
+
+### **🔍 Critical Technical Discoveries**
+
+1. **ERB Template Syntax Mastery**:
+   - **Problem**: Complex case statements in ERB causing syntax errors
+   - **Solution**: Use single ERB blocks (`<%= case ... end %>`) instead of multiple `<% case %>` `<% when %>` blocks
+   - **Pattern**: Use conditional `<% if %>` blocks for method definitions
+
+2. **Time Method Compatibility**:
+   - **Problem**: `Time.current` is Rails-specific, not available in pure Ruby context
+   - **Solution**: Replace all `Time.current` with `Time.now` for template generation
+   - **Impact**: Templates work in both Rails and pure Ruby environments
+
+3. **Git Source Installation**:
+   - **Problem**: GitHub Package Registry requires authentication even for public packages
+   - **Solution**: Use `git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v2.4.1'`
+   - **Result**: Seamless gem installation without authentication requirements
+
+4. **🚨 CRITICAL INFRASTRUCTURE DISCOVERY**:
+   - **Problem**: `tasker:install:migrations` rake task is incomplete
+   - **Gap**: Does NOT copy required database views and functions from `db/views/` and `db/functions/`
+   - **Impact**: Developer installations fail with missing file errors during migration
+   - **Solution**: Demo builder implements robust copying with multiple detection methods
+
+### **📊 Current Status (95% Complete)**
+
+**✅ COMPLETED INFRASTRUCTURE**:
+- Rails app creation with PostgreSQL ✅
+- Tasker gem installation using git source ✅
+- All 21 migrations executed successfully ✅
+- Database views and functions copied automatically ✅
+- Tasker setup with directories and configuration ✅
+- Routes mounting (`mount Tasker::Engine, at: '/tasker'`) ✅
+- Base task generation using Rails generators (3 tasks: ecommerce, inventory, customer) ✅
+- ERB template syntax fixes for case statements and conditionals ✅
+- Time method compatibility fixes (Time.now vs Time.current) ✅
+
+**🔄 REMAINING (5%)**:
+- Final `Time.now.iso8601` method call issue (trivial fix needed)
+- Complete end-to-end validation with all 3 demo workflows
+- Shell script integration and documentation
+
+## **🚀 Demo Applications Architecture**
+
+### **Business Workflow Patterns**
+1. **E-commerce Order Processing**:
+   - Cart validation via DummyJSON API
+   - Inventory checking with product lookup
+   - Pricing calculation with business rules
+   - Order creation with tracking number generation
+
+2. **Inventory Management**:
+   - Stock level monitoring with automated alerts
+   - Supplier integration for reordering
+   - Warehouse coordination across multiple locations
+   - Real-time inventory updates
+
+3. **Customer Onboarding**:
+   - User registration with validation
+   - Account setup with preferences
+   - Welcome email sequences
+   - Integration with external systems
+
+### **Technical Integration Patterns**
+- **API Integration**: Leverages existing `Tasker::StepHandler::Api` for HTTP operations
+- **Error Handling**: Production-ready retry logic and exponential backoff
+- **Observability**: Complete integration with Jaeger tracing and Prometheus metrics
+- **Structured Logging**: Correlation IDs and comprehensive event tracking
+
+## **🎯 Next Steps Strategy**
+
+### **Phase 1: Complete Demo Builder** 🔧 *IMMEDIATE PRIORITY*
+**Timeline**: 1-2 days
+**Goal**: Finish the final 5% and achieve 100% working demo application builder
+
+**Specific Actions**:
+1. **Fix Final Template Issue**:
+   - Resolve `Time.now.iso8601` method call in ERB templates
+   - Complete end-to-end testing with all 3 demo workflows
+   - Validate generated applications run successfully
+
+2. **Shell Script Integration**:
+   - Update `scripts/install-tasker-app.sh` to use new Thor-based script
+   - Test complete installation flow from curl command
+   - Ensure seamless developer experience
+
+3. **Documentation Excellence**:
+   - Create comprehensive README for demo builder
+   - Document all template customization options
+   - Provide clear usage examples and troubleshooting guide
+
+**Success Criteria**:
+- 100% working demo application generation
+- Sub-5-minute setup time from curl command to running application
+- Complete documentation with examples
+
+### **Phase 2: Infrastructure Fix** 🔧 *HIGH PRIORITY*
+**Timeline**: 1 week
+**Goal**: Address critical infrastructure gap in Tasker installation process
+
+**Specific Actions**:
+1. **New Rake Task Creation**:
+   - Create `tasker:install:database_objects` rake task
+   - Copy `db/views/` and `db/functions/` directories from gem to application
+   - Implement robust gem path detection (reuse demo builder logic)
+
+2. **Documentation Updates**:
+   - Update README.md with correct installation sequence
+   - Update QUICK_START.md with new rake task
+   - Update DEVELOPER_GUIDE.md with comprehensive installation guide
+
+3. **Installation Sequence Fix**:
+   - `rails tasker:install:migrations`
+   - `rails tasker:install:database_objects` (NEW)
+   - `rails db:migrate`
+   - `rails tasker:setup`
+
+**Success Criteria**:
+- Zero installation failures for new developers
+- Complete database objects automatically copied
+- Updated documentation across all guides
+
+### **Phase 3: Demo Application Showcase** 📚 *MEDIUM PRIORITY*
+**Timeline**: 2-3 weeks
+**Goal**: Create compelling content and examples showcasing Tasker capabilities
+
+**Specific Actions**:
+1. **Content Creation**:
+   - Blog posts demonstrating real-world workflow patterns
+   - Video tutorials showing demo application setup and usage
+   - Conference presentation materials
+
+2. **Advanced Examples**:
+   - Complex multi-step workflows with branching logic
+   - Integration patterns with popular APIs and services
+   - Performance optimization examples
+
+3. **Community Building**:
+   - GitHub repository with example applications
+   - Documentation website with interactive examples
+   - Developer community engagement
+
+**Success Criteria**:
+- Compelling demo applications showcasing enterprise capabilities
+- Complete content library for marketing and education
+- Active developer community engagement
+
+## **🎯 Key Success Metrics**
+
+### **Technical Metrics**
+- **Setup Time**: Sub-5-minute demo application generation
+- **Success Rate**: 100% successful installations without manual intervention
+- **Template Quality**: Production-ready generated code with best practices
+- **Integration Coverage**: Complete observability and monitoring integration
+
+### **Developer Experience Metrics**
+- **Installation Success**: Zero failures in developer onboarding
+- **Documentation Quality**: Complete guides with clear examples
+- **Template Customization**: Easy modification for specific use cases
+- **Troubleshooting**: Clear error messages and resolution guides
+
+### **Business Impact Metrics**
+- **Demo Quality**: Enterprise-grade applications showcasing real-world value
+- **Developer Adoption**: Faster onboarding with compelling examples
+- **Content Creation**: Rich library of educational and marketing materials
+- **Community Growth**: Active engagement and contribution from developers
+
+## **🚨 Critical Infrastructure Issue Identified**
+
+### **Database Objects Installation Gap**
+- **Issue**: `tasker:install:migrations` rake task incomplete
+- **Impact**: Developer installations fail with missing database view/function files
+- **Root Cause**: Migrations reference SQL files not copied from gem
+- **Solution**: New `tasker:install:database_objects` rake task required
+- **Priority**: HIGH - affects all new Tasker installations
+
+This discovery represents a significant improvement to the Tasker developer experience and installation reliability.

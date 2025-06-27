@@ -26,7 +26,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.4.1'
+  gem 'tasker', '~> 2.5.0'
 end
 ```
 
@@ -34,6 +34,7 @@ Install and run the migrations:
 
 ```bash
 bundle exec rails tasker:install:migrations
+bundle exec rails tasker:install:database_objects
 bundle exec rails db:migrate
 ```
 

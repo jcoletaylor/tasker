@@ -89,7 +89,7 @@
   
   <dl>
       <dt>Includes:</dt>
-      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span>, <span class='object_link'><a href="AutomaticEventPublishing.html" title="Tasker::StepHandler::AutomaticEventPublishing (module)">AutomaticEventPublishing</a></span></dd>
+      <dd><span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span>, <span class='object_link'><a href="AutomaticEventPublishing.html" title="Tasker::StepHandler::AutomaticEventPublishing (module)">AutomaticEventPublishing</a></span></dd>
   </dl>
   
   
@@ -111,6 +111,8 @@
 
 <p>⚠️ IMPORTANT DEVELOPER GUIDANCE: - NEVER override the handle() method - it’s framework-only code - ALWAYS implement the process() method - that’s your extension point - The handle() method automatically publishes lifecycle events and calls your process() method</p>
 
+<p>📊 STRUCTURED LOGGING AVAILABLE: All step handlers automatically include structured logging capabilities: - Use log_structured() to emit structured logs with correlation IDs - Correlation ID is automatically extracted from the task for traceability - Example: log_structured(level: :info, message: “Processing order”, order_id: order.id)</p>
+
 
   </div>
 </div>
@@ -123,6 +125,12 @@
 </div>
 
 
+
+  <h2>Constant Summary</h2>
+  
+  <h3 class="inherited">Constants included
+     from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">Concerns::StructuredLogging::CORRELATION_ID_KEY</a></span></p>
 
 
   <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
@@ -313,6 +321,18 @@
   
   
   
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id (method)">#correlation_id</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id=-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id= (method)">#correlation_id=</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_exception-instance_method" title="Tasker::Concerns::StructuredLogging#log_exception (method)">#log_exception</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_orchestration_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_orchestration_event (method)">#log_orchestration_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_performance_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_performance_event (method)">#log_performance_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_step_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_step_event (method)">#log_step_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_structured-instance_method" title="Tasker::Concerns::StructuredLogging#log_structured (method)">#log_structured</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_task_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_task_event (method)">#log_task_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#with_correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#with_correlation_id (method)">#with_correlation_id</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
   <h3 class="inherited">Methods included from <span class='object_link'><a href="../Concerns/EventPublisher.html" title="Tasker::Concerns::EventPublisher (module)">Concerns::EventPublisher</a></span></h3>
   <p class="inherited"><span class='object_link'><a href="../Concerns/EventPublisher.html#infer_step_event_type_from_state-instance_method" title="Tasker::Concerns::EventPublisher#infer_step_event_type_from_state (method)">#infer_step_event_type_from_state</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_custom_event-instance_method" title="Tasker::Concerns::EventPublisher#publish_custom_event (method)">#publish_custom_event</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_no_viable_steps-instance_method" title="Tasker::Concerns::EventPublisher#publish_no_viable_steps (method)">#publish_no_viable_steps</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_backoff-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_backoff (method)">#publish_step_backoff</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_before_handle-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_before_handle (method)">#publish_step_before_handle</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_cancelled-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_cancelled (method)">#publish_step_cancelled</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_completed-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_completed (method)">#publish_step_completed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_event_for_context-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_event_for_context (method)">#publish_step_event_for_context</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_failed-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_failed (method)">#publish_step_failed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_retry_requested-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_retry_requested (method)">#publish_step_retry_requested</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_step_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_step_started (method)">#publish_step_started</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_steps_execution_completed-instance_method" title="Tasker::Concerns::EventPublisher#publish_steps_execution_completed (method)">#publish_steps_execution_completed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_steps_execution_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_steps_execution_started (method)">#publish_steps_execution_started</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_completed-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_completed (method)">#publish_task_completed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_enqueue-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_enqueue (method)">#publish_task_enqueue</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_failed-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_failed (method)">#publish_task_failed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_finalization_completed-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_finalization_completed (method)">#publish_task_finalization_completed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_finalization_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_finalization_started (method)">#publish_task_finalization_started</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_pending_transition-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_pending_transition (method)">#publish_task_pending_transition</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_reenqueue_delayed-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_reenqueue_delayed (method)">#publish_task_reenqueue_delayed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_reenqueue_failed-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_reenqueue_failed (method)">#publish_task_reenqueue_failed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_reenqueue_requested-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_reenqueue_requested (method)">#publish_task_reenqueue_requested</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_reenqueue_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_reenqueue_started (method)">#publish_task_reenqueue_started</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_retry_requested-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_retry_requested (method)">#publish_task_retry_requested</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_task_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_task_started (method)">#publish_task_started</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_viable_steps_discovered-instance_method" title="Tasker::Concerns::EventPublisher#publish_viable_steps_discovered (method)">#publish_viable_steps_discovered</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_workflow_state_unclear-instance_method" title="Tasker::Concerns::EventPublisher#publish_workflow_state_unclear (method)">#publish_workflow_state_unclear</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_workflow_step_completed-instance_method" title="Tasker::Concerns::EventPublisher#publish_workflow_step_completed (method)">#publish_workflow_step_completed</a></span>, <span class='object_link'><a href="../Concerns/EventPublisher.html#publish_workflow_task_started-instance_method" title="Tasker::Concerns::EventPublisher#publish_workflow_task_started (method)">#publish_workflow_task_started</a></span></p>
 
@@ -373,12 +393,12 @@
       <pre class="lines">
 
 
-69
-70
-71</pre>
+77
+78
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 69</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 77</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>config:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span>
@@ -421,12 +441,12 @@
       <pre class="lines">
 
 
-178
-179
-180</pre>
+203
+204
+205</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 178</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 203</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span>
   <span class='ivar'>@config</span>
@@ -493,12 +513,12 @@
       <pre class="lines">
 
 
-171
-172
-173</pre>
+196
+197
+198</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 171</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 196</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_custom_event_configuration'>custom_event_configuration</span>
   <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -612,27 +632,47 @@
       <pre class="lines">
 
 
-85
-86
-87
-88
-89
-90
-91
-92
 93
 94
 95
 96
 97
 98
-99</pre>
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 85</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 93</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle'>handle</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
-  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepHandler: Starting execution of step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span>
+    <span class='symbol'>:debug</span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Starting step execution</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+    <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>correlation_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span>
+  <span class='rparen'>)</span>
 
   <span class='comment'># Store initial results state to detect if developer set them manually
 </span>  <span class='id identifier rubyid_initial_results'>initial_results</span> <span class='op'>=</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span>
@@ -643,7 +683,15 @@
   <span class='comment'># Process results using overridable method, respecting developer customization
 </span>  <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
 
-  <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='lbrace'>{</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>StepHandler: Completed execution of step </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>)</span><span class='tstring_end'>&quot;</span></span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span>
+    <span class='symbol'>:debug</span><span class='comma'>,</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Completed step execution</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+    <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+    <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
+    <span class='label'>correlation_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
+    <span class='label'>has_results:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span><span class='period'>.</span><span class='id identifier rubyid_present?'>present?</span>
+  <span class='rparen'>)</span>
+
   <span class='id identifier rubyid_process_output'>process_output</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -769,13 +817,13 @@
       <pre class="lines">
 
 
-118
-119
-120
-121</pre>
+140
+141
+142
+143</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 118</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 140</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_process'>process</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>NotImplementedError</span><span class='comma'>,</span>
@@ -868,28 +916,34 @@
       <pre class="lines">
 
 
-135
-136
-137
-138
-139
-140
-141
-142
-143
-144
-145
-146</pre>
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 135</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/step_handler/base.rb', line 157</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_process_results'>process_results</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_process_output'>process_output</span><span class='comma'>,</span> <span class='id identifier rubyid_initial_results'>initial_results</span><span class='rparen'>)</span>
   <span class='comment'># If developer already set step.results in their process() method, respect it
 </span>  <span class='kw'>if</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_results'>results</span> <span class='op'>!=</span> <span class='id identifier rubyid_initial_results'>initial_results</span>
-    <span class='const'>Rails</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_debug'>debug</span> <span class='kw'>do</span>
-      <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>StepHandler: Developer set custom results in process() method - respecting custom results</span><span class='tstring_end'>&#39;</span></span>
-    <span class='kw'>end</span>
+    <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span>
+      <span class='symbol'>:debug</span><span class='comma'>,</span>
+      <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Developer set custom results in process() method</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+      <span class='label'>step_id:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='comma'>,</span>
+      <span class='label'>step_name:</span> <span class='id identifier rubyid_step'>step</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span>
+    <span class='rparen'>)</span>
     <span class='kw'>return</span>
   <span class='kw'>end</span>
 
@@ -906,7 +960,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jun 26 06:53:39 2025 by
+  Generated on Fri Jun 27 17:34:19 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

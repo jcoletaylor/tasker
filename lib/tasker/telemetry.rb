@@ -38,10 +38,16 @@
 #   enhanced_subscriber.subscribe_to_publisher(publisher)
 
 # Explicitly require telemetry components for predictable loading
+require_relative 'telemetry/metric_types'
 require_relative 'telemetry/event_mapping'
 require_relative 'telemetry/event_router'
-require_relative 'telemetry/metric_types'
 require_relative 'telemetry/metrics_backend'
+require_relative 'telemetry/prometheus_exporter'
+require_relative 'telemetry/export_coordinator'
+require_relative 'telemetry/plugin_registry'
+
+# Require the MetricsSubscriber for automatic event-to-metrics bridging
+require_relative 'events/subscribers/metrics_subscriber'
 
 module Tasker
   module Telemetry

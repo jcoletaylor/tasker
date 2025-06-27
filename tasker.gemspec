@@ -8,8 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors     = ['Pete Taylor']
   spec.email       = ['pete.jc.taylor@hey.com']
   spec.homepage    = 'https://github.com/jcoletaylor/tasker'
-  spec.summary     = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
-  spec.description = 'Tasker Engine makes handling queuable multi-step tasks easy-ish'
+  spec.summary     = 'Enterprise-grade workflow orchestration engine for Rails applications'
+  spec.description = 'Tasker is a comprehensive workflow orchestration engine that provides ' \
+                     'multi-step task processing, dependency management, state machine transitions, ' \
+                     'and enterprise observability features including OpenTelemetry tracing and ' \
+                     'Prometheus metrics for Rails applications.'
   spec.license     = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 3.2.0')
 
@@ -26,10 +29,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'puma', '~> 6.6'
 
   # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
-  spec.add_dependency 'active_model_serializers', '>= 0.10.0'
-  spec.add_dependency 'rack-cors'
+  spec.add_dependency 'active_model_serializers', '~> 0.10', '>= 0.10.0'
+  spec.add_dependency 'rack-cors', '~> 2.0'
 
-  spec.add_dependency 'json-schema', '>= 2.4.0'
+  spec.add_dependency 'json-schema', '~> 2.4', '>= 2.4.0'
 
   spec.add_dependency 'concurrent-ruby', '~> 1.3.5'
   spec.add_dependency 'concurrent-ruby-ext', '~> 1.3.5'
@@ -39,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'dry-validation', '~> 1.10'
 
   spec.add_dependency 'faraday', '~> 2.12.2'
-  spec.add_dependency 'graphql'
+  spec.add_dependency 'graphql', '~> 2.0'
   spec.add_dependency 'jwt', '~> 2.10.0'
 
   spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'

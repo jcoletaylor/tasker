@@ -14,40 +14,42 @@ module <%= @module_namespace %>
     # self.yaml_path method
     # self.config method
     class FetchDataStepHandler < Tasker::StepHandler::Api
-      def call(task, _sequence, _step)
+      def process(task, _sequence, _step)
         input_id = task.context["input_id"]
         connection.get("/data/#{input_id}")
       end
 
-      def handle(_task, _sequence, step)
-        super
+      def process_results(_task, _sequence, step)
+        # Extract the response ID from the API response
         step.results = { response_id: step.results.deep_symbolize_keys.dig(:data, :id) }
       end
     end
 
-    class ProcessDataStepHandler
-      def handle(_task, sequence, step)
+    class ProcessDataStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, _step)
         previous_step = sequence.find_step_by_name("fetch_data")
         response_id = previous_step.results.deep_symbolize_keys.dig(:response_id)
+
         processed_data = {
           processed: true,
           original_data_id: response_id,
-          timestamp: Time.now.iso8601
+          timestamp: Time.now.strftime("%Y%m%dT%H%M%S%z")
         }
-        step.results = { processed_data: processed_data }
+
+        { processed_data: processed_data }
       end
     end
 
-    class CompleteTaskStepHandler
-      def handle(_task, sequence, step)
+    class CompleteTaskStepHandler < Tasker::StepHandler::Base
+      def process(_task, sequence, _step)
         previous_step = sequence.find_step_by_name("process_data")
         processed_data = previous_step.results.deep_symbolize_keys.dig(:processed_data)
 
         # Implement your task completion logic here
-        step.results = {
+        {
           task_completed: true,
           data_id: processed_data[:original_data_id],
-          completion_timestamp: Time.now.iso8601
+          completion_timestamp: Time.now.strftime("%Y%m%dT%H%M%S%z")
         }
       end
     end

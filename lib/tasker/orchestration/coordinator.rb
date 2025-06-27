@@ -100,15 +100,16 @@ module Tasker
         # Set up the telemetry subscriber for comprehensive observability
         def setup_telemetry_subscriber
           # Ensure telemetry subscriber is connected to the lifecycle events system
-
-          if defined?(Tasker::Events::Subscribers::TelemetrySubscriber)
-            Tasker::Events::Publisher.instance.tap do |publisher|
-              Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
-            end
-            Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully')
-          else
-            Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber not available')
+          Tasker::Events::Publisher.instance.tap do |publisher|
+            Tasker::Events::Subscribers::TelemetrySubscriber.subscribe(publisher)
           end
+          Rails.logger.debug('Tasker::Orchestration::Coordinator: TelemetrySubscriber connected successfully')
+
+          # Set up the metrics subscriber for automatic metrics collection via EventRouter
+          Tasker::Events::Publisher.instance.tap do |publisher|
+            Tasker::Events::Subscribers::MetricsSubscriber.subscribe(publisher)
+          end
+          Rails.logger.debug('Tasker::Orchestration::Coordinator: MetricsSubscriber connected successfully')
         rescue StandardError => e
           Rails.logger.error("Tasker::Orchestration::Coordinator: Failed to setup telemetry subscriber: #{e.message}")
         end
