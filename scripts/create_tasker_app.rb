@@ -20,6 +20,7 @@ require 'thor'
 require 'erb'
 require 'fileutils'
 require 'yaml'
+require 'active_support/core_ext/string'
 
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
@@ -133,24 +134,22 @@ class TaskerAppGenerator < Thor
     missing_templates = []
     required_templates.each do |template|
       template_path = File.join(@templates_dir, template)
-      unless File.exist?(template_path)
-        missing_templates << template
-      end
+      missing_templates << template unless File.exist?(template_path)
     end
 
     if missing_templates.any?
-      say "❌ Missing required template files:", :red
+      say '❌ Missing required template files:', :red
       missing_templates.each do |template|
         say "  • #{template}", :red
       end
       say "\n📁 Available templates:", :cyan
       Dir.glob(File.join(@templates_dir, '**', '*.erb')).each do |file|
-        say "  • #{file.sub(@templates_dir + '/', '')}", :cyan
+        say "  • #{file.sub("#{@templates_dir}/", '')}", :cyan
       end
       exit 1
     end
 
-    say "✅ All required templates found", :green
+    say '✅ All required templates found', :green
   end
 
   def confirm_settings
@@ -188,8 +187,8 @@ class TaskerAppGenerator < Thor
 
     # Create Rails API app
     system("rails new #{app_path} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
-    unless $?.success?
-      say "❌ Failed to create Rails app", :red
+    unless $CHILD_STATUS.success?
+      say '❌ Failed to create Rails app', :red
       exit 1
     end
     @app_dir = app_path
@@ -200,17 +199,57 @@ class TaskerAppGenerator < Thor
   def add_tasker_gem
     say '💎 Adding Tasker gem...', :blue
 
-    # Add Tasker gem to Gemfile using git source (no authentication required)
     gemfile_path = File.join(@app_dir, 'Gemfile')
 
-    # Use git source for published version (works without authentication)
+    # First, uncomment the redis gem that's already in the Gemfile by default
+    say '  🔧 Enabling Redis gem...', :cyan
+    gemfile_content = File.read(gemfile_path)
+    redis_uncommented = false
+
+    if gemfile_content.include?('# gem "redis"')
+      updated_content = gemfile_content.gsub('# gem "redis"', 'gem "redis"')
+      File.write(gemfile_path, updated_content)
+      redis_uncommented = true
+      say '  ✓ Redis gem enabled', :green
+    elsif /^\s*gem\s+['"]redis['"]/.match?(gemfile_content)
+      # Redis is already uncommented
+      redis_uncommented = true
+      say '  ✓ Redis gem already enabled', :green
+    else
+      say '  ⚠️  Redis gem not found in default form, will add manually', :yellow
+    end
+
+    # Add Tasker gem to Gemfile using git source (no authentication required)
     tasker_gem_lines = <<~GEMS
 
       # Tasker workflow orchestration
       gem 'tasker', git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
     GEMS
 
-    # Add additional gems needed for demo
+    # Add production-ready infrastructure gems
+    infrastructure_gems = <<~GEMS
+
+      # Production infrastructure for Tasker demo
+    GEMS
+
+    # Only add Redis if we didn't successfully uncomment it
+    infrastructure_gems += "  gem 'redis', '~> 5.0'  # Redis for caching and job queuing\n" unless redis_uncommented
+
+    infrastructure_gems += "  gem 'sidekiq', '~> 7.0'  # Background job processing\n"
+
+    # Add observability gems if observability is enabled
+    observability_gems = ''
+    if options[:observability]
+      observability_gems = <<~GEMS
+
+        # OpenTelemetry observability stack
+        gem 'opentelemetry-sdk'
+        gem 'opentelemetry-instrumentation-all'
+        gem 'opentelemetry-exporter-otlp'
+      GEMS
+    end
+
+    # Add additional utility gems needed for demo
     additional_gems = <<~GEMS
 
       # Additional gems for Tasker demo functionality
@@ -220,10 +259,18 @@ class TaskerAppGenerator < Thor
 
     File.open(gemfile_path, 'a') do |f|
       f.write(tasker_gem_lines)
+      f.write(infrastructure_gems)
+      f.write(observability_gems) if options[:observability]
       f.write(additional_gems)
     end
 
     say '  ✓ Tasker gem added to Gemfile (using git source)', :green
+    say '  ✓ Infrastructure gems added (Sidekiq)', :green
+    if options[:observability]
+      say '  ✓ OpenTelemetry observability gems added', :green
+    else
+      say '  ⚪ Observability gems skipped (use --observability to include)', :cyan
+    end
   end
 
   def setup_tasker_integration
@@ -233,7 +280,7 @@ class TaskerAppGenerator < Thor
       # Bundle install
       say '  📦 Installing gems...', :cyan
       system('bundle install --quiet')
-      unless $?.success?
+      unless $CHILD_STATUS.success?
         say '❌ Failed to install gems', :red
         exit 1
       end
@@ -242,78 +289,26 @@ class TaskerAppGenerator < Thor
       # Install Tasker migrations
       say '  📋 Installing Tasker migrations...', :cyan
       system('bundle exec rails tasker:install:migrations --quiet')
-      unless $?.success?
+      unless $CHILD_STATUS.success?
         say '❌ Failed to install Tasker migrations', :red
         exit 1
       end
       say '  ✓ Tasker migrations installed', :green
 
-      # Copy Tasker database views and functions (required by migrations)
-      say '  📊 Copying Tasker database views and functions...', :cyan
-
-      # Find the Tasker gem path - try multiple methods
-      tasker_gem_path = nil
-
-      # Method 1: Use bundle show
-      tasker_gem_path = `bundle show tasker 2>/dev/null`.strip
-
-      # Method 2: If bundle show fails, try to find it in the Bundler specs
-      if tasker_gem_path.empty?
-        begin
-          require 'bundler'
-          spec = Bundler.load.specs.find { |s| s.name == 'tasker' }
-          tasker_gem_path = spec.full_gem_path if spec
-        rescue => e
-          say "    ⚠️  Could not find Tasker gem path via Bundler: #{e.message}", :yellow
-        end
-      end
-
-      # Method 3: Try loading the gem and finding its root
-      if tasker_gem_path.nil? || tasker_gem_path.empty?
-        begin
-          require 'tasker'
-          tasker_gem_path = Tasker::Engine.root.to_s
-        rescue => e
-          say "    ⚠️  Could not find Tasker gem path via Engine: #{e.message}", :yellow
-        end
-      end
-
-      if tasker_gem_path.nil? || tasker_gem_path.empty?
-        say '    ❌ Could not find Tasker gem path - database views/functions not copied', :red
-        say '    ⚠️  Some migrations may fail', :yellow
-      else
-        say "    📍 Found Tasker gem at: #{tasker_gem_path}", :cyan
-
-        # Copy views directory
-        tasker_views_path = File.join(tasker_gem_path, 'db', 'views')
-        if Dir.exist?(tasker_views_path)
-          FileUtils.cp_r(tasker_views_path, File.join(@app_dir, 'db'))
-          say '    ✓ Database views copied', :green
-        else
-          say "    ⚠️  Views directory not found at #{tasker_views_path}", :yellow
-        end
-
-        # Copy functions directory
-        tasker_functions_path = File.join(tasker_gem_path, 'db', 'functions')
-        if Dir.exist?(tasker_functions_path)
-          FileUtils.cp_r(tasker_functions_path, File.join(@app_dir, 'db'))
-          say '    ✓ Database functions copied', :green
-        else
-          say "    ⚠️  Functions directory not found at #{tasker_functions_path}", :yellow
-        end
-      end
+      # NOTE: Database objects (views/functions) will be installed via rake task after setup
+      say '  📊 Database objects will be installed after Tasker setup...', :cyan
 
       # Setup database
       say '  🗄️  Setting up database...', :cyan
       system('bundle exec rails db:create --quiet')
-      unless $?.success?
+      unless $CHILD_STATUS.success?
         say '❌ Failed to create database', :red
         exit 1
       end
 
       # Run migrations (including Tasker migrations)
       system('bundle exec rails db:migrate --quiet')
-      unless $?.success?
+      unless $CHILD_STATUS.success?
         say '❌ Failed to run migrations', :red
         exit 1
       end
@@ -322,11 +317,22 @@ class TaskerAppGenerator < Thor
       # Run Tasker setup
       say '  🛠️  Running Tasker setup...', :cyan
       system('bundle exec rails tasker:setup --quiet')
-      unless $?.success?
+      unless $CHILD_STATUS.success?
         say '❌ Failed to run Tasker setup', :red
         exit 1
       end
       say '  ✓ Tasker setup completed', :green
+
+      # Install Tasker database objects (views and functions) - now that gem is loaded
+      say '  📊 Installing Tasker database objects...', :cyan
+      system('bundle exec rake tasker:install:database_objects --quiet')
+      if $CHILD_STATUS.success?
+        say '  ✓ Tasker database objects installed', :green
+      else
+        say '❌ Failed to install Tasker database objects', :red
+        say '⚠️  Some migrations may fail without required database views and functions', :yellow
+        say '💡 You can manually run: bundle exec rake tasker:install:database_objects', :cyan
+      end
 
       # Add Tasker engine mount to routes
       say '  🛤️  Setting up Tasker routes...', :cyan
@@ -339,27 +345,25 @@ class TaskerAppGenerator < Thor
 
       routes_content = File.read(routes_file)
 
-      unless routes_content.include?('mount Tasker::Engine')
+      if routes_content.include?('mount Tasker::Engine')
+        say '    ✓ Tasker routes already configured', :green
+      elsif routes_content.include?('Rails.application.routes.draw do')
         # Add Tasker mount to routes - be more careful about the insertion
-        if routes_content =~ /Rails\.application\.routes\.draw do/
-          new_routes = routes_content.gsub(
-            /(Rails\.application\.routes\.draw do\s*\n)/,
-            "\\1  mount Tasker::Engine, at: '/tasker', as: 'tasker'\n"
-          )
+        new_routes = routes_content.gsub(
+          /(Rails\.application\.routes\.draw do\s*\n)/,
+          "\\1  mount Tasker::Engine, at: '/tasker', as: 'tasker'\n"
+        )
 
-          begin
-            File.write(routes_file, new_routes)
-            say '    ✓ Tasker routes added', :green
-          rescue => e
-            say "    ❌ Failed to update routes file: #{e.message}", :red
-            exit 1
-          end
-        else
-          say "    ❌ Could not find Rails.application.routes.draw block in routes file", :red
-          say "    📝 Please manually add: mount Tasker::Engine, at: '/tasker', as: 'tasker'", :yellow
+        begin
+          File.write(routes_file, new_routes)
+          say '    ✓ Tasker routes added', :green
+        rescue StandardError => e
+          say "    ❌ Failed to update routes file: #{e.message}", :red
+          exit 1
         end
       else
-        say '    ✓ Tasker routes already configured', :green
+        say '    ❌ Could not find Rails.application.routes.draw block in routes file', :red
+        say "    📝 Please manually add: mount Tasker::Engine, at: '/tasker', as: 'tasker'", :yellow
       end
     end
   end
@@ -382,7 +386,7 @@ class TaskerAppGenerator < Thor
                         "--steps=#{step_names.join(',')}"
 
         system(generator_cmd)
-        unless $?.success?
+        unless $CHILD_STATUS.success?
           say "❌ Failed to generate #{task_type} task", :red
           exit 1
         end
@@ -438,6 +442,7 @@ class TaskerAppGenerator < Thor
 
       # Write to the same location where the generator put the step handlers
       output_dir = File.join(@app_dir, 'app', 'tasks', task_config[:namespace])
+      FileUtils.mkdir_p(output_dir)
       output_path = File.join(output_dir, "#{step[:name]}_step_handler.rb")
       File.write(output_path, rendered_content)
     end
@@ -482,10 +487,12 @@ class TaskerAppGenerator < Thor
       # This showcases how to configure OpenTelemetry for any compatible backend
       # (Jaeger is used here as an example, but any OTLP-compatible system works)
 
-      # Enable in all environments for demo purposes (in real apps, you'd check Rails.env)
+      if defined?(OpenTelemetry)
         require 'opentelemetry/sdk'
-        require 'opentelemetry/auto_instrumenter'
+        require 'opentelemetry-exporter-otlp'
+        require 'opentelemetry/instrumentation/all'
 
+        # Configure OpenTelemetry
         OpenTelemetry::SDK.configure do |c|
           c.service_name = '#{@app_name}'
           c.service_version = '1.0.0'
@@ -499,15 +506,43 @@ class TaskerAppGenerator < Thor
               )
             )
           )
+
+          # Add the OTLP exporter
+          c.add_span_processor(
+            OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(otlp_exporter)
+          )
+
+          # Configure resource with additional attributes
+          c.resource = OpenTelemetry::SDK::Resources::Resource.create({
+                                                                        'service.name' => '#{@app_name}',
+                                                                        'service.version' => '1.0.0',
+                                                                        'service.framework' => 'tasker'
+                                                                      })
+
+          # Use all auto-instrumentations except Faraday (which has a known bug)
+          # The Faraday instrumentation incorrectly passes Faraday::Response objects instead of status codes
+          # causing "undefined method `to_i' for #<Faraday::Response>" errors
+          c.use_all({ 'OpenTelemetry::Instrumentation::Faraday' => { enabled: false } })
+        end
+      end
+
+      # Add Sidekiq configuration for background job processing
+      if defined?(Sidekiq)
+        Sidekiq.configure_server do |config|
+          config.redis = { url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0') }
         end
 
-        OpenTelemetry::AutoInstrumenter.install
+        Sidekiq.configure_client do |config|
+          config.redis = { url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0') }
+        end
+      end
     RUBY
 
     otel_path = File.join(@app_dir, 'config', 'initializers', 'opentelemetry.rb')
     File.write(otel_path, otel_initializer)
 
     say '  ✓ OpenTelemetry configuration added', :green
+    say '  ✓ Sidekiq configuration added', :green
     say '  📝 Note: Jaeger used as example - any OTLP-compatible backend works', :cyan
   end
 
@@ -530,20 +565,33 @@ class TaskerAppGenerator < Thor
   def display_next_steps
     say "\n🎯 Next Steps:", :green
     say "1. cd #{File.join(@output_dir, @app_name)}", :cyan
-    say '2. bundle exec rails server', :cyan
-    say '3. Visit the generated tasks in app/tasks/', :cyan
-    say '4. Check the enhanced YAML configs in config/tasker/tasks/', :cyan
-    say "5. Test workflows using Tasker's GraphQL or REST APIs", :cyan
+    say '2. Start Redis: redis-server (or use Docker: docker run -d -p 6379:6379 redis)', :cyan
+    say '3. Start Sidekiq: bundle exec sidekiq', :cyan
+    say '4. bundle exec rails server', :cyan
+    say '5. Visit the generated tasks in app/tasks/', :cyan
+    say '6. Check the enhanced YAML configs in config/tasker/tasks/', :cyan
+    say "7. Test workflows using Tasker's GraphQL or REST APIs", :cyan
     say '', :cyan
     say '📖 API Documentation available at:', :green
     say '   • GraphQL: http://localhost:3000/tasker/graphql', :cyan
     say '   • REST API: http://localhost:3000/tasker/api-docs', :cyan
+    say '', :cyan
+    say '🔧 Infrastructure:', :green
+    say '   • Redis: Required for caching and job queuing', :cyan
+    say '   • Sidekiq: Background job processing at /sidekiq', :cyan
+    say '   • Set REDIS_URL environment variable if using non-default Redis', :cyan
+    say '', :cyan
+    say '💡 Database Objects:', :green
+    say '   • Views and functions automatically installed via rake task', :cyan
+    say '   • If installation failed, manually run: bundle exec rake tasker:install:database_objects', :cyan
+    say '   • Required for proper migration execution and database views', :cyan
     say '', :cyan
     return unless options[:observability]
 
     say '📊 Observability:', :green
     say '   • Metrics: http://localhost:3000/tasker/metrics', :cyan
     say '   • Configure OTEL_EXPORTER_OTLP_ENDPOINT for your observability backend', :cyan
+    say '   • Example: export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:14268/api/traces', :cyan
   end
 
   # Generate YAML configuration from templates
@@ -564,7 +612,7 @@ class TaskerAppGenerator < Thor
       say "    📁 Available templates in #{@templates_dir}:", :cyan
       if Dir.exist?(@templates_dir)
         Dir.glob(File.join(@templates_dir, '**', '*.erb')).each do |file|
-          say "      • #{file.sub(@templates_dir + '/', '')}", :cyan
+          say "      • #{file.sub("#{@templates_dir}/", '')}", :cyan
         end
       else
         say "    ❌ Templates directory does not exist: #{@templates_dir}", :red
@@ -580,9 +628,7 @@ class TaskerAppGenerator < Thor
       # Parse YAML and convert to hash with symbol keys for consistency
       yaml_data = YAML.safe_load(rendered_yaml)
 
-      unless yaml_data.is_a?(Hash)
-        raise "Invalid YAML structure - expected Hash, got #{yaml_data.class}"
-      end
+      raise "Invalid YAML structure - expected Hash, got #{yaml_data.class}" unless yaml_data.is_a?(Hash)
 
       # Convert to the expected format with symbol keys where needed
       {
@@ -608,7 +654,7 @@ class TaskerAppGenerator < Thor
         default_dependent_system: yaml_data['default_dependent_system'],
         named_steps: yaml_data['named_steps']
       }
-    rescue => e
+    rescue StandardError => e
       say "    ❌ Error processing template #{yaml_template_path}: #{e.message}", :red
       raise "Failed to load task configuration for #{task_type}: #{e.message}"
     end

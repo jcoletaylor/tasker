@@ -13,7 +13,7 @@ set -e
 
 # Configuration
 GITHUB_REPO="jcoletaylor/tasker"  # Update this to your actual repo
-BRANCH="demo-app-builder"  # or "demo-app-builder"
+BRANCH="demo-app-builder"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/create_tasker_app.rb"
 TEMPLATES_BASE_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/templates"
 TEMP_DIR="/tmp/tasker-app-generator-$$"
@@ -146,6 +146,7 @@ download_templates() {
         "task_handlers/database_step_handler.rb.erb"
         "task_handlers/notification_step_handler.rb.erb"
         "task_definitions/configured_task.rb.erb"
+        "task_definitions/task_handler.rb.erb"
         "task_definitions/ecommerce_task.yaml.erb"
         "task_definitions/inventory_task.yaml.erb"
         "task_definitions/customer_task.yaml.erb"
@@ -223,6 +224,18 @@ main() {
                 custom_args+=("--observability" "false")
                 shift
                 ;;
+            --skip-tests)
+                custom_args+=("--skip-tests" "true")
+                shift
+                ;;
+            --api-base-url)
+                custom_args+=("--api-base-url" "$2")
+                shift 2
+                ;;
+            --api-base-url=*)
+                custom_args+=("--api-base-url" "${1#*=}")
+                shift
+                ;;
             *)
                 custom_args+=("$1")
                 shift
@@ -254,9 +267,19 @@ main() {
     echo
     log_header "Next Steps:"
     echo "1. cd into your new Tasker application directory"
-    echo "2. bundle exec rails server"
-    echo "3. Visit http://localhost:3000/tasker/graphql for GraphQL playground"
-    echo "4. Visit http://localhost:3000/tasker/api-docs for REST API documentation"
+    echo "2. Start Redis: redis-server (or docker run -d -p 6379:6379 redis)"
+    echo "3. Start Sidekiq: bundle exec sidekiq"
+    echo "4. Start Rails: bundle exec rails server"
+    echo "5. Visit http://localhost:3000/tasker/graphql for GraphQL playground"
+    echo "6. Visit http://localhost:3000/tasker/api-docs for REST API documentation"
+    echo "7. Visit http://localhost:3000/tasker/metrics for Prometheus metrics"
+    echo
+    log_header "Infrastructure Ready:"
+    echo "✅ PostgreSQL database with all Tasker migrations"
+    echo "✅ Redis caching and session storage"
+    echo "✅ Sidekiq background job processing"
+    echo "✅ OpenTelemetry observability stack (if enabled)"
+    echo "✅ Complete workflow examples ready to test"
     echo
     echo "For more information, visit: https://github.com/${GITHUB_REPO}"
 }
@@ -278,6 +301,8 @@ show_help() {
     echo "  --output-dir DIR          Directory to create application (default: ./tasker-applications)"
     echo "  --no-observability        Skip OpenTelemetry and Prometheus configuration"
     echo "  --non-interactive         Skip interactive prompts"
+    echo "  --skip-tests              Skip test suite generation"
+    echo "  --api-base-url URL        Base URL for DummyJSON API (default: https://dummyjson.com)"
     echo "  --help                    Show this help message"
     echo
     echo "Examples:"

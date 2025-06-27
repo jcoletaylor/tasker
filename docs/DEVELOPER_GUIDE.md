@@ -1166,6 +1166,7 @@ When using a secondary database, Tasker migrations automatically target the corr
 ```bash
 # Migrations run against the configured Tasker database
 bundle exec rails tasker:install:migrations
+bundle exec rails tasker:install:database_objects
 bundle exec rails db:migrate
 ```
 

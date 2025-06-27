@@ -14,16 +14,16 @@ module <%= namespace.classify %>
 
     # Define step templates for this task
     define_step_templates do |templates|
-      <% steps.each do |step| -%>
+      <% steps.each do |step| %>
       templates.define(
         dependent_system: '<%= namespace %>',
         name: '<%= step[:name] %>',
         description: '<%= step[:description] %>',
-        <% if step[:depends_on_step] -%>
+        <% if step[:depends_on_step] %>
         depends_on_step: '<%= step[:depends_on_step] %>',
-        <% end -%>
+        <% end %>
         handler_class: <%= namespace.classify %>::StepHandlers::<%= step[:name].classify %>StepHandler,
-        <% if step[:api_endpoint] -%>
+        <% if step[:api_endpoint] %>
         handler_config: Tasker::StepHandler::Api::Config.new(
           url: '<%= step[:api_endpoint] %>',
           params: <%= step[:api_params] || '{}' %>,
@@ -34,12 +34,12 @@ module <%= namespace.classify %>
           enable_exponential_backoff: true,
           retry_delay: <%= step[:retry_delay] || 1.0 %>
         ),
-        <% end -%>
+        <% end %>
         default_retryable: <%= step[:retryable] != false %>,
         default_retry_limit: <%= step[:retry_limit] || 3 %>
       )
 
-      <% end -%>
+      <% end %>
     end
 
     # JSON schema for task context validation
@@ -48,14 +48,14 @@ module <%= namespace.classify %>
         type: :object,
         required: <%= required_context_fields.inspect %>,
         properties: {
-          <% context_schema.each do |field, config| -%>
+          <% context_schema.each do |field, config| %>
           <%= field %>: <%= config.inspect %>,
-          <% end -%>
+          <% end %>
         }
       }
     end
 
-    <% if has_annotations -%>
+    <% if has_annotations %>
     # Update annotations after task completion
     def update_annotations(task, _sequence, steps)
       annotatable_steps = steps.filter { |step| step.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
@@ -77,6 +77,6 @@ module <%= namespace.classify %>
         )
       end
     end
-    <% end -%>
+    <% end %>
   end
 end

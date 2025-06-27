@@ -15,18 +15,18 @@ This demo application showcases **Tasker's enterprise workflow orchestration cap
 
 ## Business Workflows Included
 
-<% @tasks.each do |task_type| -%>
+<% @tasks.each do |task_type| %>
 ### <%= task_type.classify %> Workflow
 
 <%= task_description(task_type) %>
 
 **Workflow Steps:**
-<% task_config = load_task_configuration(task_type) -%>
-<% task_config[:steps].each_with_index do |step, index| -%>
+<% task_config = load_task_configuration(task_type) %>
+<% task_config[:steps].each_with_index do |step, index| %>
 <%= index + 1 %>. **<%= step[:name].humanize %>**: <%= step[:description] %>
-<% end -%>
+<% end %>
 
-<% end -%>
+<% end %>
 
 ## Getting Started
 
@@ -35,9 +35,9 @@ This demo application showcases **Tasker's enterprise workflow orchestration cap
 - Ruby <%= RUBY_VERSION %>
 - Rails 7.0+
 - PostgreSQL (configured in `database.yml`)
-<% if options[:observability] -%>
+<% if options[:observability] %>
 - Docker (for Jaeger and Prometheus)
-<% end -%>
+<% end %>
 
 ### Quick Start
 
@@ -57,7 +57,7 @@ This demo application showcases **Tasker's enterprise workflow orchestration cap
    rails server
    ```
 
-<% if options[:observability] -%>
+<% if options[:observability] %>
 4. **Start observability stack (optional):**
    ```bash
    # Start Jaeger
@@ -71,7 +71,7 @@ This demo application showcases **Tasker's enterprise workflow orchestration cap
      -p 9090:9090 \
      prom/prometheus:latest
    ```
-<% end -%>
+<% end %>
 
 ### API Endpoints
 
@@ -97,7 +97,7 @@ The application provides both GraphQL and REST endpoints for workflow management
 
 ### Creating Tasks
 
-<% @tasks.each do |task_type| -%>
+<% @tasks.each do |task_type| %>
 #### <%= task_type.classify %> Workflow
 
 **GraphQL Mutation:**
@@ -107,9 +107,9 @@ mutation {
     taskName: "<%= load_task_configuration(task_type)[:task_name] %>"
     dependentSystem: "<%= task_type %>"
     context: {
-      <% load_task_configuration(task_type)[:required_context_fields].each do |field| -%>
+      <% load_task_configuration(task_type)[:required_context_fields].each do |field| %>
       <%= field %>: "sample_value"
-      <% end -%>
+      <% end %>
     }
   ) {
     task {
@@ -129,14 +129,14 @@ curl -X POST http://localhost:3000/tasker/tasks \
     "task_name": "<%= load_task_configuration(task_type)[:task_name] %>",
     "dependent_system": "<%= task_type %>",
     "context": {
-      <% load_task_configuration(task_type)[:required_context_fields].each do |field| -%>
+      <% load_task_configuration(task_type)[:required_context_fields].each do |field| %>
       "<%= field %>": "sample_value"<%= ',' unless field == load_task_configuration(task_type)[:required_context_fields].last %>
-      <% end -%>
+      <% end %>
     }
   }'
 ```
 
-<% end -%>
+<% end %>
 
 ### Monitoring Task Execution
 
@@ -165,14 +165,14 @@ Each workflow is organized with:
 ```
 app/
 ├── tasks/
-<% @tasks.each do |task_type| -%>
+<% @tasks.each do |task_type| %>
 │   └── <%= task_type %>/
 │       ├── <%= load_task_configuration(task_type)[:task_name] %>_task.rb
 │       └── step_handlers/
-│           <% load_task_configuration(task_type)[:steps].each do |step| -%>
+│           <% load_task_configuration(task_type)[:steps].each do |step| %>
 │           ├── <%= step[:name] %>_step_handler.rb
-│           <% end -%>
-<% end -%>
+│           <% end %>
+<% end %>
 └── config/
     └── initializers/
         └── tasker.rb
@@ -188,7 +188,7 @@ This demo integrates with [DummyJSON](https://dummyjson.com/), a fake REST API p
 
 ## Observability
 
-<% if options[:observability] -%>
+<% if options[:observability] %>
 ### Distributed Tracing (Jaeger)
 
 View distributed traces at: `http://localhost:16686`
@@ -207,12 +207,12 @@ Metrics available at: `http://localhost:3000/tasker/metrics`
 
 Query metrics at: `http://localhost:9090`
 
-<% else -%>
+<% else %>
 ### Basic Telemetry
 
 Structured logging is enabled with correlation IDs for tracking workflow execution across steps.
 
-<% end -%>
+<% end %>
 
 ## Development
 
@@ -254,21 +254,21 @@ Structured logging is enabled with correlation IDs for tracking workflow executi
 
 ### Testing
 
-<% unless options[:skip_tests] -%>
+<% unless options[:skip_tests] %>
 Run the test suite:
 ```bash
 bundle exec rspec
 ```
 
 Test files are organized by workflow in `spec/tasks/`
-<% else -%>
+<% else %>
 Test generation was skipped for this demo. To add tests:
 
 1. Add RSpec to your Gemfile
 2. Create test files in `spec/tasks/`
 3. Use Tasker's testing helpers for workflow validation
 
-<% end -%>
+<% end %>
 
 ## Production Deployment
 
@@ -284,13 +284,13 @@ Test generation was skipped for this demo. To add tests:
 
 ### Environment Variables
 
-<% if options[:observability] -%>
+<% if options[:observability] %>
 ```bash
 # Observability
 JAEGER_ENDPOINT=http://your-jaeger-collector:14268/api/traces
 PROMETHEUS_PUSHGATEWAY=http://your-prometheus:9091
 
-<% end -%>
+<% end %>
 # Database
 DATABASE_URL=postgresql://user:password@host:port/database
 

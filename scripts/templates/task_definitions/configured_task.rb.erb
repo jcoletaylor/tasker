@@ -14,7 +14,7 @@ module <%= namespace.classify %>
     # All step templates, dependencies, and handler configurations
     # are defined in config/tasker/tasks/<%= task_name %>.yaml
 
-    <% if has_annotations -%>
+    <% if has_annotations %>
     # Update annotations after task completion
     # This demonstrates how to add custom annotations to completed tasks
     def update_annotations(task, _sequence, steps)
@@ -52,58 +52,58 @@ module <%= namespace.classify %>
     def extract_business_metrics(step)
       # Extract business-relevant metrics from step results for analytics
       case step.name
-        <% steps.each do |step| -%>
+        <% steps.each do |step| %>
       when '<%= step[:name] %>'
         extract_<%= step[:name] %>_metrics(step.results)
-        <% end -%>
+        <% end %>
       else
         { processed_at: Time.now.strftime("%Y%m%dT%H%M%S%z") }
       end
     end
 
-    <% steps.each do |step| -%>
+    <% steps.each do |step| %>
     def extract_<%= step[:name] %>_metrics(results)
       return {} unless results.is_a?(Hash)
 
-      <% case step[:step_type] -%>
-      <% when 'cart_validation' -%>
-      {
-        products_count: results['products']&.length || 0,
-        total_quantity: results['total_quantity'] || 0,
-        user_id: results['user_id']
-      }
-      <% when 'product_lookup' -%>
-      {
-        availability_status: results['availability'],
-        stock_level: results['stock'],
-        price: results['price']
-      }
-      <% when 'calculation' -%>
-      {
-        final_total: results['final_total'],
-        discount_applied: results['discount_amount'] || 0,
-        tax_amount: results['tax_amount'] || 0
-      }
-      <% when 'order_creation' -%>
-      {
-        order_id: results['order_id'],
-        order_status: results['status'],
-        total_amount: results['total_amount']
-      }
-      <% when 'analysis' -%>
-      {
-        low_stock_count: results['low_stock_count'] || 0,
-        products_analyzed: results['total_products_analyzed'] || 0
-      }
-      <% else -%>
-      {
-        step_type: '<%= step[:step_type] %>',
-        has_data: results.present?
-      }
-      <% end -%>
+      <%= case step[:step_type]
+          when 'cart_validation'
+            %q({
+              products_count: results['products']&.length || 0,
+              total_quantity: results['total_quantity'] || 0,
+              user_id: results['user_id']
+            })
+          when 'product_lookup'
+            %q({
+              availability_status: results['availability'],
+              stock_level: results['stock'],
+              price: results['price']
+            })
+          when 'calculation'
+            %q({
+              final_total: results['final_total'],
+              discount_applied: results['discount_amount'] || 0,
+              tax_amount: results['tax_amount'] || 0
+            })
+          when 'order_creation'
+            %q({
+              order_id: results['order_id'],
+              order_status: results['status'],
+              total_amount: results['total_amount']
+            })
+          when 'analysis'
+            %q({
+              low_stock_count: results['low_stock_count'] || 0,
+              products_analyzed: results['total_products_analyzed'] || 0
+            })
+          else
+            %Q({
+              step_type: '#{step[:step_type]}',
+              has_data: results.present?
+            })
+          end %>
     end
 
-    <% end -%>
-    <% end -%>
+    <% end %>
+    <% end %>
   end
 end

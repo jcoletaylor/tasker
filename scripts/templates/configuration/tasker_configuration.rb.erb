@@ -43,24 +43,24 @@ Tasker.configure do |config|
     telemetry.metrics_endpoint = '/tasker/metrics'
     telemetry.metrics_auth_required = false
 
-    <% if options[:observability] -%>
-    # Prometheus configuration
+    <% if options[:observability] %>
+    # Prometheus configuration (all values in seconds for dry-struct compatibility)
     telemetry.prometheus = {
       endpoint: ENV['PROMETHEUS_ENDPOINT'], # nil disables remote write
       username: ENV['PROMETHEUS_USERNAME'],
       password: ENV['PROMETHEUS_PASSWORD'],
-      job_timeout: 5.minutes,
-      export_timeout: 2.minutes,
+      job_timeout: 300,        # 5 minutes in seconds
+      export_timeout: 120,     # 2 minutes in seconds
       retry_attempts: 3,
-      retention_window: 5.minutes,
-      safety_margin: 1.minute,
+      retention_window: 300,   # 5 minutes in seconds
+      safety_margin: 60,       # 1 minute in seconds
       metric_prefix: 'tasker',
       include_instance_labels: true,
       compression: 'snappy',
       batch_size: 1000,
       skip_if_unavailable: true
     }
-    <% end -%>
+    <% end %>
 
     # Performance monitoring
     telemetry.performance_monitoring_enabled = true
@@ -68,8 +68,8 @@ Tasker.configure do |config|
     telemetry.memory_threshold_mb = 100
     telemetry.event_sampling_rate = 1.0
 
-    # Reduce noise in demo environment
-    telemetry.filter_parameters = %w[password token api_key]
+    # Reduce noise in demo environment (use symbols for proper array type)
+    telemetry.filter_parameters = [:password, :token, :api_key]
     telemetry.filter_mask = '[REDACTED]'
   end
 
@@ -83,7 +83,7 @@ Tasker.configure do |config|
     engine.identity_strategy = :default
     # engine.identity_strategy_class = 'MyApp::CustomIdentityStrategy'
 
-    # Custom events directories
+    # Custom events directories (array of strings)
     engine.custom_events_directories = ['config/tasker/events']
   end
 
@@ -93,31 +93,32 @@ Tasker.configure do |config|
     health.status_requires_authentication = false  # Allow unauthenticated access for demo
     health.ready_requires_authentication = false   # K8s compatibility
 
-    # Timeouts and caching
+    # Timeouts and caching (proper types: Float for timeout, Integer for cache)
     health.readiness_timeout_seconds = 5.0
     health.cache_duration_seconds = 15
   end
 
   # Backoff Configuration
   config.backoff do |backoff|
-    # Default backoff progression (in seconds)
+    # Default backoff progression (array of integers in seconds)
     backoff.default_backoff_seconds = [1, 2, 4, 8, 16, 32]
 
-    # Exponential backoff settings
-    backoff.max_backoff_seconds = 300.0  # 5 minutes maximum
+    # Exponential backoff settings (Integer for max seconds, Float for multiplier)
+    backoff.max_backoff_seconds = 300  # 5 minutes maximum
     backoff.backoff_multiplier = 2.0
 
-    # Jitter to prevent thundering herd
+    # Jitter to prevent thundering herd (Boolean and Float)
     backoff.jitter_enabled = true
     backoff.jitter_max_percentage = 0.1
 
-    # Task reenqueue delays for different states
+    # Task reenqueue delays for different states (hash with symbol keys, integer values)
     backoff.reenqueue_delays = {
       has_ready_steps: 0,              # Immediate processing
       waiting_for_dependencies: 45,    # Moderate delay
       processing: 10                   # Short delay
     }
 
+    # Default values (integers)
     backoff.default_reenqueue_delay = 30
     backoff.buffer_seconds = 5
   end

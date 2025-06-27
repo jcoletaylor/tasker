@@ -34,6 +34,7 @@ Install and run the migrations:
 
 ```bash
 bundle exec rails tasker:install:migrations
+bundle exec rails tasker:install:database_objects
 bundle exec rails db:migrate
 ```
 
