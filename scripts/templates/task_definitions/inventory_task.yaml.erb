@@ -1,0 +1,57 @@
+---
+name: inventory/stock_management
+namespace_name: inventory
+version: 1.0.0
+module_namespace: Inventory
+task_handler_class: StockManagement
+description: "Automated inventory monitoring and reorder management"
+
+default_dependent_system: inventory_system
+
+named_steps:
+  - monitor_stock_levels
+  - identify_low_stock
+
+schema:
+  type: object
+  required:
+    - threshold
+  properties:
+    threshold:
+      type: integer
+    category:
+      type: string
+
+step_templates:
+  - name: monitor_stock_levels
+    description: Check current inventory against thresholds
+    handler_class: Inventory::StepHandlers::MonitorStockLevelsStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/products
+      method: GET
+      params:
+        limit: 100
+
+  - name: identify_low_stock
+    description: Filter products below reorder threshold
+    depends_on_step: monitor_stock_levels
+    handler_class: Inventory::StepHandlers::IdentifyLowStockStepHandler
+
+environments:
+  development:
+    step_templates:
+      - name: monitor_stock_levels
+        handler_config:
+          url: <%= @api_base_url %>/products
+          params:
+            limit: 100
+            debug: true
+
+  production:
+    step_templates:
+      - name: monitor_stock_levels
+        handler_config:
+          url: <%= @api_base_url %>/products
+          params:
+            limit: 100

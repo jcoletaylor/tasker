@@ -1,11 +1,39 @@
-# Tasker 2.5.0 Integration Validation Scripts
+# Tasker 2.5.0 Scripts & Tools
 
-This directory contains comprehensive validation scripts that prove Tasker's production readiness through real-world integration testing with enterprise observability stack components.
+This directory contains comprehensive validation scripts and application generators that prove Tasker's production readiness and provide enterprise-grade development tools.
 
 ## **Strategic Mission**
-Validate Tasker's enterprise-grade capabilities through comprehensive integration testing, demonstrating production readiness with real-world workflows and complete observability stack validation.
+1. **Validate** Tasker's enterprise-grade capabilities through comprehensive integration testing
+2. **Generate** production-ready applications with enterprise templates and best practices
+3. **Demonstrate** real-world workflows with complete observability stack validation
 
-## Available Scripts
+## Available Scripts & Tools
+
+### **🚀 Application Template Generator** 🆕
+**Files**: `create_tasker_app.rb` + `install-tasker-app.sh`
+
+Production-ready application generator that creates complete Tasker applications with enterprise templates.
+
+**Features**:
+- **One-Line Creation**: `curl | bash` installer for instant setup
+- **Enterprise Templates**: E-commerce, inventory, customer management workflows
+- **Production Architecture**: Proper YAML configs, structured logging, observability
+- **Real-World Patterns**: DummyJSON API integration, step handlers, ConfiguredTask pattern
+- **Complete Stack**: Rails generators, comprehensive documentation, test suites
+
+**Quick Start**:
+```bash
+# Interactive creation
+curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash
+
+# Custom application
+curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+  --app-name my-ecommerce-app \
+  --tasks ecommerce \
+  --non-interactive
+```
+
+**Documentation**: See `docs/APPLICATION_GENERATOR.md` for complete details.
 
 ### **🔍 Jaeger Integration Validator** ✅ COMPLETED
 **File**: `validate_jaeger_integration.rb`

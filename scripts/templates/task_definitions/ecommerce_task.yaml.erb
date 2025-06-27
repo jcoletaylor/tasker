@@ -1,0 +1,111 @@
+---
+name: ecommerce/order_processing
+namespace_name: ecommerce
+version: 1.0.0
+module_namespace: Ecommerce
+task_handler_class: OrderProcessing
+description: "Complete e-commerce order processing workflow with DummyJSON integration"
+
+default_dependent_system: ecommerce_system
+
+named_steps:
+  - validate_cart
+  - check_inventory
+  - calculate_pricing
+  - create_order
+
+schema:
+  type: object
+  required:
+    - cart_id
+  properties:
+    cart_id:
+      type: integer
+    user_id:
+      type: integer
+
+step_templates:
+  - name: validate_cart
+    description: Validate cart items against DummyJSON product data
+    handler_class: Ecommerce::StepHandlers::ValidateCartStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/carts/{cart_id}
+      method: GET
+      params:
+        cart_id: 1
+      timeout: 30
+    default_retryable: true
+    default_retry_limit: 3
+
+  - name: check_inventory
+    description: Verify product availability and stock levels
+    depends_on_step: validate_cart
+    handler_class: Ecommerce::StepHandlers::CheckInventoryStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/products/{product_id}
+      method: GET
+      params:
+        product_id: 1
+      timeout: 15
+    default_retryable: true
+    default_retry_limit: 3
+
+  - name: calculate_pricing
+    description: Apply discounts, taxes, and shipping costs
+    depends_on_step: check_inventory
+    handler_class: Ecommerce::StepHandlers::CalculatePricingStepHandler
+
+  - name: create_order
+    description: Generate order record with tracking information
+    depends_on_step: calculate_pricing
+    handler_class: Ecommerce::StepHandlers::CreateOrderStepHandler
+    handler_config:
+      type: api
+      url: <%= @api_base_url %>/orders/add
+      method: POST
+      timeout: 30
+    default_retryable: true
+    default_retry_limit: 2
+
+environments:
+  development:
+    step_templates:
+      - name: validate_cart
+        handler_config:
+          url: <%= @api_base_url %>/carts/{cart_id}
+          params:
+            cart_id: 1
+            debug: true
+
+      - name: check_inventory
+        handler_config:
+          url: <%= @api_base_url %>/products/{product_id}
+          params:
+            product_id: 1
+            debug: true
+
+      - name: create_order
+        handler_config:
+          url: <%= @api_base_url %>/orders/add
+          params:
+            debug: true
+
+  production:
+    step_templates:
+      - name: validate_cart
+        handler_config:
+          url: <%= @api_base_url %>/carts/{cart_id}
+          params:
+            cart_id: 1
+
+      - name: check_inventory
+        handler_config:
+          url: <%= @api_base_url %>/products/{product_id}
+          params:
+            product_id: 1
+
+      - name: create_order
+        handler_config:
+          url: <%= @api_base_url %>/orders/add

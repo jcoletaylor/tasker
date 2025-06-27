@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/event_publisher'
+require_relative '../concerns/structured_logging'
 
 module Tasker
   module StepHandler
@@ -57,10 +58,17 @@ module Tasker
     # - NEVER override the handle() method - it's framework-only code
     # - ALWAYS implement the process() method - that's your extension point
     # - The handle() method automatically publishes lifecycle events and calls your process() method
+    #
+    # 📊  STRUCTURED LOGGING AVAILABLE:
+    # All step handlers automatically include structured logging capabilities:
+    # - Use log_structured() to emit structured logs with correlation IDs
+    # - Correlation ID is automatically extracted from the task for traceability
+    # - Example: log_structured(level: :info, message: "Processing order", order_id: order.id)
     class Base
       # Use prepend to automatically wrap handle methods with event publishing
       prepend AutomaticEventPublishing
       include Tasker::Concerns::EventPublisher
+      include Tasker::Concerns::StructuredLogging
 
       # Creates a new step handler instance
       #
@@ -83,7 +91,13 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The current step being handled
       # @return [Object] The result of processing the step
       def handle(task, sequence, step)
-        Rails.logger.debug { "StepHandler: Starting execution of step #{step.workflow_step_id} (#{step.name})" }
+        log_structured(
+          :debug,
+          "Starting step execution",
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          correlation_id: task.task_id
+        )
 
         # Store initial results state to detect if developer set them manually
         initial_results = step.results
@@ -94,7 +108,15 @@ module Tasker
         # Process results using overridable method, respecting developer customization
         process_results(step, process_output, initial_results)
 
-        Rails.logger.debug { "StepHandler: Completed execution of step #{step.workflow_step_id} (#{step.name})" }
+        log_structured(
+          :debug,
+          "Completed step execution",
+          step_id: step.workflow_step_id,
+          step_name: step.name,
+          correlation_id: task.task_id,
+          has_results: step.results.present?
+        )
+
         process_output
       end
 
@@ -135,9 +157,12 @@ module Tasker
       def process_results(step, process_output, initial_results)
         # If developer already set step.results in their process() method, respect it
         if step.results != initial_results
-          Rails.logger.debug do
-            'StepHandler: Developer set custom results in process() method - respecting custom results'
-          end
+          log_structured(
+            :debug,
+            "Developer set custom results in process() method",
+            step_id: step.workflow_step_id,
+            step_name: step.name
+          )
           return
         end
 
