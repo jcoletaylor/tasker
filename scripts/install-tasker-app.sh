@@ -196,18 +196,48 @@ main() {
     # Make script executable
     chmod +x "$TEMP_DIR/$SCRIPT_NAME"
 
-    # Prepare arguments
-    local script_args=()
-    script_args+=("--templates-dir" "$TEMP_DIR/templates")
+    # Prepare arguments for Thor command structure
+    local script_args=("build")  # Start with the command
+    local app_name=""
+    local custom_args=()
 
-    # Pass through any command line arguments
-    if [ $# -gt 0 ]; then
-        script_args+=("$@")
-    else
-        # Default arguments for one-liner usage
-        script_args+=("build" "my-tasker-app")
-        script_args+=("--interactive" "true")
+    # Always add templates directory
+    custom_args+=("--templates-dir" "$TEMP_DIR/templates")
+
+    # Parse command line arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --app-name)
+                app_name="$2"
+                shift 2
+                ;;
+            --app-name=*)
+                app_name="${1#*=}"
+                shift
+                ;;
+            --non-interactive)
+                custom_args+=("--interactive" "false")
+                shift
+                ;;
+            --no-observability)
+                custom_args+=("--observability" "false")
+                shift
+                ;;
+            *)
+                custom_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Set default app name if not provided
+    if [ -z "$app_name" ]; then
+        app_name="my-tasker-app"
     fi
+
+    # Build final arguments: command + app_name + options
+    script_args+=("$app_name")
+    script_args+=("${custom_args[@]}")
 
     echo
     log_header "Running Tasker Application Generator"

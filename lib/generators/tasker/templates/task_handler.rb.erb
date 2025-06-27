@@ -32,7 +32,7 @@ module <%= @module_namespace %>
         processed_data = {
           processed: true,
           original_data_id: response_id,
-          timestamp: Time.now.iso8601
+          timestamp: Time.now.strftime("%Y%m%dT%H%M%S%z")
         }
         step.results = { processed_data: processed_data }
       end
@@ -47,7 +47,7 @@ module <%= @module_namespace %>
         step.results = {
           task_completed: true,
           data_id: processed_data[:original_data_id],
-          completion_timestamp: Time.now.iso8601
+          completion_timestamp: Time.now.strftime("%Y%m%dT%H%M%S%z")
         }
       end
     end

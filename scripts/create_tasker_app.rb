@@ -23,7 +23,12 @@ require 'yaml'
 
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
-  TASKER_VERSION = '~> 2.5.0' # Use latest stable version
+  TASKER_VERSION = '~> 2.4.1' # Use latest published version
+
+  # Fix Thor deprecation warning
+  def self.exit_on_failure?
+    true
+  end
 
   desc 'build [APP_NAME]', 'Generate a complete Tasker application with enterprise templates'
   option :app_name, default: 'my-tasker-app', desc: 'Name of the generated Tasker application'
@@ -34,7 +39,7 @@ class TaskerAppGenerator < Thor
   option :interactive, type: :boolean, default: true, desc: 'Interactive setup with guided prompts'
   option :skip_tests, type: :boolean, default: false, desc: 'Skip test suite generation'
   option :api_base_url, default: 'https://dummyjson.com', desc: 'Base URL for DummyJSON API (for example workflows)'
-  option :templates_dir, default: nil, desc: 'Directory containing ERB templates (defaults to scripts/templates)'
+  option :templates_dir, default: nil, desc: 'Internal: Directory containing ERB templates', hide: true
 
   def build(app_name = nil)
     @app_name = app_name || options[:app_name]
@@ -47,6 +52,9 @@ class TaskerAppGenerator < Thor
     say "📋 Selected templates: #{@tasks.join(', ')}", :cyan
     say "📍 Output directory: #{@output_dir}", :cyan
     say "🔗 Using Tasker gem version: #{TASKER_VERSION}", :cyan
+
+    # Validate templates directory and required files
+    validate_templates_directory
 
     confirm_settings if options[:interactive]
 
@@ -103,6 +111,48 @@ class TaskerAppGenerator < Thor
 
   private
 
+  def validate_templates_directory
+    say '📋 Validating templates directory...', :blue
+
+    unless Dir.exist?(@templates_dir)
+      say "❌ Templates directory does not exist: #{@templates_dir}", :red
+      exit 1
+    end
+
+    # Check for required template files
+    required_templates = [
+      'task_definitions/ecommerce_task.yaml.erb',
+      'task_definitions/inventory_task.yaml.erb',
+      'task_definitions/customer_task.yaml.erb',
+      'task_handlers/api_step_handler.rb.erb',
+      'task_handlers/calculation_step_handler.rb.erb',
+      'configuration/tasker_configuration.rb.erb',
+      'documentation/README.md.erb'
+    ]
+
+    missing_templates = []
+    required_templates.each do |template|
+      template_path = File.join(@templates_dir, template)
+      unless File.exist?(template_path)
+        missing_templates << template
+      end
+    end
+
+    if missing_templates.any?
+      say "❌ Missing required template files:", :red
+      missing_templates.each do |template|
+        say "  • #{template}", :red
+      end
+      say "\n📁 Available templates:", :cyan
+      Dir.glob(File.join(@templates_dir, '**', '*.erb')).each do |file|
+        say "  • #{file.sub(@templates_dir + '/', '')}", :cyan
+      end
+      exit 1
+    end
+
+    say "✅ All required templates found", :green
+  end
+
   def confirm_settings
     return unless yes?('Continue with these settings? (y/n)')
 
@@ -137,7 +187,11 @@ class TaskerAppGenerator < Thor
     end
 
     # Create Rails API app
-    run "rails new #{app_path} --api --skip-test --skip-bootsnap --skip-listen --quiet"
+    system("rails new #{app_path} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
+    unless $?.success?
+      say "❌ Failed to create Rails app", :red
+      exit 1
+    end
     @app_dir = app_path
 
     say '  ✓ Rails app created', :green
@@ -146,9 +200,15 @@ class TaskerAppGenerator < Thor
   def add_tasker_gem
     say '💎 Adding Tasker gem...', :blue
 
-    # Add Tasker gem to Gemfile (using real gem, not local path)
+    # Add Tasker gem to Gemfile using git source (no authentication required)
     gemfile_path = File.join(@app_dir, 'Gemfile')
-    tasker_gem_line = "\n# Tasker workflow orchestration\ngem 'tasker', '#{TASKER_VERSION}'\n"
+
+    # Use git source for published version (works without authentication)
+    tasker_gem_lines = <<~GEMS
+
+      # Tasker workflow orchestration
+      gem 'tasker', git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
+    GEMS
 
     # Add additional gems needed for demo
     additional_gems = <<~GEMS
@@ -159,11 +219,11 @@ class TaskerAppGenerator < Thor
     GEMS
 
     File.open(gemfile_path, 'a') do |f|
-      f.write(tasker_gem_line)
+      f.write(tasker_gem_lines)
       f.write(additional_gems)
     end
 
-    say '  ✓ Tasker gem added to Gemfile', :green
+    say '  ✓ Tasker gem added to Gemfile (using git source)', :green
   end
 
   def setup_tasker_integration
@@ -172,19 +232,135 @@ class TaskerAppGenerator < Thor
     Dir.chdir(@app_dir) do
       # Bundle install
       say '  📦 Installing gems...', :cyan
-      run 'bundle install --quiet'
+      system('bundle install --quiet')
+      unless $?.success?
+        say '❌ Failed to install gems', :red
+        exit 1
+      end
       say '  ✓ Gems installed', :green
 
-      # Install Tasker using the real generator
-      say '  🛠️  Running Tasker install generator...', :cyan
-      run 'rails generate tasker:install --quiet'
-      say '  ✓ Tasker installed', :green
+      # Install Tasker migrations
+      say '  📋 Installing Tasker migrations...', :cyan
+      system('bundle exec rails tasker:install:migrations --quiet')
+      unless $?.success?
+        say '❌ Failed to install Tasker migrations', :red
+        exit 1
+      end
+      say '  ✓ Tasker migrations installed', :green
+
+      # Copy Tasker database views and functions (required by migrations)
+      say '  📊 Copying Tasker database views and functions...', :cyan
+
+      # Find the Tasker gem path - try multiple methods
+      tasker_gem_path = nil
+
+      # Method 1: Use bundle show
+      tasker_gem_path = `bundle show tasker 2>/dev/null`.strip
+
+      # Method 2: If bundle show fails, try to find it in the Bundler specs
+      if tasker_gem_path.empty?
+        begin
+          require 'bundler'
+          spec = Bundler.load.specs.find { |s| s.name == 'tasker' }
+          tasker_gem_path = spec.full_gem_path if spec
+        rescue => e
+          say "    ⚠️  Could not find Tasker gem path via Bundler: #{e.message}", :yellow
+        end
+      end
+
+      # Method 3: Try loading the gem and finding its root
+      if tasker_gem_path.nil? || tasker_gem_path.empty?
+        begin
+          require 'tasker'
+          tasker_gem_path = Tasker::Engine.root.to_s
+        rescue => e
+          say "    ⚠️  Could not find Tasker gem path via Engine: #{e.message}", :yellow
+        end
+      end
+
+      if tasker_gem_path.nil? || tasker_gem_path.empty?
+        say '    ❌ Could not find Tasker gem path - database views/functions not copied', :red
+        say '    ⚠️  Some migrations may fail', :yellow
+      else
+        say "    📍 Found Tasker gem at: #{tasker_gem_path}", :cyan
+
+        # Copy views directory
+        tasker_views_path = File.join(tasker_gem_path, 'db', 'views')
+        if Dir.exist?(tasker_views_path)
+          FileUtils.cp_r(tasker_views_path, File.join(@app_dir, 'db'))
+          say '    ✓ Database views copied', :green
+        else
+          say "    ⚠️  Views directory not found at #{tasker_views_path}", :yellow
+        end
+
+        # Copy functions directory
+        tasker_functions_path = File.join(tasker_gem_path, 'db', 'functions')
+        if Dir.exist?(tasker_functions_path)
+          FileUtils.cp_r(tasker_functions_path, File.join(@app_dir, 'db'))
+          say '    ✓ Database functions copied', :green
+        else
+          say "    ⚠️  Functions directory not found at #{tasker_functions_path}", :yellow
+        end
+      end
 
       # Setup database
       say '  🗄️  Setting up database...', :cyan
-      run 'rails db:create --quiet'
-      run 'rails db:migrate --quiet'
-      say '  ✓ Database setup', :green
+      system('bundle exec rails db:create --quiet')
+      unless $?.success?
+        say '❌ Failed to create database', :red
+        exit 1
+      end
+
+      # Run migrations (including Tasker migrations)
+      system('bundle exec rails db:migrate --quiet')
+      unless $?.success?
+        say '❌ Failed to run migrations', :red
+        exit 1
+      end
+      say '  ✓ Database setup and migrations completed', :green
+
+      # Run Tasker setup
+      say '  🛠️  Running Tasker setup...', :cyan
+      system('bundle exec rails tasker:setup --quiet')
+      unless $?.success?
+        say '❌ Failed to run Tasker setup', :red
+        exit 1
+      end
+      say '  ✓ Tasker setup completed', :green
+
+      # Add Tasker engine mount to routes
+      say '  🛤️  Setting up Tasker routes...', :cyan
+      routes_file = File.join(@app_dir, 'config', 'routes.rb')
+
+      unless File.exist?(routes_file)
+        say "    ❌ Routes file not found: #{routes_file}", :red
+        exit 1
+      end
+
+      routes_content = File.read(routes_file)
+
+      unless routes_content.include?('mount Tasker::Engine')
+        # Add Tasker mount to routes - be more careful about the insertion
+        if routes_content =~ /Rails\.application\.routes\.draw do/
+          new_routes = routes_content.gsub(
+            /(Rails\.application\.routes\.draw do\s*\n)/,
+            "\\1  mount Tasker::Engine, at: '/tasker', as: 'tasker'\n"
+          )
+
+          begin
+            File.write(routes_file, new_routes)
+            say '    ✓ Tasker routes added', :green
+          rescue => e
+            say "    ❌ Failed to update routes file: #{e.message}", :red
+            exit 1
+          end
+        else
+          say "    ❌ Could not find Rails.application.routes.draw block in routes file", :red
+          say "    📝 Please manually add: mount Tasker::Engine, at: '/tasker', as: 'tasker'", :yellow
+        end
+      else
+        say '    ✓ Tasker routes already configured', :green
+      end
     end
   end
 
@@ -205,7 +381,11 @@ class TaskerAppGenerator < Thor
                         "--description='#{task_config[:description]}' " \
                         "--steps=#{step_names.join(',')}"
 
-        run generator_cmd
+        system(generator_cmd)
+        unless $?.success?
+          say "❌ Failed to generate #{task_type} task", :red
+          exit 1
+        end
         say "    ✓ #{task_type} base task generated", :green
       end
     end
@@ -302,7 +482,7 @@ class TaskerAppGenerator < Thor
       # This showcases how to configure OpenTelemetry for any compatible backend
       # (Jaeger is used here as an example, but any OTLP-compatible system works)
 
-      if Rails.env.development? || Rails.env.production?
+      # Enable in all environments for demo purposes (in real apps, you'd check Rails.env)
         require 'opentelemetry/sdk'
         require 'opentelemetry/auto_instrumenter'
 
@@ -322,7 +502,6 @@ class TaskerAppGenerator < Thor
         end
 
         OpenTelemetry::AutoInstrumenter.install
-      end
     RUBY
 
     otel_path = File.join(@app_dir, 'config', 'initializers', 'opentelemetry.rb')
@@ -380,31 +559,59 @@ class TaskerAppGenerator < Thor
   def load_task_configuration(task_type)
     yaml_template_path = File.join(@templates_dir, 'task_definitions', "#{task_type}_task.yaml.erb")
 
-    raise "Task configuration template not found: #{yaml_template_path}" unless File.exist?(yaml_template_path)
+    unless File.exist?(yaml_template_path)
+      say "    ❌ Task configuration template not found: #{yaml_template_path}", :red
+      say "    📁 Available templates in #{@templates_dir}:", :cyan
+      if Dir.exist?(@templates_dir)
+        Dir.glob(File.join(@templates_dir, '**', '*.erb')).each do |file|
+          say "      • #{file.sub(@templates_dir + '/', '')}", :cyan
+        end
+      else
+        say "    ❌ Templates directory does not exist: #{@templates_dir}", :red
+      end
+      raise "Task configuration template not found: #{yaml_template_path}"
+    end
 
-    # Process ERB template
-    template = ERB.new(File.read(yaml_template_path))
-    rendered_yaml = template.result(binding)
+    begin
+      # Process ERB template
+      template = ERB.new(File.read(yaml_template_path))
+      rendered_yaml = template.result(binding)
 
-    # Parse YAML and convert to hash with symbol keys for consistency
-    yaml_data = YAML.safe_load(rendered_yaml)
+      # Parse YAML and convert to hash with symbol keys for consistency
+      yaml_data = YAML.safe_load(rendered_yaml)
 
-    # Convert to the expected format with symbol keys where needed
-    {
-      namespace: yaml_data['namespace_name'],
-      task_name: yaml_data['name']&.split('/')&.last || yaml_data['task_handler_class']&.underscore,
-      description: yaml_data['description'],
-      required_context_fields: yaml_data.dig('schema', 'required') || [],
-      context_schema: yaml_data.dig('schema', 'properties')&.transform_keys(&:to_sym) || {},
-      has_annotations: false, # Demo-specific field, not from YAML
-      annotation_type_name: nil, # Demo-specific field, not from YAML
-      steps: yaml_data['step_templates']&.map { |step| step.transform_keys(&:to_sym) } || [],
-      module_namespace: yaml_data['module_namespace'],
-      task_handler_class: yaml_data['task_handler_class'],
-      version: yaml_data['version'],
-      default_dependent_system: yaml_data['default_dependent_system'],
-      named_steps: yaml_data['named_steps']
-    }
+      unless yaml_data.is_a?(Hash)
+        raise "Invalid YAML structure - expected Hash, got #{yaml_data.class}"
+      end
+
+      # Convert to the expected format with symbol keys where needed
+      {
+        namespace: yaml_data['namespace_name'] || 'default',
+        task_name: yaml_data['name']&.split('/')&.last || yaml_data['task_handler_class']&.underscore || task_type,
+        description: yaml_data['description'] || "#{task_type.capitalize} workflow",
+        required_context_fields: yaml_data.dig('schema', 'required') || [],
+        context_schema: yaml_data.dig('schema', 'properties')&.transform_keys(&:to_sym) || {},
+        has_annotations: false, # Demo-specific field, not from YAML
+        annotation_type_name: nil, # Demo-specific field, not from YAML
+        steps: yaml_data['step_templates']&.map do |step|
+          step_hash = step.transform_keys(&:to_sym)
+          # Extract step_type and handler_type from handler_config if available
+          if step_hash[:handler_config] && step_hash[:handler_config]['type']
+            step_hash[:step_type] = step_hash[:handler_config]['type']
+            step_hash[:handler_type] = step_hash[:handler_config]['type']
+          end
+          step_hash
+        end || [],
+        module_namespace: yaml_data['module_namespace'],
+        task_handler_class: yaml_data['task_handler_class'],
+        version: yaml_data['version'] || '1.0.0',
+        default_dependent_system: yaml_data['default_dependent_system'],
+        named_steps: yaml_data['named_steps']
+      }
+    rescue => e
+      say "    ❌ Error processing template #{yaml_template_path}: #{e.message}", :red
+      raise "Failed to load task configuration for #{task_type}: #{e.message}"
+    end
   end
 
   # Helper methods for binding context
