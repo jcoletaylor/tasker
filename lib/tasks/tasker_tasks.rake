@@ -92,12 +92,18 @@ namespace :tasker do
         FileUtils.mkdir_p(File.dirname(target_path))
 
         # Copy the entire directory
-        FileUtils.cp_r(source_path, Rails.root.join('db').to_s)
+        begin
+          FileUtils.cp_r(source_path, Rails.root.join('db').to_s)
 
-        # Count files copied
-        file_count = Dir.glob(File.join(target_path, '**', '*')).count { |f| File.file?(f) }
+          # Count files copied
+          file_count = Dir.glob(File.join(target_path, '**', '*')).count { |f| File.file?(f) }
 
-        puts "   ✓ Copied #{file_count} #{directory_name} files to db/#{directory_name}/"
+          puts "   ✓ Copied #{file_count} #{directory_name} files to db/#{directory_name}/"
+        rescue StandardError => e
+          puts "   ❌ Failed to copy #{directory_name} directory: #{e.message}"
+          puts '      Please check file system permissions and available disk space.'
+          exit 1
+        end
       else
         puts "   ⚠️  #{directory_name.capitalize} directory not found at #{source_path}"
         puts '      This may indicate an incomplete Tasker installation'
