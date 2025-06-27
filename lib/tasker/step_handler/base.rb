@@ -93,7 +93,7 @@ module Tasker
       def handle(task, sequence, step)
         log_structured(
           :debug,
-          "Starting step execution",
+          'Starting step execution',
           step_id: step.workflow_step_id,
           step_name: step.name,
           correlation_id: task.task_id
@@ -110,7 +110,7 @@ module Tasker
 
         log_structured(
           :debug,
-          "Completed step execution",
+          'Completed step execution',
           step_id: step.workflow_step_id,
           step_name: step.name,
           correlation_id: task.task_id,
@@ -159,7 +159,7 @@ module Tasker
         if step.results != initial_results
           log_structured(
             :debug,
-            "Developer set custom results in process() method",
+            'Developer set custom results in process() method',
             step_id: step.workflow_step_id,
             step_name: step.name
           )

@@ -76,7 +76,7 @@ curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/demo-app-builder
 
 **Generated Application Includes**:
 - Complete Rails application with PostgreSQL
-- Tasker gem installed via Git source (v2.4.1)
+- Tasker gem installed via Git source (v2.5.0)
 - All 21 Tasker migrations executed
 - Database views and functions copied
 - Redis and Sidekiq configured and ready

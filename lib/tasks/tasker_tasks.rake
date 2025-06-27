@@ -15,7 +15,7 @@ namespace :tasker do
       # Find the Tasker gem path using multiple methods for reliability
       tasker_gem_path = find_tasker_gem_path
 
-      if tasker_gem_path.nil? || tasker_gem_path.empty?
+      if tasker_gem_path.blank?
         puts '❌ Could not find Tasker gem path'
         puts '   Please ensure Tasker gem is properly installed'
         exit 1
@@ -51,7 +51,7 @@ namespace :tasker do
         require 'bundler'
         spec = Bundler.load.specs.find { |s| s.name == 'tasker' }
         return spec.full_gem_path if spec
-      rescue => e
+      rescue StandardError => e
         puts "   ⚠️  Bundler spec detection failed: #{e.message}"
       end
 
@@ -59,7 +59,7 @@ namespace :tasker do
       begin
         require 'tasker'
         return Tasker::Engine.root.to_s if defined?(Tasker::Engine)
-      rescue => e
+      rescue StandardError => e
         puts "   ⚠️  Engine detection failed: #{e.message}"
       end
 
@@ -72,7 +72,7 @@ namespace :tasker do
             return tasker_dir if File.directory?(File.join(tasker_dir, 'db'))
           end
         end
-      rescue => e
+      rescue StandardError => e
         puts "   ⚠️  Gem path detection failed: #{e.message}"
       end
 
@@ -85,22 +85,22 @@ namespace :tasker do
     # @param directory_name [String] Name of directory to copy ('views' or 'functions')
     def copy_database_directory(gem_path, directory_name)
       source_path = File.join(gem_path, 'db', directory_name)
-      target_path = File.join(Rails.root, 'db', directory_name)
+      target_path = Rails.root.join('db', directory_name)
 
       if Dir.exist?(source_path)
         # Create target directory if it doesn't exist
         FileUtils.mkdir_p(File.dirname(target_path))
 
         # Copy the entire directory
-        FileUtils.cp_r(source_path, File.join(Rails.root, 'db'))
+        FileUtils.cp_r(source_path, Rails.root.join('db').to_s)
 
         # Count files copied
-        file_count = Dir.glob(File.join(target_path, '**', '*')).select { |f| File.file?(f) }.size
+        file_count = Dir.glob(File.join(target_path, '**', '*')).count { |f| File.file?(f) }
 
         puts "   ✓ Copied #{file_count} #{directory_name} files to db/#{directory_name}/"
       else
         puts "   ⚠️  #{directory_name.capitalize} directory not found at #{source_path}"
-        puts "      This may indicate an incomplete Tasker installation"
+        puts '      This may indicate an incomplete Tasker installation'
       end
     end
   end

@@ -98,7 +98,7 @@ module Tasker
           metrics_events = @event_router.events_for_backend(:metrics)
 
           # Convert event names to constants and subscribe
-          event_constants = metrics_events.map do |event_name|
+          event_constants = metrics_events.filter_map do |event_name|
             # Convert dot notation to constant path
             constant_path = event_name.split('.').map(&:upcase).join('::')
 
@@ -109,7 +109,7 @@ module Tasker
               # If constant doesn't exist, use the string directly
               event_name
             end
-          end.compact
+          end
 
           # Subscribe to the events
           self.class.subscribe_to(*event_constants) unless event_constants.empty?

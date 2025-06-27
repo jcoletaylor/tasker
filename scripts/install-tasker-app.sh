@@ -13,7 +13,7 @@ set -e
 
 # Configuration
 GITHUB_REPO="jcoletaylor/tasker"  # Update this to your actual repo
-BRANCH="demo-app-builder"
+BRANCH="main"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/create_tasker_app.rb"
 TEMPLATES_BASE_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/templates"
 TEMP_DIR="/tmp/tasker-app-generator-$$"
