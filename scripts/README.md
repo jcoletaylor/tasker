@@ -60,16 +60,16 @@ This directory contains comprehensive validation scripts and application generat
 **Quick Start**:
 ```bash
 # Interactive creation with full observability stack
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 
 # Custom application with specific templates
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name my-ecommerce-app \
   --tasks ecommerce \
   --non-interactive
 
 # Minimal setup without observability
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name minimal-tasker \
   --no-observability \
   --non-interactive

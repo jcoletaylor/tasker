@@ -4,15 +4,15 @@ set -e
 # Tasker Application Template Generator
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 #
 #   Or with options:
-#   curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- --app-name my-tasker-app --templates ecommerce,inventory
+#   curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- --app-name my-tasker-app --templates ecommerce,inventory
 #
 # This script downloads and runs the Tasker application template generator
 
 # Configuration
-GITHUB_REPO="jcoletaylor/tasker"  # Update this to your actual repo
+GITHUB_REPO="tasker-systems/tasker"  # Update this to your actual repo
 BRANCH="main"
 SCRIPT_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/create_tasker_app.rb"
 TEMPLATES_BASE_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/templates"

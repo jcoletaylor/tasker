@@ -29,10 +29,10 @@ Create a complete Tasker application with real-world workflows instantly:
 
 ```bash
 # Interactive setup with full observability stack
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 
 # Or specify your preferences
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name my-tasker-demo \
   --tasks ecommerce,inventory,customer \
   --observability \
@@ -55,7 +55,7 @@ If you have an existing Rails application:
 
 ```bash
 # Add to Gemfile
-echo 'gem "tasker", git: "https://github.com/jcoletaylor/tasker.git", tag: "v2.5.0"' >> Gemfile
+echo 'gem "tasker", git: "https://github.com/tasker-systems/tasker.git", tag: "v2.5.0"' >> Gemfile
 
 # Install and setup
 bundle install

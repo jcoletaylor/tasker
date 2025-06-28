@@ -6,7 +6,7 @@ The Tasker Application Template Generator provides a one-line creation experienc
 
 ### One-Line Creation (Interactive)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 ```
 
 This will:
@@ -17,7 +17,7 @@ This will:
 
 ### Non-Interactive Creation
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name my-tasker-app \
   --tasks ecommerce,inventory \
   --non-interactive
@@ -25,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/ins
 
 ### With Custom Options
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name ecommerce-app \
   --tasks ecommerce \
   --output-dir ./my-applications \
@@ -151,7 +151,7 @@ To host this installer on your GitHub repository:
 
 1. **Update URLs** in `scripts/install-tasker-app.sh`:
    ```bash
-   GITHUB_REPO="jcoletaylor/tasker"  # Your actual GitHub repo
+   GITHUB_REPO="tasker-systems/tasker"  # Your actual GitHub repo
    BRANCH="main"                  # Your default branch
    ```
 
@@ -162,7 +162,7 @@ To host this installer on your GitHub repository:
 
 3. **Test the URLs**:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/main/scripts/install-tasker-app.sh
+   curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh
    ```
 
 ## Example Usage Flows

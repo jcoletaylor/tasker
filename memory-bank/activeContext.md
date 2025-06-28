@@ -588,7 +588,7 @@ We are implementing **Week 3-4 of the Tasker 2.5.0 strategic plan** - building a
 
 3. **Git Source Installation**:
    - **Problem**: GitHub Package Registry requires authentication even for public packages
-   - **Solution**: Use `git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v2.4.1'`
+   - **Solution**: Use `git: 'https://github.com/tasker-systems/tasker.git', tag: 'v2.4.1'`
    - **Result**: Seamless gem installation without authentication requirements
 
 4. **🚨 CRITICAL INFRASTRUCTURE DISCOVERY**:

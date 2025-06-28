@@ -223,7 +223,7 @@ class TaskerAppGenerator < Thor
     tasker_gem_lines = <<~GEMS
 
       # Tasker workflow orchestration
-      gem 'tasker', git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
+      gem 'tasker', git: 'https://github.com/tasker-systems/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
     GEMS
 
     # Add production-ready infrastructure gems
