@@ -144,7 +144,9 @@ RSpec.describe Tasker::CacheStrategy do
 
   describe 'custom detector registration' do
     it 'allows registering custom detectors' do
-      custom_detector = ->(store) { { distributed: true, atomic_increment: true, locking: true, custom_feature: true } }
+      custom_detector = lambda { |_store|
+        { distributed: true, atomic_increment: true, locking: true, custom_feature: true }
+      }
 
       described_class.register_detector(/MyCompany::CustomCacheStore/, custom_detector)
 
@@ -165,7 +167,7 @@ RSpec.describe Tasker::CacheStrategy do
     end
 
     it 'supports string pattern matching' do
-      custom_detector = ->(store) { { distributed: false, atomic_increment: true } }
+      custom_detector = ->(_store) { { distributed: false, atomic_increment: true } }
 
       described_class.register_detector('WeirdCacheStore', custom_detector)
 
@@ -279,7 +281,7 @@ RSpec.describe Tasker::CacheStrategy do
 
     context 'when custom detector fails' do
       it 'logs warning and continues with built-in detection' do
-        failing_detector = ->(store) { raise StandardError.new('Custom detector failed') }
+        failing_detector = ->(_store) { raise StandardError, 'Custom detector failed' }
 
         described_class.register_detector(/FailingStore/, failing_detector)
 
@@ -353,7 +355,7 @@ RSpec.describe Tasker::CacheStrategy do
 
   describe 'detector registry' do
     it 'maintains detector registry across calls' do
-      custom_detector = ->(store) { { custom: true } }
+      custom_detector = ->(_store) { { custom: true } }
 
       described_class.register_detector(/Custom/, custom_detector)
 
@@ -364,7 +366,7 @@ RSpec.describe Tasker::CacheStrategy do
     end
 
     it 'clears detectors when requested' do
-      custom_detector = ->(store) { { custom: true } }
+      custom_detector = ->(_store) { { custom: true } }
 
       described_class.register_detector(/Custom/, custom_detector)
       described_class.clear_detectors!
@@ -379,10 +381,10 @@ RSpec.describe Tasker::CacheStrategy do
     describe 'DISTRIBUTED_CACHE_STORES' do
       it 'includes official Rails distributed cache stores' do
         expect(described_class::DISTRIBUTED_CACHE_STORES).to eq([
-          'ActiveSupport::Cache::RedisCacheStore',
-          'ActiveSupport::Cache::MemCacheStore',
-          'SolidCache::Store'
-        ])
+                                                                  'ActiveSupport::Cache::RedisCacheStore',
+                                                                  'ActiveSupport::Cache::MemCacheStore',
+                                                                  'SolidCache::Store'
+                                                                ])
       end
 
       it 'is frozen for performance' do
@@ -393,10 +395,10 @@ RSpec.describe Tasker::CacheStrategy do
     describe 'ATOMIC_INCREMENT_STORES' do
       it 'includes stores that support atomic increment operations' do
         expect(described_class::ATOMIC_INCREMENT_STORES).to eq([
-          'ActiveSupport::Cache::RedisCacheStore',
-          'ActiveSupport::Cache::MemCacheStore',
-          'SolidCache::Store'
-        ])
+                                                                 'ActiveSupport::Cache::RedisCacheStore',
+                                                                 'ActiveSupport::Cache::MemCacheStore',
+                                                                 'SolidCache::Store'
+                                                               ])
       end
 
       it 'is frozen for performance' do
@@ -407,9 +409,9 @@ RSpec.describe Tasker::CacheStrategy do
     describe 'LOCKING_CAPABLE_STORES' do
       it 'includes stores that support distributed locking' do
         expect(described_class::LOCKING_CAPABLE_STORES).to eq([
-          'ActiveSupport::Cache::RedisCacheStore',
-          'SolidCache::Store'
-        ])
+                                                                'ActiveSupport::Cache::RedisCacheStore',
+                                                                'SolidCache::Store'
+                                                              ])
       end
 
       it 'is frozen for performance' do
@@ -420,10 +422,10 @@ RSpec.describe Tasker::CacheStrategy do
     describe 'LOCAL_CACHE_STORES' do
       it 'includes local-only cache stores' do
         expect(described_class::LOCAL_CACHE_STORES).to eq([
-          'ActiveSupport::Cache::MemoryStore',
-          'ActiveSupport::Cache::FileStore',
-          'ActiveSupport::Cache::NullStore'
-        ])
+                                                            'ActiveSupport::Cache::MemoryStore',
+                                                            'ActiveSupport::Cache::FileStore',
+                                                            'ActiveSupport::Cache::NullStore'
+                                                          ])
       end
 
       it 'is frozen for performance' do
@@ -479,61 +481,61 @@ RSpec.describe Tasker::CacheStrategy do
     end
 
     context 'with built-in store constants (Priority 2)' do
-             it 'detects Redis cache store capabilities' do
-         allow(Rails).to receive(:cache).and_return(redis_store)
-         allow(redis_store).to receive(:respond_to?).and_return(false)
-         allow(redis_store).to receive(:respond_to?).with(:read).and_return(true)
-         allow(redis_store).to receive(:respond_to?).with(:write).and_return(true)
-         strategy = described_class.new
+      it 'detects Redis cache store capabilities' do
+        allow(Rails).to receive(:cache).and_return(redis_store)
+        allow(redis_store).to receive(:respond_to?).and_return(false)
+        allow(redis_store).to receive(:respond_to?).with(:read).and_return(true)
+        allow(redis_store).to receive(:respond_to?).with(:write).and_return(true)
+        strategy = described_class.new
 
-         expect(strategy.supports?(:distributed)).to be(true)
-         expect(strategy.supports?(:atomic_increment)).to be(true)
-         expect(strategy.supports?(:locking)).to be(true)
-         expect(strategy.coordination_mode).to eq(:distributed_atomic)
-       end
+        expect(strategy.supports?(:distributed)).to be(true)
+        expect(strategy.supports?(:atomic_increment)).to be(true)
+        expect(strategy.supports?(:locking)).to be(true)
+        expect(strategy.coordination_mode).to eq(:distributed_atomic)
+      end
 
-       it 'detects Memcache store capabilities' do
-         allow(Rails).to receive(:cache).and_return(memcache_store)
-         allow(memcache_store).to receive(:respond_to?).and_return(false)
-         allow(memcache_store).to receive(:respond_to?).with(:read).and_return(true)
-         allow(memcache_store).to receive(:respond_to?).with(:write).and_return(true)
-         strategy = described_class.new
+      it 'detects Memcache store capabilities' do
+        allow(Rails).to receive(:cache).and_return(memcache_store)
+        allow(memcache_store).to receive(:respond_to?).and_return(false)
+        allow(memcache_store).to receive(:respond_to?).with(:read).and_return(true)
+        allow(memcache_store).to receive(:respond_to?).with(:write).and_return(true)
+        strategy = described_class.new
 
-         expect(strategy.supports?(:distributed)).to be(true)
-         expect(strategy.supports?(:atomic_increment)).to be(true)
-         expect(strategy.supports?(:locking)).to be(false) # Memcache doesn't support locking
-         expect(strategy.coordination_mode).to eq(:distributed_basic)
-       end
+        expect(strategy.supports?(:distributed)).to be(true)
+        expect(strategy.supports?(:atomic_increment)).to be(true)
+        expect(strategy.supports?(:locking)).to be(false) # Memcache doesn't support locking
+        expect(strategy.coordination_mode).to eq(:distributed_basic)
+      end
 
-       it 'detects SolidCache store capabilities' do
-         allow(Rails).to receive(:cache).and_return(solid_cache_store)
-         allow(solid_cache_store).to receive(:respond_to?).and_return(false)
-         allow(solid_cache_store).to receive(:respond_to?).with(:read).and_return(true)
-         allow(solid_cache_store).to receive(:respond_to?).with(:write).and_return(true)
-         strategy = described_class.new
+      it 'detects SolidCache store capabilities' do
+        allow(Rails).to receive(:cache).and_return(solid_cache_store)
+        allow(solid_cache_store).to receive(:respond_to?).and_return(false)
+        allow(solid_cache_store).to receive(:respond_to?).with(:read).and_return(true)
+        allow(solid_cache_store).to receive(:respond_to?).with(:write).and_return(true)
+        strategy = described_class.new
 
-         expect(strategy.supports?(:distributed)).to be(true)
-         expect(strategy.supports?(:atomic_increment)).to be(true)
-         expect(strategy.supports?(:locking)).to be(true)
-         expect(strategy.coordination_mode).to eq(:distributed_atomic)
-       end
+        expect(strategy.supports?(:distributed)).to be(true)
+        expect(strategy.supports?(:atomic_increment)).to be(true)
+        expect(strategy.supports?(:locking)).to be(true)
+        expect(strategy.coordination_mode).to eq(:distributed_atomic)
+      end
 
-       it 'detects local cache stores' do
-         allow(Rails).to receive(:cache).and_return(memory_store)
-         strategy = described_class.new
+      it 'detects local cache stores' do
+        allow(Rails).to receive(:cache).and_return(memory_store)
+        strategy = described_class.new
 
-         expect(strategy.supports?(:distributed)).to be(false)
-         expect(strategy.supports?(:atomic_increment)).to be(false)
-         expect(strategy.supports?(:locking)).to be(false)
-         expect(strategy.coordination_mode).to eq(:local_only)
-       end
+        expect(strategy.supports?(:distributed)).to be(false)
+        expect(strategy.supports?(:atomic_increment)).to be(false)
+        expect(strategy.supports?(:locking)).to be(false)
+        expect(strategy.coordination_mode).to eq(:local_only)
+      end
     end
 
     context 'with custom detectors (Priority 3)' do
       let(:unknown_store) { double('UnknownStore', class: double(name: 'MyCustom::CacheStore')) }
 
       before do
-        described_class.register_detector(/MyCustom/, ->(store) {
+        described_class.register_detector(/MyCustom/, lambda { |_store|
           { distributed: true, custom_feature: 'advanced' }
         })
       end
@@ -571,9 +573,8 @@ RSpec.describe Tasker::CacheStrategy do
     context 'with runtime detection fallback (Priority 4)' do
       let(:unknown_redis_like_store) do
         double('UnknownRedisLikeStore',
-          class: double(name: 'SomeLibrary::RedisBasedCache'),
-          respond_to?: false
-        )
+               class: double(name: 'SomeLibrary::RedisBasedCache'),
+               respond_to?: false)
       end
 
       it 'falls back to runtime pattern detection' do
@@ -591,9 +592,8 @@ RSpec.describe Tasker::CacheStrategy do
 
       it 'provides conservative defaults for completely unknown stores' do
         unknown_store = double('CompletelyUnknownStore',
-          class: double(name: 'Unknown::Store'),
-          respond_to?: false
-        )
+                               class: double(name: 'Unknown::Store'),
+                               respond_to?: false)
 
         allow(Rails).to receive(:cache).and_return(unknown_store)
         strategy = described_class.new
@@ -625,7 +625,7 @@ RSpec.describe Tasker::CacheStrategy do
       allow(complex_store_class).to receive(:name).and_return('ActiveSupport::Cache::RedisCacheStore')
 
       # Register a custom detector that would match (Priority 3)
-      described_class.register_detector(/Redis/, ->(store) {
+      described_class.register_detector(/Redis/, lambda { |_store|
         { locking: true, custom_feature: 'from_detector' }
       })
 
@@ -683,10 +683,10 @@ RSpec.describe Tasker::CacheStrategy do
       allow(broken_store).to receive(:class).and_raise(StandardError.new('Broken'))
 
       allow(Rails).to receive(:cache).and_return(broken_store)
-      expect {
+      expect do
         strategy = described_class.new
         expect(strategy.store_class_name).to eq('Unknown')
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'handles declared capability detection errors gracefully' do
@@ -698,10 +698,10 @@ RSpec.describe Tasker::CacheStrategy do
       allow(broken_class).to receive(:declared_cache_capabilities).and_raise(StandardError.new('Broken'))
 
       allow(Rails).to receive(:cache).and_return(broken_declared_store)
-      expect {
+      expect do
         strategy = described_class.new
         expect(strategy.supports?(:distributed)).to be(false) # Falls back to safe defaults
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 

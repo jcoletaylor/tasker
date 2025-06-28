@@ -199,7 +199,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Detailed status endpoint with comprehensive system metrics Uses system_status.read authorization if authorization is enabled.</p>
+<p>Detailed status endpoint with comprehensive system metrics (cached) Uses system_status.read authorization if authorization is enabled Results are cached using IntelligentCacheManager for performance.</p>
 </div></span>
   
 </li>
@@ -279,16 +279,16 @@
       <pre class="lines">
 
 
-49
-50
-51
 52
 53
 54
-55</pre>
+55
+56
+57
+58</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 49</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 52</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_live'>live</span>
   <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='lbrace'>{</span>
@@ -346,9 +346,6 @@
       <pre class="lines">
 
 
-28
-29
-30
 31
 32
 33
@@ -361,10 +358,13 @@
 40
 41
 42
-43</pre>
+43
+44
+45
+46</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 28</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 31</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_ready'>ready</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health.html" title="Tasker::Health (module)">Health</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health/ReadinessChecker.html" title="Tasker::Health::ReadinessChecker (class)">ReadinessChecker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_ready?'><span class='object_link'><a href="Health/ReadinessChecker.html#ready%3F-class_method" title="Tasker::Health::ReadinessChecker.ready? (method)">ready?</a></span></span>
@@ -399,7 +399,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Detailed status endpoint with comprehensive system metrics Uses system_status.read authorization if authorization is enabled</p>
+<p>Detailed status endpoint with comprehensive system metrics (cached) Uses system_status.read authorization if authorization is enabled Results are cached using IntelligentCacheManager for performance</p>
 
 
   </div>
@@ -431,10 +431,6 @@
       <pre class="lines">
 
 
-61
-62
-63
-64
 65
 66
 67
@@ -446,18 +442,58 @@
 73
 74
 75
-76</pre>
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 61</span>
+      <pre class="code"><span class="info file"># File 'app/controllers/tasker/health_controller.rb', line 65</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
-  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health.html" title="Tasker::Health (module)">Health</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health/StatusChecker.html" title="Tasker::Health::StatusChecker (class)">StatusChecker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_status'><span class='object_link'><a href="Health/StatusChecker.html#status-class_method" title="Tasker::Health::StatusChecker.status (method)">status</a></span></span>
+  <span class='comment'># Use intelligent caching for expensive system status analysis
+</span>  <span class='id identifier rubyid_cache_key'>cache_key</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>tasker:health:detailed_status:</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_system_status_cache_version'>system_status_cache_version</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
 
-  <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span><span class='lbracket'>[</span><span class='symbol'>:healthy</span><span class='rbracket'>]</span>
-    <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:ok</span>
+  <span class='id identifier rubyid_cached_result'>cached_result</span> <span class='op'>=</span> <span class='ivar'>@intelligent_cache</span><span class='period'>.</span><span class='id identifier rubyid_intelligent_fetch'>intelligent_fetch</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_key'>cache_key</span><span class='comma'>,</span> <span class='label'>base_ttl:</span> <span class='int'>60</span><span class='period'>.</span><span class='id identifier rubyid_seconds'>seconds</span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_status_result'>status_result</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health.html" title="Tasker::Health (module)">Health</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Health/StatusChecker.html" title="Tasker::Health::StatusChecker (class)">StatusChecker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_status'><span class='object_link'><a href="Health/StatusChecker.html#status-class_method" title="Tasker::Health::StatusChecker.status (method)">status</a></span></span>
+
+    <span class='comment'># Enhance with additional performance analytics
+</span>    <span class='id identifier rubyid_enhanced_result'>enhanced_result</span> <span class='op'>=</span> <span class='id identifier rubyid_enhance_status_with_analytics'>enhance_status_with_analytics</span><span class='lparen'>(</span><span class='id identifier rubyid_status_result'>status_result</span><span class='rparen'>)</span>
+
+    <span class='lbrace'>{</span>
+      <span class='op'>**</span><span class='id identifier rubyid_enhanced_result'>enhanced_result</span><span class='comma'>,</span>
+      <span class='label'>generated_at:</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='comma'>,</span>
+      <span class='label'>cache_info:</span> <span class='lbrace'>{</span>
+        <span class='label'>cached:</span> <span class='kw'>true</span><span class='comma'>,</span>
+        <span class='label'>cache_key:</span> <span class='id identifier rubyid_cache_key'>cache_key</span><span class='comma'>,</span>
+        <span class='label'>ttl_base:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>5 minutes</span><span class='tstring_end'>&#39;</span></span>
+      <span class='rbrace'>}</span>
+    <span class='rbrace'>}</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>if</span> <span class='id identifier rubyid_cached_result'>cached_result</span><span class='lbracket'>[</span><span class='symbol'>:healthy</span><span class='rbracket'>]</span>
+    <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='id identifier rubyid_cached_result'>cached_result</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:ok</span>
   <span class='kw'>else</span>
-    <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:service_unavailable</span>
+    <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='id identifier rubyid_cached_result'>cached_result</span><span class='comma'>,</span> <span class='label'>status:</span> <span class='symbol'>:service_unavailable</span>
   <span class='kw'>end</span>
 <span class='kw'>rescue</span> <span class='const'>StandardError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='id identifier rubyid_render'>render</span> <span class='label'>json:</span> <span class='lbrace'>{</span>
@@ -477,7 +513,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sat Jun 28 10:14:01 2025 by
+  Generated on Sat Jun 28 15:42:34 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

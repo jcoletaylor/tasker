@@ -710,14 +710,12 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       it 'selects distributed_atomic for full-featured Redis' do
         # Mock a Redis cache strategy during initialization
         mock_strategy = double('CacheStrategy')
-        allow(mock_strategy).to receive(:export_capabilities).and_return({
-          distributed: true,
-          atomic_increment: true,
-          locking: true,
-          ttl_inspection: true
-        })
-        allow(mock_strategy).to receive(:coordination_mode).and_return(:distributed_atomic)
-        allow(mock_strategy).to receive(:instance_id).and_return('test-instance')
+        allow(mock_strategy).to receive_messages(export_capabilities: {
+                                                   distributed: true,
+                                                   atomic_increment: true,
+                                                   locking: true,
+                                                   ttl_inspection: true
+                                                 }, coordination_mode: :distributed_atomic, instance_id: 'test-instance')
         allow(Tasker::CacheStrategy).to receive(:detect).and_return(mock_strategy)
 
         backend = described_class.send(:new)
@@ -728,14 +726,12 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
       it 'selects distributed_basic for basic distributed cache' do
         # Mock a Memcached cache strategy during initialization
         mock_strategy = double('CacheStrategy')
-        allow(mock_strategy).to receive(:export_capabilities).and_return({
-          distributed: true,
-          atomic_increment: true,
-          locking: false,
-          ttl_inspection: true
-        })
-        allow(mock_strategy).to receive(:coordination_mode).and_return(:distributed_basic)
-        allow(mock_strategy).to receive(:instance_id).and_return('test-instance')
+        allow(mock_strategy).to receive_messages(export_capabilities: {
+                                                   distributed: true,
+                                                   atomic_increment: true,
+                                                   locking: false,
+                                                   ttl_inspection: true
+                                                 }, coordination_mode: :distributed_basic, instance_id: 'test-instance')
         allow(Tasker::CacheStrategy).to receive(:detect).and_return(mock_strategy)
 
         backend = described_class.send(:new)

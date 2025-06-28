@@ -64,10 +64,9 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
     it 'uses global configuration when none provided' do
       telemetry_config_mock = double('telemetry_config',
-        parameter_filter: nil,
-        log_format: 'json',
-        log_level: 'info'
-      )
+                                     parameter_filter: nil,
+                                     log_format: 'json',
+                                     log_level: 'info')
       mock_config = double('config', cache: cache_config, telemetry: telemetry_config_mock)
       allow(Tasker).to receive(:configuration).and_return(mock_config)
 
@@ -94,7 +93,8 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
       it 'fetches data using local tracking' do
         # Mock the main cache fetch call to yield and return the test value
-        expect(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+        expect(Rails.cache).to receive(:fetch).with(cache_key,
+                                                    expires_in: kind_of(Integer)).and_yield.and_return(test_value)
 
         # Allow performance metrics update
         allow(manager).to receive(:update_local_performance_metrics)
@@ -107,13 +107,14 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
       it 'uses adaptive TTL calculation' do
         # Mock performance data fetch
         allow(manager).to receive(:fetch_local_performance_data).and_return({
-          hit_rate: 0.8,
-          generation_time: 0.5,
-          access_frequency: 50
-        })
+                                                                              hit_rate: 0.8,
+                                                                              generation_time: 0.5,
+                                                                              access_frequency: 50
+                                                                            })
 
         # Expect adaptive TTL to be used - the actual value will be calculated by CacheConfig
-        expect(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+        expect(Rails.cache).to receive(:fetch).with(cache_key,
+                                                    expires_in: kind_of(Integer)).and_yield.and_return(test_value)
         allow(manager).to receive(:update_local_performance_metrics)
 
         result = manager.intelligent_fetch(cache_key) { test_value }
@@ -137,7 +138,8 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
       it 'handles cache misses correctly' do
         # Mock cache miss (yields) - Rails.cache.fetch calls the block
-        expect(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+        expect(Rails.cache).to receive(:fetch).with(cache_key,
+                                                    expires_in: kind_of(Integer)).and_yield.and_return(test_value)
 
         # Should track as miss (cache_miss = true)
         expect(manager).to receive(:update_local_performance_metrics).with(
@@ -164,12 +166,13 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
       it 'uses atomic coordination for performance tracking' do
         expect(manager_with_redis).to receive(:fetch_atomic_performance_data).and_return({
-          hit_rate: 0.0,
-          generation_time: 0.0,
-          access_frequency: 0
-        })
+                                                                                           hit_rate: 0.0,
+                                                                                           generation_time: 0.0,
+                                                                                           access_frequency: 0
+                                                                                         })
 
-        expect(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+        expect(Rails.cache).to receive(:fetch).with(cache_key,
+                                                    expires_in: kind_of(Integer)).and_yield.and_return(test_value)
 
         expect(manager_with_redis).to receive(:update_atomic_performance_metrics).with(
           cache_key,
@@ -195,12 +198,13 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
       it 'uses basic coordination for performance tracking' do
         expect(manager_with_memcached).to receive(:fetch_basic_performance_data).and_return({
-          hit_rate: 0.0,
-          generation_time: 0.0,
-          access_frequency: 0
-        })
+                                                                                              hit_rate: 0.0,
+                                                                                              generation_time: 0.0,
+                                                                                              access_frequency: 0
+                                                                                            })
 
-        expect(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+        expect(Rails.cache).to receive(:fetch).with(cache_key,
+                                                    expires_in: kind_of(Integer)).and_yield.and_return(test_value)
 
         expect(manager_with_memcached).to receive(:update_basic_performance_metrics).with(
           cache_key,
@@ -225,7 +229,7 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
     end
 
     it 'handles errors gracefully' do
-      allow(Rails.cache).to receive(:delete).and_raise(StandardError.new("Cache error"))
+      allow(Rails.cache).to receive(:delete).and_raise(StandardError.new('Cache error'))
 
       result = manager.clear_performance_data(cache_key)
       expect(result).to be false
@@ -326,14 +330,19 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
 
   describe 'error handling' do
     it 'handles cache errors gracefully' do
-      allow(Rails.cache).to receive(:fetch).and_raise(StandardError.new("Cache connection failed"))
+      allow(Rails.cache).to receive(:fetch).and_raise(StandardError.new('Cache connection failed'))
 
-      expect { manager.intelligent_fetch(cache_key) { test_value } }.to raise_error(StandardError, "Cache connection failed")
+      expect do
+        manager.intelligent_fetch(cache_key) do
+          test_value
+        end
+      end.to raise_error(StandardError, 'Cache connection failed')
     end
 
     it 'handles performance data fetch errors' do
-      allow(Rails.cache).to receive(:read).and_raise(StandardError.new("Read failed"))
-      allow(Rails.cache).to receive(:fetch).with(cache_key, expires_in: kind_of(Integer)).and_yield.and_return(test_value)
+      allow(Rails.cache).to receive(:read).and_raise(StandardError.new('Read failed'))
+      allow(Rails.cache).to receive(:fetch).with(cache_key,
+                                                 expires_in: kind_of(Integer)).and_yield.and_return(test_value)
       allow(manager).to receive(:update_local_performance_metrics)
 
       # Should fall back to default performance data

@@ -188,7 +188,9 @@ module Tasker
           errors << "cache_pressure_threshold must be between 0.0 and 1.0 (got: #{cache_pressure_threshold})"
         end
 
-        errors << "adaptive_calculation_interval must be positive (got: #{adaptive_calculation_interval})" if adaptive_calculation_interval <= 0
+        if adaptive_calculation_interval <= 0
+          errors << "adaptive_calculation_interval must be positive (got: #{adaptive_calculation_interval})"
+        end
 
         errors
       end
@@ -235,7 +237,7 @@ module Tasker
         # Adjust based on access frequency (only if we have meaningful data)
         if access_frequency > 100
           adaptive_ttl *= 1.2  # Frequently accessed, cache longer
-        elsif access_frequency > 0 && access_frequency < 5
+        elsif access_frequency.positive? && access_frequency < 5
           adaptive_ttl *= 0.9  # Rarely accessed, cache shorter
         end
 

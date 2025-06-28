@@ -63,12 +63,11 @@ module Tasker
         @coordination_config = configure_coordination_parameters
 
         log_structured(:info, 'IntelligentCacheManager initialized',
-          coordination_strategy: @coordination_strategy,
-          cache_store: @cache_strategy.store_class_name,
-          instance_id: @instance_id,
-          adaptive_ttl_enabled: @config.adaptive_ttl_enabled,
-          performance_tracking_enabled: @config.performance_tracking_enabled
-        )
+                       coordination_strategy: @coordination_strategy,
+                       cache_store: @cache_strategy.store_class_name,
+                       instance_id: @instance_id,
+                       adaptive_ttl_enabled: @config.adaptive_ttl_enabled,
+                       performance_tracking_enabled: @config.performance_tracking_enabled)
       end
 
       # Main intelligent cache method with distributed coordination
@@ -77,17 +76,17 @@ module Tasker
       # @param base_ttl [Integer] Base TTL in seconds
       # @yield Block that generates the value if cache miss
       # @return [Object] The cached or generated value
-      def intelligent_fetch(cache_key, base_ttl: @config.default_ttl, &block)
+      def intelligent_fetch(cache_key, base_ttl: @config.default_ttl, &)
         case @coordination_strategy
         when :distributed_atomic
-          intelligent_fetch_with_atomic_coordination(cache_key, base_ttl, &block)
+          intelligent_fetch_with_atomic_coordination(cache_key, base_ttl, &)
         when :distributed_basic
-          intelligent_fetch_with_basic_coordination(cache_key, base_ttl, &block)
+          intelligent_fetch_with_basic_coordination(cache_key, base_ttl, &)
         when :local_only
-          intelligent_fetch_with_local_tracking(cache_key, base_ttl, &block)
+          intelligent_fetch_with_local_tracking(cache_key, base_ttl, &)
         else
           # Fallback to basic Rails.cache behavior
-          Rails.cache.fetch(cache_key, expires_in: base_ttl, &block)
+          Rails.cache.fetch(cache_key, expires_in: base_ttl, &)
         end
       end
 
@@ -100,18 +99,16 @@ module Tasker
         Rails.cache.delete(performance_key)
 
         log_structured(:debug, 'Cache performance data cleared',
-          cache_key: cache_key,
-          performance_key: performance_key,
-          coordination_strategy: @coordination_strategy
-        )
+                       cache_key: cache_key,
+                       performance_key: performance_key,
+                       coordination_strategy: @coordination_strategy)
 
         true
       rescue StandardError => e
         log_structured(:error, 'Failed to clear cache performance data',
-          cache_key: cache_key,
-          error: e.message,
-          coordination_strategy: @coordination_strategy
-        )
+                       cache_key: cache_key,
+                       error: e.message,
+                       coordination_strategy: @coordination_strategy)
         false
       end
 
@@ -137,13 +134,13 @@ module Tasker
       # @param base_ttl [Integer] Base TTL in seconds
       # @yield Block that generates the value
       # @return [Object] The cached or generated value
-      def intelligent_fetch_with_atomic_coordination(cache_key, base_ttl, &block)
+      def intelligent_fetch_with_atomic_coordination(cache_key, base_ttl, &)
         # Get performance data atomically (no race conditions)
         performance_data = fetch_atomic_performance_data(cache_key)
         adaptive_ttl = @config.calculate_adaptive_ttl(base_ttl, **performance_data)
 
         # Execute cache fetch with performance tracking
-        result = execute_tracked_fetch(cache_key, adaptive_ttl, &block)
+        result = execute_tracked_fetch(cache_key, adaptive_ttl, &)
 
         # Update performance metrics atomically
         update_atomic_performance_metrics(cache_key, result[:hit], result[:duration])
@@ -157,13 +154,13 @@ module Tasker
       # @param base_ttl [Integer] Base TTL in seconds
       # @yield Block that generates the value
       # @return [Object] The cached or generated value
-      def intelligent_fetch_with_basic_coordination(cache_key, base_ttl, &block)
+      def intelligent_fetch_with_basic_coordination(cache_key, base_ttl, &)
         # Get performance data with read-modify-write pattern
         performance_data = fetch_basic_performance_data(cache_key)
         adaptive_ttl = @config.calculate_adaptive_ttl(base_ttl, **performance_data)
 
         # Execute cache fetch with performance tracking
-        result = execute_tracked_fetch(cache_key, adaptive_ttl, &block)
+        result = execute_tracked_fetch(cache_key, adaptive_ttl, &)
 
         # Update performance metrics with coordination
         update_basic_performance_metrics(cache_key, result[:hit], result[:duration])
@@ -177,13 +174,13 @@ module Tasker
       # @param base_ttl [Integer] Base TTL in seconds
       # @yield Block that generates the value
       # @return [Object] The cached or generated value
-      def intelligent_fetch_with_local_tracking(cache_key, base_ttl, &block)
+      def intelligent_fetch_with_local_tracking(cache_key, base_ttl, &)
         # Get instance-specific performance data
         performance_data = fetch_local_performance_data(cache_key)
         adaptive_ttl = @config.calculate_adaptive_ttl(base_ttl, **performance_data)
 
         # Execute cache fetch with local tracking
-        result = execute_tracked_fetch(cache_key, adaptive_ttl, &block)
+        result = execute_tracked_fetch(cache_key, adaptive_ttl, &)
 
         # Update local performance metrics
         update_local_performance_metrics(cache_key, result[:hit], result[:duration])
@@ -197,7 +194,7 @@ module Tasker
       # @param adaptive_ttl [Integer] Calculated adaptive TTL
       # @yield Block that generates the value
       # @return [Hash] Result with hit status, duration, and value
-      def execute_tracked_fetch(cache_key, adaptive_ttl, &block)
+      def execute_tracked_fetch(cache_key, adaptive_ttl)
         fetch_start = Time.current
         cache_miss = false
 
@@ -212,12 +209,11 @@ module Tasker
         fetch_duration = Time.current - fetch_start
 
         log_structured(:debug, 'Intelligent cache fetch completed',
-          cache_key: cache_key,
-          adaptive_ttl: adaptive_ttl,
-          cache_hit: cache_hit,
-          fetch_duration_ms: (fetch_duration * 1000).round(2),
-          coordination_strategy: @coordination_strategy
-        )
+                       cache_key: cache_key,
+                       adaptive_ttl: adaptive_ttl,
+                       cache_hit: cache_hit,
+                       fetch_duration_ms: (fetch_duration * 1000).round(2),
+                       coordination_strategy: @coordination_strategy)
 
         {
           value: value,
@@ -261,9 +257,8 @@ module Tasker
         }
       rescue StandardError => e
         log_structured(:error, 'Failed to fetch atomic performance data',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
         default_performance_data
       end
 
@@ -283,9 +278,8 @@ module Tasker
         }
       rescue StandardError => e
         log_structured(:error, 'Failed to fetch basic performance data',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
         default_performance_data
       end
 
@@ -305,9 +299,8 @@ module Tasker
         }
       rescue StandardError => e
         log_structured(:error, 'Failed to fetch local performance data',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
         default_performance_data
       end
 
@@ -326,9 +319,8 @@ module Tasker
         Rails.cache.write(performance_key, updated_data, expires_in: PERFORMANCE_RETENTION_PERIOD)
       rescue StandardError => e
         log_structured(:error, 'Failed to update atomic performance metrics',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
       end
 
       # Update performance metrics using basic coordination
@@ -346,9 +338,8 @@ module Tasker
         Rails.cache.write(performance_key, updated_data, expires_in: PERFORMANCE_RETENTION_PERIOD)
       rescue StandardError => e
         log_structured(:error, 'Failed to update basic performance metrics',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
       end
 
       # Update local performance metrics
@@ -365,9 +356,8 @@ module Tasker
         Rails.cache.write(performance_key, updated_data, expires_in: PERFORMANCE_RETENTION_PERIOD)
       rescue StandardError => e
         log_structured(:error, 'Failed to update local performance metrics',
-          cache_key: cache_key,
-          error: e.message
-        )
+                       cache_key: cache_key,
+                       error: e.message)
       end
 
       # Calculate updated performance data with smoothing
@@ -395,10 +385,10 @@ module Tasker
 
         # Update average generation time (only for misses)
         new_avg_generation_time = if cache_hit
-          current_avg_generation_time * decay_rate
-        else
-          (current_avg_generation_time * smoothing_factor) + (duration * (1 - smoothing_factor))
-        end
+                                    current_avg_generation_time * decay_rate
+                                  else
+                                    (current_avg_generation_time * smoothing_factor) + (duration * (1 - smoothing_factor))
+                                  end
 
         # Update access frequency with decay
         new_access_frequency = (current_access_frequency * decay_rate) + 1

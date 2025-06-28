@@ -124,7 +124,7 @@ module Tasker
       #
       # @return [Hash] The internal capabilities hash
       def cache_capabilities_hash
-        @declared_cache_capabilities ||= {}
+        @cache_capabilities_hash ||= {}
       end
     end
   end

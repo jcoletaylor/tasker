@@ -255,7 +255,7 @@ RSpec.describe Tasker::Types::CacheConfig do
 
         result = config.calculate_adaptive_ttl(
           120,
-          hit_rate: 0.2,        # * 0.7 = 84
+          hit_rate: 0.2, # * 0.7 = 84
           generation_time: 0.05, # * 0.8 = 67.2
           access_frequency: 3    # * 0.9 = 60.48
         )

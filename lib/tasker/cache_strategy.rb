@@ -115,53 +115,51 @@ module Tasker
       @detector_registry = DetectorRegistry.instance
       @instance_id = generate_instance_id
 
-          # Handle Rails.cache unavailability gracefully
-    begin
-      @store = Rails.cache
-      @store_class_name = @store.class.name
-    rescue StandardError => e
-      log_structured(:warn, 'Rails.cache unavailable, using fallback configuration',
-        error: e.message,
-        instance_id: @instance_id
-      )
-      @store = nil
-      @store_class_name = 'Unknown'
-      @capabilities = default_capabilities
-      @coordination_mode = :local_only
-      return
-    end
-
-    # Generate cache key that includes store configuration
-    cache_key = generate_cache_key(@store, @store_class_name)
-
-    # Check for cached strategy first
-    cached = @detector_registry.cached_strategy_for(cache_key)
-    if cached
-      @capabilities = cached.capabilities
-      @coordination_mode = cached.coordination_mode
-    else
-      # Detect capabilities with error handling
+      # Handle Rails.cache unavailability gracefully
       begin
-        @capabilities = detect_capabilities
-        @coordination_mode = select_coordination_strategy
-
-        # Cache this strategy instance
-        @detector_registry.cache_strategy_for(cache_key, self)
+        @store = Rails.cache
+        @store_class_name = @store.class.name
       rescue StandardError => e
-        log_structured(:warn, 'Cache detection failed',
-          error: e.message,
-          store_class: @store_class_name,
-          instance_id: @instance_id
-        )
-        log_structured(:warn, 'Falling back to local-only mode')
+        log_structured(:warn, 'Rails.cache unavailable, using fallback configuration',
+                       error: e.message,
+                       instance_id: @instance_id)
+        @store = nil
         @store_class_name = 'Unknown'
         @capabilities = default_capabilities
         @coordination_mode = :local_only
         return
       end
-    end
 
-    log_strategy_detection
+      # Generate cache key that includes store configuration
+      cache_key = generate_cache_key(@store, @store_class_name)
+
+      # Check for cached strategy first
+      cached = @detector_registry.cached_strategy_for(cache_key)
+      if cached
+        @capabilities = cached.capabilities
+        @coordination_mode = cached.coordination_mode
+      else
+        # Detect capabilities with error handling
+        begin
+          @capabilities = detect_capabilities
+          @coordination_mode = select_coordination_strategy
+
+          # Cache this strategy instance
+          @detector_registry.cache_strategy_for(cache_key, self)
+        rescue StandardError => e
+          log_structured(:warn, 'Cache detection failed',
+                         error: e.message,
+                         store_class: @store_class_name,
+                         instance_id: @instance_id)
+          log_structured(:warn, 'Falling back to local-only mode')
+          @store_class_name = 'Unknown'
+          @capabilities = default_capabilities
+          @coordination_mode = :local_only
+          return
+        end
+      end
+
+      log_strategy_detection
     end
 
     # Check if store supports a specific capability
@@ -235,9 +233,8 @@ module Tasker
       declared_capabilities = detect_declared_capabilities
       if declared_capabilities.any?
         log_structured(:debug, 'Using declared cache capabilities',
-          store_class: @store_class_name,
-          declared_capabilities: declared_capabilities
-        )
+                       store_class: @store_class_name,
+                       declared_capabilities: declared_capabilities)
         capabilities.merge!(declared_capabilities)
       end
 
@@ -259,10 +256,9 @@ module Tasker
       capabilities
     rescue StandardError => e
       log_structured(:error, 'Cache capability detection failed',
-        error: e.message,
-        store_class: @store_class_name,
-        instance_id: @instance_id
-      )
+                     error: e.message,
+                     store_class: @store_class_name,
+                     instance_id: @instance_id)
       default_capabilities
     end
 
@@ -284,9 +280,8 @@ module Tasker
       capabilities
     rescue StandardError => e
       log_structured(:warn, 'Failed to detect declared capabilities',
-        error: e.message,
-        store_class: @store_class_name
-      )
+                     error: e.message,
+                     store_class: @store_class_name)
       {}
     end
 
@@ -314,7 +309,7 @@ module Tasker
     # Uses our frozen constants plus runtime introspection for non-capability features
     # @return [Hash] Runtime-detected capabilities
     def detect_runtime_capabilities
-      capabilities = {
+      {
         # Use frozen constants (much more reliable than pattern matching)
         distributed: DISTRIBUTED_CACHE_STORES.include?(@store_class_name),
         atomic_increment: ATOMIC_INCREMENT_STORES.include?(@store_class_name),
@@ -326,8 +321,6 @@ module Tasker
         key_transformation: true, # All Rails cache stores transform keys
         store_class: @store_class_name
       }
-
-      capabilities
     end
 
     # Priority 2: Apply custom detectors to the store
@@ -337,17 +330,16 @@ module Tasker
       custom_capabilities = {}
 
       @detector_registry.custom_detectors.each do |pattern, detector|
-        if pattern.is_a?(Regexp) ? pattern.match?(@store_class_name) : @store_class_name.include?(pattern.to_s)
-          begin
-            detected = detector.call(@store)
-            custom_capabilities.merge!(detected) if detected.is_a?(Hash)
-          rescue StandardError => e
-            log_structured(:warn, 'Custom detector failed',
-              pattern: pattern.inspect,
-              error: e.message,
-              store_class: @store_class_name
-            )
-          end
+        next unless pattern.is_a?(Regexp) ? pattern.match?(@store_class_name) : @store_class_name.include?(pattern.to_s)
+
+        begin
+          detected = detector.call(@store)
+          custom_capabilities.merge!(detected) if detected.is_a?(Hash)
+        rescue StandardError => e
+          log_structured(:warn, 'Custom detector failed',
+                         pattern: pattern.inspect,
+                         error: e.message,
+                         store_class: @store_class_name)
         end
       end
 
@@ -411,6 +403,7 @@ module Tasker
     # @return [Boolean] True if Rails.cache is available
     def rails_cache_available?
       return false if @store.nil?
+
       defined?(Rails) && @store.respond_to?(:read) && @store.respond_to?(:write)
     rescue StandardError
       false
@@ -419,11 +412,10 @@ module Tasker
     # Log strategy detection results
     def log_strategy_detection
       log_structured(:info, 'Cache strategy detected',
-        store_class: @store_class_name,
-        coordination_strategy: @coordination_mode,
-        capabilities: @capabilities,
-        instance_id: @instance_id
-      )
+                     store_class: @store_class_name,
+                     coordination_strategy: @coordination_mode,
+                     capabilities: @capabilities,
+                     instance_id: @instance_id)
     end
   end
 

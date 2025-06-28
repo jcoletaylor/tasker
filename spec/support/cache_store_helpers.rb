@@ -9,9 +9,9 @@ module CacheStoreHelpers
     redis_store: -> { ActiveSupport::Cache::RedisCacheStore.new(url: 'redis://localhost:6379/1') },
     memcache_store: -> { ActiveSupport::Cache::MemCacheStore.new('localhost:11211') },
     memory_store: -> { ActiveSupport::Cache::MemoryStore.new },
-    file_store: -> { ActiveSupport::Cache::FileStore.new(Rails.root.join('tmp', 'cache')) },
+    file_store: -> { ActiveSupport::Cache::FileStore.new(Rails.root.join('tmp/cache')) },
     null_store: -> { ActiveSupport::Cache::NullStore.new },
-    solid_cache_store: -> {
+    solid_cache_store: lambda {
       # Create a Solid Cache store if available
       if defined?(SolidCache)
         SolidCache::Store.new
@@ -104,17 +104,17 @@ module CacheStoreHelpers
         namespace_support: false,
         compression_support: false
       }
-         when :solid_cache_store
-       {
-         distributed: true,
-         atomic_increment: true,
-         locking: true,
-         ttl_inspection: true,
-         store_class: 'SolidCache::Store',
-         key_transformation: true,
-         namespace_support: false,
-         compression_support: false
-       }
+    when :solid_cache_store
+      {
+        distributed: true,
+        atomic_increment: true,
+        locking: true,
+        ttl_inspection: true,
+        store_class: 'SolidCache::Store',
+        key_transformation: true,
+        namespace_support: false,
+        compression_support: false
+      }
     else
       raise ArgumentError, "Unknown cache store type: #{store_type}"
     end
@@ -132,8 +132,8 @@ module CacheStoreHelpers
       :distributed_basic
     when :memory_store, :file_store, :null_store
       :local_only
-         when :solid_cache_store
-       :distributed_atomic
+    when :solid_cache_store
+      :distributed_atomic
     else
       raise ArgumentError, "Unknown cache store type: #{store_type}"
     end
@@ -205,8 +205,6 @@ module CacheStoreHelpers
     allow(store).to receive(:respond_to?).with(:options).and_return(false)
     store
   end
-
-  public
 end
 
 # Include in RSpec configuration

@@ -96,9 +96,9 @@ RSpec.describe Tasker::CacheCapabilities do
 
         capabilities = test_cache_store_class.declared_cache_capabilities
         expect(capabilities).to eq({
-          distributed: true,
-          custom_feature: 'advanced'
-        })
+                                     distributed: true,
+                                     custom_feature: 'advanced'
+                                   })
       end
 
       it 'returns a new hash instance each time' do
@@ -147,10 +147,10 @@ RSpec.describe Tasker::CacheCapabilities do
 
       capabilities = test_cache_store_class.declared_cache_capabilities
       expect(capabilities).to eq({
-        distributed: true,
-        atomic_increment: true,
-        locking: true
-      })
+                                   distributed: true,
+                                   atomic_increment: true,
+                                   locking: true
+                                 })
     end
 
     it 'supports mixing convenience methods with explicit declarations' do
@@ -160,10 +160,10 @@ RSpec.describe Tasker::CacheCapabilities do
 
       capabilities = test_cache_store_class.declared_cache_capabilities
       expect(capabilities).to eq({
-        distributed: true,
-        custom_feature: 'enabled',
-        atomic_increment: true
-      })
+                                   distributed: true,
+                                   custom_feature: 'enabled',
+                                   atomic_increment: true
+                                 })
     end
   end
 
@@ -184,13 +184,13 @@ RSpec.describe Tasker::CacheCapabilities do
     it 'child classes have independent capability declarations' do
       # Parent should only have distributed capability
       expect(parent_cache_store_class.declared_cache_capabilities).to eq({
-        distributed: true
-      })
+                                                                           distributed: true
+                                                                         })
 
       # Child should only have atomic_increment capability (independent of parent)
       expect(child_cache_store_class.declared_cache_capabilities).to eq({
-        atomic_increment: true
-      })
+                                                                          atomic_increment: true
+                                                                        })
     end
   end
 
@@ -216,14 +216,14 @@ RSpec.describe Tasker::CacheCapabilities do
       capabilities = awesome_cache_store_class.declared_cache_capabilities
 
       expect(capabilities).to eq({
-        distributed: true,
-        atomic_increment: true,
-        locking: true,
-        ttl_inspection: true,
-        namespace_support: true,
-        advanced_analytics: true,
-        compression_support: false
-      })
+                                   distributed: true,
+                                   atomic_increment: true,
+                                   locking: true,
+                                   ttl_inspection: true,
+                                   namespace_support: true,
+                                   advanced_analytics: true,
+                                   compression_support: false
+                                 })
     end
 
     it 'integrates with CacheStrategy detection' do
