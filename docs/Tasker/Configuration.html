@@ -310,6 +310,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#execution-instance_method" title="#execution (instance method)">#<strong>execution</strong> {|ConfigurationProxy| ... } &#x21d2; Tasker::Types::ExecutionConfig </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Configure step execution and concurrency settings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#health-instance_method" title="#health (instance method)">#<strong>health</strong> {|ConfigurationProxy| ... } &#x21d2; Tasker::Types::HealthConfig </a>
     
 
@@ -470,7 +494,8 @@
 94
 95
 96
-97</pre>
+97
+98</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 88</span>
@@ -484,6 +509,7 @@
   <span class='ivar'>@health_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/HealthConfig.html" title="Tasker::Types::HealthConfig (class)">HealthConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
   <span class='ivar'>@dependency_graph_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/DependencyGraphConfig.html" title="Tasker::Types::DependencyGraphConfig (class)">DependencyGraphConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
   <span class='ivar'>@backoff_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">BackoffConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
+  <span class='ivar'>@execution_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/ExecutionConfig.html" title="Tasker::Types::ExecutionConfig (class)">ExecutionConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -559,19 +585,19 @@
       <pre class="lines">
 
 
-129
-130
-131
 132
 133
 134
 135
 136
 137
-138</pre>
+138
+139
+140
+141</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 129</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 132</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_auth'>auth</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -632,12 +658,12 @@
       <pre class="lines">
 
 
-142
-143
-144</pre>
+145
+146
+147</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 142</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 145</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_authentication'>authentication</span>
   <span class='ivar'>@auth_config</span>
@@ -709,19 +735,19 @@
       <pre class="lines">
 
 
-225
-226
-227
 228
 229
 230
 231
 232
 233
-234</pre>
+234
+235
+236
+237</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 225</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 228</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_backoff'>backoff</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -800,19 +826,19 @@
       <pre class="lines">
 
 
-150
-151
-152
 153
 154
 155
 156
 157
 158
-159</pre>
+159
+160
+161
+162</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 150</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 153</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_database'>database</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -891,19 +917,19 @@
       <pre class="lines">
 
 
-210
-211
-212
 213
 214
 215
 216
 217
 218
-219</pre>
+219
+220
+221
+222</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 210</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 213</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_dependency_graph'>dependency_graph</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -948,8 +974,6 @@
       <pre class="lines">
 
 
-113
-114
 115
 116
 117
@@ -958,10 +982,13 @@
 120
 121
 122
-123</pre>
+123
+124
+125
+126</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 113</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 115</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_dup'>dup</span>
   <span class='id identifier rubyid_new_config'>new_config</span> <span class='op'>=</span> <span class='kw'>super</span>
@@ -972,6 +999,7 @@
   <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@health_config</span><span class='comma'>,</span> <span class='ivar'>@health_config</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@dependency_graph_config</span><span class='comma'>,</span> <span class='ivar'>@dependency_graph_config</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@backoff_config</span><span class='comma'>,</span> <span class='ivar'>@backoff_config</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new_config'>new_config</span><span class='period'>.</span><span class='id identifier rubyid_instance_variable_set'>instance_variable_set</span><span class='lparen'>(</span><span class='symbol'>:@execution_config</span><span class='comma'>,</span> <span class='ivar'>@execution_config</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_new_config'>new_config</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1041,19 +1069,19 @@
       <pre class="lines">
 
 
-180
-181
-182
 183
 184
 185
 186
 187
 188
-189</pre>
+189
+190
+191
+192</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 180</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 183</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_engine'>engine</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -1064,6 +1092,97 @@
     <span class='ivar'>@engine_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/EngineConfig.html" title="Tasker::Types::EngineConfig (class)">EngineConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_yield_config'>yield_config</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
   <span class='ivar'>@engine_config</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="execution-instance_method">
+  
+    #<strong>execution</strong> {|ConfigurationProxy| ... } &#x21d2; <tt><span class='object_link'><a href="Types/ExecutionConfig.html" title="Tasker::Types::ExecutionConfig (class)">Tasker::Types::ExecutionConfig</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Configure step execution and concurrency settings</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Yields:</p>
+<ul class="yield">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Configuration/ConfigurationProxy.html" title="Tasker::Configuration::ConfigurationProxy (class)">ConfigurationProxy</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>A configuration object for setting execution options</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Types/ExecutionConfig.html" title="Tasker::Types::ExecutionConfig (class)">Tasker::Types::ExecutionConfig</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The execution configuration instance</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 243</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_execution'>execution</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
+    <span class='comment'># For block configuration, we need to create a new instance with the block&#39;s values
+</span>    <span class='id identifier rubyid_current_values'>current_values</span> <span class='op'>=</span> <span class='ivar'>@execution_config</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span>
+    <span class='id identifier rubyid_yield_config'>yield_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Configuration/ConfigurationProxy.html" title="Tasker::Configuration::ConfigurationProxy (class)">ConfigurationProxy</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Configuration/ConfigurationProxy.html#initialize-instance_method" title="Tasker::Configuration::ConfigurationProxy#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_current_values'>current_values</span><span class='rparen'>)</span>
+    <span class='kw'>yield</span><span class='lparen'>(</span><span class='id identifier rubyid_yield_config'>yield_config</span><span class='rparen'>)</span>
+    <span class='ivar'>@execution_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/ExecutionConfig.html" title="Tasker::Types::ExecutionConfig (class)">ExecutionConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_yield_config'>yield_config</span><span class='period'>.</span><span class='id identifier rubyid_to_h'>to_h</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@execution_config</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1132,19 +1251,19 @@
       <pre class="lines">
 
 
-195
-196
-197
 198
 199
 200
 201
 202
 203
-204</pre>
+204
+205
+206
+207</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 195</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 198</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_health'>health</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -1187,7 +1306,6 @@
       <pre class="lines">
 
 
-100
 101
 102
 103
@@ -1195,10 +1313,12 @@
 105
 106
 107
-108</pre>
+108
+109
+110</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 100</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 101</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reset!'>reset!</span>
   <span class='ivar'>@auth_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/AuthConfig.html" title="Tasker::Types::AuthConfig (class)">AuthConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
@@ -1208,6 +1328,7 @@
   <span class='ivar'>@health_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/HealthConfig.html" title="Tasker::Types::HealthConfig (class)">HealthConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
   <span class='ivar'>@dependency_graph_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/DependencyGraphConfig.html" title="Tasker::Types::DependencyGraphConfig (class)">DependencyGraphConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
   <span class='ivar'>@backoff_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">BackoffConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
+  <span class='ivar'>@execution_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Types/ExecutionConfig.html" title="Tasker::Types::ExecutionConfig (class)">ExecutionConfig</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Types/BaseConfig.html#initialize-instance_method" title="Tasker::Types::BaseConfig#initialize (method)">new</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -1276,19 +1397,19 @@
       <pre class="lines">
 
 
-165
-166
-167
 168
 169
 170
 171
 172
 173
-174</pre>
+174
+175
+176
+177</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 168</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry'>telemetry</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
@@ -1367,27 +1488,27 @@
       <pre class="lines">
 
 
-240
-241
-242
-243
-244
-245
-246
-247
-248
-249
-250
-251
-252
-253
-254
-255
-256
-257</pre>
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/configuration.rb', line 258</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_validate_required_settings'>validate_required_settings</span>
   <span class='id identifier rubyid_errors'>errors</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -1417,7 +1538,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jun 27 17:34:19 2025 by
+  Generated on Sat Jun 28 10:13:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -1403,6 +1403,27 @@ CREATE UNIQUE INDEX idx_on_workflow_step_id_sort_key_4d476d7adb ON public.tasker
 
 
 --
+-- Name: idx_step_edges_from_to; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_step_edges_from_to ON public.tasker_workflow_step_edges USING btree (from_step_id, to_step_id);
+
+
+--
+-- Name: idx_step_edges_to_from; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_step_edges_to_from ON public.tasker_workflow_step_edges USING btree (to_step_id, from_step_id);
+
+
+--
+-- Name: idx_step_transitions_current_state; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_step_transitions_current_state ON public.tasker_workflow_step_transitions USING btree (workflow_step_id, most_recent, to_state) WHERE (most_recent = true);
+
+
+--
 -- Name: idx_step_transitions_most_recent; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1456,6 +1477,13 @@ CREATE INDEX idx_workflow_step_edges_dependency_lookup ON public.tasker_workflow
 --
 
 CREATE INDEX idx_workflow_steps_task_grouping_active ON public.tasker_workflow_steps USING btree (task_id, workflow_step_id) WHERE ((processed = false) OR (processed IS NULL));
+
+
+--
+-- Name: idx_workflow_steps_task_readiness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_workflow_steps_task_readiness ON public.tasker_workflow_steps USING btree (task_id, processed, workflow_step_id) WHERE (processed = false);
 
 
 --
@@ -2026,6 +2054,7 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250628125747'),
 ('20250620125540'),
 ('20250620125433'),
 ('20250616222419'),

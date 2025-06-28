@@ -493,19 +493,21 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
     describe '#cleanup_futures_with_memory_management' do
       let(:batch_start_time) { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
 
-      it 'cancels pending futures and waits for running ones' do
-        pending_future = double('pending', pending?: true, running?: false)
-        running_future = double('running', pending?: false, running?: true)
-        completed_future = double('completed', pending?: false, running?: false)
+      it 'cancels pending futures and waits for executing ones' do
+        pending_future = double('pending', pending?: true, incomplete?: true, unscheduled?: false)
+        executing_future = double('executing', pending?: false, incomplete?: true, unscheduled?: false)
+        completed_future = double('completed', pending?: false, incomplete?: false, unscheduled?: false)
+        unscheduled_future = double('unscheduled', pending?: false, incomplete?: true, unscheduled?: true)
 
-        futures = [pending_future, running_future, completed_future]
+        futures = [pending_future, executing_future, completed_future, unscheduled_future]
 
         expect(pending_future).to receive(:cancel)
-        expect(running_future).to receive(:wait).with(1.second)
+        expect(executing_future).to receive(:wait).with(1.second)
+        # completed_future and unscheduled_future should not be touched
         expect(futures).to receive(:clear)
 
         step_executor.send(:cleanup_futures_with_memory_management,
-                           futures, 3, batch_start_time, task.task_id)
+                           futures, 4, batch_start_time, task.task_id)
       end
 
       it 'handles nil futures gracefully' do
@@ -524,7 +526,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
                                                 task_id: task.task_id,
                                                 batch_size: 3,
                                                 pending_cancelled: 0,
-                                                running_waited: 0
+                                                executing_waited: 0
                                               )
         )
 
@@ -624,7 +626,13 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
       it 'handles timeout errors gracefully' do
         # Create mock futures that behave like real Concurrent::Future objects
         timeout_future = double('timeout_future')
-        allow(timeout_future).to receive_messages(pending?: false, running?: false, complete?: false, rejected?: false)
+        allow(timeout_future).to receive_messages(
+          pending?: false,
+          incomplete?: true,
+          unscheduled?: false,
+          rejected?: false,
+          complete?: false # Add missing complete? method
+        )
         allow(timeout_future).to receive(:cancel)
         allow(timeout_future).to receive(:wait)
 
@@ -649,7 +657,13 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
       it 'handles general errors gracefully' do
         # Create mock futures that behave like real Concurrent::Future objects
         error_future = double('error_future')
-        allow(error_future).to receive_messages(pending?: false, running?: false, complete?: false, rejected?: false)
+        allow(error_future).to receive_messages(
+          pending?: false,
+          incomplete?: true,
+          unscheduled?: false,
+          rejected?: false,
+          complete?: false # Add missing complete? method
+        )
         allow(error_future).to receive(:cancel)
         allow(error_future).to receive(:wait)
 

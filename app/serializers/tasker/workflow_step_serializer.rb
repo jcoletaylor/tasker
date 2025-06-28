@@ -19,10 +19,9 @@ module Tasker
     end
 
     def siblings_ids
-      # Siblings are more complex - get all children of this step's parents, excluding self
-      # For now, fall back to original pattern but add comment for future optimization
-      object.siblings.pluck(:workflow_step_id)
-      # TODO: Optimize siblings using DAG view - need to aggregate sibling relationships
+      # Use existing WorkflowStepEdge siblings logic - finds steps with exact same parent set
+      # This is more accurate than just shared parents and leverages well-tested code
+      WorkflowStepEdge.siblings_of(object).pluck(:to_step_id)
     end
   end
 end

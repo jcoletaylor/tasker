@@ -5,6 +5,7 @@ require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/structured_logging'
 require_relative '../concerns/event_publisher'
 require_relative '../types/step_sequence'
+require_relative 'future_state_analyzer'
 
 module Tasker
   module Orchestration
@@ -20,24 +21,13 @@ module Tasker
       include Tasker::Concerns::EventPublisher
       include Tasker::Concerns::StructuredLogging
 
-      # Legacy constant for backward compatibility - now calculated dynamically
-      # This is deprecated and will be removed in a future version
-      MAX_CONCURRENT_STEPS = 3
+      # Configuration-driven execution settings
+      # These delegate to Tasker.configuration.execution for configurable values
+      # while maintaining architectural constants for Ruby-specific optimizations
 
-      # Minimum and maximum bounds for dynamic concurrency
-      MIN_CONCURRENT_STEPS = 3
-      MAX_CONCURRENT_STEPS_LIMIT = 12
-
-      # Cache duration for concurrency calculation (30 seconds)
-      CONCURRENCY_CACHE_DURATION = 30.seconds
-
-      # Memory management and timeout constants
-      BATCH_TIMEOUT_BASE_SECONDS = 30.seconds
-      BATCH_TIMEOUT_PER_STEP_SECONDS = 5.seconds
-      MAX_BATCH_TIMEOUT_SECONDS = 120.seconds
-      FUTURE_CLEANUP_WAIT_SECONDS = 1.second
-      GC_TRIGGER_BATCH_SIZE_THRESHOLD = 6
-      GC_TRIGGER_DURATION_THRESHOLD = 30.seconds
+      def execution_config
+        @execution_config ||= Tasker.configuration.execution
+      end
 
       # Execute a collection of viable steps
       #
@@ -110,11 +100,12 @@ module Tasker
       # executed concurrently based on current system load, database connections,
       # and other health metrics.
       #
-      # @return [Integer] Optimal number of concurrent steps (between MIN_CONCURRENT_STEPS and MAX_CONCURRENT_STEPS_LIMIT)
+      # @return [Integer] Optimal number of concurrent steps (between configured min and max)
       def max_concurrent_steps
         # Return cached value if still valid
+        cache_duration = execution_config.concurrency_cache_duration.seconds
         if @max_concurrent_steps && @concurrency_calculated_at &&
-           (Time.current - @concurrency_calculated_at) < CONCURRENCY_CACHE_DURATION
+           (Time.current - @concurrency_calculated_at) < cache_duration
           return @max_concurrent_steps
         end
 
@@ -580,11 +571,11 @@ module Tasker
       def calculate_optimal_concurrency
         # Get system health data
         health_data = fetch_system_health_data
-        return MIN_CONCURRENT_STEPS unless health_data
+        return execution_config.min_concurrent_steps unless health_data
 
         # Get connection pool information
         connection_pool_size = fetch_connection_pool_size
-        return MIN_CONCURRENT_STEPS unless connection_pool_size
+        return execution_config.min_concurrent_steps unless connection_pool_size
 
         # Calculate base concurrency from health metrics
         base_concurrency = calculate_base_concurrency(health_data)
@@ -596,10 +587,10 @@ module Tasker
         optimal_concurrency = [base_concurrency, connection_constrained].min
 
         # Ensure we stay within bounds
-        optimal_concurrency.clamp(MIN_CONCURRENT_STEPS, MAX_CONCURRENT_STEPS_LIMIT)
+        optimal_concurrency.clamp(execution_config.min_concurrent_steps, execution_config.max_concurrent_steps_limit)
       rescue StandardError => e
         Rails.logger.warn("StepExecutor: Failed to calculate optimal concurrency: #{e.message}")
-        MIN_CONCURRENT_STEPS
+        execution_config.min_concurrent_steps
       end
 
       # Fetch system health data with error handling
@@ -639,19 +630,22 @@ module Tasker
         combined_load = (load_factor * 0.3) + (step_load_factor * 0.7)
 
         # Calculate concurrency based on load (inverse relationship)
+        min_steps = execution_config.min_concurrent_steps
+        max_steps = execution_config.max_concurrent_steps_limit
+
         if combined_load <= 0.3
           # Low load: Allow higher concurrency
-          MAX_CONCURRENT_STEPS_LIMIT
+          max_steps
         elsif combined_load <= 0.6
           # Moderate load: Medium concurrency
-          (((MAX_CONCURRENT_STEPS_LIMIT - MIN_CONCURRENT_STEPS) * 0.6) + MIN_CONCURRENT_STEPS).round
+          (((max_steps - min_steps) * 0.6) + min_steps).round
         else
           # High load: Conservative concurrency
-          MIN_CONCURRENT_STEPS + 1
+          min_steps + 1
         end
       rescue StandardError => e
         Rails.logger.warn("StepExecutor: Error calculating base concurrency: #{e.message}")
-        MIN_CONCURRENT_STEPS
+        execution_config.min_concurrent_steps
       end
 
       # Calculate connection-constrained concurrency
@@ -660,7 +654,10 @@ module Tasker
       # @param pool_size [Integer] Connection pool size
       # @return [Integer] Connection-constrained concurrency level
       def calculate_connection_constrained_concurrency(health_data, pool_size)
-        return MIN_CONCURRENT_STEPS if pool_size <= 0
+        min_steps = execution_config.min_concurrent_steps
+        max_steps = execution_config.max_concurrent_steps_limit
+
+        return min_steps if pool_size <= 0
 
         # Get current connection usage
         active_connections = [health_data.active_connections, 0].max
@@ -674,15 +671,15 @@ module Tasker
 
         # Don't allow concurrency that would exhaust connections
         if connection_utilization >= 0.9 || safe_available <= 2
-          MIN_CONCURRENT_STEPS
+          min_steps
         elsif connection_utilization >= 0.7
-          [safe_available / 2, MIN_CONCURRENT_STEPS + 1].max
+          [safe_available / 2, min_steps + 1].max
         else
-          [safe_available, MAX_CONCURRENT_STEPS_LIMIT].min
+          [safe_available, max_steps].min
         end
       rescue StandardError => e
         Rails.logger.warn("StepExecutor: Error calculating connection-constrained concurrency: #{e.message}")
-        MIN_CONCURRENT_STEPS
+        execution_config.min_concurrent_steps
       end
 
       # Execute steps concurrently using concurrent-ruby with enhanced memory management
@@ -797,9 +794,8 @@ module Tasker
       # @param batch_size [Integer] Number of steps in the batch
       # @return [Numeric] Timeout in seconds
       def calculate_batch_timeout(batch_size)
-        # Base timeout + per-step timeout, with maximum cap
-        calculated_timeout = BATCH_TIMEOUT_BASE_SECONDS + (batch_size * BATCH_TIMEOUT_PER_STEP_SECONDS)
-        [calculated_timeout, MAX_BATCH_TIMEOUT_SECONDS].min
+        # Delegate to execution config for timeout calculation
+        execution_config.calculate_batch_timeout(batch_size)
       end
 
       # Collect results from completed futures without waiting
@@ -841,21 +837,23 @@ module Tasker
         cleanup_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
         begin
-          # Step 1: Cancel any pending futures
+          # Step 1: Cancel any pending futures using domain-specific logic
           pending_count = 0
           futures.each do |future|
-            if future.pending?
+            analyzer = FutureStateAnalyzer.new(future)
+            if analyzer.should_cancel?
               future.cancel
               pending_count += 1
             end
           end
 
-          # Step 2: Wait briefly for running futures to complete gracefully
-          running_count = 0
+          # Step 2: Wait briefly for executing futures to complete gracefully
+          executing_count = 0
           futures.each do |future|
-            if future.running?
-              future.wait(FUTURE_CLEANUP_WAIT_SECONDS)
-              running_count += 1
+            analyzer = FutureStateAnalyzer.new(future)
+            if analyzer.should_wait_for_completion?
+              future.wait(execution_config.future_cleanup_wait_seconds)
+              executing_count += 1
             end
           end
 
@@ -871,7 +869,7 @@ module Tasker
                          task_id: task_id,
                          batch_size: batch_size,
                          pending_cancelled: pending_count,
-                         running_waited: running_count,
+                         executing_waited: executing_count,
                          cleanup_duration_ms: (cleanup_duration * 1000).round(2),
                          gc_triggered: should_trigger_gc?(batch_size, batch_start_time),
                          correlation_id: current_correlation_id)
@@ -893,9 +891,8 @@ module Tasker
       def should_trigger_gc?(batch_size, batch_start_time)
         batch_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - batch_start_time
 
-        # Trigger GC for large batches or long-running batches
-        batch_size >= GC_TRIGGER_BATCH_SIZE_THRESHOLD ||
-          batch_duration > GC_TRIGGER_DURATION_THRESHOLD
+        # Delegate to execution config for GC decision
+        execution_config.should_trigger_gc?(batch_size, batch_duration)
       end
 
       # Trigger intelligent garbage collection with logging

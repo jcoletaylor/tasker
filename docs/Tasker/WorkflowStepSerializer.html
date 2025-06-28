@@ -275,18 +275,16 @@
 22
 23
 24
-25
-26</pre>
+25</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/serializers/tasker/workflow_step_serializer.rb', line 21</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_siblings_ids'>siblings_ids</span>
-  <span class='comment'># Siblings are more complex - get all children of this step&#39;s parents, excluding self
-</span>  <span class='comment'># For now, fall back to original pattern but add comment for future optimization
-</span>  <span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_siblings'>siblings</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_id</span><span class='rparen'>)</span>
-  <span class='comment'># TODO: Optimize siblings using DAG view - need to aggregate sibling relationships
-</span><span class='kw'>end</span></pre>
+  <span class='comment'># Use existing WorkflowStepEdge siblings logic - finds steps with exact same parent set
+</span>  <span class='comment'># This is more accurate than just shared parents and leverages well-tested code
+</span>  <span class='const'><span class='object_link'><a href="WorkflowStepEdge.html" title="Tasker::WorkflowStepEdge (class)">WorkflowStepEdge</a></span></span><span class='period'>.</span><span class='id identifier rubyid_siblings_of'>siblings_of</span><span class='lparen'>(</span><span class='id identifier rubyid_object'>object</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_pluck'>pluck</span><span class='lparen'>(</span><span class='symbol'>:to_step_id</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
@@ -297,7 +295,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jun 27 17:34:23 2025 by
+  Generated on Sat Jun 28 10:14:03 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
