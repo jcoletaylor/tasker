@@ -6,18 +6,26 @@ require_relative 'application_controller'
 module Tasker
   class HandlersController < ApplicationController
     before_action :set_handler_factory
+    before_action :set_intelligent_cache
 
-    # GET /handlers - List all namespaces
+    # GET /handlers - List all namespaces with intelligent caching
     def index
-      render json: {
-        namespaces: @handler_factory.registered_namespaces.map do |namespace|
-          {
-            name: namespace.to_s,
-            handler_count: count_handlers_in_namespace(namespace)
-          }
-        end,
-        total_namespaces: @handler_factory.registered_namespaces.size
-      }, status: :ok
+      cache_key = "tasker:handlers:namespaces:#{handler_registry_version}"
+
+      cached_data = @intelligent_cache.intelligent_fetch(cache_key, base_ttl: 2.minutes) do
+        {
+          namespaces: @handler_factory.registered_namespaces.map do |namespace|
+            {
+              name: namespace.to_s,
+              handler_count: count_handlers_in_namespace(namespace)
+            }
+          end,
+          total_namespaces: @handler_factory.registered_namespaces.size,
+          generated_at: Time.current
+        }
+      end
+
+      render json: cached_data, status: :ok
     end
 
     # GET /handlers/:namespace - List handlers in a specific namespace
@@ -48,7 +56,7 @@ module Tasker
       }, status: :ok
     end
 
-    # GET /handlers/:namespace/:name - Show specific handler with dependency graph
+    # GET /handlers/:namespace/:name - Show specific handler with dependency graph (cached)
     def show
       namespace_name = params[:namespace]
       handler_name = params[:name]
@@ -59,14 +67,32 @@ module Tasker
         return
       end
 
-      handler_data = find_handler_data(namespace_name, handler_name, version)
+      # Use intelligent caching for expensive handler discovery and dependency graph building
+      cache_key = "tasker:handlers:show:#{namespace_name}:#{handler_name}:#{version}:#{handler_registry_version}"
 
-      if handler_data
-        # Add dependency graph information
-        handler_data[:dependency_graph] = build_dependency_graph(handler_data[:step_templates])
-        render json: { handler: handler_data }, status: :ok
+      cached_result = @intelligent_cache.intelligent_fetch(cache_key, base_ttl: 2.minutes) do
+        handler_data = find_handler_data(namespace_name, handler_name, version)
+
+        if handler_data
+          # Add dependency graph information (expensive operation)
+          handler_data[:dependency_graph] = build_dependency_graph(handler_data[:step_templates])
+          {
+            handler: handler_data,
+            generated_at: Time.current,
+            cache_key: cache_key
+          }
+        else
+          {
+            error: 'Handler not found in namespace',
+            generated_at: Time.current
+          }
+        end
+      end
+
+      if cached_result[:error]
+        render json: { error: cached_result[:error] }, status: :not_found
       else
-        render json: { error: 'Handler not found in namespace' }, status: :not_found
+        render json: cached_result, status: :ok
       end
     end
 
@@ -74,6 +100,23 @@ module Tasker
 
     def set_handler_factory
       @handler_factory = Tasker::HandlerFactory.instance
+    end
+
+    def set_intelligent_cache
+      @intelligent_cache = Tasker::Telemetry::IntelligentCacheManager.new
+    end
+
+    # Generate cache version based on handler registry state
+    #
+    # @return [String] Cache version that changes when handlers are registered/updated
+    def handler_registry_version
+      # Use handler factory statistics for cache invalidation
+      namespace_count = @handler_factory.registered_namespaces.size
+      total_handlers = @handler_factory.registered_namespaces.sum do |namespace|
+        @handler_factory.list_handlers(namespace: namespace).size
+      end
+
+      "v1:#{namespace_count}:#{total_handlers}"
     end
 
     def count_handlers_in_namespace(namespace)

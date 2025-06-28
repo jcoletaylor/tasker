@@ -58,6 +58,7 @@ require 'tasker/types/engine_config'
 require 'tasker/types/dependency_graph_config'
 require 'tasker/types/backoff_config'
 require 'tasker/types/execution_config'
+require 'tasker/types/cache_config'
 
 # Dependency graph types
 require 'tasker/types/dependency_graph'

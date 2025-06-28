@@ -72,6 +72,10 @@ module Tasker
       # @return [Hash] Sync configuration parameters
       attr_reader :sync_config
 
+      # Cache strategy for this instance
+      # @return [Tasker::CacheStrategy] The cache strategy for this instance
+      attr_reader :cache_strategy
+
       # Initialize the metrics backend
       #
       # Sets up thread-safe storage, integrates with EventRouter, and configures
@@ -79,17 +83,23 @@ module Tasker
       # Called automatically via singleton pattern.
       def initialize
         @metrics = Concurrent::Hash.new
-        @event_router = nil # Will be set by EventRouter during configuration
+        @event_router = nil
+        @local_buffer = []
+        @last_sync = Time.current
         @created_at = Time.current.freeze
+
+        # Thread-safe metric creation lock
         @metric_creation_lock = Mutex.new
 
-        # Phase 4.2.2.3.1: Cache Detection System
-        @instance_id = generate_instance_id
-        @cache_capabilities = detect_cache_capabilities
-        @sync_strategy = select_sync_strategy
+        # Use unified cache strategy for capability detection
+        @cache_strategy = Tasker::CacheStrategy.detect
+        @instance_id = @cache_strategy.instance_id
+        @sync_strategy = @cache_strategy.coordination_mode
+
+        # Extract capabilities for backward compatibility
+        @cache_capabilities = @cache_strategy.export_capabilities
         @sync_config = configure_sync_parameters
 
-        # Log cache strategy for operational visibility
         log_cache_strategy_selection
       end
 
@@ -453,107 +463,6 @@ module Tasker
           'unknown'
         end
         "#{hostname}-#{Process.pid}"
-      end
-
-      # Detect Rails.cache capabilities for adaptive sync strategy
-      #
-      # Following Rails caching guide patterns for cache store detection
-      # and capability assessment based on documented store behaviors.
-      #
-      # @return [Hash] Detected cache store capabilities
-      def detect_cache_capabilities
-        return default_cache_capabilities unless rails_cache_available?
-
-        store = Rails.cache
-        store_class_name = store.class.name
-
-        capabilities = {
-          distributed: distributed_cache?(store),
-          atomic_increment: atomic_increment_supported?(store),
-          locking: locking_supported?(store),
-          ttl_inspection: ttl_inspection_supported?(store),
-          store_class: store_class_name,
-          # Additional Rails-specific capabilities
-          key_transformation: true, # All Rails cache stores transform keys
-          namespace_support: store.respond_to?(:options) && store.options.key?(:namespace),
-          compression_support: store.respond_to?(:options) && store.options.key?(:compress)
-        }
-
-        log_cache_capabilities_detected(capabilities)
-        capabilities
-      rescue StandardError => e
-        log_cache_detection_error(e)
-        default_cache_capabilities
-      end
-
-      # Check if cache store supports distributed operations
-      #
-      # @param store [ActiveSupport::Cache::Store] Rails cache store
-      # @return [Boolean] True if cache is shared across processes/containers
-      def distributed_cache?(store)
-        # Use string comparison to avoid requiring gems that may not be available
-        store_class_name = store.class.name
-
-        store_class_name.include?('RedisCacheStore') ||
-          store_class_name.include?('MemCacheStore') ||
-          store_class_name.include?('RedisStore')
-      rescue StandardError => e
-        log_cache_detection_error(e)
-        false
-      end
-
-      # Check if cache store supports atomic increment operations
-      #
-      # @param store [ActiveSupport::Cache::Store] Rails cache store
-      # @return [Boolean] True if increment operations are truly atomic
-      def atomic_increment_supported?(store)
-        store_class_name = store.class.name
-
-        store.respond_to?(:increment) &&
-          (store_class_name.include?('RedisCacheStore') ||
-           store_class_name.include?('MemCacheStore'))
-      rescue StandardError => e
-        log_cache_detection_error(e)
-        false
-      end
-
-      # Check if cache store supports distributed locking
-      #
-      # @param store [ActiveSupport::Cache::Store] Rails cache store
-      # @return [Boolean] True if with_lock is supported
-      def locking_supported?(store)
-        store_class_name = store.class.name
-
-        Rails.cache.respond_to?(:with_lock) &&
-          store_class_name.include?('RedisCacheStore')
-      rescue StandardError => e
-        log_cache_detection_error(e)
-        false
-      end
-
-      # Check if cache store supports TTL inspection
-      #
-      # @param store [ActiveSupport::Cache::Store] Rails cache store
-      # @return [Boolean] True if TTL can be checked/extended
-      def ttl_inspection_supported?(store)
-        # Most distributed stores support some form of TTL management
-        distributed_cache?(store)
-      end
-
-      # Select appropriate sync strategy based on detected capabilities
-      #
-      # @return [Symbol] Selected sync strategy
-      def select_sync_strategy
-        case @cache_capabilities
-        in { distributed: true, atomic_increment: true, locking: true }
-          :distributed_atomic      # Redis with full features
-        in { distributed: true, atomic_increment: true }
-          :distributed_basic       # Redis/Memcached without locking
-        in { distributed: true }
-          :distributed_basic       # Basic distributed cache
-        else
-          :local_only # Memory/File store - no cross-process sync
-        end
       end
 
       # Configure sync parameters based on strategy and telemetry config

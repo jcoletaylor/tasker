@@ -174,12 +174,8 @@ RSpec.describe 'Cache Store Integration', type: :cache_store do
 
   describe 'Error Handling and Resilience' do
     it 'handles cache store failures gracefully' do
-      # Mock a failing cache store
-      failing_store = double('FailingCacheStore')
-      allow(failing_store).to receive(:class).and_return(double(name: 'FailingStore'))
-      allow(failing_store).to receive(:respond_to?).and_raise(StandardError.new('Cache failure'))
-
-      allow(Rails).to receive(:cache).and_return(failing_store)
+      # Mock Rails.cache to fail during access
+      allow(Rails).to receive(:cache).and_raise(StandardError.new('Cache failure'))
 
       test_backend = Tasker::Telemetry::MetricsBackend.send(:new)
 
@@ -189,8 +185,8 @@ RSpec.describe 'Cache Store Integration', type: :cache_store do
     end
 
     it 'logs cache detection errors appropriately' do
-      expect(Rails.logger).to receive(:warn).with(/Cache detection failed/).ordered
-      expect(Rails.logger).to receive(:warn).with(/Falling back to local-only mode/).ordered
+      # Expect structured logging for cache unavailability
+      expect(Rails.logger).to receive(:warn).with(/Rails.cache unavailable, using fallback configuration/)
 
       # Force cache detection error
       allow(Rails.cache).to receive(:class).and_raise(StandardError.new('Detection error'))

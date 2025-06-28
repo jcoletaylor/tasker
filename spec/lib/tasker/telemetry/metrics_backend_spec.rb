@@ -629,7 +629,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
                                                       class: double(name: 'ActiveSupport::Cache::RedisCacheStore'))
 
           backend = described_class.send(:new) # Create new instance for testing
-          capabilities = backend.send(:detect_cache_capabilities)
+          capabilities = backend.instance_variable_get(:@cache_capabilities)
 
           expect(capabilities[:distributed]).to be true
           expect(capabilities[:atomic_increment]).to be true
@@ -655,7 +655,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
                                                          class: double(name: 'ActiveSupport::Cache::MemCacheStore'))
 
           backend = described_class.send(:new)
-          capabilities = backend.send(:detect_cache_capabilities)
+          capabilities = backend.instance_variable_get(:@cache_capabilities)
 
           expect(capabilities[:distributed]).to be true
           expect(capabilities[:atomic_increment]).to be true
@@ -679,7 +679,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
                                                        class: double(name: 'ActiveSupport::Cache::MemoryStore'))
 
           backend = described_class.send(:new)
-          capabilities = backend.send(:detect_cache_capabilities)
+          capabilities = backend.instance_variable_get(:@cache_capabilities)
 
           expect(capabilities[:distributed]).to be false
           expect(capabilities[:atomic_increment]).to be false
@@ -695,7 +695,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
           allow(Rails).to receive(:cache).and_raise(StandardError.new('Cache not available'))
 
           backend = described_class.send(:new)
-          capabilities = backend.send(:detect_cache_capabilities)
+          capabilities = backend.instance_variable_get(:@cache_capabilities)
 
           expect(capabilities[:distributed]).to be false
           expect(capabilities[:atomic_increment]).to be false
@@ -708,28 +708,38 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
 
     describe 'sync strategy selection' do
       it 'selects distributed_atomic for full-featured Redis' do
-        backend = described_class.send(:new)
-        backend.instance_variable_set(:@cache_capabilities, {
-                                        distributed: true,
-                                        atomic_increment: true,
-                                        locking: true,
-                                        ttl_inspection: true
-                                      })
+        # Mock a Redis cache strategy during initialization
+        mock_strategy = double('CacheStrategy')
+        allow(mock_strategy).to receive(:export_capabilities).and_return({
+          distributed: true,
+          atomic_increment: true,
+          locking: true,
+          ttl_inspection: true
+        })
+        allow(mock_strategy).to receive(:coordination_mode).and_return(:distributed_atomic)
+        allow(mock_strategy).to receive(:instance_id).and_return('test-instance')
+        allow(Tasker::CacheStrategy).to receive(:detect).and_return(mock_strategy)
 
-        strategy = backend.send(:select_sync_strategy)
+        backend = described_class.send(:new)
+        strategy = backend.instance_variable_get(:@sync_strategy)
         expect(strategy).to eq(:distributed_atomic)
       end
 
       it 'selects distributed_basic for basic distributed cache' do
-        backend = described_class.send(:new)
-        backend.instance_variable_set(:@cache_capabilities, {
-                                        distributed: true,
-                                        atomic_increment: true,
-                                        locking: false,
-                                        ttl_inspection: true
-                                      })
+        # Mock a Memcached cache strategy during initialization
+        mock_strategy = double('CacheStrategy')
+        allow(mock_strategy).to receive(:export_capabilities).and_return({
+          distributed: true,
+          atomic_increment: true,
+          locking: false,
+          ttl_inspection: true
+        })
+        allow(mock_strategy).to receive(:coordination_mode).and_return(:distributed_basic)
+        allow(mock_strategy).to receive(:instance_id).and_return('test-instance')
+        allow(Tasker::CacheStrategy).to receive(:detect).and_return(mock_strategy)
 
-        strategy = backend.send(:select_sync_strategy)
+        backend = described_class.send(:new)
+        strategy = backend.instance_variable_get(:@sync_strategy)
         expect(strategy).to eq(:distributed_basic)
       end
 
@@ -742,7 +752,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
                                         ttl_inspection: false
                                       })
 
-        strategy = backend.send(:select_sync_strategy)
+        strategy = backend.instance_variable_get(:@sync_strategy)
         expect(strategy).to eq(:local_only)
       end
     end
@@ -750,7 +760,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
     describe 'instance ID generation' do
       it 'generates hostname-pid format' do
         backend = described_class.send(:new)
-        instance_id = backend.send(:generate_instance_id)
+        instance_id = backend.instance_variable_get(:@instance_id)
 
         expect(instance_id).to match(/\A.+-\d+\z/) # hostname-pid pattern
         expect(instance_id).to include('-')
@@ -761,7 +771,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
         allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
 
         backend = described_class.send(:new)
-        instance_id = backend.send(:generate_instance_id)
+        instance_id = backend.instance_variable_get(:@instance_id)
 
         expect(instance_id).to start_with('unknown-')
         expect(instance_id).to end_with(Process.pid.to_s)

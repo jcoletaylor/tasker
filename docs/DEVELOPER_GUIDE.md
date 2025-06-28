@@ -1433,6 +1433,379 @@ end
 
 The dependency graph configuration provides powerful tools for optimizing workflow performance while maintaining the flexibility to adapt to your specific operational requirements.
 
+## 8. Cache Strategy & Custom Store Capabilities
+
+Tasker includes a **Hybrid Cache Detection System** that provides intelligent cache strategy selection and supports both built-in Rails cache stores and custom cache implementations. This system automatically adapts coordination strategies based on cache store capabilities, ensuring optimal performance across different deployment environments.
+
+### Key Features
+
+- **🎯 Developer-Friendly API**: Declarative capability system for custom cache stores
+- **🚀 Performance Optimized**: Frozen constants provide O(1) lookup for built-in stores
+- **🔄 Hybrid Detection**: Priority-based detection system (declared → constants → custom → runtime)
+- **📊 Production-Ready**: Comprehensive structured logging and error handling
+- **⚡ Rails Integration**: Always uses `Rails.cache` as the source of truth
+
+### Quick Example
+
+```ruby
+# For custom cache stores - declare capabilities explicitly
+class MyAwesomeCacheStore < ActiveSupport::Cache::Store
+  include Tasker::CacheCapabilities
+
+  # Use convenience methods for common capabilities
+  supports_distributed_caching!
+  supports_atomic_increment!
+  supports_locking!
+
+  # Or declare specific capabilities
+  declare_cache_capability(:advanced_analytics, true)
+  declare_cache_capability(:compression_support, false)
+end
+
+# Configure Rails to use your custom store
+Rails.application.configure do
+  config.cache_store = MyAwesomeCacheStore.new
+end
+
+# Tasker automatically detects capabilities and selects optimal strategy
+strategy = Tasker::CacheStrategy.detect
+puts strategy.coordination_mode  # => :distributed_atomic
+puts strategy.supports?(:distributed)  # => true
+```
+
+### Architecture Overview
+
+The cache detection system uses a **4-level priority hierarchy**:
+
+```mermaid
+flowchart TD
+    A[Cache Store Detection] --> B{Priority 1: Declared?}
+    B -->|Yes| C[Use Declared Capabilities]
+    B -->|No| D{Priority 2: Built-in Store?}
+    D -->|Yes| E[Use Frozen Constants]
+    D -->|No| F{Priority 3: Custom Detector?}
+    F -->|Yes| G[Apply Custom Detector]
+    F -->|No| H[Priority 4: Runtime Detection]
+
+    C --> I[Select Coordination Strategy]
+    E --> I
+    G --> I
+    H --> I
+
+    I --> J{Strategy Selection}
+    J --> K[distributed_atomic]
+    J --> L[distributed_basic]
+    J --> M[local_only]
+
+    classDef priority fill:#e1f5fe,stroke:#01579b
+    classDef strategy fill:#f3e5f5,stroke:#4a148c
+
+    class B,D,F priority
+    class K,L,M strategy
+```
+
+### Built-in Store Support
+
+Tasker includes **frozen constants** for fast, reliable detection of official Rails cache stores:
+
+```ruby
+# Automatically detected with O(1) lookup
+DISTRIBUTED_CACHE_STORES = %w[
+  ActiveSupport::Cache::RedisCacheStore
+  ActiveSupport::Cache::MemCacheStore
+  SolidCache::Store
+].freeze
+
+ATOMIC_INCREMENT_STORES = %w[
+  ActiveSupport::Cache::RedisCacheStore
+  ActiveSupport::Cache::MemCacheStore
+  SolidCache::Store
+].freeze
+
+LOCKING_CAPABLE_STORES = %w[
+  ActiveSupport::Cache::RedisCacheStore
+  SolidCache::Store
+].freeze
+
+LOCAL_CACHE_STORES = %w[
+  ActiveSupport::Cache::MemoryStore
+  ActiveSupport::Cache::FileStore
+  ActiveSupport::Cache::NullStore
+].freeze
+```
+
+**Coordination Strategies by Store Type**:
+- **Redis/SolidCache**: `distributed_atomic` (full distributed coordination with locking)
+- **Memcached**: `distributed_basic` (distributed coordination without locking)
+- **Memory/File/Null**: `local_only` (single-process coordination)
+
+### Custom Cache Store Integration
+
+#### Using CacheCapabilities Module
+
+The `Tasker::CacheCapabilities` module provides a clean API for declaring your cache store's capabilities:
+
+```ruby
+class MyRedisCluster < ActiveSupport::Cache::Store
+  include Tasker::CacheCapabilities
+
+  # Convenience methods for common capabilities
+  supports_distributed_caching!     # Sets distributed: true
+  supports_atomic_increment!        # Sets atomic_increment: true
+  supports_locking!                 # Sets locking: true
+  supports_ttl_inspection!          # Sets ttl_inspection: true
+  supports_namespace_isolation!     # Sets namespace_support: true
+  supports_compression!             # Sets compression_support: true
+
+  # Custom capabilities specific to your implementation
+  declare_cache_capability(:cluster_failover, true)
+  declare_cache_capability(:read_replicas, true)
+  declare_cache_capability(:geo_replication, false)
+
+  # Your cache store implementation...
+  def read(name, options = nil)
+    # Implementation
+  end
+
+  def write(name, value, options = nil)
+    # Implementation
+  end
+
+  # Optional: Implement advanced features
+  def increment(name, amount = 1, options = nil)
+    # Atomic increment implementation
+  end
+
+  def with_lock(name, options = {}, &block)
+    # Distributed locking implementation
+  end
+end
+```
+
+#### Capability Reference
+
+| Capability | Description | Impact |
+|------------|-------------|---------|
+| `distributed` | Cache is shared across processes/containers | Enables distributed coordination |
+| `atomic_increment` | Supports atomic increment/decrement operations | Enables optimistic locking patterns |
+| `locking` | Supports distributed locking (with_lock) | Enables `distributed_atomic` strategy |
+| `ttl_inspection` | Can inspect/extend TTL of cached entries | Enables advanced TTL management |
+| `namespace_support` | Supports cache key namespacing | Enables namespace isolation |
+| `compression_support` | Supports automatic value compression | Enables bandwidth optimization |
+
+#### Chaining and Inheritance
+
+```ruby
+class BaseDistributedStore < ActiveSupport::Cache::Store
+  include Tasker::CacheCapabilities
+
+  supports_distributed_caching!
+  supports_ttl_inspection!
+end
+
+class RedisClusterStore < BaseDistributedStore
+  # Inherits distributed and ttl_inspection capabilities
+  supports_atomic_increment!
+  supports_locking!
+
+  # Override inherited capabilities if needed
+  declare_cache_capability(:ttl_inspection, false)  # Override parent
+end
+
+class MemcachedClusterStore < BaseDistributedStore
+  # Different capabilities for different technology
+  supports_atomic_increment!
+  # Note: Memcached doesn't support distributed locking
+end
+```
+
+### Advanced Usage Patterns
+
+#### Custom Detector Registration
+
+For complex detection logic that can't be expressed through simple capability declarations:
+
+```ruby
+# Register a custom detector for pattern-based detection
+Tasker::CacheStrategy.register_detector(/MyCustomCache/, lambda do |store|
+  {
+    distributed: store.respond_to?(:cluster_nodes) && store.cluster_nodes.size > 1,
+    atomic_increment: store.respond_to?(:atomic_ops),
+    locking: store.respond_to?(:distributed_lock),
+    custom_feature: store.respond_to?(:advanced_query)
+  }
+end)
+
+# The detector will be applied automatically during detection
+strategy = Tasker::CacheStrategy.detect
+```
+
+#### Runtime Strategy Inspection
+
+```ruby
+strategy = Tasker::CacheStrategy.detect
+
+# Check coordination mode
+puts strategy.coordination_mode  # => :distributed_atomic
+
+# Check specific capabilities
+puts strategy.supports?(:distributed)      # => true
+puts strategy.supports?(:locking)          # => true
+puts strategy.supports?(:custom_feature)   # => true
+
+# Export all capabilities (useful for debugging)
+puts strategy.export_capabilities
+# => {
+#   distributed: true,
+#   atomic_increment: true,
+#   locking: true,
+#   ttl_inspection: true,
+#   namespace_support: true,
+#   compression_support: false,
+#   key_transformation: true,
+#   store_class: "MyAwesomeCacheStore"
+# }
+```
+
+#### Production Monitoring
+
+The cache strategy system includes comprehensive structured logging:
+
+```ruby
+# Automatic logging when strategy is detected
+strategy = Tasker::CacheStrategy.detect
+
+# Logs output (JSON format):
+{
+  "timestamp": "2025-06-28T17:15:53.386Z",
+  "correlation_id": "tsk_mcgi5my9_a24eXc",
+  "component": "cache_strategy",
+  "message": "Cache strategy detected",
+  "environment": "production",
+  "tasker_version": "2.5.0",
+  "store_class": "MyAwesomeCacheStore",
+  "coordination_strategy": "distributed_atomic",
+  "capabilities": {
+    "distributed": true,
+    "atomic_increment": true,
+    "locking": true,
+    "ttl_inspection": true,
+    "namespace_support": true,
+    "compression_support": false,
+    "key_transformation": true,
+    "store_class": "MyAwesomeCacheStore"
+  },
+  "instance_id": "web-01-12345"
+}
+```
+
+### Best Practices
+
+#### Cache Store Selection
+
+**For High-Performance Applications**:
+```ruby
+# Redis with full capabilities
+class ProductionRedisStore < ActiveSupport::Cache::RedisCacheStore
+  include Tasker::CacheCapabilities
+
+  supports_distributed_caching!
+  supports_atomic_increment!
+  supports_locking!
+  supports_ttl_inspection!
+  supports_namespace_isolation!
+  supports_compression!
+end
+```
+
+**For Development/Testing**:
+```ruby
+# Memory store with local-only coordination
+# No additional configuration needed - automatically detected
+Rails.application.configure do
+  config.cache_store = :memory_store
+end
+```
+
+**For Legacy Memcached**:
+```ruby
+class LegacyMemcachedStore < ActiveSupport::Cache::MemCacheStore
+  include Tasker::CacheCapabilities
+
+  supports_distributed_caching!
+  supports_atomic_increment!
+  # Note: Don't declare locking support - Memcached doesn't support it
+  supports_ttl_inspection!
+end
+```
+
+#### Testing Custom Stores
+
+```ruby
+# spec/lib/my_awesome_cache_store_spec.rb
+RSpec.describe MyAwesomeCacheStore do
+  let(:store) { described_class.new }
+
+  describe 'capability declarations' do
+    it 'declares expected capabilities' do
+      capabilities = store.class.declared_cache_capabilities
+
+      expect(capabilities[:distributed]).to be(true)
+      expect(capabilities[:atomic_increment]).to be(true)
+      expect(capabilities[:locking]).to be(true)
+      expect(capabilities[:advanced_analytics]).to be(true)
+      expect(capabilities[:compression_support]).to be(false)
+    end
+  end
+
+  describe 'integration with CacheStrategy' do
+    before do
+      allow(Rails).to receive(:cache).and_return(store)
+    end
+
+    it 'is detected correctly by CacheStrategy' do
+      strategy = Tasker::CacheStrategy.detect
+
+      expect(strategy.coordination_mode).to eq(:distributed_atomic)
+      expect(strategy.supports?(:distributed)).to be(true)
+      expect(strategy.supports?(:advanced_analytics)).to be(true)
+    end
+  end
+end
+```
+
+### Migration Guide
+
+#### Upgrading Existing Custom Stores
+
+If you have existing custom cache stores, add capability declarations:
+
+```ruby
+# Before: No capability declarations
+class MyLegacyStore < ActiveSupport::Cache::Store
+  # Implementation...
+end
+
+# After: With capability declarations
+class MyLegacyStore < ActiveSupport::Cache::Store
+  include Tasker::CacheCapabilities
+
+  # Declare what your store actually supports
+  supports_distributed_caching! if respond_to?(:cluster_mode?)
+  supports_atomic_increment! if respond_to?(:increment)
+  # etc.
+end
+```
+
+#### Backwards Compatibility
+
+The system maintains full backwards compatibility:
+- **Undeclared stores**: Fall back to runtime pattern detection
+- **Existing configurations**: Continue working without changes
+- **Built-in stores**: Automatically detected with frozen constants
+
+The cache strategy system provides a robust foundation for building cache-aware applications that adapt intelligently to different deployment environments while maintaining optimal performance characteristics.
+
 ## Extensibility & Advanced Patterns
 
 ### Custom Step Handler Types

@@ -6,20 +6,19 @@ module CacheStoreHelpers
 
   # Available cache stores for testing
   CACHE_STORES = {
-    null_store: -> { ActiveSupport::Cache::NullStore.new },
+    redis_store: -> { ActiveSupport::Cache::RedisCacheStore.new(url: 'redis://localhost:6379/1') },
+    memcache_store: -> { ActiveSupport::Cache::MemCacheStore.new('localhost:11211') },
     memory_store: -> { ActiveSupport::Cache::MemoryStore.new },
-    file_store: -> { ActiveSupport::Cache::FileStore.new(Rails.root.join('tmp/cache/test')) },
-    redis_store: lambda {
-      # Only create if Redis gem is available
-      raise 'Redis gem not available for testing' unless defined?(Redis)
-
-      ActiveSupport::Cache::RedisCacheStore.new(url: 'redis://localhost:6379/1')
-    },
-    memcache_store: lambda {
-      # Only create if Dalli gem is available
-      raise 'Dalli gem not available for testing' unless defined?(Dalli)
-
-      ActiveSupport::Cache::MemCacheStore.new('localhost:11211')
+    file_store: -> { ActiveSupport::Cache::FileStore.new(Rails.root.join('tmp', 'cache')) },
+    null_store: -> { ActiveSupport::Cache::NullStore.new },
+    solid_cache_store: -> {
+      # Create a Solid Cache store if available
+      if defined?(SolidCache)
+        SolidCache::Store.new
+      else
+        # Fallback to a mock that behaves like Solid Cache
+        mock_solid_cache_store
+      end
     }
   }.freeze
 
@@ -105,6 +104,17 @@ module CacheStoreHelpers
         namespace_support: false,
         compression_support: false
       }
+         when :solid_cache_store
+       {
+         distributed: true,
+         atomic_increment: true,
+         locking: true,
+         ttl_inspection: true,
+         store_class: 'SolidCache::Store',
+         key_transformation: true,
+         namespace_support: false,
+         compression_support: false
+       }
     else
       raise ArgumentError, "Unknown cache store type: #{store_type}"
     end
@@ -122,6 +132,8 @@ module CacheStoreHelpers
       :distributed_basic
     when :memory_store, :file_store, :null_store
       :local_only
+         when :solid_cache_store
+       :distributed_atomic
     else
       raise ArgumentError, "Unknown cache store type: #{store_type}"
     end
@@ -174,6 +186,27 @@ module CacheStoreHelpers
     # Ignore cleanup errors
     Rails.logger&.debug("Cache cleanup failed: #{e.message}")
   end
+
+  private
+
+  # Create a mock Solid Cache store for testing when gem is not available
+  def mock_solid_cache_store
+    store = double('SolidCacheStore')
+    allow(store).to receive(:class).and_return(double(name: 'SolidCache::Store'))
+    allow(store).to receive(:read)
+    allow(store).to receive(:write)
+    allow(store).to receive(:delete)
+    allow(store).to receive(:clear)
+    allow(store).to receive(:increment)
+    allow(store).to receive(:respond_to?).with(:read).and_return(true)
+    allow(store).to receive(:respond_to?).with(:write).and_return(true)
+    allow(store).to receive(:respond_to?).with(:increment).and_return(true)
+    allow(store).to receive(:respond_to?).with(:with_lock).and_return(false)
+    allow(store).to receive(:respond_to?).with(:options).and_return(false)
+    store
+  end
+
+  public
 end
 
 # Include in RSpec configuration
