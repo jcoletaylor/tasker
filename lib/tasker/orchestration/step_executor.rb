@@ -20,8 +20,16 @@ module Tasker
       include Tasker::Concerns::EventPublisher
       include Tasker::Concerns::StructuredLogging
 
-      # ⚠️  PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion
+      # Legacy constant for backward compatibility - now calculated dynamically
+      # This is deprecated and will be removed in a future version
       MAX_CONCURRENT_STEPS = 3
+
+      # Minimum and maximum bounds for dynamic concurrency
+      MIN_CONCURRENT_STEPS = 3
+      MAX_CONCURRENT_STEPS_LIMIT = 12
+
+      # Cache duration for concurrency calculation (30 seconds)
+      CONCURRENCY_CACHE_DURATION = 30
 
       # Execute a collection of viable steps
       #
@@ -38,8 +46,8 @@ module Tasker
 
         execution_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Determine processing mode
-        processing_mode = determine_processing_mode(task_handler)
+        # Always use concurrent processing - sequential mode has been deprecated
+        processing_mode = 'concurrent'
 
         log_orchestration_event('step_batch_execution', :started,
                                 task_id: task.task_id,
@@ -54,12 +62,8 @@ module Tasker
           processing_mode: processing_mode
         )
 
-        # PRESERVE: Original concurrent processing logic with monitoring
-        processed_steps = if processing_mode == 'concurrent'
-                            execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
-                          else
-                            execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
-                          end
+        # Always use concurrent processing with dynamic concurrency optimization
+        processed_steps = execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
 
         execution_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - execution_start_time
         successful_count = processed_steps.count do |s|
@@ -90,6 +94,27 @@ module Tasker
                                 duration_ms: (execution_duration * 1000).round(2))
 
         processed_steps.compact
+      end
+
+      # Calculate optimal concurrency based on system health and resources
+      #
+      # This method dynamically determines the maximum number of steps that can be
+      # executed concurrently based on current system load, database connections,
+      # and other health metrics.
+      #
+      # @return [Integer] Optimal number of concurrent steps (between MIN_CONCURRENT_STEPS and MAX_CONCURRENT_STEPS_LIMIT)
+      def max_concurrent_steps
+        # Return cached value if still valid
+        if @max_concurrent_steps && @concurrency_calculated_at &&
+           (Time.current - @concurrency_calculated_at) < CONCURRENCY_CACHE_DURATION
+          return @max_concurrent_steps
+        end
+
+        # Calculate new concurrency level
+        @max_concurrent_steps = calculate_optimal_concurrency
+        @concurrency_calculated_at = Time.current
+
+        @max_concurrent_steps
       end
 
       # Handle viable steps discovered event
@@ -192,7 +217,7 @@ module Tasker
         log_orchestration_event('concurrent_execution', :started,
                                 task_id: task.task_id,
                                 step_count: viable_steps.size,
-                                max_concurrency: MAX_CONCURRENT_STEPS)
+                                max_concurrency: max_concurrent_steps)
 
         concurrent_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
@@ -217,41 +242,7 @@ module Tasker
         results
       end
 
-      # Execute steps sequentially with monitoring
-      #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Successfully processed steps
-      def execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
-        log_orchestration_event('sequential_execution', :started,
-                                task_id: task.task_id,
-                                step_count: viable_steps.size,
-                                step_names: viable_steps.map(&:name))
 
-        sequential_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
-        # Use the original sequential execution logic
-        results = execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-
-        sequential_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - sequential_start_time
-        successful_count = results.count { |r| r&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
-
-        log_performance_event('sequential_execution', sequential_duration,
-                              task_id: task.task_id,
-                              step_count: viable_steps.size,
-                              successful_count: successful_count,
-                              failure_count: results.size - successful_count)
-
-        log_orchestration_event('sequential_execution', :completed,
-                                task_id: task.task_id,
-                                step_count: viable_steps.size,
-                                successful_count: successful_count,
-                                duration_ms: (sequential_duration * 1000).round(2))
-
-        results
-      end
 
       # Validate that the step and database connection are ready
       def validate_step_preconditions_with_logging(step)
@@ -577,6 +568,117 @@ module Tasker
         nil
       end
 
+      # Calculate optimal concurrency based on system health metrics
+      #
+      # @return [Integer] Calculated concurrency level
+      def calculate_optimal_concurrency
+        # Get system health data
+        health_data = fetch_system_health_data
+        return MIN_CONCURRENT_STEPS unless health_data
+
+        # Get connection pool information
+        connection_pool_size = fetch_connection_pool_size
+        return MIN_CONCURRENT_STEPS unless connection_pool_size
+
+        # Calculate base concurrency from health metrics
+        base_concurrency = calculate_base_concurrency(health_data)
+
+        # Apply connection pool constraints
+        connection_constrained = calculate_connection_constrained_concurrency(health_data, connection_pool_size)
+
+        # Use the most restrictive constraint
+        optimal_concurrency = [base_concurrency, connection_constrained].min
+
+        # Ensure we stay within bounds
+        optimal_concurrency.clamp(MIN_CONCURRENT_STEPS, MAX_CONCURRENT_STEPS_LIMIT)
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to calculate optimal concurrency: #{e.message}")
+        MIN_CONCURRENT_STEPS
+      end
+
+      # Fetch system health data with error handling
+      #
+      # @return [HealthMetrics, nil] Health metrics or nil if unavailable
+      def fetch_system_health_data
+        Tasker::Functions::FunctionBasedSystemHealthCounts.call
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to fetch system health data: #{e.message}")
+        nil
+      end
+
+      # Fetch connection pool size with error handling
+      #
+      # @return [Integer, nil] Connection pool size or nil if unavailable
+      def fetch_connection_pool_size
+        ActiveRecord::Base.connection_pool&.size
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to fetch connection pool size: #{e.message}")
+        nil
+      end
+
+      # Calculate base concurrency from system health metrics
+      #
+      # @param health_data [HealthMetrics] System health metrics
+      # @return [Integer] Base concurrency level
+      def calculate_base_concurrency(health_data)
+        # Calculate system load factor (0.0 to 1.0+)
+        total_active_work = [health_data.in_progress_tasks + health_data.pending_tasks, 1].max
+        load_factor = total_active_work.to_f / [health_data.total_tasks, 1].max
+
+        # Calculate step processing load
+        total_active_steps = [health_data.in_progress_steps + health_data.pending_steps, 1].max
+        step_load_factor = total_active_steps.to_f / [health_data.total_steps, 1].max
+
+        # Combine load factors (weighted toward step load)
+        combined_load = (load_factor * 0.3) + (step_load_factor * 0.7)
+
+        # Calculate concurrency based on load (inverse relationship)
+        if combined_load <= 0.3
+          # Low load: Allow higher concurrency
+          MAX_CONCURRENT_STEPS_LIMIT
+        elsif combined_load <= 0.6
+          # Moderate load: Medium concurrency
+          ((MAX_CONCURRENT_STEPS_LIMIT - MIN_CONCURRENT_STEPS) * 0.6 + MIN_CONCURRENT_STEPS).round
+        else
+          # High load: Conservative concurrency
+          MIN_CONCURRENT_STEPS + 1
+        end
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Error calculating base concurrency: #{e.message}")
+        MIN_CONCURRENT_STEPS
+      end
+
+      # Calculate connection-constrained concurrency
+      #
+      # @param health_data [HealthMetrics] System health metrics
+      # @param pool_size [Integer] Connection pool size
+      # @return [Integer] Connection-constrained concurrency level
+      def calculate_connection_constrained_concurrency(health_data, pool_size)
+        return MIN_CONCURRENT_STEPS if pool_size <= 0
+
+        # Get current connection usage
+        active_connections = [health_data.active_connections, 0].max
+        connection_utilization = active_connections.to_f / pool_size
+
+        # Calculate available connections with safety margin
+        available_connections = pool_size - active_connections
+        safety_margin = [pool_size * 0.2, 2].max.round  # 20% safety margin, minimum 2
+
+        safe_available = available_connections - safety_margin
+
+        # Don't allow concurrency that would exhaust connections
+        if connection_utilization >= 0.9 || safe_available <= 2
+          MIN_CONCURRENT_STEPS
+        elsif connection_utilization >= 0.7
+          [safe_available / 2, MIN_CONCURRENT_STEPS + 1].max
+        else
+          [safe_available, MAX_CONCURRENT_STEPS_LIMIT].min
+        end
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Error calculating connection-constrained concurrency: #{e.message}")
+        MIN_CONCURRENT_STEPS
+      end
+
       # Execute steps concurrently using concurrent-ruby
       #
       # @param task [Tasker::Task] The task containing the steps
@@ -585,10 +687,11 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Array<Tasker::WorkflowStep>] Processed steps
       def execute_steps_concurrently(task, sequence, viable_steps, task_handler)
-        # ⚠️  PRIORITY 0 FIX: Process in smaller batches to prevent database connection exhaustion
+        # Use dynamic concurrency calculation instead of static constant
         results = []
+        current_max_concurrency = max_concurrent_steps
 
-        viable_steps.each_slice(MAX_CONCURRENT_STEPS) do |step_batch|
+        viable_steps.each_slice(current_max_concurrency) do |step_batch|
           # Use concurrent-ruby for parallel execution within batch
           futures = step_batch.map do |step|
             Concurrent::Future.execute do
@@ -612,26 +715,9 @@ module Tasker
         results
       end
 
-      # Execute steps sequentially
-      #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-        viable_steps.map do |step|
-          execute_single_step(task, sequence, step, task_handler)
-        end
-      end
 
-      # Determine processing mode based on task handler configuration
-      #
-      # @param task_handler [Object] The task handler instance
-      # @return [String] Processing mode ('concurrent' or 'sequential')
-      def determine_processing_mode(_task_handler)
-        'concurrent'
-      end
+
+
     end
   end
 end
