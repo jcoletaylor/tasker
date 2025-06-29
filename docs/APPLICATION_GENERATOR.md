@@ -1,6 +1,6 @@
 # Tasker Application Template Generator
 
-The Tasker Application Template Generator provides a one-line creation experience for building production-ready applications that leverage Tasker's enterprise workflow orchestration capabilities.
+The Tasker Application Template Generator provides a one-line creation experience for building production-ready applications that leverage Tasker's enterprise workflow orchestration capabilities. Version 2.6.0 introduces Docker-based development environments and comprehensive dry-run validation.
 
 ## Quick Start
 
@@ -14,6 +14,22 @@ This will:
 2. Download the application generator and templates
 3. Run an interactive setup to customize your application
 4. Create a complete Rails application with Tasker integration
+
+### Docker-Based Development (NEW in v2.6.0)
+```bash
+# Create a Docker-based development environment
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+  --app-name my-tasker-app \
+  --docker \
+  --with-observability
+```
+
+This creates a complete Docker environment with:
+- Rails application container with live code reloading
+- PostgreSQL 15 with Tasker schema
+- Redis 7 for caching and background jobs
+- Jaeger distributed tracing (optional)
+- Prometheus metrics collection (optional)
 
 ### Non-Interactive Creation
 ```bash
@@ -42,6 +58,8 @@ curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/
 | `--observability` | Include OpenTelemetry/Prometheus config | `true` |
 | `--interactive` | Enable interactive prompts | `true` |
 | `--api-base-url URL` | DummyJSON API base URL | `https://dummyjson.com` |
+| `--docker` | Generate Docker-based development environment | `false` |
+| `--with-observability` | Include Jaeger and Prometheus in Docker setup | `false` |
 
 ## What Gets Created
 
@@ -129,6 +147,142 @@ Choose from three business domains:
 - Clear logging of all operations
 - Fail-fast error handling
 
+## Docker Development Environment (v2.6.0)
+
+### Quick Start with Docker
+The Docker mode provides a complete containerized development environment, eliminating setup friction:
+
+```bash
+# Generate application with Docker support
+ruby scripts/create_tasker_app.rb build my-app --docker --with-observability
+
+# Navigate to your app
+cd tasker-applications/my-app
+
+# Start the development environment
+./bin/docker-dev up          # Core services only
+./bin/docker-dev up-full     # Include observability stack
+```
+
+### Docker Development Commands
+The `./bin/docker-dev` helper script provides 15+ commands for Docker management:
+
+**Service Management**
+```bash
+./bin/docker-dev up          # Start core services
+./bin/docker-dev up-full     # Start with observability
+./bin/docker-dev down        # Stop all services
+./bin/docker-dev restart     # Restart app service
+./bin/docker-dev status      # Show service status
+```
+
+**Development Tools**
+```bash
+./bin/docker-dev console     # Rails console
+./bin/docker-dev bash        # Shell access
+./bin/docker-dev logs        # View all logs
+./bin/docker-dev logs-app    # View app logs only
+```
+
+**Database Operations**
+```bash
+./bin/docker-dev migrate     # Run migrations
+./bin/docker-dev setup       # Run Tasker setup
+./bin/docker-dev reset-db    # Reset database (destructive)
+```
+
+**Testing & Validation**
+```bash
+./bin/docker-dev test        # Run test suite
+./bin/docker-dev validate    # Run integration validations
+```
+
+### Docker Architecture
+- **Multi-stage Dockerfile**: Optimized for development and production
+- **Service orchestration**: PostgreSQL, Redis, Rails app, and optional observability
+- **Volume mounts**: Live code reloading with persistent data
+- **Health checks**: Automatic service dependency management
+- **Network isolation**: Secure bridge network for all services
+
+## Dry-Run Validation System (v2.6.0)
+
+### Overview
+The generator includes a comprehensive dry-run validation system that tests template consistency without generating files:
+
+```bash
+# Run all validations
+ruby scripts/create_tasker_app.rb dry_run
+
+# Run specific validation modes
+ruby scripts/create_tasker_app.rb dry_run --mode=templates  # File existence
+ruby scripts/create_tasker_app.rb dry_run --mode=syntax     # ERB/Ruby/YAML syntax
+ruby scripts/create_tasker_app.rb dry_run --mode=cli        # CLI option mapping
+ruby scripts/create_tasker_app.rb dry_run --mode=bindings   # Template variables
+
+# Validate Docker templates
+ruby scripts/create_tasker_app.rb dry_run --docker --with-observability
+```
+
+### Validation Categories
+
+**1. Template File Existence**
+- Verifies all required ERB templates exist
+- Adapts to Docker/observability modes
+- Reports missing templates with paths
+
+**2. ERB Template Syntax**
+- Parses all ERB templates for syntax errors
+- Validates without executing templates
+- Catches malformed Ruby blocks and expressions
+
+**3. Generated Code Syntax**
+- Renders templates with test data
+- Validates Ruby syntax using RubyVM::InstructionSequence
+- Validates YAML syntax using YAML.safe_load
+- Tests actual generated output, not just templates
+
+**4. CLI Options Mapping**
+- Ensures all Thor options have corresponding instance variables
+- Validates required methods exist
+- Handles renamed variables (e.g., `--docker` → `@docker_mode`)
+
+**5. Template Variable Bindings**
+- Tests templates can render with expected contexts
+- Validates all required variables are available
+- Tests step handlers, configuration, and Docker bindings
+
+### Example Output
+```
+🧪 Starting Dry Run Validation...
+📋 Mode: all
+🏗️  Tasks: ecommerce, inventory, customer
+🐳 Docker mode: enabled
+📊 Observability: enabled
+
+📁 Validating template files existence...
+  ✅ 14 templates found
+🔧 Validating ERB template syntax...
+  ✅ 19 ERB templates valid
+💎 Validating Ruby template output syntax...
+  ✅ 4 Ruby templates generate valid syntax
+📄 Validating YAML template output syntax...
+  ✅ 4 YAML templates generate valid syntax
+⚙️  Validating CLI options mapping...
+  ✅ 17 CLI mappings valid
+🔗 Validating template variable bindings...
+  ✅ 5 binding contexts valid
+
+🎯 Overall Result:
+✅ All validations passed! (63 checks)
+```
+
+### CI/CD Integration
+The dry-run system is perfect for CI/CD pipelines:
+- Zero file system impact
+- Clear exit codes (0 for success, 1 for failure)
+- Detailed error reporting
+- Sub-second execution time
+
 ## Development Setup
 
 ### For Contributors
@@ -143,6 +297,13 @@ If you're developing or testing the installer:
 ruby scripts/create_tasker_app.rb build test-app \
   --templates-dir ./scripts/templates \
   --non-interactive
+
+# Run comprehensive validation
+ruby scripts/create_tasker_app.rb dry_run --mode=all
+
+# Test Docker generation
+ruby scripts/create_tasker_app.rb build docker-app \
+  --docker --with-observability
 ```
 
 ### Repository Setup

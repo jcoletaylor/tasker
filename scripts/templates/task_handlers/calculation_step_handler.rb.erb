@@ -21,8 +21,8 @@ module <%= namespace.classify %>
         input_data = extract_input_data(step)
 
         # Perform calculation based on step type
-        <% case step_type %>
-        <% when 'calculation' %>
+        <% case step_type
+        when 'calculation' %>
         result = perform_pricing_calculation(input_data)
         <% when 'analysis' %>
         result = perform_stock_analysis(input_data)
@@ -67,8 +67,8 @@ module <%= namespace.classify %>
         input_data
       end
 
-      <% case step_type %>
-      <% when 'calculation' %>
+      <% case step_type
+      when 'calculation' %>
       def perform_pricing_calculation(input_data)
         # Extract cart and product data from previous steps
         cart_data = input_data['validate_cart'] || {}

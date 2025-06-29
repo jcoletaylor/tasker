@@ -228,6 +228,14 @@ main() {
                 custom_args+=("--skip-tests" "true")
                 shift
                 ;;
+            --docker)
+                custom_args+=("--docker" "true")
+                shift
+                ;;
+            --with-observability)
+                custom_args+=("--with-observability" "true")
+                shift
+                ;;
             --api-base-url)
                 custom_args+=("--api-base-url" "$2")
                 shift 2
@@ -267,12 +275,16 @@ main() {
     echo
     log_header "Next Steps:"
     echo "1. cd into your new Tasker application directory"
-    echo "2. Start Redis: redis-server (or docker run -d -p 6379:6379 redis)"
-    echo "3. Start Sidekiq: bundle exec sidekiq"
-    echo "4. Start Rails: bundle exec rails server"
-    echo "5. Visit http://localhost:3000/tasker/graphql for GraphQL playground"
-    echo "6. Visit http://localhost:3000/tasker/api-docs for REST API documentation"
-    echo "7. Visit http://localhost:3000/tasker/metrics for Prometheus metrics"
+    echo "2a. For traditional setup:"
+    echo "      Start Redis: redis-server (or docker run -d -p 6379:6379 redis)"
+    echo "      Start Sidekiq: bundle exec sidekiq"
+    echo "      Start Rails: bundle exec rails server"
+    echo "2b. For Docker setup (if --docker was used):"
+    echo "      ./bin/docker-dev up-full    # Includes observability stack"
+    echo "      ./bin/docker-dev logs       # View application logs"
+    echo "3. Visit http://localhost:3000/tasker/graphql for GraphQL playground"
+    echo "4. Visit http://localhost:3000/tasker/api-docs for REST API documentation"
+    echo "5. Visit http://localhost:3000/tasker/metrics for Prometheus metrics"
     echo
     log_header "Infrastructure Ready:"
     echo "✅ PostgreSQL database with all Tasker migrations"
@@ -299,6 +311,8 @@ show_help() {
     echo "  --tasks LIST              Comma-separated list of application templates to include"
     echo "                           Options: ecommerce,inventory,customer (default: all)"
     echo "  --output-dir DIR          Directory to create application (default: ./tasker-applications)"
+    echo "  --docker                  Generate Docker-based development environment"
+    echo "  --with-observability      Include Jaeger and Prometheus in Docker setup (requires --docker)"
     echo "  --no-observability        Skip OpenTelemetry and Prometheus configuration"
     echo "  --non-interactive         Skip interactive prompts"
     echo "  --skip-tests              Skip test suite generation"
@@ -312,8 +326,11 @@ show_help() {
     echo "  # Create specific application"
     echo "  curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/install-tasker-app.sh | bash -s -- --app-name my-ecommerce-app --tasks ecommerce"
     echo
-          echo "  # Non-interactive creation"
+    echo "  # Non-interactive creation"
     echo "  curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/install-tasker-app.sh | bash -s -- --non-interactive"
+    echo
+    echo "  # Docker-based development environment"
+    echo "  curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}/scripts/install-tasker-app.sh | bash -s -- --docker --with-observability"
 }
 
 # Check for help flag

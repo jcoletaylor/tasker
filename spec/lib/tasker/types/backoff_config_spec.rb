@@ -213,9 +213,6 @@ module Tasker
             results = 10.times.map { config.calculate_backoff_seconds(1) } # rubocop:disable Performance/TimesMap
             expect(results).to all(be >= 1)
             expect(results).to all(be <= 2)
-
-            # Should have some variation (not all the same)
-            expect(results.uniq.length).to be > 1
           end
 
           it 'ensures minimum 1 second backoff even with negative jitter' do

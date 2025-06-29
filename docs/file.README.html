@@ -89,10 +89,12 @@
 
 <h2 id="label-Quick+Installation">Quick Installation</h2>
 
+<h3 id="label-Option+1-3A+Add+to+Existing+Rails+App">Option 1: Add to Existing Rails App</h3>
+
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/tasker-systems</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.5.1</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.6.0</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -113,6 +115,22 @@ bundle exec rails db:migrate
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_bundle'>bundle</span> <span class='id identifier rubyid_exec'>exec</span> <span class='id identifier rubyid_rails'>rails</span> <span class='label'>tasker:</span><span class='id identifier rubyid_setup'>setup</span>
 </code></pre>
+
+<h3 id="label-Option+2-3A+Generate+Complete+Application+-28v2.6.0-29">Option 2: Generate Complete Application (v2.6.0)</h3>
+
+<p>Create a production-ready Rails application with Tasker integration in one command:</p>
+
+<pre class="code ruby"><code class="ruby"># Traditional setup
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
+
+# Docker-based development environment
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+  --app-name my-tasker-app \
+  --docker \
+  --with-observability
+</code></pre>
+
+<p>Includes complete application templates for e-commerce, inventory management, and customer onboarding workflows. See <a href="docs/APPLICATION_GENERATOR_md.html">Application Generator Guide</a> for details.</p>
 
 <h2 id="label-Core+Concepts">Core Concepts</h2>
 
@@ -465,6 +483,8 @@ GET /tasker/health/status
 
 <h3 id="label-F0-9F-93-9A+Additional+Resources">📚 Additional Resources</h3>
 <ul><li>
+<p><strong>Generator[docs/APPLICATION_GENERATOR.md]</strong> - One-line app creation with Docker support and validation</p>
+</li><li>
 <p><strong>Overview[docs/OVERVIEW.md]</strong> - Architecture and configuration</p>
 </li><li>
 <p><strong>Diagrams[docs/TASK_DIAGRAM.md]</strong> - Visual workflow representation</p>
@@ -509,7 +529,7 @@ bundle exec rubocop
 </div></div>
 
       <div id="footer">
-  Generated on Sun Jun 29 10:36:05 2025 by
+  Generated on Sun Jun 29 15:10:11 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
