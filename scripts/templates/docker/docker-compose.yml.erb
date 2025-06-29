@@ -11,6 +11,11 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
+      args:
+        # Use current user's ID to avoid permission issues
+        # Uncomment and set these to match your host user
+        # USER_ID: 1000
+        # GROUP_ID: 1000
     ports:
       - "3000:3000"      # Rails server
     volumes:
