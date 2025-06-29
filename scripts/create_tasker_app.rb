@@ -322,7 +322,16 @@ class TaskerAppGenerator < Thor
 
       begin
         erb = ERB.new(File.read(template_path))
-        rendered = erb.result(test_binding_for_yaml_templates)
+        
+        # Use appropriate binding based on template type
+        test_binding = case template
+                      when 'docker/prometheus.yml.erb'
+                        docker_binding
+                      else
+                        test_binding_for_yaml_templates
+                      end
+        
+        rendered = erb.result(test_binding)
 
         # Parse YAML to check syntax
         YAML.safe_load(rendered)
