@@ -185,11 +185,17 @@ class TaskerAppGenerator < Thor
       end
     end
 
-    # Create Rails API app
-    system("rails new #{app_path} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
-    unless $CHILD_STATUS.success?
-      say '❌ Failed to create Rails app', :red
-      exit 1
+    # Create Rails API app (need to change directory to avoid Rails directory conflict)
+    current_dir = Dir.pwd
+    begin
+      Dir.chdir(@output_dir)
+      system("rails new #{@app_name} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
+      unless $CHILD_STATUS.success?
+        say '❌ Failed to create Rails app', :red
+        exit 1
+      end
+    ensure
+      Dir.chdir(current_dir)
     end
     @app_dir = app_path
 
