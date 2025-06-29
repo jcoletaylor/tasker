@@ -4,7 +4,7 @@ lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
 lib/tasker/errors.rb f69f032114647dc76a343ea7b7e78a8ff3f07715
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb 891200e76f33de8f804d80f9e913e175902b9a19
+lib/tasker/version.rb 35eea5fcc7dd2c77eae6cf330286f65d17a661ef
 lib/tasker/registry.rb 9111c3bb57bf606fcd4ba09517431366b4dfa3b3
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
