@@ -136,6 +136,29 @@ Tasker.configuration do |config|
   #   }
   # end
 
+  # Execution and performance configuration
+  # These settings control concurrent step execution, memory management,
+  # and timeout behavior for optimal performance and system tuning.
+  # config.execution do |exec|
+  #   # === CONCURRENCY SETTINGS ===
+  #   # These control dynamic concurrency calculation bounds
+  #   exec.min_concurrent_steps = 3           # Conservative lower bound for system stability
+  #   exec.max_concurrent_steps_limit = 12    # Upper bound (should align with DB connection pool)
+  #   exec.concurrency_cache_duration = 30    # Cache duration in seconds for concurrency calculations
+  #
+  #   # === TIMEOUT CONFIGURATION ===
+  #   # These control batch execution timeouts with automatic calculation
+  #   exec.batch_timeout_base_seconds = 30    # Base timeout before per-step adjustments
+  #   exec.batch_timeout_per_step_seconds = 5 # Additional timeout per step in batch
+  #   exec.max_batch_timeout_seconds = 120    # Absolute maximum timeout cap
+  #
+  #   # === ARCHITECTURAL CONSTANTS (Ruby-specific, not configurable) ===
+  #   # These are set based on Ruby/Rails characteristics and should not be changed:
+  #   # - future_cleanup_wait_seconds: 1 second (optimal for Concurrent::Future cleanup)
+  #   # - gc_trigger_batch_size_threshold: 6 operations (Ruby memory pressure detection)
+  #   # - gc_trigger_duration_threshold: 30 seconds (Ruby GC timing characteristics)
+  # end
+
   # Backoff and retry configuration
   # These settings control retry timing, exponential backoff calculations,
   # and task reenqueue delays for optimal failure recovery.

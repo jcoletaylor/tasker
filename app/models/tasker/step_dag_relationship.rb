@@ -21,6 +21,17 @@ module Tasker
     scope :with_parents, -> { where('parent_count > 0') }
     scope :with_children, -> { where('child_count > 0') }
 
+    # Efficient siblings scope leveraging existing WorkflowStepEdge logic
+    # Uses the sophisticated sibling_sql that finds steps with exactly the same parent set
+    scope :siblings_of, lambda { |workflow_step_id|
+      # Get sibling step IDs using the existing, well-tested WorkflowStepEdge logic
+      sibling_edges = WorkflowStepEdge.siblings_of(WorkflowStep.find(workflow_step_id))
+      sibling_step_ids = sibling_edges.pluck(:to_step_id).uniq
+
+      # Return StepDagRelationship records for these siblings
+      where(workflow_step_id: sibling_step_ids)
+    }
+
     # Helper methods for DAG navigation
     def root_step?
       is_root_step

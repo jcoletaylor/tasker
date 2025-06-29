@@ -5,6 +5,7 @@ require_relative '../concerns/idempotent_state_transitions'
 require_relative '../concerns/structured_logging'
 require_relative '../concerns/event_publisher'
 require_relative '../types/step_sequence'
+require_relative 'future_state_analyzer'
 
 module Tasker
   module Orchestration
@@ -20,8 +21,13 @@ module Tasker
       include Tasker::Concerns::EventPublisher
       include Tasker::Concerns::StructuredLogging
 
-      # ⚠️  PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion
-      MAX_CONCURRENT_STEPS = 3
+      # Configuration-driven execution settings
+      # These delegate to Tasker.configuration.execution for configurable values
+      # while maintaining architectural constants for Ruby-specific optimizations
+
+      def execution_config
+        @execution_config ||= Tasker.configuration.execution
+      end
 
       # Execute a collection of viable steps
       #
@@ -38,8 +44,8 @@ module Tasker
 
         execution_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Determine processing mode
-        processing_mode = determine_processing_mode(task_handler)
+        # Always use concurrent processing - sequential mode has been deprecated
+        processing_mode = 'concurrent'
 
         log_orchestration_event('step_batch_execution', :started,
                                 task_id: task.task_id,
@@ -54,12 +60,8 @@ module Tasker
           processing_mode: processing_mode
         )
 
-        # PRESERVE: Original concurrent processing logic with monitoring
-        processed_steps = if processing_mode == 'concurrent'
-                            execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
-                          else
-                            execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
-                          end
+        # Always use concurrent processing with dynamic concurrency optimization
+        processed_steps = execute_steps_concurrently_with_monitoring(task, sequence, viable_steps, task_handler)
 
         execution_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - execution_start_time
         successful_count = processed_steps.count do |s|
@@ -90,6 +92,28 @@ module Tasker
                                 duration_ms: (execution_duration * 1000).round(2))
 
         processed_steps.compact
+      end
+
+      # Calculate optimal concurrency based on system health and resources
+      #
+      # This method dynamically determines the maximum number of steps that can be
+      # executed concurrently based on current system load, database connections,
+      # and other health metrics.
+      #
+      # @return [Integer] Optimal number of concurrent steps (between configured min and max)
+      def max_concurrent_steps
+        # Return cached value if still valid
+        cache_duration = execution_config.concurrency_cache_duration.seconds
+        if @max_concurrent_steps && @concurrency_calculated_at &&
+           (Time.current - @concurrency_calculated_at) < cache_duration
+          return @max_concurrent_steps
+        end
+
+        # Calculate new concurrency level
+        @max_concurrent_steps = calculate_optimal_concurrency
+        @concurrency_calculated_at = Time.current
+
+        @max_concurrent_steps
       end
 
       # Handle viable steps discovered event
@@ -192,7 +216,7 @@ module Tasker
         log_orchestration_event('concurrent_execution', :started,
                                 task_id: task.task_id,
                                 step_count: viable_steps.size,
-                                max_concurrency: MAX_CONCURRENT_STEPS)
+                                max_concurrency: max_concurrent_steps)
 
         concurrent_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
@@ -213,42 +237,6 @@ module Tasker
                                 step_count: viable_steps.size,
                                 successful_count: successful_count,
                                 duration_ms: (concurrent_duration * 1000).round(2))
-
-        results
-      end
-
-      # Execute steps sequentially with monitoring
-      #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps ready for execution
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Successfully processed steps
-      def execute_steps_sequentially_with_monitoring(task, sequence, viable_steps, task_handler)
-        log_orchestration_event('sequential_execution', :started,
-                                task_id: task.task_id,
-                                step_count: viable_steps.size,
-                                step_names: viable_steps.map(&:name))
-
-        sequential_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-
-        # Use the original sequential execution logic
-        results = execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-
-        sequential_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - sequential_start_time
-        successful_count = results.count { |r| r&.status == Tasker::Constants::WorkflowStepStatuses::COMPLETE }
-
-        log_performance_event('sequential_execution', sequential_duration,
-                              task_id: task.task_id,
-                              step_count: viable_steps.size,
-                              successful_count: successful_count,
-                              failure_count: results.size - successful_count)
-
-        log_orchestration_event('sequential_execution', :completed,
-                                task_id: task.task_id,
-                                step_count: viable_steps.size,
-                                successful_count: successful_count,
-                                duration_ms: (sequential_duration * 1000).round(2))
 
         results
       end
@@ -577,7 +565,127 @@ module Tasker
         nil
       end
 
-      # Execute steps concurrently using concurrent-ruby
+      # Calculate optimal concurrency based on system health metrics
+      #
+      # @return [Integer] Calculated concurrency level
+      def calculate_optimal_concurrency
+        # Get system health data
+        health_data = fetch_system_health_data
+        return execution_config.min_concurrent_steps unless health_data
+
+        # Get connection pool information
+        connection_pool_size = fetch_connection_pool_size
+        return execution_config.min_concurrent_steps unless connection_pool_size
+
+        # Calculate base concurrency from health metrics
+        base_concurrency = calculate_base_concurrency(health_data)
+
+        # Apply connection pool constraints
+        connection_constrained = calculate_connection_constrained_concurrency(health_data, connection_pool_size)
+
+        # Use the most restrictive constraint
+        optimal_concurrency = [base_concurrency, connection_constrained].min
+
+        # Ensure we stay within bounds
+        optimal_concurrency.clamp(execution_config.min_concurrent_steps, execution_config.max_concurrent_steps_limit)
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to calculate optimal concurrency: #{e.message}")
+        execution_config.min_concurrent_steps
+      end
+
+      # Fetch system health data with error handling
+      #
+      # @return [HealthMetrics, nil] Health metrics or nil if unavailable
+      def fetch_system_health_data
+        Tasker::Functions::FunctionBasedSystemHealthCounts.call
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to fetch system health data: #{e.message}")
+        nil
+      end
+
+      # Fetch connection pool size with error handling
+      #
+      # @return [Integer, nil] Connection pool size or nil if unavailable
+      def fetch_connection_pool_size
+        ActiveRecord::Base.connection_pool&.size
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Failed to fetch connection pool size: #{e.message}")
+        nil
+      end
+
+      # Calculate base concurrency from system health metrics
+      #
+      # @param health_data [HealthMetrics] System health metrics
+      # @return [Integer] Base concurrency level
+      def calculate_base_concurrency(health_data)
+        # Calculate system load factor (0.0 to 1.0+)
+        total_active_work = [health_data.in_progress_tasks + health_data.pending_tasks, 1].max
+        load_factor = total_active_work.to_f / [health_data.total_tasks, 1].max
+
+        # Calculate step processing load
+        total_active_steps = [health_data.in_progress_steps + health_data.pending_steps, 1].max
+        step_load_factor = total_active_steps.to_f / [health_data.total_steps, 1].max
+
+        # Combine load factors (weighted toward step load)
+        combined_load = (load_factor * 0.3) + (step_load_factor * 0.7)
+
+        # Calculate concurrency based on load (inverse relationship)
+        min_steps = execution_config.min_concurrent_steps
+        max_steps = execution_config.max_concurrent_steps_limit
+
+        if combined_load <= 0.3
+          # Low load: Allow higher concurrency
+          max_steps
+        elsif combined_load <= 0.6
+          # Moderate load: Medium concurrency
+          (((max_steps - min_steps) * 0.6) + min_steps).round
+        else
+          # High load: Conservative concurrency
+          min_steps + 1
+        end
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Error calculating base concurrency: #{e.message}")
+        execution_config.min_concurrent_steps
+      end
+
+      # Calculate connection-constrained concurrency
+      #
+      # @param health_data [HealthMetrics] System health metrics
+      # @param pool_size [Integer] Connection pool size
+      # @return [Integer] Connection-constrained concurrency level
+      def calculate_connection_constrained_concurrency(health_data, pool_size)
+        min_steps = execution_config.min_concurrent_steps
+        max_steps = execution_config.max_concurrent_steps_limit
+
+        return min_steps if pool_size <= 0
+
+        # Get current connection usage
+        active_connections = [health_data.active_connections, 0].max
+        connection_utilization = active_connections.to_f / pool_size
+
+        # Calculate available connections with safety margin
+        available_connections = pool_size - active_connections
+        safety_margin = [pool_size * 0.2, 2].max.round # 20% safety margin, minimum 2
+
+        safe_available = available_connections - safety_margin
+
+        # Don't allow concurrency that would exhaust connections
+        if connection_utilization >= 0.9 || safe_available <= 2
+          min_steps
+        elsif connection_utilization >= 0.7
+          [safe_available / 2, min_steps + 1].max
+        else
+          [safe_available, max_steps].min
+        end
+      rescue StandardError => e
+        Rails.logger.warn("StepExecutor: Error calculating connection-constrained concurrency: #{e.message}")
+        execution_config.min_concurrent_steps
+      end
+
+      # Execute steps concurrently using concurrent-ruby with enhanced memory management
+      #
+      # Enhanced with timeout protection, comprehensive future cleanup, and intelligent
+      # garbage collection triggers to prevent memory leaks in long-running processes.
       #
       # @param task [Tasker::Task] The task containing the steps
       # @param sequence [Tasker::Types::StepSequence] The step sequence
@@ -585,52 +693,240 @@ module Tasker
       # @param task_handler [Object] The task handler instance
       # @return [Array<Tasker::WorkflowStep>] Processed steps
       def execute_steps_concurrently(task, sequence, viable_steps, task_handler)
-        # ⚠️  PRIORITY 0 FIX: Process in smaller batches to prevent database connection exhaustion
         results = []
+        current_max_concurrency = max_concurrent_steps
 
-        viable_steps.each_slice(MAX_CONCURRENT_STEPS) do |step_batch|
-          # Use concurrent-ruby for parallel execution within batch
-          futures = step_batch.map do |step|
-            Concurrent::Future.execute do
-              # Ensure each future has its own database connection
-              ActiveRecord::Base.connection_pool.with_connection do
-                execute_single_step(task, sequence, step, task_handler)
+        viable_steps.each_slice(current_max_concurrency) do |step_batch|
+          futures = nil
+          batch_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+          begin
+            # Create futures with connection pool management
+            futures = step_batch.map do |step|
+              Concurrent::Future.execute do
+                # Ensure each future has its own database connection
+                ActiveRecord::Base.connection_pool.with_connection do
+                  execute_single_step(task, sequence, step, task_handler)
+                end
               end
             end
-          end
 
-          # Wait for batch to complete and collect results
-          begin
-            batch_results = futures.map(&:value)
+            # Enhanced timeout protection with graceful degradation
+            batch_results = collect_results_with_timeout(futures, step_batch.size, task.task_id)
             results.concat(batch_results.compact)
+          rescue Concurrent::TimeoutError
+            log_structured(:warn, 'Batch execution timeout',
+                           task_id: task.task_id,
+                           batch_size: step_batch.size,
+                           timeout_seconds: calculate_batch_timeout(step_batch.size),
+                           correlation_id: current_correlation_id)
+
+            # Graceful degradation: collect any completed results
+            completed_results = collect_completed_results(futures)
+            results.concat(completed_results.compact)
+          rescue StandardError => e
+            log_structured(:error, 'Batch execution error',
+                           task_id: task.task_id,
+                           batch_size: step_batch.size,
+                           error_class: e.class.name,
+                           error_message: e.message,
+                           correlation_id: current_correlation_id)
+
+            # Attempt to collect any completed results before cleanup
+            completed_results = collect_completed_results(futures) if futures
+            results.concat(completed_results.compact) if completed_results
           ensure
-            # ⚠️  MEMORY FIX: Explicitly clear future references to prevent memory leaks
-            futures.clear
+            # ENHANCED: Comprehensive memory cleanup with intelligent GC
+            cleanup_futures_with_memory_management(futures, step_batch.size, batch_start_time, task.task_id)
           end
         end
 
         results
       end
 
-      # Execute steps sequentially
+      # Get current correlation ID for logging context
       #
-      # @param task [Tasker::Task] The task containing the steps
-      # @param sequence [Tasker::Types::StepSequence] The step sequence
-      # @param viable_steps [Array<Tasker::WorkflowStep>] Steps to execute
-      # @param task_handler [Object] The task handler instance
-      # @return [Array<Tasker::WorkflowStep>] Processed steps
-      def execute_steps_sequentially(task, sequence, viable_steps, task_handler)
-        viable_steps.map do |step|
-          execute_single_step(task, sequence, step, task_handler)
+      # Ensures we always have a correlation ID for traceability. If the StepExecutor
+      # doesn't have the StructuredLogging concern properly included, this will fail fast
+      # rather than silently returning nil and masking workflow issues.
+      #
+      # @return [String] Current correlation ID (never nil)
+      # @raise [RuntimeError] If StructuredLogging concern is not properly included
+      def current_correlation_id
+        unless respond_to?(:correlation_id, true)
+          raise 'StepExecutor must include StructuredLogging concern for correlation ID support. ' \
+                'This indicates a workflow or initialization issue.'
+        end
+
+        # The StructuredLogging concern automatically generates correlation IDs if none exist
+        # This ensures we always have traceability without masking logical sequencing issues
+        correlation_id
+      end
+
+      # Collect results with configurable timeout protection
+      #
+      # @param futures [Array<Concurrent::Future>] The futures to collect from
+      # @param batch_size [Integer] Size of the batch for timeout calculation
+      # @param task_id [String] Task ID for logging context
+      # @return [Array] Results from completed futures
+      def collect_results_with_timeout(futures, batch_size, task_id)
+        timeout_seconds = calculate_batch_timeout(batch_size)
+
+        log_structured(:debug, 'Collecting batch results with timeout',
+                       task_id: task_id,
+                       batch_size: batch_size,
+                       timeout_seconds: timeout_seconds,
+                       correlation_id: current_correlation_id)
+
+        futures.map { |future| future.value(timeout_seconds) }
+      rescue Concurrent::TimeoutError
+        # Log timeout but let the caller handle graceful degradation
+        log_structured(:warn, 'Future collection timeout',
+                       task_id: task_id,
+                       batch_size: batch_size,
+                       timeout_seconds: timeout_seconds,
+                       correlation_id: current_correlation_id)
+        raise
+      end
+
+      # Calculate appropriate timeout based on batch size
+      #
+      # @param batch_size [Integer] Number of steps in the batch
+      # @return [Numeric] Timeout in seconds
+      def calculate_batch_timeout(batch_size)
+        # Delegate to execution config for timeout calculation
+        execution_config.calculate_batch_timeout(batch_size)
+      end
+
+      # Collect results from completed futures without waiting
+      #
+      # @param futures [Array<Concurrent::Future>] The futures to check
+      # @return [Array] Results from completed futures only
+      def collect_completed_results(futures)
+        return [] unless futures
+
+        completed_results = []
+        futures.each do |future|
+          if future.complete? && !future.rejected?
+            completed_results << future.value
+          elsif future.rejected?
+            log_structured(:warn, 'Future rejected during collection',
+                           reason: future.reason&.message,
+                           correlation_id: current_correlation_id)
+          end
+        end
+
+        completed_results
+      rescue StandardError => e
+        log_structured(:error, 'Error collecting completed results',
+                       error_class: e.class.name,
+                       error_message: e.message,
+                       correlation_id: current_correlation_id)
+        []
+      end
+
+      # Comprehensive future cleanup with memory management
+      #
+      # @param futures [Array<Concurrent::Future>] The futures to clean up
+      # @param batch_size [Integer] Size of the processed batch
+      # @param batch_start_time [Float] When the batch started processing
+      # @param task_id [String] Task ID for logging context
+      def cleanup_futures_with_memory_management(futures, batch_size, batch_start_time, task_id)
+        return unless futures
+
+        cleanup_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        begin
+          # Step 1: Cancel any pending futures using domain-specific logic
+          pending_count = 0
+          futures.each do |future|
+            analyzer = FutureStateAnalyzer.new(future)
+            if analyzer.should_cancel?
+              future.cancel
+              pending_count += 1
+            end
+          end
+
+          # Step 2: Wait briefly for executing futures to complete gracefully
+          executing_count = 0
+          futures.each do |future|
+            analyzer = FutureStateAnalyzer.new(future)
+            if analyzer.should_wait_for_completion?
+              future.wait(execution_config.future_cleanup_wait_seconds)
+              executing_count += 1
+            end
+          end
+
+          # Step 3: Clear future references to prevent memory leaks
+          futures.clear
+
+          # Step 4: Intelligent GC trigger for memory pressure relief
+          trigger_intelligent_gc(batch_size, task_id) if should_trigger_gc?(batch_size, batch_start_time)
+
+          # Log cleanup metrics for observability
+          cleanup_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - cleanup_start_time
+          log_structured(:debug, 'Future cleanup completed',
+                         task_id: task_id,
+                         batch_size: batch_size,
+                         pending_cancelled: pending_count,
+                         executing_waited: executing_count,
+                         cleanup_duration_ms: (cleanup_duration * 1000).round(2),
+                         gc_triggered: should_trigger_gc?(batch_size, batch_start_time),
+                         correlation_id: current_correlation_id)
+        rescue StandardError => e
+          log_structured(:error, 'Error during future cleanup',
+                         task_id: task_id,
+                         batch_size: batch_size,
+                         error_class: e.class.name,
+                         error_message: e.message,
+                         correlation_id: current_correlation_id)
         end
       end
 
-      # Determine processing mode based on task handler configuration
+      # Determine if garbage collection should be triggered
       #
-      # @param task_handler [Object] The task handler instance
-      # @return [String] Processing mode ('concurrent' or 'sequential')
-      def determine_processing_mode(_task_handler)
-        'concurrent'
+      # @param batch_size [Integer] Size of the processed batch
+      # @param batch_start_time [Float] When the batch started processing
+      # @return [Boolean] Whether GC should be triggered
+      def should_trigger_gc?(batch_size, batch_start_time)
+        batch_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - batch_start_time
+
+        # Delegate to execution config for GC decision
+        execution_config.should_trigger_gc?(batch_size, batch_duration)
+      end
+
+      # Trigger intelligent garbage collection with logging
+      #
+      # @param batch_size [Integer] Size of the batch that triggered GC
+      # @param task_id [String] Task ID for logging context
+      def trigger_intelligent_gc(batch_size, task_id)
+        gc_start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+        # Record memory stats before GC
+        memory_before = GC.stat[:heap_live_slots] if GC.respond_to?(:stat)
+
+        # Trigger GC
+        GC.start
+
+        # Record memory stats after GC
+        memory_after = GC.stat[:heap_live_slots] if GC.respond_to?(:stat)
+        gc_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - gc_start_time
+
+        # Log GC metrics for memory monitoring
+        log_structured(:info, 'Intelligent GC triggered',
+                       task_id: task_id,
+                       batch_size: batch_size,
+                       gc_duration_ms: (gc_duration * 1000).round(2),
+                       memory_before: memory_before,
+                       memory_after: memory_after,
+                       memory_freed: memory_before && memory_after ? (memory_before - memory_after) : nil,
+                       correlation_id: current_correlation_id)
+      rescue StandardError => e
+        log_structured(:error, 'Error during intelligent GC',
+                       task_id: task_id,
+                       error_class: e.class.name,
+                       error_message: e.message,
+                       correlation_id: current_correlation_id)
       end
     end
   end

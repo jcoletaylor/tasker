@@ -120,36 +120,9 @@
   
 
 </div>
-  
-    <h2>
-      Constant Summary
-      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
-    </h2>
-
-    <dl class="constants">
-      
-        <dt id="MAX_CONCURRENT_STEPS-constant" class="">MAX_CONCURRENT_STEPS =
-          <div class="docstring">
-  <div class="discussion">
-    
-<p>⚠️ PRIORITY 0 FIX: Limit concurrency to prevent database connection exhaustion</p>
 
 
-  </div>
-</div>
-<div class="tags">
-  
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='int'>3</span></pre></dd>
-      
-    </dl>
-  
-
-
-
-  
+  <h2>Constant Summary</h2>
   
   <h3 class="inherited">Constants included
      from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
@@ -218,6 +191,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#execution_config-instance_method" title="#execution_config (instance method)">#<strong>execution_config</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Configuration-driven execution settings These delegate to Tasker.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#handle_viable_steps_discovered-instance_method" title="#handle_viable_steps_discovered (instance method)">#<strong>handle_viable_steps_discovered</strong>(event)  &#x21d2; Object </a>
     
 
@@ -234,6 +231,30 @@
   
     <span class="summary_desc"><div class='inline'>
 <p>Handle viable steps discovered event.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#max_concurrent_steps-instance_method" title="#max_concurrent_steps (instance method)">#<strong>max_concurrent_steps</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Calculate optimal concurrency based on system health and resources.</p>
 </div></span>
   
 </li>
@@ -398,30 +419,6 @@
       <pre class="lines">
 
 
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153
-154
 155
 156
 157
@@ -447,10 +444,34 @@
 177
 178
 179
-180</pre>
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 131</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 155</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execute_single_step'>execute_single_step</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_step_start_time'>step_start_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
@@ -621,12 +642,6 @@
       <pre class="lines">
 
 
-36
-37
-38
-39
-40
-41
 42
 43
 44
@@ -678,18 +693,20 @@
 90
 91
 92
-93</pre>
+93
+94
+95</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 42</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execute_steps'>execute_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
 
   <span class='id identifier rubyid_execution_start_time'>execution_start_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
 
-  <span class='comment'># Determine processing mode
-</span>  <span class='id identifier rubyid_processing_mode'>processing_mode</span> <span class='op'>=</span> <span class='id identifier rubyid_determine_processing_mode'>determine_processing_mode</span><span class='lparen'>(</span><span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
+  <span class='comment'># Always use concurrent processing - sequential mode has been deprecated
+</span>  <span class='id identifier rubyid_processing_mode'>processing_mode</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>concurrent</span><span class='tstring_end'>&#39;</span></span>
 
   <span class='id identifier rubyid_log_orchestration_event'>log_orchestration_event</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step_batch_execution</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='symbol'>:started</span><span class='comma'>,</span>
                           <span class='label'>task_id:</span> <span class='id identifier rubyid_task'>task</span><span class='period'>.</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span>
@@ -704,12 +721,8 @@
     <span class='label'>processing_mode:</span> <span class='id identifier rubyid_processing_mode'>processing_mode</span>
   <span class='rparen'>)</span>
 
-  <span class='comment'># PRESERVE: Original concurrent processing logic with monitoring
-</span>  <span class='id identifier rubyid_processed_steps'>processed_steps</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='id identifier rubyid_processing_mode'>processing_mode</span> <span class='op'>==</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>concurrent</span><span class='tstring_end'>&#39;</span></span>
-                      <span class='id identifier rubyid_execute_steps_concurrently_with_monitoring'>execute_steps_concurrently_with_monitoring</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
-                    <span class='kw'>else</span>
-                      <span class='id identifier rubyid_execute_steps_sequentially_with_monitoring'>execute_steps_sequentially_with_monitoring</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
-                    <span class='kw'>end</span>
+  <span class='comment'># Always use concurrent processing with dynamic concurrency optimization
+</span>  <span class='id identifier rubyid_processed_steps'>processed_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_execute_steps_concurrently_with_monitoring'>execute_steps_concurrently_with_monitoring</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_viable_steps'>viable_steps</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_execution_duration'>execution_duration</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span> <span class='op'>-</span> <span class='id identifier rubyid_execution_start_time'>execution_start_time</span>
   <span class='id identifier rubyid_successful_count'>successful_count</span> <span class='op'>=</span> <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span>
@@ -740,6 +753,47 @@
                           <span class='label'>duration_ms:</span> <span class='lparen'>(</span><span class='id identifier rubyid_execution_duration'>execution_duration</span> <span class='op'>*</span> <span class='int'>1000</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>2</span><span class='rparen'>)</span><span class='rparen'>)</span>
 
   <span class='id identifier rubyid_processed_steps'>processed_steps</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="execution_config-instance_method">
+  
+    #<strong>execution_config</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Configuration-driven execution settings These delegate to Tasker.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+28
+29
+30</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 28</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_execution_config'>execution_config</span>
+  <span class='ivar'>@execution_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -794,29 +848,29 @@
       <pre class="lines">
 
 
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120</pre>
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 101</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 125</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_viable_steps_discovered'>handle_viable_steps_discovered</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span>
@@ -843,12 +897,95 @@
 </table>
 </div>
     
+      <div class="method_details ">
+  <h3 class="signature " id="max_concurrent_steps-instance_method">
+  
+    #<strong>max_concurrent_steps</strong>  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Calculate optimal concurrency based on system health and resources</p>
+
+<p>This method dynamically determines the maximum number of steps that can be executed concurrently based on current system load, database connections, and other health metrics.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Optimal number of concurrent steps (between configured min and max)</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 104</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_max_concurrent_steps'>max_concurrent_steps</span>
+  <span class='comment'># Return cached value if still valid
+</span>  <span class='id identifier rubyid_cache_duration'>cache_duration</span> <span class='op'>=</span> <span class='id identifier rubyid_execution_config'>execution_config</span><span class='period'>.</span><span class='id identifier rubyid_concurrency_cache_duration'>concurrency_cache_duration</span><span class='period'>.</span><span class='id identifier rubyid_seconds'>seconds</span>
+  <span class='kw'>if</span> <span class='ivar'>@max_concurrent_steps</span> <span class='op'>&amp;&amp;</span> <span class='ivar'>@concurrency_calculated_at</span> <span class='op'>&amp;&amp;</span>
+     <span class='lparen'>(</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span> <span class='op'>-</span> <span class='ivar'>@concurrency_calculated_at</span><span class='rparen'>)</span> <span class='op'>&lt;</span> <span class='id identifier rubyid_cache_duration'>cache_duration</span>
+    <span class='kw'>return</span> <span class='ivar'>@max_concurrent_steps</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Calculate new concurrency level
+</span>  <span class='ivar'>@max_concurrent_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_optimal_concurrency'>calculate_optimal_concurrency</span>
+  <span class='ivar'>@concurrency_calculated_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
+
+  <span class='ivar'>@max_concurrent_steps</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Fri Jun 27 17:34:21 2025 by
+  Generated on Sun Jun 29 10:36:10 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

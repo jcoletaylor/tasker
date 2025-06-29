@@ -1187,3 +1187,95 @@ end
 - **Performance Baselines**: Establish timing expectations for production deployment
 
 This integration validation architecture establishes the foundation for Week 2 Prometheus validation and Week 3-4 demo application development, ensuring enterprise-grade observability throughout the 2.5.0 strategic initiative.
+
+## **🔍 Key Architectural Insights**
+
+### **Distributed Cache System Design Principles**
+- **Distributed coordination is essential** for multi-container cache systems
+- **Strategic constants vs configuration separation** enables infrastructure consistency with workload flexibility
+- **MetricsBackend integration patterns** provide proven enterprise-scale coordination
+- **Cache store capability detection** enables adaptive strategy selection
+- **Process-level coordination with instance IDs** prevents race conditions
+
+### **🚀 NEW: Hybrid Cache Store Detection Pattern**
+
+**Pattern**: Support both built-in Rails cache stores (with frozen constants) and custom cache stores (with declared capabilities)
+
+**Architecture**:
+1. **Frozen Constants for Built-in Stores**: Fast, reliable detection using validated Rails cache store class names
+2. **Declared Capabilities for Custom Stores**: Developer-friendly capability declaration via modules or configuration
+3. **Detection Priority Hierarchy**: Declared capabilities → Built-in constants → Custom detectors → Runtime detection
+4. **Extensible Framework**: Multiple extension points for different use cases
+
+**Key Benefits**:
+- **Performance**: O(1) lookup for built-in stores via frozen constants
+- **Accuracy**: Validates against real Rails cache store implementations
+- **Extensibility**: Clear patterns for custom cache store integration
+- **Maintainability**: Single source of truth with multiple extension mechanisms
+
+**Implementation Pattern**:
+```ruby
+# Constants for built-in stores (infrastructure consistency)
+DISTRIBUTED_CACHE_STORES = %w[
+  ActiveSupport::Cache::RedisCacheStore
+  ActiveSupport::Cache::MemCacheStore
+  SolidCache::Store
+].freeze
+
+# Capability declaration module (developer extensibility)
+module Tasker::CacheCapabilities
+  extend ActiveSupport::Concern
+
+  class_methods do
+    def supports_distributed_caching!
+      declare_cache_capability(:distributed, true)
+    end
+  end
+end
+
+# Hybrid detection logic
+def detect_capabilities
+  # 1. Check declared capabilities (highest priority)
+  declared = detect_declared_capabilities
+  return declared if declared.any?
+
+  # 2. Check built-in store constants (fast path)
+  return detect_built_in_capabilities if built_in_store?
+
+  # 3. Apply custom detectors (legacy compatibility)
+  custom = apply_custom_detectors
+  return custom if custom.any?
+
+  # 4. Runtime detection (conservative fallback)
+  detect_runtime_capabilities
+end
+```
+
+**Developer Usage Patterns**:
+```ruby
+# Pattern 1: Include capability module
+class MyCustomStore < ActiveSupport::Cache::Store
+  include Tasker::CacheCapabilities
+  supports_distributed_caching!
+  supports_atomic_increment!
+end
+
+# Pattern 2: Configuration-based declaration
+store = CustomStore.new(capabilities: {
+  distributed: true,
+  atomic_increment: true
+})
+
+# Pattern 3: Class-level registration
+Tasker::CacheStrategy.register_store_capabilities(MyStore, {
+  distributed: true,
+  locking: false
+})
+```
+
+### **Strategic Framework Excellence**
+- **GLOBAL vs LOCAL decision framework** optimizes cache content sharing while maintaining coordination flexibility
+- **Multi-strategy coordination** provides graceful degradation across cache store types
+- **Adaptive TTL calculation** improves cache hit rates through performance-based optimization
+- **Comprehensive error handling** ensures production reliability
+- **Hybrid detection system** balances performance, accuracy, and extensibility

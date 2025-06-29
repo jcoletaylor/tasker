@@ -94,6 +94,8 @@ module Tasker
       @health_config = Tasker::Types::HealthConfig.new
       @dependency_graph_config = Tasker::Types::DependencyGraphConfig.new
       @backoff_config = Tasker::Types::BackoffConfig.new
+      @execution_config = Tasker::Types::ExecutionConfig.new
+      @cache_config = Tasker::Types::CacheConfig.new
     end
 
     # Reset configuration to defaults (useful for testing)
@@ -105,6 +107,8 @@ module Tasker
       @health_config = Tasker::Types::HealthConfig.new
       @dependency_graph_config = Tasker::Types::DependencyGraphConfig.new
       @backoff_config = Tasker::Types::BackoffConfig.new
+      @execution_config = Tasker::Types::ExecutionConfig.new
+      @cache_config = Tasker::Types::CacheConfig.new
     end
 
     # Create a deep copy of the configuration
@@ -119,6 +123,8 @@ module Tasker
       new_config.instance_variable_set(:@health_config, @health_config)
       new_config.instance_variable_set(:@dependency_graph_config, @dependency_graph_config)
       new_config.instance_variable_set(:@backoff_config, @backoff_config)
+      new_config.instance_variable_set(:@execution_config, @execution_config)
+      new_config.instance_variable_set(:@cache_config, @cache_config)
       new_config
     end
 
@@ -231,6 +237,36 @@ module Tasker
         @backoff_config = Tasker::Types::BackoffConfig.new(yield_config.to_h)
       end
       @backoff_config
+    end
+
+    # Configure step execution and concurrency settings
+    #
+    # @yield [ConfigurationProxy] A configuration object for setting execution options
+    # @return [Tasker::Types::ExecutionConfig] The execution configuration instance
+    def execution
+      if block_given?
+        # For block configuration, we need to create a new instance with the block's values
+        current_values = @execution_config.to_h
+        yield_config = ConfigurationProxy.new(current_values)
+        yield(yield_config)
+        @execution_config = Tasker::Types::ExecutionConfig.new(yield_config.to_h)
+      end
+      @execution_config
+    end
+
+    # Configure intelligent cache strategy settings
+    #
+    # @yield [ConfigurationProxy] A configuration object for setting cache options
+    # @return [Tasker::Types::CacheConfig] The cache configuration instance
+    def cache
+      if block_given?
+        # For block configuration, we need to create a new instance with the block's values
+        current_values = @cache_config.to_h
+        yield_config = ConfigurationProxy.new(current_values)
+        yield(yield_config)
+        @cache_config = Tasker::Types::CacheConfig.new(yield_config.to_h)
+      end
+      @cache_config
     end
 
     # Validate required configuration settings for system health

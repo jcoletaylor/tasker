@@ -98,6 +98,23 @@ Tasker.configure do |config|
     health.cache_duration_seconds = 15
   end
 
+  # Execution Configuration
+  config.execution do |execution|
+    # Concurrency settings - tune these based on your system's database connection pool
+    # and processing capacity. The defaults are conservative and work well for most systems.
+    # execution.min_concurrent_steps = 3           # Minimum concurrent steps (system stability)
+    # execution.max_concurrent_steps_limit = 12    # Maximum concurrent steps (DB pool limit)
+    # execution.concurrency_cache_duration = 30    # Cache duration for concurrency calculations
+
+    # Timeout settings - adjust based on your workflow characteristics
+    # execution.batch_timeout_base_seconds = 30    # Base timeout for batch execution
+    # execution.batch_timeout_per_step_seconds = 5 # Additional timeout per step
+    # execution.max_batch_timeout_seconds = 120    # Maximum timeout cap
+
+    # Note: Ruby-specific constants (GC thresholds, Future cleanup timing) are
+    # automatically set based on Ruby characteristics and are not configurable.
+  end
+
   # Backoff Configuration
   config.backoff do |backoff|
     # Default backoff progression (array of integers in seconds)

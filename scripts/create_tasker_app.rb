@@ -24,7 +24,7 @@ require 'active_support/core_ext/string'
 
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
-  TASKER_VERSION = '~> 2.5.0' # Use latest published version
+  TASKER_VERSION = '~> 2.5.1' # Use latest published version
 
   # Fix Thor deprecation warning
   def self.exit_on_failure?
@@ -185,11 +185,17 @@ class TaskerAppGenerator < Thor
       end
     end
 
-    # Create Rails API app
-    system("rails new #{app_path} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
-    unless $CHILD_STATUS.success?
-      say '❌ Failed to create Rails app', :red
-      exit 1
+    # Create Rails API app (need to change directory to avoid Rails directory conflict)
+    current_dir = Dir.pwd
+    begin
+      Dir.chdir(@output_dir)
+      system("rails new #{@app_name} --api --skip-test --skip-bootsnap --skip-listen --quiet --database=postgresql")
+      unless $CHILD_STATUS.success?
+        say '❌ Failed to create Rails app', :red
+        exit 1
+      end
+    ensure
+      Dir.chdir(current_dir)
     end
     @app_dir = app_path
 
@@ -223,7 +229,7 @@ class TaskerAppGenerator < Thor
     tasker_gem_lines = <<~GEMS
 
       # Tasker workflow orchestration
-      gem 'tasker', git: 'https://github.com/jcoletaylor/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
+      gem 'tasker', git: 'https://github.com/tasker-systems/tasker.git', tag: 'v#{TASKER_VERSION.gsub('~> ', '')}'
     GEMS
 
     # Add production-ready infrastructure gems

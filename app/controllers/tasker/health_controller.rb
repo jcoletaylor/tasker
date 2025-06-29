@@ -18,8 +18,11 @@ module Tasker
     skip_before_action :authenticate_tasker_user!, only: %i[ready live]
     skip_before_action :authorize_tasker_action!, only: %i[ready live]
 
-    # Set cache headers to prevent caching of health data
-    before_action :set_cache_headers
+    # Set cache headers to prevent caching of health data (except detailed status)
+    before_action :set_cache_headers, except: [:status]
+
+    # Initialize intelligent cache for expensive status operations
+    before_action :set_intelligent_cache, only: [:status]
 
     # Readiness check endpoint for Kubernetes probes
     # Always returns quickly and doesn't require authentication/authorization
@@ -54,17 +57,36 @@ module Tasker
       }, status: :ok
     end
 
-    # Detailed status endpoint with comprehensive system metrics
+    # Detailed status endpoint with comprehensive system metrics (cached)
     # Uses system_status.read authorization if authorization is enabled
+    # Results are cached using IntelligentCacheManager for performance
     #
     # @return [JSON] Detailed system status and metrics
     def status
-      result = Tasker::Health::StatusChecker.status
+      # Use intelligent caching for expensive system status analysis
+      cache_key = "tasker:health:detailed_status:#{system_status_cache_version}"
 
-      if result[:healthy]
-        render json: result, status: :ok
+      cached_result = @intelligent_cache.intelligent_fetch(cache_key, base_ttl: 60.seconds) do
+        status_result = Tasker::Health::StatusChecker.status
+
+        # Enhance with additional performance analytics
+        enhanced_result = enhance_status_with_analytics(status_result)
+
+        {
+          **enhanced_result,
+          generated_at: Time.current,
+          cache_info: {
+            cached: true,
+            cache_key: cache_key,
+            ttl_base: '5 minutes'
+          }
+        }
+      end
+
+      if cached_result[:healthy]
+        render json: cached_result, status: :ok
       else
-        render json: result, status: :service_unavailable
+        render json: cached_result, status: :service_unavailable
       end
     rescue StandardError => e
       render json: {
@@ -76,6 +98,98 @@ module Tasker
     end
 
     private
+
+    def set_intelligent_cache
+      @intelligent_cache = Tasker::Telemetry::IntelligentCacheManager.new
+    end
+
+    # Generate cache version based on system state for intelligent cache invalidation
+    #
+    # @return [String] Cache version that changes when system state changes significantly
+    def system_status_cache_version
+      # Use current hour and basic system metrics for cache versioning
+      # This ensures cache invalidation every hour and when major system changes occur
+      current_hour = Time.current.strftime('%Y%m%d%H')
+
+      # Include basic system state indicators
+      active_tasks = Task.where('created_at > ?', 1.hour.ago).count
+      recent_errors = WorkflowStep.joins(:workflow_step_transitions)
+                                  .where('tasker_workflow_steps.created_at > ?', 1.hour.ago)
+                                  .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
+                                  .count
+
+      "v1:#{current_hour}:#{active_tasks}:#{recent_errors}"
+    end
+
+    # Enhance basic status with additional performance analytics
+    #
+    # @param status_result [Hash] Basic status from StatusChecker
+    # @return [Hash] Enhanced status with performance insights
+    def enhance_status_with_analytics(status_result)
+      # Add performance trend analysis
+      performance_trends = calculate_performance_trends
+
+      # Add cache performance metrics
+      cache_performance = @intelligent_cache.export_performance_metrics
+
+      # Enhance the original status with analytics
+      status_result.merge(
+        performance_analytics: {
+          trends: performance_trends,
+          cache_performance: cache_performance,
+          analysis_period: '1 hour',
+          enhanced_at: Time.current
+        }
+      )
+    rescue StandardError => e
+      # If analytics enhancement fails, return original status with error note
+      status_result.merge(
+        performance_analytics: {
+          error: "Analytics enhancement failed: #{e.message}",
+          fallback_mode: true
+        }
+      )
+    end
+
+    # Calculate performance trends for the last hour
+    #
+    # @return [Hash] Performance trend analysis
+    def calculate_performance_trends
+      one_hour_ago = 1.hour.ago
+
+      {
+        task_creation_rate: Task.where('created_at > ?', one_hour_ago).count,
+        completion_rate: Task.joins(workflow_steps: :workflow_step_transitions)
+                             .where('tasks.created_at > ?', one_hour_ago)
+                             .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'complete', true)
+                             .distinct.count,
+        error_rate: Task.joins(workflow_steps: :workflow_step_transitions)
+                        .where('tasks.created_at > ?', one_hour_ago)
+                        .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
+                        .distinct.count,
+        avg_step_duration: calculate_average_step_duration(one_hour_ago)
+      }
+    end
+
+    # Calculate average step duration for performance trending
+    #
+    # @param since [Time] Calculate duration since this time
+    # @return [Float] Average duration in seconds
+    def calculate_average_step_duration(since)
+      completed_steps = WorkflowStep.joins(:workflow_step_transitions)
+                                    .where('tasker_workflow_steps.updated_at > ?', since)
+                                    .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'complete', true)
+
+      return 0.0 if completed_steps.empty?
+
+      durations = completed_steps.filter_map do |step|
+        next 0.0 unless step.created_at && step.updated_at
+
+        (step.updated_at - step.created_at).to_f
+      end
+
+      durations.empty? ? 0.0 : (durations.sum / durations.size).round(3)
+    end
 
     # Override the resource name for authorization
     # Maps status action to health_status resource instead of health resource

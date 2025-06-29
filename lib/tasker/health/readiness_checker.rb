@@ -119,11 +119,16 @@ module Tasker
         }
       end
 
-      # Check cache availability with timing (Rails cache)
+      # Check cache availability with timing and strategy awareness
       #
-      # @return [Hash] Cache check result with response time
+      # Enhanced with cache strategy detection to provide detailed capability information
+      # @return [Hash] Cache check result with response time and strategy details
       def check_cache_availability_with_timing
         start_time = Time.current
+
+        # Get cache strategy for enhanced diagnostics
+        cache_strategy = Tasker::CacheStrategy.detect
+
         # Simple cache test - write and read a test key
         test_key = "tasker_readiness_check_#{SecureRandom.hex(8)}"
         test_value = Time.current.to_i
@@ -138,24 +143,43 @@ module Tasker
           {
             status: 'healthy',
             message: 'Cache is available',
-            response_time_ms: response_time
+            response_time_ms: response_time,
+            cache_store: cache_strategy.store_class_name,
+            coordination_strategy: cache_strategy.coordination_mode,
+            distributed: cache_strategy.supports?(:distributed),
+            atomic_operations: cache_strategy.supports?(:atomic_increment),
+            locking_support: cache_strategy.supports?(:locking)
           }
         else
           {
             status: 'unhealthy',
             message: 'Cache read/write test failed',
             error: 'CacheTestFailed',
-            response_time_ms: response_time
+            response_time_ms: response_time,
+            cache_store: cache_strategy.store_class_name,
+            coordination_strategy: cache_strategy.coordination_mode
           }
         end
       rescue StandardError => e
         response_time = ((Time.current - start_time) * 1000).round(2)
+
+        # Try to get cache strategy info even if test failed
+        strategy_info = begin
+          strategy = Tasker::CacheStrategy.detect
+          {
+            cache_store: strategy.store_class_name,
+            coordination_strategy: strategy.coordination_mode
+          }
+        rescue StandardError
+          { cache_store: 'Unknown', coordination_strategy: 'unknown' }
+        end
+
         {
           status: 'unhealthy',
           message: "Cache check failed: #{e.message}",
           error: "#{e.class.name}: #{e.message}",
           response_time_ms: response_time
-        }
+        }.merge(strategy_info)
       end
     end
   end

@@ -152,7 +152,7 @@ RSpec.describe 'Workflow Orchestration System', type: :integration do
         viable_steps_event = {
           task_id: task.task_id,
           step_ids: task.workflow_steps.pluck(:workflow_step_id),
-          processing_mode: 'sequential'
+          processing_mode: 'concurrent'
         }
 
         expect do

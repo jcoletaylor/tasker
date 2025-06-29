@@ -54,21 +54,22 @@ This directory contains comprehensive validation scripts and application generat
 - **ERB Syntax**: All templates validated and working correctly
 - **Type Safety**: Configuration values match Dry::Struct type requirements
 - **Modern Patterns**: Uses current `process` methods instead of deprecated `handle`/`call`
+- **Performance Configuration**: Comprehensive execution tuning examples for all environments
 - **Production Ready**: Proper error handling, logging, and infrastructure integration
 
 **Quick Start**:
 ```bash
 # Interactive creation with full observability stack
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/demo-app-builder/scripts/install-tasker-app.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 
 # Custom application with specific templates
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/demo-app-builder/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name my-ecommerce-app \
   --tasks ecommerce \
   --non-interactive
 
 # Minimal setup without observability
-curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/demo-app-builder/scripts/install-tasker-app.sh | bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name minimal-tasker \
   --no-observability \
   --non-interactive
@@ -82,6 +83,7 @@ curl -fsSL https://raw.githubusercontent.com/jcoletaylor/tasker/demo-app-builder
 - Redis and Sidekiq configured and ready
 - 3 complete workflow examples (ecommerce, inventory, customer)
 - OpenTelemetry instrumentation (when enabled)
+- **Execution configuration examples** for performance tuning
 - Comprehensive documentation and test suites
 
 **Next Steps After Generation**:
@@ -97,7 +99,22 @@ bundle exec rails server            # Start Rails
 # http://localhost:3000/tasker/metrics     - Prometheus metrics
 ```
 
-**Documentation**: See `docs/APPLICATION_GENERATOR.md` for complete details.
+**Configuration Templates**:
+The demo application builder now includes comprehensive execution configuration examples:
+
+- **`tasker_configuration.rb.erb`**: Main configuration with execution settings
+- **`execution_tuning_examples.rb.erb`**: Environment-specific tuning examples
+  - Development: Conservative settings for local development
+  - Production: High-performance settings for enterprise deployment
+  - High-Performance: Maximum throughput for large-scale systems
+  - API-Heavy: Optimized for external API workflows
+  - Database-Intensive: Tuned for heavy database operations
+  - Mixed Workload: Balanced settings for varied workflows
+  - Testing: Minimal concurrency for test reliability
+
+**Performance Tuning**: Each template includes detailed comments explaining when and how to adjust settings based on your system characteristics and workload patterns.
+
+**Documentation**: See `docs/APPLICATION_GENERATOR.md` and `docs/EXECUTION_CONFIGURATION.md` for complete details.
 
 ### **🔍 Jaeger Integration Validator** ✅ COMPLETED
 **File**: `validate_jaeger_integration.rb`

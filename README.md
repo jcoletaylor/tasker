@@ -1,6 +1,7 @@
-[![CI](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml/badge.svg)](https://github.com/jcoletaylor/tasker/actions/workflows/main.yml)
-![GitHub](https://img.shields.io/github/license/jcoletaylor/tasker)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jcoletaylor/tasker?color=blue&sort=semver)
+[![CI](https://github.com/tasker-systems/tasker/actions/workflows/main.yml/badge.svg)](https://github.com/tasker-systems/tasker/actions/workflows/main.yml)
+![GitHub](https://img.shields.io/github/license/tasker-systems/tasker)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tasker-systems/tasker?color=blue&sort=semver)
+[![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
 # Tasker: Production-Ready Workflow Orchestration Engine
 
@@ -25,8 +26,8 @@ Perfect for processes that involve multiple interdependent steps, require automa
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
-source 'https://rubygems.pkg.github.com/jcoletaylor' do
-  gem 'tasker', '~> 2.5.0'
+source 'https://rubygems.pkg.github.com/tasker-systems' do
+  gem 'tasker', '~> 2.5.1'
 end
 ```
 

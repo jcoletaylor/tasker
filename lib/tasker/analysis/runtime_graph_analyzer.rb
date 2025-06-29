@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../functions/function_based_dependency_levels'
+require_relative '../telemetry/intelligent_cache_manager'
 
 module Tasker
   module Analysis
@@ -35,13 +36,14 @@ module Tasker
         @task = task
         @task_id = task.task_id
         @cache = {}
+        @intelligent_cache = Tasker::Telemetry::IntelligentCacheManager.new
       end
 
       # Perform comprehensive workflow analysis
       #
       # Returns a complete analysis of the workflow including dependency graphs,
       # critical paths, parallelism opportunities, error chains, and bottlenecks.
-      # Results are cached for performance.
+      # Results are cached using IntelligentCacheManager with adaptive TTL.
       #
       # @return [Hash] Complete analysis with the following keys:
       #   - :dependency_graph [Hash] Graph structure with nodes, edges, and adjacency lists
@@ -55,13 +57,20 @@ module Tasker
       #   puts "Longest path: #{analysis[:critical_paths][:longest_path_length]} steps"
       #   puts "Critical bottlenecks: #{analysis[:bottlenecks][:critical_bottlenecks]}"
       def analyze
-        @cache[:analysis] ||= {
-          dependency_graph: build_dependency_graph,
-          critical_paths: analyze_critical_paths,
-          parallelism_opportunities: analyze_parallelism,
-          error_chains: analyze_error_chains,
-          bottlenecks: identify_bottlenecks
-        }
+        # Use intelligent caching for expensive workflow analysis
+        cache_key = "tasker:analysis:runtime_graph:#{task_id}:#{task_analysis_cache_version}"
+
+        @intelligent_cache.intelligent_fetch(cache_key, base_ttl: 90.seconds) do
+          {
+            dependency_graph: build_dependency_graph,
+            critical_paths: analyze_critical_paths,
+            parallelism_opportunities: analyze_parallelism,
+            error_chains: analyze_error_chains,
+            bottlenecks: identify_bottlenecks,
+            generated_at: Time.current,
+            task_id: task_id
+          }
+        end
       end
 
       # Clear all cached analysis results
@@ -72,6 +81,11 @@ module Tasker
       # @return [void]
       def clear_cache!
         @cache.clear
+
+        # Clear intelligent cache for this task
+        cache_key = "tasker:analysis:runtime_graph:#{task_id}:#{task_analysis_cache_version}"
+        @intelligent_cache.clear_performance_data(cache_key)
+        Rails.cache.delete(cache_key)
       end
 
       # Build complete dependency graph structure
@@ -114,6 +128,17 @@ module Tasker
       # @api private
       def dependency_graph_config
         @dependency_graph_config ||= Tasker.configuration.dependency_graph
+      end
+
+      # Generate cache version based on task state for intelligent cache invalidation
+      #
+      # @return [String] Cache version string that changes when task state changes
+      # @api private
+      def task_analysis_cache_version
+        # Include task updated_at and step count to invalidate when task changes
+        step_count = task.workflow_steps.count
+        task_updated = task.updated_at.to_i
+        "v1:#{task_updated}:#{step_count}"
       end
 
       # Load workflow steps with named step associations

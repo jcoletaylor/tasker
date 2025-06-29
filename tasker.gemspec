@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.version     = Tasker::VERSION
   spec.authors     = ['Pete Taylor']
   spec.email       = ['pete.jc.taylor@hey.com']
-  spec.homepage    = 'https://github.com/jcoletaylor/tasker'
+  spec.homepage    = 'https://github.com/tasker-systems/tasker'
   spec.summary     = 'Enterprise-grade workflow orchestration engine for Rails applications'
   spec.description = 'Tasker is a comprehensive workflow orchestration engine that provides ' \
                      'multi-step task processing, dependency management, state machine transitions, ' \
@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new('>= 3.2.0')
 
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = 'https://github.com/jcoletaylor/tasker'
+  spec.metadata['source_code_uri'] = 'https://github.com/tasker-systems/tasker'
 
   spec.files = Dir['{app,config,db,docs,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
@@ -44,6 +44,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'faraday', '~> 2.12.2'
   spec.add_dependency 'graphql', '~> 2.0'
   spec.add_dependency 'jwt', '~> 2.10.0'
+
+  spec.add_dependency 'kamal', '~> 1.9'
 
   spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'
   spec.add_dependency 'opentelemetry-sdk', '~> 1.8.0'
