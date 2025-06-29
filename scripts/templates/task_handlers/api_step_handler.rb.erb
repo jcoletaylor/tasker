@@ -24,20 +24,18 @@ module <%= namespace.classify %>
         api_response = super
 
         # Process the DummyJSON response data
-        <%=
-        case step_name
-        when 'validate_cart'
-          'validated_data = validate_cart_data(api_response)'
-        when 'check_inventory'
-          'product_data = process_product_data(api_response)'
-        when 'register_user'
-          'user_data = process_user_data(api_response)'
-        when 'create_order'
-          'order_data = create_order_record(api_response)'
-        else
-          'processed_data = process_api_response(api_response)'
-        end
-        %>
+        <% case step_name
+        when 'validate_cart' %>
+        validated_data = validate_cart_data(api_response)
+        <% when 'check_inventory' %>
+        product_data = process_product_data(api_response)
+        <% when 'register_user' %>
+        user_data = process_user_data(api_response)
+        <% when 'create_order' %>
+        order_data = create_order_record(api_response)
+        <% else %>
+        processed_data = process_api_response(api_response)
+        <% end %>
 
         log_structured(
           :info,
@@ -47,20 +45,18 @@ module <%= namespace.classify %>
         )
 
         # Return processed data
-        <%=
-        case step_name
-        when 'validate_cart'
-          'validated_data'
-        when 'check_inventory'
-          'product_data'
-        when 'register_user'
-          'user_data'
-        when 'create_order'
-          'order_data'
-        else
-          'processed_data'
-        end
-        %>
+        <% case step_name
+        when 'validate_cart' %>
+        validated_data
+        <% when 'check_inventory' %>
+        product_data
+        <% when 'register_user' %>
+        user_data
+        <% when 'create_order' %>
+        order_data
+        <% else %>
+        processed_data
+        <% end %>
 
       rescue StandardError => e
         log_structured(

@@ -64,3 +64,42 @@ jobs:
         with:
           name: test-results-ruby-${{ matrix.ruby-version }}
           path: tmp/rspec.xml
+
+  # Application generator validation job
+  validate-app-generator:
+    name: Validate Application Generator Templates
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Validate All Template Categories
+        run: |
+          echo "🧪 Running comprehensive template validation..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --mode=all
+
+      - name: Validate Docker Templates
+        run: |
+          echo "🐳 Validating Docker-specific templates..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --docker --with-observability
+
+      - name: Validate Individual Categories
+        run: |
+          echo "📁 Validating template file existence..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --mode=templates
+          
+          echo "🔧 Validating ERB syntax..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --mode=syntax
+          
+          echo "⚙️ Validating CLI options mapping..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --mode=cli
+          
+          echo "🔗 Validating template variable bindings..."
+          bundle exec ruby scripts/create_tasker_app.rb dry_run --mode=bindings

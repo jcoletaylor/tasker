@@ -31,12 +31,18 @@ Create a complete Tasker application with real-world workflows instantly:
 # Interactive setup with full observability stack
 curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
 
-# Or specify your preferences
+# Or specify your preferences (traditional Rails setup)
 curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
   --app-name my-tasker-demo \
   --tasks ecommerce,inventory,customer \
   --observability \
   --non-interactive
+
+# NEW: Docker-based development environment (v2.6.0)
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+  --app-name my-tasker-demo \
+  --docker \
+  --with-observability
 ```
 
 This creates a complete Rails application with:
@@ -74,6 +80,7 @@ If you used the automated demo application builder, you now have a complete Rail
 
 ### Start Your Application
 
+#### Traditional Rails Setup
 ```bash
 cd your-app-name  # Use the name you chose during installation
 
@@ -81,6 +88,19 @@ cd your-app-name  # Use the name you chose during installation
 bundle exec redis-server &          # Background Redis
 bundle exec sidekiq &               # Background Sidekiq
 bundle exec rails server            # Rails application
+```
+
+#### Docker Setup (if you used --docker)
+```bash
+cd your-app-name  # Use the name you chose during installation
+
+# Start all services with Docker
+./bin/docker-dev up-full            # Includes observability stack
+# OR
+./bin/docker-dev up                 # Core services only
+
+# View application logs
+./bin/docker-dev logs
 ```
 
 ### Explore the Demo Workflows

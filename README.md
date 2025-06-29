@@ -23,11 +23,13 @@ Perfect for processes that involve multiple interdependent steps, require automa
 
 ## Quick Installation
 
+### Option 1: Add to Existing Rails App
+
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/tasker-systems' do
-  gem 'tasker', '~> 2.5.1'
+  gem 'tasker', '~> 2.6.0'
 end
 ```
 
@@ -51,6 +53,23 @@ end
 ```bash
 bundle exec rails tasker:setup
 ```
+
+### Option 2: Generate Complete Application (v2.6.0)
+
+Create a production-ready Rails application with Tasker integration in one command:
+
+```bash
+# Traditional setup
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash
+
+# Docker-based development environment
+curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/install-tasker-app.sh | bash -s -- \
+  --app-name my-tasker-app \
+  --docker \
+  --with-observability
+```
+
+Includes complete application templates for e-commerce, inventory management, and customer onboarding workflows. See [Application Generator Guide](docs/APPLICATION_GENERATOR.md) for details.
 
 ## Core Concepts
 
@@ -384,6 +403,7 @@ end
 - **[Performance](docs/SQL_FUNCTIONS.md)** - High-performance SQL functions
 
 ### 📚 Additional Resources
+- **[Application Generator](docs/APPLICATION_GENERATOR.md)** - One-line app creation with Docker support and validation
 - **[System Overview](docs/OVERVIEW.md)** - Architecture and configuration
 - **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual workflow representation
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
