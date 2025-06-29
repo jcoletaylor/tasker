@@ -274,7 +274,18 @@ class TaskerAppGenerator < Thor
 
       begin
         erb = ERB.new(File.read(template_path))
-        rendered = erb.result(test_binding_for_ruby_templates)
+        
+        # Use appropriate binding based on template type
+        test_binding = case template
+                      when 'task_definitions/configured_task.rb.erb'
+                        test_binding_for_task_config
+                      when 'configuration/tasker_configuration.rb.erb'
+                        test_binding_for_config
+                      else
+                        test_binding_for_ruby_templates
+                      end
+        
+        rendered = erb.result(test_binding)
 
         # Check Ruby syntax using RubyVM::InstructionSequence
         RubyVM::InstructionSequence.compile(rendered)
