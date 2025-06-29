@@ -199,63 +199,148 @@ end
    - Validate structured logging provides adequate observability
    - Measure performance impact and system reliability improvements
 
-**Success Criteria**:
-- Zero registry-related production errors
-- Improved system performance metrics
-- Enhanced observability with structured logging
-- Successful thread-safe operations under load
+### **🐳 FUTURE ENHANCEMENT: Docker-Based Development Environment** 🆕 *DOCUMENTED*
+**Status**: Documented for future implementation (not current branch)
+**Goal**: Provide complete containerized development environment for Tasker applications
 
-### **Phase 2: API Documentation Enhancement** 📚 *HIGH PRIORITY*
-**Timeline**: 1-2 weeks
-**Goal**: Complete API documentation for health/metrics endpoints
+**Vision**: Extend the current install app scripts (`create_tasker_app.rb` + `install-tasker-app.sh`) with Docker support to create a complete development environment that includes:
 
-**Specific Actions**:
-1. **RSwag Integration**:
-   - Convert health controller request specs to RSwag format
-   - Convert metrics controller request specs to RSwag format
-   - Generate comprehensive OpenAPI 3.0 documentation
+**Core Infrastructure Components**:
+- **PostgreSQL**: Primary database with all Tasker migrations and database objects
+- **Redis**: Caching layer and session storage
+- **Jaeger**: Distributed tracing for observability
+- **Prometheus**: Metrics collection and monitoring
+- **RabbitMQ**: Message queue for future enhancements and event streaming
+- **Rails App**: Tasker application running behind Puma server
 
-2. **Documentation Enhancement**:
-   - Update API documentation with registry system capabilities
-   - Add comprehensive examples for structured logging features
-   - Document new observability endpoints and capabilities
+**Technical Architecture**:
+```yaml
+# docker-compose.yml structure
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=tasker_development
+      - POSTGRES_USER=tasker
+      - POSTGRES_PASSWORD=tasker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migrate:/docker-entrypoint-initdb.d/migrations
+      - ./db/functions:/docker-entrypoint-initdb.d/functions
+      - ./db/views:/docker-entrypoint-initdb.d/views
 
-3. **Developer Experience**:
-   - Create integration guides for registry system usage
-   - Document best practices for structured logging
-   - Provide examples of event-driven coordination patterns
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
 
-**Success Criteria**:
-- Complete OpenAPI documentation for all endpoints
-- Developer-friendly integration guides
-- Comprehensive observability documentation
-- Clear examples and best practices
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP API
 
-### **Phase 3: Advanced Telemetry Features** 📊 *MEDIUM PRIORITY*
-**Timeline**: 3-4 weeks
-**Goal**: Build on registry consolidation for advanced observability capabilities
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
 
-**Specific Actions**:
-1. **Hybrid Cache System**:
-   - Implement hybrid Rails cache + event-driven export system
-   - Add cross-container coordination for distributed deployments
-   - Enhance cache store compatibility and feature detection
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "15672:15672"  # Management UI
+      - "5672:5672"    # AMQP port
+    environment:
+      - RABBITMQ_DEFAULT_USER=tasker
+      - RABBITMQ_DEFAULT_PASS=tasker
 
-2. **Advanced Metrics**:
-   - Enhance metrics collection with registry statistics
-   - Implement comprehensive analytics and reporting
-   - Add advanced plugin architecture for custom exporters
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app  # Mount source code for development
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      - postgres
+      - redis
+      - jaeger
+      - prometheus
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://tasker:tasker@postgres:5432/tasker_development
+      - REDIS_URL=redis://redis:6379/0
+      - JAEGER_AGENT_HOST=jaeger
+      - PROMETHEUS_PUSHGATEWAY_URL=http://prometheus:9091
+```
 
-3. **Enterprise Features**:
-   - Implement distributed system coordination
-   - Add enterprise-scale observability capabilities
-   - Create extensible plugin ecosystem
+**Development Benefits**:
+1. **Instant Setup**: Single `docker-compose up` command for complete environment
+2. **Consistent Environment**: Same infrastructure across all developer machines
+3. **Production Parity**: Container setup mirrors production deployment patterns
+4. **Testing Scenarios**: Easy to simulate curl scripts and JavaScript clients
+5. **Observability**: Full tracing and metrics stack available immediately
+6. **Code Mounting**: Live code editing with container-based execution
 
-**Success Criteria**:
-- Hybrid cache system with cross-container coordination
-- Advanced metrics and analytics capabilities
-- Enterprise-scale observability features
-- Extensible plugin architecture
+**Enhanced Install Script Integration**:
+- Extend `create_tasker_app.rb` with `--docker` flag
+- Generate `Dockerfile` and `docker-compose.yml` alongside Rails application
+- Include Docker-specific configuration templates
+- Add validation scripts for containerized environment
+- Provide example curl scripts and JavaScript client code
+
+**Client Testing Capabilities**:
+```bash
+# Example curl scripts for testing configured tasks
+curl -X POST http://localhost:3000/tasker/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "mutation { createTask(input: { handlerName: \"EcommerceTask\" }) { task { id status } } }"}'
+
+# JavaScript client examples
+const response = await fetch('http://localhost:3000/tasker/graphql', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    query: `mutation CreateTask($input: CreateTaskInput!) {
+      createTask(input: $input) {
+        task { id status createdAt }
+      }
+    }`,
+    variables: { input: { handlerName: 'InventoryTask' } }
+  })
+});
+```
+
+**Technical Implementation Strategy**:
+1. **Dockerfile Creation**: Multi-stage build with Ruby 3.2+, Rails 7+, and all dependencies
+2. **Database Initialization**: Automatic migration and database object deployment
+3. **Configuration Management**: Environment-specific configs for containerized setup
+4. **Health Checks**: Container health checks for all services
+5. **Volume Management**: Persistent data and development code mounting
+6. **Network Configuration**: Service discovery and inter-container communication
+
+**Future Enhancement Value**:
+- **Developer Onboarding**: Reduce setup time from hours to minutes
+- **Demo Environment**: Perfect for showcasing Tasker capabilities
+- **Integration Testing**: Comprehensive environment for testing external integrations
+- **Client Development**: Easy testing of REST and GraphQL clients
+- **Observability Validation**: Full tracing and metrics in development
+- **Production Simulation**: Container patterns mirror production deployment
+
+**Integration with Current Scripts**:
+- Leverage existing template system for Docker configuration files
+- Extend current validation scripts (`validate_jaeger_integration.rb`, `validate_prometheus_integration.rb`) for containerized environment
+- Build on proven patterns from current install scripts
+- Maintain backward compatibility with non-Docker installations
+
+**Priority**: Future enhancement after current production deployment phase
+**Complexity**: Medium (builds on existing install script infrastructure)
+**Value**: High (significantly improves developer experience and demo capabilities)
 
 ## **🎯 Key Success Metrics**
 

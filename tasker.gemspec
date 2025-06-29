@@ -45,6 +45,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'graphql', '~> 2.0'
   spec.add_dependency 'jwt', '~> 2.10.0'
 
+  spec.add_dependency 'kamal', '~> 1.9'
+
   spec.add_dependency 'opentelemetry-exporter-otlp', '~> 0.30.0'
   spec.add_dependency 'opentelemetry-sdk', '~> 1.8.0'
 
