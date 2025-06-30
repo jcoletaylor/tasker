@@ -1,6 +1,8 @@
 # typed: false
 # frozen_string_literal: true
 
+require 'tasker/logging/correlation_id_generator'
+
 module Tasker
   class TaskRunnerJob < Tasker::ApplicationJob
     include Tasker::Concerns::StructuredLogging

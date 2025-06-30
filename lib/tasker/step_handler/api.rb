@@ -5,6 +5,7 @@ require_relative '../concerns/event_publisher'
 require_relative '../orchestration/response_processor'
 require_relative '../orchestration/backoff_calculator'
 require_relative '../orchestration/connection_builder'
+require_relative '../../../app/models/tasker/procedural_error'
 
 module Tasker
   module StepHandler
@@ -15,6 +16,37 @@ module Tasker
     #   class MyApiHandler < Tasker::StepHandler::Api
     #     def process(task, sequence, step)
     #       connection.post('/endpoint', task.context)
+    #     end
+    #   end
+    #
+    # @example Using error types for better retry control
+    #   class MyApiHandler < Tasker::StepHandler::Api
+    #     def process(task, sequence, step)
+    #       response = connection.post('/endpoint', task.context)
+    #
+    #       case response.status
+    #       when 400, 422
+    #         # Client errors - don't retry, these are permanent failures
+    #         raise Tasker::PermanentError.new(
+    #           "Invalid request: #{response.body}",
+    #           error_code: 'VALIDATION_ERROR'
+    #         )
+    #       when 429
+    #         # Rate limited - retry with server-suggested delay
+    #         retry_after = response.headers['retry-after']&.to_i || 60
+    #         raise Tasker::RetryableError.new(
+    #           "Rate limited by API",
+    #           retry_after: retry_after
+    #         )
+    #       when 500..599
+    #         # Server errors - let Tasker's exponential backoff handle retry timing
+    #         raise Tasker::RetryableError.new(
+    #           "Server error: #{response.status}",
+    #           context: { status: response.status, endpoint: '/endpoint' }
+    #         )
+    #       end
+    #
+    #       response
     #     end
     #   end
     class Api < Base
@@ -212,10 +244,20 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The current step
       # @param error [StandardError] The error that occurred
       def handle_execution_error(step, error)
-        # Apply backoff for specific Faraday errors
-        if error.is_a?(Faraday::Error) && error.response && backoff_error_code?(error.response.status)
-          error_context = build_faraday_error_context(step, error.response)
-          @backoff_calculator.calculate_and_apply_backoff(step, error_context)
+        # Handle Tasker-specific errors appropriately
+        case error
+        when Tasker::RetryableError
+          # Apply backoff for retryable errors, respecting suggested retry_after
+          apply_retryable_error_backoff(step, error)
+        when Tasker::PermanentError
+          # Don't apply backoff for permanent errors - they shouldn't be retried
+          Rails.logger.info { "StepHandler: Permanent error encountered - #{error.message}" }
+        else
+          # Handle legacy Faraday errors and unknown errors
+          if error.is_a?(Faraday::Error) && error.response && backoff_error_code?(error.response.status)
+            error_context = build_faraday_error_context(step, error.response)
+            @backoff_calculator.calculate_and_apply_backoff(step, error_context)
+          end
         end
 
         # Add error information to results using the same extensible pattern
@@ -317,10 +359,44 @@ module Tasker
           error_info[:response_body] = error.response.body
         end
 
+        # Add context for Tasker-specific errors
+        error_info[:error_context] = error.context if error.respond_to?(:context)
+
+        # Add error code for permanent errors
+        error_info[:error_code] = error.error_code if error.respond_to?(:error_code)
+
+        # Add retry information for retryable errors
+        error_info[:retry_after] = error.retry_after if error.respond_to?(:retry_after)
+
         step.results = current_results.merge(
           error: true,
           error_details: error_info
         )
+      end
+
+      # Apply backoff for RetryableError with custom retry_after
+      #
+      # @param step [Tasker::WorkflowStep] The current step
+      # @param error [Tasker::RetryableError] The retryable error
+      def apply_retryable_error_backoff(step, error)
+        error_context = if error.retry_after
+                          # Use the specific retry delay from the error
+                          {
+                            step_id: step.workflow_step_id,
+                            step_name: step.name,
+                            suggested_delay: error.retry_after,
+                            error_type: 'retryable_error'
+                          }
+                        else
+                          # Use default backoff calculation
+                          {
+                            step_id: step.workflow_step_id,
+                            step_name: step.name,
+                            status: 503, # Treat as service unavailable
+                            error_type: 'retryable_error'
+                          }
+                        end
+        @backoff_calculator.calculate_and_apply_backoff(step, error_context)
       end
     end
   end

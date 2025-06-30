@@ -158,6 +158,49 @@ High-performance PostgreSQL functions handle:
 - Review health status: `GET /tasker/health/status`
 - Enable structured logging for detailed traces
 
+## Version Release Workflow
+
+When ready to commit and release a new version, follow this systematic workflow:
+
+### Pre-Release Steps
+1. **Determine Version Type**: Review changes to decide if major, minor, or patch level revision
+   - Major: Breaking API changes, significant architectural changes
+   - Minor: New features, backwards-compatible additions
+   - Patch: Bug fixes, performance improvements, documentation, behind-the-scenes enhancements
+
+2. **Update Version File**: Modify `lib/tasker/version.rb` to reflect new semantic version
+
+3. **Update Version References**: Find and update version references in:
+   - Documentation files (excluding YARD docs - handled separately)
+   - Script files
+   - Configuration files
+   - README and other markdown files
+
+### Build and Quality Checks
+4. **Rebuild Dependencies**: `bundle exec gem build` (rebuilds Gemfile.lock with new version)
+
+5. **Clean Build Artifacts**: `rm` the produced .gem file (don't publish until merged to main)
+
+6. **Code Quality**: `bundle exec rubocop -A` (auto-fix all style issues)
+
+7. **Documentation**: `bundle exec yard` (regenerate API documentation)
+
+8. **Database Preparation**: `bundle exec rails db:migrate db:test:prepare`
+
+9. **Full Test Suite**: `bundle exec rspec -f d` (run all tests with detailed output)
+
+### Release Process
+10. **Manual Git Operations**: User handles `git add`, `git commit`, and `git push`
+
+11. **Create Pull Request**: Open PR on GitHub
+
+12. **PR Documentation**: Create `PR_DESCRIPTION.md` with accomplishments and version changes
+
+### Post-Merge (GitHub)
+13. **Tag Release**: Create GitHub release with semantic version tag
+14. **Publish Gem**: Build and publish to RubyGems after all tests pass
+15. **Update Documentation**: Deploy updated docs if applicable
+
 ## Current Development Status
 
 ### Recent Achievements (2025)

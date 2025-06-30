@@ -41,7 +41,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
         )
 
         allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-          double('ConnectionPool', size: 20)
+          double('ConnectionPool', size: 20, stat: { size: 20, busy: 2, available: 18 })
         )
       end
 
@@ -86,7 +86,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
         )
 
         allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-          double('ConnectionPool', size: 20)
+          double('ConnectionPool', size: 20, stat: { size: 20, busy: 2, available: 18 })
         )
       end
 
@@ -121,7 +121,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
         )
 
         allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-          double('ConnectionPool', size: 20)
+          double('ConnectionPool', size: 20, stat: { size: 20, busy: 2, available: 18 })
         )
       end
 
@@ -156,7 +156,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
         )
 
         allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-          double('ConnectionPool', size: 20)
+          double('ConnectionPool', size: 5, stat: { size: 5, busy: 4, available: 1 })
         )
       end
 
@@ -204,7 +204,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
       )
 
       allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-        double('ConnectionPool', size: 5)
+        double('ConnectionPool', size: 5, stat: { size: 5, busy: 4, available: 1 })
       )
 
       # Even with very low resources, should never go below 3
@@ -236,7 +236,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
       )
 
       allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-        double('ConnectionPool', size: 100)
+        double('ConnectionPool', size: 100, stat: { size: 100, busy: 10, available: 90 })
       )
 
       # Even with very high resources, should never exceed reasonable maximum
@@ -358,7 +358,7 @@ RSpec.describe 'Dynamic Concurrency Optimization' do
       )
 
       allow(ActiveRecord::Base).to receive(:connection_pool).and_return(
-        double('ConnectionPool', size: 20)
+        double('ConnectionPool', size: 20, stat: { size: 20, busy: 5, available: 15 })
       )
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)

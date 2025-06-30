@@ -98,7 +98,8 @@ module Tasker
       #
       # This method dynamically determines the maximum number of steps that can be
       # executed concurrently based on current system load, database connections,
-      # and other health metrics.
+      # and other health metrics. Now enhanced with ConnectionPoolIntelligence
+      # for Rails-aware connection management.
       #
       # @return [Integer] Optimal number of concurrent steps (between configured min and max)
       def max_concurrent_steps
@@ -109,7 +110,7 @@ module Tasker
           return @max_concurrent_steps
         end
 
-        # Calculate new concurrency level
+        # Calculate new concurrency level using enhanced intelligence
         @max_concurrent_steps = calculate_optimal_concurrency
         @concurrency_calculated_at = Time.current
 
@@ -567,29 +568,36 @@ module Tasker
 
       # Calculate optimal concurrency based on system health metrics
       #
+      # Enhanced with ConnectionPoolIntelligence for Rails-aware connection management.
+      # Falls back to legacy calculation if ConnectionPoolIntelligence is unavailable.
+      #
       # @return [Integer] Calculated concurrency level
       def calculate_optimal_concurrency
-        # Get system health data
+        # Use enhanced ConnectionPoolIntelligence for Rails-aware calculation
+        intelligence_concurrency = Tasker::Orchestration::ConnectionPoolIntelligence
+                                   .intelligent_concurrency_for_step_executor
+
+        # Combine with system health analysis for comprehensive optimization
         health_data = fetch_system_health_data
-        return execution_config.min_concurrent_steps unless health_data
+        if health_data
+          # Apply additional system load considerations
+          base_concurrency = calculate_base_concurrency(health_data)
 
-        # Get connection pool information
-        connection_pool_size = fetch_connection_pool_size
-        return execution_config.min_concurrent_steps unless connection_pool_size
+          # Use the most conservative of both approaches for safety
+          optimal_concurrency = [intelligence_concurrency, base_concurrency].min
+        else
+          # Use ConnectionPoolIntelligence recommendation when health data unavailable
+          optimal_concurrency = intelligence_concurrency
+        end
 
-        # Calculate base concurrency from health metrics
-        base_concurrency = calculate_base_concurrency(health_data)
-
-        # Apply connection pool constraints
-        connection_constrained = calculate_connection_constrained_concurrency(health_data, connection_pool_size)
-
-        # Use the most restrictive constraint
-        optimal_concurrency = [base_concurrency, connection_constrained].min
-
-        # Ensure we stay within bounds
+        # Ensure we stay within configured bounds
         optimal_concurrency.clamp(execution_config.min_concurrent_steps, execution_config.max_concurrent_steps_limit)
       rescue StandardError => e
-        Rails.logger.warn("StepExecutor: Failed to calculate optimal concurrency: #{e.message}")
+        log_structured(:warn, 'Optimal concurrency calculation failed, using fallback', {
+                         error_class: e.class.name,
+                         error_message: e.message,
+                         fallback_concurrency: execution_config.min_concurrent_steps
+                       })
         execution_config.min_concurrent_steps
       end
 

@@ -228,12 +228,12 @@
       <pre class="lines">
 
 
-12
-13
-14</pre>
+14
+15
+16</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/jobs/tasker/task_runner_job.rb', line 12</span>
+      <pre class="code"><span class="info file"># File 'app/jobs/tasker/task_runner_job.rb', line 14</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handler_factory'>handler_factory</span>
   <span class='ivar'>@handler_factory</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span>
@@ -258,8 +258,6 @@
       <pre class="lines">
 
 
-16
-17
 18
 19
 20
@@ -319,10 +317,12 @@
 74
 75
 76
-77</pre>
+77
+78
+79</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/jobs/tasker/task_runner_job.rb', line 16</span>
+      <pre class="code"><span class="info file"># File 'app/jobs/tasker/task_runner_job.rb', line 18</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_perform'>perform</span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='label'>correlation_id:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_job_start_time'>job_start_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
@@ -396,7 +396,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 29 15:10:13 2025 by
+  Generated on Mon Jun 30 10:06:58 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

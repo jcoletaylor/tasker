@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'tasker/logging/correlation_id_generator'
+
 module Tasker
   module Concerns
     # StructuredLogging provides correlation ID tracking and consistent JSON formatting

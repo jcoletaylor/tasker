@@ -24,7 +24,7 @@ require 'active_support/core_ext/string'
 
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
-  TASKER_VERSION = '~> 2.6.0' # Use latest published version
+  TASKER_VERSION = '~> 2.6.1' # Use latest published version
 
   # Fix Thor deprecation warning
   def self.exit_on_failure?
@@ -274,17 +274,17 @@ class TaskerAppGenerator < Thor
 
       begin
         erb = ERB.new(File.read(template_path))
-        
+
         # Use appropriate binding based on template type
         test_binding = case template
-                      when 'task_definitions/configured_task.rb.erb'
-                        test_binding_for_task_config
-                      when 'configuration/tasker_configuration.rb.erb'
-                        test_binding_for_config
-                      else
-                        test_binding_for_ruby_templates
-                      end
-        
+                       when 'task_definitions/configured_task.rb.erb'
+                         test_binding_for_task_config
+                       when 'configuration/tasker_configuration.rb.erb'
+                         test_binding_for_config
+                       else
+                         test_binding_for_ruby_templates
+                       end
+
         rendered = erb.result(test_binding)
 
         # Check Ruby syntax using RubyVM::InstructionSequence
@@ -322,15 +322,15 @@ class TaskerAppGenerator < Thor
 
       begin
         erb = ERB.new(File.read(template_path))
-        
+
         # Use appropriate binding based on template type
         test_binding = case template
-                      when 'docker/prometheus.yml.erb'
-                        docker_binding
-                      else
-                        test_binding_for_yaml_templates
-                      end
-        
+                       when 'docker/prometheus.yml.erb'
+                         docker_binding
+                       else
+                         test_binding_for_yaml_templates
+                       end
+
         rendered = erb.result(test_binding)
 
         # Parse YAML to check syntax
