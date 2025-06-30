@@ -60,7 +60,7 @@
       <div id="content"><div id='filecontents'>
 <p><a href="https://github.com/tasker-systems/tasker/actions/workflows/main.yml"><img src="https://github.com/tasker-systems/tasker/actions/workflows/main.yml/badge.svg" alt="CI"></a> <img src="https://img.shields.io/github/license/tasker-systems/tasker" alt="GitHub"> <img src="https://img.shields.io/github/v/release/tasker-systems/tasker?color=blue&amp;sort=semver" alt="GitHub"> release (latest SemVer) <a href="https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&amp;utm_medium=organic&amp;utm_campaign=preview_documentation&amp;utm_content=link"><img src="https://img.shields.io/static/v1?message=Documented%20on%20GitBook&amp;logo=gitbook&amp;logoColor=ffffff&amp;label=%20&amp;labelColor=5c5c5c&amp;color=3F89A1" alt="GitBook"></a></p>
 
-<h1 id="label-Tasker-3A+Production-Ready+Workflow+Orchestration+Engine">Tasker: Production-Ready Workflow Orchestration Engine</h1>
+<h1 id="label-Tasker-3A+Making+Complex+Workflows+Easy-ish">Tasker: Making Complex Workflows Easy-ish</h1>
 
 <h2 id="label-What+is+Tasker-3F">What is Tasker?</h2>
 
@@ -94,7 +94,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/tasker-systems</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.6.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 2.6.1</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -116,7 +116,7 @@ bundle exec rails db:migrate
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_bundle'>bundle</span> <span class='id identifier rubyid_exec'>exec</span> <span class='id identifier rubyid_rails'>rails</span> <span class='label'>tasker:</span><span class='id identifier rubyid_setup'>setup</span>
 </code></pre>
 
-<h3 id="label-Option+2-3A+Generate+Complete+Application+-28v2.6.0-29">Option 2: Generate Complete Application (v2.6.0)</h3>
+<h3 id="label-Option+2-3A+Generate+Complete+Application+-28v2.6.1-29">Option 2: Generate Complete Application (v2.6.1)</h3>
 
 <p>Create a production-ready Rails application with Tasker integration in one command:</p>
 
@@ -479,6 +479,8 @@ GET /tasker/health/status
 <p><strong>Telemetry[docs/TELEMETRY.md]</strong> - OpenTelemetry setup and monitoring</p>
 </li><li>
 <p><strong>Performance[docs/SQL_FUNCTIONS.md]</strong> - High-performance SQL functions</p>
+</li><li>
+<p><strong>Breaker[docs/CIRCUIT_BREAKER.md]</strong> - Distributed, SQL-driven retry architecture</p>
 </li></ul>
 
 <h3 id="label-F0-9F-93-9A+Additional+Resources">📚 Additional Resources</h3>
@@ -529,7 +531,7 @@ bundle exec rubocop
 </div></div>
 
       <div id="footer">
-  Generated on Sun Jun 29 15:10:11 2025 by
+  Generated on Mon Jun 30 10:06:55 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

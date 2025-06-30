@@ -575,14 +575,14 @@ module Tasker
       def calculate_optimal_concurrency
         # Use enhanced ConnectionPoolIntelligence for Rails-aware calculation
         intelligence_concurrency = Tasker::Orchestration::ConnectionPoolIntelligence
-          .intelligent_concurrency_for_step_executor
+                                   .intelligent_concurrency_for_step_executor
 
         # Combine with system health analysis for comprehensive optimization
         health_data = fetch_system_health_data
         if health_data
           # Apply additional system load considerations
           base_concurrency = calculate_base_concurrency(health_data)
-          
+
           # Use the most conservative of both approaches for safety
           optimal_concurrency = [intelligence_concurrency, base_concurrency].min
         else
@@ -594,10 +594,10 @@ module Tasker
         optimal_concurrency.clamp(execution_config.min_concurrent_steps, execution_config.max_concurrent_steps_limit)
       rescue StandardError => e
         log_structured(:warn, 'Optimal concurrency calculation failed, using fallback', {
-          error_class: e.class.name,
-          error_message: e.message,
-          fallback_concurrency: execution_config.min_concurrent_steps
-        })
+                         error_class: e.class.name,
+                         error_message: e.message,
+                         fallback_concurrency: execution_config.min_concurrent_steps
+                       })
         execution_config.min_concurrent_steps
       end
 

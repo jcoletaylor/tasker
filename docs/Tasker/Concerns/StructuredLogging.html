@@ -428,12 +428,12 @@
       <pre class="lines">
 
 
-81
-82
-83</pre>
+83
+84
+85</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 81</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 83</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_correlation_id'>correlation_id</span>
   <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>||=</span> <span class='id identifier rubyid_generate_correlation_id'>generate_correlation_id</span>
@@ -507,12 +507,12 @@
       <pre class="lines">
 
 
-89
-90
-91</pre>
+91
+92
+93</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 91</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_correlation_id='>correlation_id=</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
   <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_id'>id</span>
@@ -613,8 +613,6 @@
       <pre class="lines">
 
 
-227
-228
 229
 230
 231
@@ -623,10 +621,12 @@
 234
 235
 236
-237</pre>
+237
+238
+239</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 227</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 229</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_exception'>log_exception</span><span class='lparen'>(</span><span class='id identifier rubyid_exception'>exception</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='label'>level:</span> <span class='symbol'>:error</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_exception_context'>exception_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -732,16 +732,16 @@
       <pre class="lines">
 
 
-180
-181
 182
 183
 184
 185
-186</pre>
+186
+187
+188</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 180</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 182</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_orchestration_event'>log_orchestration_event</span><span class='lparen'>(</span><span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:debug</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Orchestration </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_type'>event_type</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
@@ -844,8 +844,6 @@
       <pre class="lines">
 
 
-200
-201
 202
 203
 204
@@ -855,10 +853,12 @@
 208
 209
 210
-211</pre>
+211
+212
+213</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 200</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 202</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_performance_event'>log_performance_event</span><span class='lparen'>(</span><span class='id identifier rubyid_operation'>operation</span><span class='comma'>,</span> <span class='id identifier rubyid_duration'>duration</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_performance_context'>performance_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -983,8 +983,6 @@
       <pre class="lines">
 
 
-149
-150
 151
 152
 153
@@ -1001,10 +999,12 @@
 164
 165
 166
-167</pre>
+167
+168
+169</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 149</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 151</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_step_event'>log_step_event</span><span class='lparen'>(</span><span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='label'>duration:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_step_context'>step_context</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -1134,8 +1134,6 @@
       <pre class="lines">
 
 
-61
-62
 63
 64
 65
@@ -1145,10 +1143,12 @@
 69
 70
 71
-72</pre>
+72
+73
+74</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 61</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 63</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='comma'>,</span> <span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>unless</span> <span class='id identifier rubyid_should_log?'>should_log?</span><span class='lparen'>(</span><span class='id identifier rubyid_level'>level</span><span class='rparen'>)</span>
@@ -1255,18 +1255,18 @@
       <pre class="lines">
 
 
-127
-128
 129
 130
 131
 132
 133
 134
-135</pre>
+135
+136
+137</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 127</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 129</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_log_task_event'>log_task_event</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_event_type'>event_type</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_log_structured'>log_structured</span><span class='lparen'>(</span><span class='symbol'>:info</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Task </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_event_type'>event_type</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
@@ -1375,16 +1375,16 @@
       <pre class="lines">
 
 
-104
-105
 106
 107
 108
 109
-110</pre>
+110
+111
+112</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 104</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/concerns/structured_logging.rb', line 106</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_with_correlation_id'>with_correlation_id</span><span class='lparen'>(</span><span class='id identifier rubyid_id'>id</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_previous_id'>previous_id</span> <span class='op'>=</span> <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">CORRELATION_ID_KEY</a></span></span><span class='rbracket'>]</span>
@@ -1403,7 +1403,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 29 15:10:12 2025 by
+  Generated on Mon Jun 30 10:06:56 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

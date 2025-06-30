@@ -9,27 +9,24 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
   before do
     allow(ActiveRecord::Base).to receive(:connection_pool).and_return(mock_pool)
     allow(Tasker.configuration).to receive(:execution).and_return(mock_config)
-    
+
     # Default config values
-    allow(mock_config).to receive(:min_concurrent_steps).and_return(3)
-    allow(mock_config).to receive(:max_concurrent_steps_limit).and_return(12)
-    allow(mock_config).to receive(:connection_pressure_factors).and_return({
-      low: 0.8,
-      moderate: 0.6,
-      high: 0.4,
-      critical: 0.2
-    })
+    allow(mock_config).to receive_messages(min_concurrent_steps: 3, max_concurrent_steps_limit: 12, connection_pressure_factors: {
+                                             low: 0.8,
+                                             moderate: 0.6,
+                                             high: 0.4,
+                                             critical: 0.2
+                                           })
   end
 
   describe '.assess_connection_health' do
     context 'with healthy connection pool' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 2,
-          available: 8
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 2,
+                                               available: 8
+                                             }, size: 10)
       end
 
       it 'returns comprehensive health assessment' do
@@ -42,22 +39,21 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
           assessment_timestamp: be_within(1.second).of(Time.current)
         )
         expect(result[:rails_pool_stats]).to eq({
-          size: 10,
-          busy: 2,
-          available: 8
-        })
+                                                  size: 10,
+                                                  busy: 2,
+                                                  available: 8
+                                                })
         expect(result[:recommended_concurrency]).to be >= 3
       end
     end
 
     context 'with moderate pressure' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 6,
-          available: 4
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 6,
+                                               available: 4
+                                             }, size: 10)
       end
 
       it 'correctly identifies moderate pressure' do
@@ -73,12 +69,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
 
     context 'with high pressure' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 8,
-          available: 2
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 8,
+                                               available: 2
+                                             }, size: 10)
       end
 
       it 'correctly identifies high pressure and degraded health' do
@@ -94,12 +89,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
 
     context 'with critical pressure' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 9,
-          available: 1
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 9,
+                                               available: 1
+                                             }, size: 10)
       end
 
       it 'correctly identifies critical pressure and status' do
@@ -135,12 +129,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
   describe '.intelligent_concurrency_for_step_executor' do
     context 'with low pressure conditions' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 2,
-          available: 8
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 2,
+                                               available: 8
+                                             }, size: 10)
       end
 
       it 'returns higher concurrency for low pressure' do
@@ -165,12 +158,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
 
     context 'with critical pressure conditions' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 9,
-          available: 1
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 9,
+                                               available: 1
+                                             }, size: 10)
       end
 
       it 'returns emergency fallback concurrency for critical pressure' do
@@ -183,17 +175,16 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
     context 'with custom pressure factors' do
       before do
         allow(mock_config).to receive(:connection_pressure_factors).and_return({
-          low: 0.9,
-          moderate: 0.7,
-          high: 0.5,
-          critical: 0.1
-        })
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 2,
-          available: 8
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+                                                                                 low: 0.9,
+                                                                                 moderate: 0.7,
+                                                                                 high: 0.5,
+                                                                                 critical: 0.1
+                                                                               })
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 2,
+                                               available: 8
+                                             }, size: 10)
       end
 
       it 'uses custom pressure factors for calculation' do
@@ -227,11 +218,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
   describe 'pressure assessment constants' do
     it 'has correct pressure thresholds' do
       expect(described_class::PRESSURE_ASSESSMENT_THRESHOLDS).to eq({
-        low: 0.0..0.5,
-        moderate: 0.5..0.7,
-        high: 0.7..0.85,
-        critical: 0.85..Float::INFINITY
-      })
+                                                                      low: 0.0..0.5,
+                                                                      moderate: 0.5..0.7,
+                                                                      high: 0.7..0.85,
+                                                                      critical: 0.85..Float::INFINITY
+                                                                    })
     end
 
     it 'has conservative safety constants' do
@@ -243,12 +234,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
 
   describe 'utilization calculation precision' do
     before do
-      allow(mock_pool).to receive(:stat).and_return({
-        size: 7,
-        busy: 2,
-        available: 5
-      })
-      allow(mock_pool).to receive(:size).and_return(7)
+      allow(mock_pool).to receive_messages(stat: {
+                                             size: 7,
+                                             busy: 2,
+                                             available: 5
+                                           }, size: 7)
     end
 
     it 'calculates utilization with correct precision' do
@@ -262,12 +252,11 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
   describe 'safety margin application' do
     context 'with moderate available connections' do
       before do
-        allow(mock_pool).to receive(:stat).and_return({
-          size: 10,
-          busy: 3,
-          available: 7
-        })
-        allow(mock_pool).to receive(:size).and_return(10)
+        allow(mock_pool).to receive_messages(stat: {
+                                               size: 10,
+                                               busy: 3,
+                                               available: 7
+                                             }, size: 10)
       end
 
       it 'applies 60% safety margin correctly' do

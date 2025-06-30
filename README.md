@@ -29,7 +29,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/tasker-systems' do
-  gem 'tasker', '~> 2.6.0'
+  gem 'tasker', '~> 2.6.1'
 end
 ```
 
@@ -54,7 +54,7 @@ end
 bundle exec rails tasker:setup
 ```
 
-### Option 2: Generate Complete Application (v2.6.0)
+### Option 2: Generate Complete Application (v2.6.1)
 
 Create a production-ready Rails application with Tasker integration in one command:
 

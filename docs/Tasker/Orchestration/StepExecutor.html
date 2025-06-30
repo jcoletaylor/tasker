@@ -419,7 +419,6 @@
       <pre class="lines">
 
 
-155
 156
 157
 158
@@ -468,10 +467,11 @@
 201
 202
 203
-204</pre>
+204
+205</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 155</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 156</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execute_single_step'>execute_single_step</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='comma'>,</span> <span class='id identifier rubyid_step'>step</span><span class='comma'>,</span> <span class='id identifier rubyid_task_handler'>task_handler</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_step_start_time'>step_start_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
@@ -848,7 +848,6 @@
       <pre class="lines">
 
 
-125
 126
 127
 128
@@ -867,10 +866,11 @@
 141
 142
 143
-144</pre>
+144
+145</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 125</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 126</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_handle_viable_steps_discovered'>handle_viable_steps_discovered</span><span class='lparen'>(</span><span class='id identifier rubyid_event'>event</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task_id'>task_id</span> <span class='op'>=</span> <span class='id identifier rubyid_event'>event</span><span class='lbracket'>[</span><span class='symbol'>:task_id</span><span class='rbracket'>]</span>
@@ -911,7 +911,7 @@
     
 <p>Calculate optimal concurrency based on system health and resources</p>
 
-<p>This method dynamically determines the maximum number of steps that can be executed concurrently based on current system load, database connections, and other health metrics.</p>
+<p>This method dynamically determines the maximum number of steps that can be executed concurrently based on current system load, database connections, and other health metrics. Now enhanced with ConnectionPoolIntelligence for Rails-aware connection management.</p>
 
 
   </div>
@@ -943,7 +943,6 @@
       <pre class="lines">
 
 
-104
 105
 106
 107
@@ -956,10 +955,11 @@
 114
 115
 116
-117</pre>
+117
+118</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 104</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 105</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_max_concurrent_steps'>max_concurrent_steps</span>
   <span class='comment'># Return cached value if still valid
@@ -969,7 +969,7 @@
     <span class='kw'>return</span> <span class='ivar'>@max_concurrent_steps</span>
   <span class='kw'>end</span>
 
-  <span class='comment'># Calculate new concurrency level
+  <span class='comment'># Calculate new concurrency level using enhanced intelligence
 </span>  <span class='ivar'>@max_concurrent_steps</span> <span class='op'>=</span> <span class='id identifier rubyid_calculate_optimal_concurrency'>calculate_optimal_concurrency</span>
   <span class='ivar'>@concurrency_calculated_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
 
@@ -985,7 +985,7 @@
 </div>
 
       <div id="footer">
-  Generated on Sun Jun 29 15:10:15 2025 by
+  Generated on Mon Jun 30 10:06:59 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

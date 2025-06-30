@@ -17,11 +17,11 @@ RSpec.describe Tasker::Types::ExecutionConfig do
 
     it 'provides sensible defaults for connection configuration' do
       expect(config.connection_pressure_factors).to eq({
-        low: 0.8,
-        moderate: 0.6,
-        high: 0.4,
-        critical: 0.2
-      })
+                                                         low: 0.8,
+                                                         moderate: 0.6,
+                                                         high: 0.4,
+                                                         critical: 0.2
+                                                       })
       expect(config.health_assessment_cache_duration).to eq(30)
       expect(config.connection_health_log_level).to eq('debug')
     end
@@ -64,11 +64,11 @@ RSpec.describe Tasker::Types::ExecutionConfig do
 
     it 'accepts custom connection configuration values' do
       expect(config.connection_pressure_factors).to eq({
-        low: 0.9,
-        moderate: 0.7,
-        high: 0.5,
-        critical: 0.1
-      })
+                                                         low: 0.9,
+                                                         moderate: 0.7,
+                                                         high: 0.5,
+                                                         critical: 0.1
+                                                       })
       expect(config.health_assessment_cache_duration).to eq(60)
       expect(config.connection_health_log_level).to eq('info')
     end
@@ -202,11 +202,11 @@ RSpec.describe Tasker::Types::ExecutionConfig do
 
       it 'returns error for invalid pressure factor values' do
         config = described_class.new(connection_pressure_factors: {
-          low: 0.8,
-          moderate: 1.5,  # Invalid: > 1.0
-          high: -0.1,     # Invalid: < 0.0
-          critical: 'invalid'  # Invalid: not numeric
-        })
+                                       low: 0.8,
+                                       moderate: 1.5,  # Invalid: > 1.0
+                                       high: -0.1,     # Invalid: < 0.0
+                                       critical: 'invalid' # Invalid: not numeric
+                                     })
         errors = config.validate_connection_configuration
         expect(errors).to include('connection_pressure_factors[moderate] must be between 0.0 and 1.0 (got: 1.5)')
         expect(errors).to include('connection_pressure_factors[high] must be between 0.0 and 1.0 (got: -0.1)')
