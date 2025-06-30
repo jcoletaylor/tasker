@@ -70,7 +70,7 @@ module ApiTask
         step = sequence.find_step_by_name(step_name)
         if step.nil? || step.results.empty?
           raise Tasker::PermanentError.new(
-            "Step or results not found or are incomplete in sequence",
+            'Step or results not found or are incomplete in sequence',
             error_code: 'MISSING_STEP_RESULTS',
             context: { step_name: step_name, sequence_id: sequence.object_id }
           )
