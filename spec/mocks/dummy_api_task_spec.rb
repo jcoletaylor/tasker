@@ -63,7 +63,7 @@ module Tasker
               [429, { 'Retry-After' => '30' }, '{"error": "Too many requests"}']
             end
 
-            expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+            expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
             expect(step.backoff_request_seconds).to eq(30)
           end
 
@@ -73,7 +73,7 @@ module Tasker
               [429, { 'Retry-After' => retry_after }, '{"error": "Too many requests"}']
             end
 
-            expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+            expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
             expect(step.backoff_request_seconds).to be_between(1, 60)
           end
         end
@@ -84,7 +84,7 @@ module Tasker
               [429, {}, '{"error": "Too many requests"}']
             end
 
-            expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+            expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
             expect(step.backoff_request_seconds).to eq(1) # First attempt (1) gets backoff[0] = 1 second
           end
 
@@ -94,7 +94,7 @@ module Tasker
             end
 
             step.attempts = 2
-            expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+            expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
             expect(step.backoff_request_seconds).to eq(4) # Attempt 2 (3rd attempt) gets backoff[2] = 4 seconds
           end
         end
@@ -106,7 +106,7 @@ module Tasker
             [503, {}, '{"error": "Service unavailable"}']
           end
 
-          expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+          expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
           expect(step.backoff_request_seconds).to eq(1) # First attempt gets backoff[0] = 1 second
         end
       end
@@ -117,7 +117,7 @@ module Tasker
             [500, {}, '{"error": "Internal server error"}']
           end
 
-          expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+          expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
           expect(step.backoff_request_seconds).to be_nil
         end
       end
@@ -137,7 +137,7 @@ module Tasker
             [429, {}, '{"error": "Too many requests"}']
           end
 
-          expect { handler.handle(task, sequence, step) }.to raise_error(Faraday::Error)
+          expect { handler.handle(task, sequence, step) }.to raise_error(Tasker::RetryableError)
           expect(step.backoff_request_seconds).to be_nil
         end
       end

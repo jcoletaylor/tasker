@@ -5,7 +5,7 @@ require_relative '../concerns/event_publisher'
 require_relative '../orchestration/response_processor'
 require_relative '../orchestration/backoff_calculator'
 require_relative '../orchestration/connection_builder'
-require_relative '../../../app/models/tasker/procedural_error'
+require_relative '../errors'
 
 module Tasker
   module StepHandler
@@ -211,8 +211,9 @@ module Tasker
         # Call the developer-implemented process() method to make the HTTP request
         response = process(task, sequence, step)
 
-        # Process response and handle any API-specific error conditions
-        handle_api_response(step, response)
+        # ResponseProcessor will automatically raise Tasker::RetryableError or Tasker::PermanentError
+        # for error responses, so we only process successful responses here
+        @response_processor.process_response(step, response)
 
         # Set results using overridable method, respecting developer customization
         process_results(step, response, initial_results)
@@ -379,12 +380,18 @@ module Tasker
       # @param step [Tasker::WorkflowStep] The current step
       # @param error [Tasker::RetryableError] The retryable error
       def apply_retryable_error_backoff(step, error)
+        # Check if this error should skip backoff (e.g., server errors)
+        if error.respond_to?(:skip_backoff?) && error.skip_backoff?
+          Rails.logger.info { "StepHandler: Skipping backoff for error type that doesn't require it" }
+          return
+        end
+
         error_context = if error.retry_after
-                          # Use the specific retry delay from the error
+                          # Use the specific retry delay from the error by providing it as a Retry-After header
                           {
                             step_id: step.workflow_step_id,
                             step_name: step.name,
-                            suggested_delay: error.retry_after,
+                            headers: { 'Retry-After' => error.retry_after.to_s },
                             error_type: 'retryable_error'
                           }
                         else

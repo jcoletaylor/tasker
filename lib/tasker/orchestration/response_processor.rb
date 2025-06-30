@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../concerns/event_publisher'
+require_relative '../errors'
 
 module Tasker
   module Orchestration
@@ -12,8 +13,11 @@ module Tasker
     class ResponseProcessor
       include Tasker::Concerns::EventPublisher
 
-      # HTTP status codes that should trigger backoff behavior
+      # HTTP status codes that should trigger backoff behavior (temporary failures)
       BACKOFF_ERROR_CODES = [429, 503].freeze
+
+      # HTTP status codes that indicate permanent failures (don't retry)
+      PERMANENT_ERROR_CODES = [400, 401, 403, 404, 422].freeze
 
       # HTTP status codes that indicate a successful request
       SUCCESS_CODES = (200..226)
@@ -30,28 +34,66 @@ module Tasker
         # Successful responses don't need special handling
         return nil if SUCCESS_CODES.include?(status)
 
-        # Check if this is a backoff-requiring error
+        # Categorize error type and raise appropriate Tasker error
         if BACKOFF_ERROR_CODES.include?(status)
+          # Temporary failures that should be retried with backoff
           context = build_error_context(step, response, status)
+          retry_after = extract_retry_after(response)
 
-          # Log the backoff error for observability
           Rails.logger.warn(
             'ResponseProcessor: API response requires backoff handling - ' \
             "Status: #{status}, Step: #{step.name} (#{step.workflow_step_id})"
           )
 
-          # Return context for backoff handling
-          context
-        else
-          # Other error statuses don't require backoff but should still fail
+          # Parse retry_after immediately to avoid timing issues with date formats
+          parsed_retry_after = if retry_after&.match?(/^\d+$/)
+                                 retry_after.to_i
+                               elsif retry_after
+                                 # Parse HTTP date format immediately
+                                 retry_time = Time.zone.parse(retry_after)
+                                 [(retry_time - Time.zone.now).to_i, 1].max
+                               end
+
+          raise Tasker::RetryableError.new(
+            "API call failed with retryable status #{status}",
+            retry_after: parsed_retry_after,
+            context: context
+          )
+        elsif PERMANENT_ERROR_CODES.include?(status)
+          # Permanent failures that should not be retried
+          body = extract_body(response)
+          context = build_error_context(step, response, status)
+
           Rails.logger.error(
-            'ResponseProcessor: API response indicates non-backoff error - ' \
+            'ResponseProcessor: API response indicates permanent error - ' \
             "Status: #{status}, Step: #{step.name} (#{step.workflow_step_id})"
           )
 
-          # Raise error for non-backoff failures
+          raise Tasker::PermanentError.new(
+            "API call failed with permanent status #{status}: #{body}",
+            error_code: "HTTP_#{status}",
+            context: context
+          )
+        else
+          # Other server errors (5xx) - treat as retryable but without forced backoff
           body = extract_body(response)
-          raise Faraday::Error, "API call failed with status #{status} and body #{body}"
+          context = build_error_context(step, response, status)
+
+          Rails.logger.error(
+            'ResponseProcessor: API response indicates server error - ' \
+            "Status: #{status}, Step: #{step.name} (#{step.workflow_step_id})"
+          )
+
+          # Create a special RetryableError that doesn't apply backoff
+          error = Tasker::RetryableError.new(
+            "API call failed with server error #{status}: #{body}",
+            context: context
+          )
+
+          # Mark this error as not requiring backoff
+          error.define_singleton_method(:skip_backoff?) { true }
+
+          raise error
         end
       end
 
@@ -106,6 +148,15 @@ module Tasker
       # @return [Hash] The response headers
       def extract_headers(response)
         response.is_a?(Hash) ? response[:headers] || {} : response.headers
+      end
+
+      # Extract retry-after header value for rate limiting
+      #
+      # @param response [Faraday::Response, Hash] The response object
+      # @return [String, nil] Retry delay as string (for parsing), nil if not present
+      def extract_retry_after(response)
+        headers = extract_headers(response)
+        headers['retry-after'] || headers['Retry-After']
       end
     end
   end
