@@ -49,9 +49,14 @@ module Tasker
           parsed_retry_after = if retry_after&.match?(/^\d+$/)
                                  retry_after.to_i
                                elsif retry_after
-                                 # Parse HTTP date format immediately
-                                 retry_time = Time.zone.parse(retry_after)
-                                 [(retry_time - Time.zone.now).to_i, 1].max
+                                 # Parse HTTP date format with error handling
+                                 begin
+                                   retry_time = Time.zone.parse(retry_after)
+                                   [(retry_time - Time.zone.now).to_i, 1].max
+                                 rescue ArgumentError => e
+                                   Rails.logger.warn("Invalid Retry-After date format: #{retry_after}, error: #{e.message}")
+                                   nil # Let exponential backoff handle it
+                                 end
                                end
 
           raise Tasker::RetryableError.new(
