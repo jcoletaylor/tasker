@@ -95,6 +95,41 @@ module Tasker
       #   @return [Integer] Maximum timeout in seconds (default: 120)
       attribute :max_batch_timeout_seconds, Types::Integer.default(120)
 
+      # Connection pressure response factors
+      #
+      # Configurable factors that determine how connection pressure affects
+      # concurrency recommendations. Higher values are more aggressive,
+      # lower values are more conservative.
+      #
+      # @!attribute [r] connection_pressure_factors
+      #   @return [Hash] Pressure response factors by pressure level
+      attribute :connection_pressure_factors, Types::Hash.default(proc {
+        {
+          low: 0.8,      # Use 80% of available when pressure is low
+          moderate: 0.6, # Use 60% of available when pressure is moderate
+          high: 0.4,     # Use 40% of available when pressure is high
+          critical: 0.2  # Use 20% of available when pressure is critical
+        }
+      }.freeze)
+
+      # Health assessment cache duration
+      #
+      # How long to cache connection health assessments before recalculating.
+      # Frequent assessments provide better responsiveness but add overhead.
+      #
+      # @!attribute [r] health_assessment_cache_duration
+      #   @return [Integer] Cache duration in seconds (default: 30)
+      attribute :health_assessment_cache_duration, Types::Integer.default(30)
+
+      # Connection health log level
+      #
+      # Log level for connection health assessment messages.
+      # Production systems typically use 'info' or 'warn'.
+      #
+      # @!attribute [r] connection_health_log_level
+      #   @return [String] Log level (default: 'debug')
+      attribute :connection_health_log_level, Types::String.default('debug')
+
       # ====================
       # ARCHITECTURAL CONSTANTS
       # ====================
@@ -172,7 +207,8 @@ module Tasker
         end
 
         if min_concurrent_steps > max_concurrent_steps_limit
-          errors << "min_concurrent_steps (#{min_concurrent_steps}) cannot exceed max_concurrent_steps_limit (#{max_concurrent_steps_limit})"
+          errors << "min_concurrent_steps (#{min_concurrent_steps}) cannot exceed " \
+                    "max_concurrent_steps_limit (#{max_concurrent_steps_limit})"
         end
 
         errors
@@ -194,7 +230,42 @@ module Tasker
         end
 
         if max_batch_timeout_seconds <= batch_timeout_base_seconds
-          errors << "max_batch_timeout_seconds (#{max_batch_timeout_seconds}) must be greater than batch_timeout_base_seconds (#{batch_timeout_base_seconds})"
+          errors << "max_batch_timeout_seconds (#{max_batch_timeout_seconds}) must be greater than " \
+                    "batch_timeout_base_seconds (#{batch_timeout_base_seconds})"
+        end
+
+        errors
+      end
+
+      # Validate connection configuration
+      #
+      # Ensures connection pressure factors and health settings are valid
+      # @return [Array<String>] Validation errors (empty if valid)
+      def validate_connection_configuration
+        errors = []
+
+        if health_assessment_cache_duration <= 0
+          errors << "health_assessment_cache_duration must be positive (got: #{health_assessment_cache_duration})"
+        end
+
+        # Validate connection pressure factors
+        required_pressure_levels = %i[low moderate high critical]
+        missing_levels = required_pressure_levels - connection_pressure_factors.keys
+        unless missing_levels.empty?
+          errors << "connection_pressure_factors missing required levels: #{missing_levels.join(', ')}"
+        end
+
+        connection_pressure_factors.each do |level, factor|
+          unless factor.is_a?(Numeric) && factor >= 0.0 && factor <= 1.0
+            errors << "connection_pressure_factors[#{level}] must be between 0.0 and 1.0 (got: #{factor})"
+          end
+        end
+
+        # Validate log level
+        valid_log_levels = %w[debug info warn error fatal]
+        unless valid_log_levels.include?(connection_health_log_level)
+          errors << "connection_health_log_level must be one of: #{valid_log_levels.join(', ')} " \
+                    "(got: #{connection_health_log_level})"
         end
 
         errors
@@ -202,14 +273,17 @@ module Tasker
 
       # Comprehensive validation
       #
-      # @return [Array<String>] All validation errors (empty if valid)
+      # @return [Boolean] True if valid, raises exception if invalid
+      # @raise [Dry::Struct::Error] If validation fails
+      # rubocop:disable Naming/PredicateMethod
       def validate!
-        errors = validate_concurrency_bounds + validate_timeout_configuration
+        errors = validate_concurrency_bounds + validate_timeout_configuration + validate_connection_configuration
 
         raise Dry::Struct::Error, "ExecutionConfig validation failed: #{errors.join(', ')}" unless errors.empty?
 
         true
       end
+      # rubocop:enable Naming/PredicateMethod
     end
   end
 end

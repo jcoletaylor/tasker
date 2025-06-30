@@ -3,7 +3,7 @@
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tasker-systems/tasker?color=blue&sort=semver)
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-# Tasker: Production-Ready Workflow Orchestration Engine
+# Tasker: Making Complex Workflows Easy-ish
 
 ## What is Tasker?
 
@@ -401,6 +401,7 @@ end
 - **[Event System](docs/EVENT_SYSTEM.md)** - Observability and integrations
 - **[Telemetry](docs/TELEMETRY.md)** - OpenTelemetry setup and monitoring
 - **[Performance](docs/SQL_FUNCTIONS.md)** - High-performance SQL functions
+- **[Circuit Breaker](docs/CIRCUIT_BREAKER.md)** - Distributed, SQL-driven retry architecture
 
 ### 📚 Additional Resources
 - **[Application Generator](docs/APPLICATION_GENERATOR.md)** - One-line app creation with Docker support and validation

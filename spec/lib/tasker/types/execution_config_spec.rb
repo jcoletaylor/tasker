@@ -15,6 +15,17 @@ RSpec.describe Tasker::Types::ExecutionConfig do
       expect(config.max_batch_timeout_seconds).to eq(120)
     end
 
+    it 'provides sensible defaults for connection configuration' do
+      expect(config.connection_pressure_factors).to eq({
+        low: 0.8,
+        moderate: 0.6,
+        high: 0.4,
+        critical: 0.2
+      })
+      expect(config.health_assessment_cache_duration).to eq(30)
+      expect(config.connection_health_log_level).to eq('debug')
+    end
+
     it 'provides correct architectural constants' do
       expect(config.future_cleanup_wait_seconds).to eq(1)
       expect(config.gc_trigger_batch_size_threshold).to eq(6)
@@ -30,7 +41,15 @@ RSpec.describe Tasker::Types::ExecutionConfig do
         concurrency_cache_duration: 60,
         batch_timeout_base_seconds: 45,
         batch_timeout_per_step_seconds: 10,
-        max_batch_timeout_seconds: 300
+        max_batch_timeout_seconds: 300,
+        connection_pressure_factors: {
+          low: 0.9,
+          moderate: 0.7,
+          high: 0.5,
+          critical: 0.1
+        },
+        health_assessment_cache_duration: 60,
+        connection_health_log_level: 'info'
       )
     end
 
@@ -41,6 +60,17 @@ RSpec.describe Tasker::Types::ExecutionConfig do
       expect(config.batch_timeout_base_seconds).to eq(45)
       expect(config.batch_timeout_per_step_seconds).to eq(10)
       expect(config.max_batch_timeout_seconds).to eq(300)
+    end
+
+    it 'accepts custom connection configuration values' do
+      expect(config.connection_pressure_factors).to eq({
+        low: 0.9,
+        moderate: 0.7,
+        high: 0.5,
+        critical: 0.1
+      })
+      expect(config.health_assessment_cache_duration).to eq(60)
+      expect(config.connection_health_log_level).to eq('info')
     end
 
     it 'maintains architectural constants regardless of custom configuration' do
@@ -152,6 +182,44 @@ RSpec.describe Tasker::Types::ExecutionConfig do
       end
     end
 
+    describe '#validate_connection_configuration' do
+      it 'returns no errors for valid connection configuration' do
+        config = described_class.new
+        expect(config.validate_connection_configuration).to be_empty
+      end
+
+      it 'returns error for non-positive health_assessment_cache_duration' do
+        config = described_class.new(health_assessment_cache_duration: 0)
+        errors = config.validate_connection_configuration
+        expect(errors).to include('health_assessment_cache_duration must be positive (got: 0)')
+      end
+
+      it 'returns error for missing pressure factor levels' do
+        config = described_class.new(connection_pressure_factors: { low: 0.8 })
+        errors = config.validate_connection_configuration
+        expect(errors).to include('connection_pressure_factors missing required levels: moderate, high, critical')
+      end
+
+      it 'returns error for invalid pressure factor values' do
+        config = described_class.new(connection_pressure_factors: {
+          low: 0.8,
+          moderate: 1.5,  # Invalid: > 1.0
+          high: -0.1,     # Invalid: < 0.0
+          critical: 'invalid'  # Invalid: not numeric
+        })
+        errors = config.validate_connection_configuration
+        expect(errors).to include('connection_pressure_factors[moderate] must be between 0.0 and 1.0 (got: 1.5)')
+        expect(errors).to include('connection_pressure_factors[high] must be between 0.0 and 1.0 (got: -0.1)')
+        expect(errors).to include('connection_pressure_factors[critical] must be between 0.0 and 1.0 (got: invalid)')
+      end
+
+      it 'returns error for invalid log level' do
+        config = described_class.new(connection_health_log_level: 'invalid')
+        errors = config.validate_connection_configuration
+        expect(errors).to include('connection_health_log_level must be one of: debug, info, warn, error, fatal (got: invalid)')
+      end
+    end
+
     describe '#validate!' do
       it 'passes for valid configuration' do
         config = described_class.new
@@ -161,6 +229,11 @@ RSpec.describe Tasker::Types::ExecutionConfig do
 
       it 'raises error for invalid configuration' do
         config = described_class.new(min_concurrent_steps: 0, batch_timeout_base_seconds: 0)
+        expect { config.validate! }.to raise_error(Dry::Struct::Error, /validation failed/)
+      end
+
+      it 'raises error for invalid connection configuration' do
+        config = described_class.new(health_assessment_cache_duration: 0)
         expect { config.validate! }.to raise_error(Dry::Struct::Error, /validation failed/)
       end
     end
