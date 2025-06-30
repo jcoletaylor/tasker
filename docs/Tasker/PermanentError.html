@@ -76,6 +76,8 @@
           
             <li class="next">StandardError</li>
           
+            <li class="next"><span class='object_link'><a href="Error.html" title="Tasker::Error (class)">Error</a></span></li>
+          
             <li class="next"><span class='object_link'><a href="ProceduralError.html" title="Tasker::ProceduralError (class)">ProceduralError</a></span></li>
           
             <li class="next">Tasker::PermanentError</li>
@@ -98,7 +100,7 @@
   
   <dl>
     <dt>Defined in:</dt>
-    <dd>app/models/tasker/procedural_error.rb</dd>
+    <dd>lib/tasker/errors.rb</dd>
   </dl>
   
 </div>
@@ -263,6 +265,12 @@
   
   
   
+  
+  
+  
+  
+  
+  
   <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
   
@@ -348,14 +356,14 @@
       <pre class="lines">
 
 
-80
-81
-82
-83
-84</pre>
+84
+85
+86
+87
+88</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/procedural_error.rb', line 80</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/errors.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_message'>message</span><span class='comma'>,</span> <span class='label'>error_code:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>context:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
@@ -418,12 +426,12 @@
       <pre class="lines">
 
 
-75
-76
-77</pre>
+79
+80
+81</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/procedural_error.rb', line 75</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/errors.rb', line 79</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_context'>context</span>
   <span class='ivar'>@context</span>
@@ -479,12 +487,12 @@
       <pre class="lines">
 
 
-72
-73
-74</pre>
+76
+77
+78</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/procedural_error.rb', line 72</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/errors.rb', line 76</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_error_code'>error_code</span>
   <span class='ivar'>@error_code</span>
@@ -500,7 +508,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 30 10:06:59 2025 by
+  Generated on Mon Jun 30 16:37:22 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

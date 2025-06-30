@@ -5,6 +5,7 @@ require_relative 'models/actions'
 require_relative 'models/example_order'
 require_relative 'events/event_bus'
 require_relative 'concerns/api_utils'
+require_relative '../../../../../lib/tasker/errors'
 module ApiTask
   module StepHandler
     class CartFetchStepHandler < Tasker::StepHandler::Api
@@ -42,7 +43,13 @@ module ApiTask
         products = _get_products(sequence)
         valid_products = _valid_cart_products(cart, products)
 
-        raise "No valid products found for cart: #{cart.id}" if valid_products.empty?
+        if valid_products.empty?
+          raise Tasker::PermanentError.new(
+            "No valid products found for cart: #{cart.id}",
+            error_code: 'INVALID_CART_PRODUCTS',
+            context: { cart_id: cart.id, product_count: cart.products.size }
+          )
+        end
 
         { valid_products: valid_products.map(&:to_h) }
       end
@@ -62,7 +69,11 @@ module ApiTask
       def _get_valid_step_and_results(sequence, step_name, key)
         step = sequence.find_step_by_name(step_name)
         if step.nil? || step.results.empty?
-          raise "Step or results not found or are incomplete in sequence: #{sequence.inspect}"
+          raise Tasker::PermanentError.new(
+            'Step or results not found or are incomplete in sequence',
+            error_code: 'MISSING_STEP_RESULTS',
+            context: { step_name: step_name, sequence_id: sequence.object_id }
+          )
         end
 
         step.results.deep_symbolize_keys[key]
@@ -77,7 +88,11 @@ module ApiTask
           product = products_map[cart_product.id]
           unless product
             logger.error("Product from cart #{cart.id} with product ID #{cart_product.id} not found in products list")
-            raise "Product with ID #{cart_product.id} not found in products list"
+            raise Tasker::PermanentError.new(
+              "Product with ID #{cart_product.id} not found in products list",
+              error_code: 'PRODUCT_NOT_FOUND',
+              context: { cart_id: cart.id, product_id: cart_product.id }
+            )
           end
           product
         end

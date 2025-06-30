@@ -1,10 +1,10 @@
 lib/tasker.rb 302c6f4ff4e4e872393a521161e7a008e989825d
 lib/tasker/types.rb 726b792fbe859c2f35d7d2d3dca39b0a52b98927
 lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
-lib/tasker/errors.rb f69f032114647dc76a343ea7b7e78a8ff3f07715
+lib/tasker/errors.rb 1279017c1fc3bc6a7161a01895b5adabecff4e00
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb f59267b38de73a0ec6261692a298aa0ef1d2c289
+lib/tasker/version.rb 0a46b6ccf9feeb0b7d0dbd33270a63120c64cd54
 lib/tasker/registry.rb 9111c3bb57bf606fcd4ba09517431366b4dfa3b3
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
@@ -20,7 +20,7 @@ lib/tasker/cache_strategy.rb 61432481e1614b41cfda91efc3bf1c66c1695f29
 lib/tasker/events/catalog.rb 812346e16ade28ad27f89bda5d5a7bb6faa8247c
 lib/tasker/handler_factory.rb 21167dfa9b138b8ffd451f1e15cf3b7775930f12
 lib/tasker/events/publisher.rb f3f73ebef9fb9b94e9364b4705fdc1ba0771a781
-lib/tasker/step_handler/api.rb e72639a2d829d047c67953daca4bec0739ce2d04
+lib/tasker/step_handler/api.rb 1c306772be575c4360cea05696d1e0c42ba693c3
 app/models/tasker/named_step.rb 585ca6629b3e5981efb6a7615c4acbbe09df8ca6
 app/models/tasker/named_task.rb eb7411458b578bb824f7e606292fbe57036853eb
 lib/tasker/identity_strategy.rb 48485a2ce12b3ee4977ce4b5c301f7b996c9c5c5
@@ -37,7 +37,7 @@ lib/tasker/types/health_config.rb f89b934d3dee7204c1ee7d5c3bb6fc6225655e55
 lib/tasker/types/step_sequence.rb fc61466ca5384ff06515394144656dfc3af64a19
 lib/tasker/types/step_template.rb ae9e79f1c2595395aca44a3774088ca4467261f2
 app/jobs/tasker/application_job.rb b0e963b20b1102dfa1eec72c809d44e1ce68a28f
-app/jobs/tasker/task_runner_job.rb 99feb70fa2c4d64980cde03c46fc81b5b6136d29
+app/jobs/tasker/task_runner_job.rb b3241a67c7323e2bb13cc1020ab6736f6d7edb78
 app/models/tasker/workflow_step.rb 07bc9340321841b2b48d4e3d6d8e53b7e21f809e
 lib/tasker/authorization/errors.rb 205a66140852b0af77d6e108966253de8ebbc813
 lib/tasker/types/backoff_config.rb 6764533ddbb5c0fd1659e7d24a3c97ad7277737f
@@ -61,7 +61,6 @@ lib/tasker/types/telemetry_config.rb 2939db407f5625442dcd6b30b5f830da65ee684f
 app/graphql/tasker/queries/helpers.rb 5f4901ddf5bb75f241393e3f9cf2b44e8f7c1ca1
 app/jobs/tasker/metrics_export_job.rb 50d46dde52488f63e175ff1701c69e0bc698d5ad
 app/models/tasker/dependent_system.rb 89d2f54f4e2730faf449b54daa9eebceb40648f5
-app/models/tasker/procedural_error.rb c8777f1e9d3ae79f4d3602c7c7108485f0627b2e
 lib/tasker/task_handler/step_group.rb 7f974499f673b98f17a26fdad54acf3d8e9d0e58
 lib/tasker/telemetry/event_mapping.rb 521ccc8c74a242b050e8eb2854c3ca35909e17f9
 app/graphql/tasker/queries/one_step.rb f339f69c1ddee189b6fd0aa83f91540386375847
@@ -140,7 +139,7 @@ lib/tasker/logging/correlation_id_generator.rb 971c287dca01a2b70605c9baf3f15e5a4
 lib/tasker/orchestration/backoff_calculator.rb bc210ade67de9af6166b3b963d262c158c03b385
 lib/tasker/orchestration/connection_builder.rb 951f32c728a69f83b61634f53d3843e0d171cdf1
 lib/tasker/orchestration/plugin_integration.rb c07d26e2e4a3c149ee3dc9dfd1502368969b4382
-lib/tasker/orchestration/response_processor.rb a10531b837135375b523192f4d11a4c0ab6184f8
+lib/tasker/orchestration/response_processor.rb 64fe6c67d5a22d274fa930bf0c9a6cc0fec88dcd
 lib/tasker/state_machine/step_state_machine.rb 713150f5319418f8592ae2b70641bbfc77405a0f
 lib/tasker/state_machine/task_state_machine.rb 2ab201105900f0e07c54ab2ec0fcd736879c71f2
 lib/tasker/telemetry/metrics_export_service.rb e9da7b1bdafc9c489ef673d66df4c045f86ea473

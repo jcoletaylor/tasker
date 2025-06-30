@@ -519,6 +519,12 @@ graph TD
 
 The system implements advanced workflow traversal with parallel execution, sophisticated retry logic, and production-ready error handling:
 
+### 📖 Detailed Orchestration Documentation
+
+For comprehensive understanding of Tasker's sophisticated orchestration patterns, including the dual finalization strategy and execution control flow, see:
+
+**[Task Execution Control Flow](TASK_EXECUTION_CONTROL_FLOW.md)** - Deep dive into workflow orchestration patterns, synchronous vs asynchronous finalization, and the coordination between WorkflowCoordinator and TaskFinalizer components.
+
 - **DAG Traversal & Parallel Execution**
   - Initial identification and queueing of root steps (no dependencies)
   - Parallel execution of independent steps at each level

@@ -2064,6 +2064,12 @@ class TransformingStepHandler < Tasker::StepHandler::Base
 end
 ```
 
+## Task Execution & Orchestration
+
+For detailed understanding of Tasker's sophisticated orchestration patterns, including the dual finalization strategy and coordinated vs autonomous execution contexts, see:
+
+**📖 [Task Execution Control Flow](TASK_EXECUTION_CONTROL_FLOW.md)** - Comprehensive documentation of workflow orchestration patterns, synchronous vs asynchronous finalization, and the coordination between WorkflowCoordinator and TaskFinalizer components.
+
 ## Best Practices
 
 ### Task Handler Design

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'tasker/logging/correlation_id_generator'
+require_relative '../../../lib/tasker/errors'
 
 module Tasker
   class TaskRunnerJob < Tasker::ApplicationJob
@@ -9,6 +10,14 @@ module Tasker
     include Tasker::Concerns::EventPublisher
 
     queue_as :default
+
+    # Retry retryable errors with exponential backoff
+    retry_on Tasker::RetryableError, wait: :exponentially_longer, attempts: 5
+
+    # Don't retry permanent errors
+    discard_on Tasker::PermanentError
+
+    # Retry other errors with shorter attempts
     retry_on StandardError, wait: 3.seconds, attempts: 3
 
     def handler_factory
@@ -183,7 +192,21 @@ module Tasker
                        correlation_id: job_correlation_id)
 
         Rails.logger.error("TaskRunnerJob: #{error_message}")
-        raise "TaskRunnerJob: #{error_message}"
+
+        # Raise appropriate error type based on task status
+        case task.status
+        when Tasker::Constants::TaskStatuses::FAILED
+          raise Tasker::PermanentError.new(
+            error_message,
+            error_code: 'TASK_EXECUTION_FAILED',
+            context: { task_id: task.task_id, final_status: task.status }
+          )
+        else
+          raise Tasker::RetryableError.new(
+            error_message,
+            context: { task_id: task.task_id, final_status: task.status }
+          )
+        end
       end
     end
 

@@ -4,8 +4,8 @@ require 'rails_helper'
 
 RSpec.describe Tasker::ProceduralError do
   describe 'inheritance hierarchy' do
-    it 'inherits from StandardError' do
-      expect(described_class.superclass).to eq(StandardError)
+    it 'inherits from Tasker::Error' do
+      expect(described_class.superclass).to eq(Tasker::Error)
     end
   end
 
