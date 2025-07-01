@@ -126,8 +126,8 @@ RSpec.describe 'Analytics API', type: :request do
 
       response(503, 'analytics unavailable') do
         before do
-          # Mock analytics failure
-          allow_any_instance_of(Tasker::AnalyticsController).to receive(:calculate_performance_analytics).and_raise(StandardError, 'Analytics service unavailable')
+          # Mock analytics service failure
+          allow(Tasker::AnalyticsService).to receive(:calculate_performance_analytics).and_raise(StandardError, 'Analytics service unavailable')
         end
 
         after do |example|
@@ -246,7 +246,7 @@ RSpec.describe 'Analytics API', type: :request do
       response(503, 'bottleneck analysis unavailable') do
         before do
           # Mock bottleneck analysis failure
-          allow_any_instance_of(Tasker::AnalyticsController).to receive(:calculate_bottleneck_analytics).and_raise(StandardError, 'Database connection lost')
+          allow(Tasker::AnalyticsService).to receive(:calculate_bottleneck_analytics).and_raise(StandardError, 'Database connection lost')
         end
 
         after do |example|
