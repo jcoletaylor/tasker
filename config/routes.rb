@@ -13,6 +13,12 @@ Tasker::Engine.routes.draw do
   # Metrics endpoint
   get '/metrics', to: 'metrics#index'
 
+  # Analytics endpoints
+  scope '/analytics', as: :analytics do
+    get :performance, to: 'analytics#performance'
+    get :bottlenecks, to: 'analytics#bottlenecks'
+  end
+
   # Handler discovery endpoints
   get '/handlers', to: 'handlers#index' # List namespaces
   get '/handlers/:namespace', to: 'handlers#show_namespace' # List handlers in namespace

@@ -53,6 +53,267 @@ $$;
 
 
 --
+-- Name: get_analytics_metrics_v01(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_analytics_metrics_v01(since_timestamp timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS TABLE(active_tasks_count bigint, total_namespaces_count bigint, unique_task_types_count bigint, system_health_score numeric, task_throughput bigint, completion_count bigint, error_count bigint, completion_rate numeric, error_rate numeric, avg_task_duration numeric, avg_step_duration numeric, step_throughput bigint, analysis_period_start timestamp with time zone, calculated_at timestamp with time zone)
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    analysis_start TIMESTAMPTZ;
+BEGIN
+    -- Set analysis start time (default to 1 hour ago if not provided)
+    analysis_start := COALESCE(since_timestamp, NOW() - INTERVAL '1 hour');
+    
+    RETURN QUERY
+    WITH active_tasks AS (
+        SELECT COUNT(DISTINCT t.task_id) as active_count
+        FROM tasker_tasks t
+        INNER JOIN tasker_workflow_steps ws ON ws.task_id = t.task_id
+        INNER JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = ws.workflow_step_id
+        WHERE wst.most_recent = true
+          AND wst.to_state NOT IN ('complete', 'error', 'skipped', 'resolved_manually')
+    ),
+    namespace_summary AS (
+        SELECT COUNT(DISTINCT tn.name) as namespace_count
+        FROM tasker_task_namespaces tn
+        INNER JOIN tasker_named_tasks nt ON nt.task_namespace_id = tn.task_namespace_id
+        INNER JOIN tasker_tasks t ON t.named_task_id = nt.named_task_id
+    ),
+    task_type_summary AS (
+        SELECT COUNT(DISTINCT nt.name) as task_type_count
+        FROM tasker_named_tasks nt
+        INNER JOIN tasker_tasks t ON t.named_task_id = nt.named_task_id
+    ),
+    recent_task_health AS (
+        SELECT 
+            COUNT(DISTINCT t.task_id) as total_recent_tasks,
+            COUNT(DISTINCT t.task_id) FILTER (
+                WHERE wst.to_state = 'complete' AND wst.most_recent = true
+            ) as completed_tasks,
+            COUNT(DISTINCT t.task_id) FILTER (
+                WHERE wst.to_state = 'error' AND wst.most_recent = true
+            ) as error_tasks
+        FROM tasker_tasks t
+        INNER JOIN tasker_workflow_steps ws ON ws.task_id = t.task_id
+        INNER JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = ws.workflow_step_id
+        WHERE t.created_at > NOW() - INTERVAL '1 hour'
+    ),
+    period_metrics AS (
+        SELECT 
+            COUNT(DISTINCT t.task_id) as throughput,
+            COUNT(DISTINCT t.task_id) FILTER (
+                WHERE completed_wst.to_state = 'complete' AND completed_wst.most_recent = true
+            ) as completions,
+            COUNT(DISTINCT t.task_id) FILTER (
+                WHERE error_wst.to_state = 'error' AND error_wst.most_recent = true
+            ) as errors,
+            COUNT(DISTINCT ws.workflow_step_id) as step_count,
+            AVG(
+                CASE 
+                    WHEN completed_wst.to_state = 'complete' AND completed_wst.most_recent = true
+                    THEN EXTRACT(EPOCH FROM (completed_wst.created_at - t.created_at))
+                    ELSE NULL
+                END
+            ) as avg_task_seconds,
+            AVG(
+                CASE 
+                    WHEN step_completed.to_state = 'complete' AND step_completed.most_recent = true
+                    THEN EXTRACT(EPOCH FROM (step_completed.created_at - ws.created_at))
+                    ELSE NULL
+                END
+            ) as avg_step_seconds
+        FROM tasker_tasks t
+        LEFT JOIN tasker_workflow_steps ws ON ws.task_id = t.task_id
+        LEFT JOIN tasker_workflow_step_transitions completed_wst ON completed_wst.workflow_step_id = ws.workflow_step_id
+            AND completed_wst.to_state = 'complete' AND completed_wst.most_recent = true
+        LEFT JOIN tasker_workflow_step_transitions error_wst ON error_wst.workflow_step_id = ws.workflow_step_id
+            AND error_wst.to_state = 'error' AND error_wst.most_recent = true
+        LEFT JOIN tasker_workflow_step_transitions step_completed ON step_completed.workflow_step_id = ws.workflow_step_id
+            AND step_completed.to_state = 'complete' AND step_completed.most_recent = true
+        WHERE t.created_at > analysis_start
+    )
+    SELECT 
+        at.active_count,
+        ns.namespace_count,
+        tts.task_type_count,
+        CASE 
+            WHEN (rth.completed_tasks + rth.error_tasks) > 0 
+            THEN ROUND((rth.completed_tasks::NUMERIC / (rth.completed_tasks + rth.error_tasks)), 3)
+            ELSE 1.0
+        END as health_score,
+        pm.throughput,
+        pm.completions,
+        pm.errors,
+        CASE 
+            WHEN pm.throughput > 0 
+            THEN ROUND((pm.completions::NUMERIC / pm.throughput * 100), 2)
+            ELSE 0.0
+        END as completion_rate_pct,
+        CASE 
+            WHEN pm.throughput > 0 
+            THEN ROUND((pm.errors::NUMERIC / pm.throughput * 100), 2)
+            ELSE 0.0
+        END as error_rate_pct,
+        ROUND(COALESCE(pm.avg_task_seconds, 0), 3),
+        ROUND(COALESCE(pm.avg_step_seconds, 0), 3),
+        pm.step_count,
+        analysis_start,
+        NOW()
+    FROM active_tasks at
+    CROSS JOIN namespace_summary ns
+    CROSS JOIN task_type_summary tts
+    CROSS JOIN recent_task_health rth
+    CROSS JOIN period_metrics pm;
+END;
+$$;
+
+
+--
+-- Name: get_slowest_steps_v01(timestamp with time zone, integer, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_slowest_steps_v01(since_timestamp timestamp with time zone DEFAULT NULL::timestamp with time zone, limit_count integer DEFAULT 10, namespace_filter text DEFAULT NULL::text, task_name_filter text DEFAULT NULL::text, version_filter text DEFAULT NULL::text) RETURNS TABLE(workflow_step_id bigint, task_id bigint, step_name character varying, task_name character varying, namespace_name character varying, version character varying, duration_seconds numeric, attempts integer, created_at timestamp with time zone, completed_at timestamp with time zone, retryable boolean, step_status character varying)
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    analysis_start TIMESTAMPTZ;
+BEGIN
+    -- Set analysis start time (default to 24 hours ago if not provided)
+    analysis_start := COALESCE(since_timestamp, NOW() - INTERVAL '24 hours');
+    
+    RETURN QUERY
+    WITH step_durations AS (
+        SELECT 
+            ws.workflow_step_id,
+            ws.task_id,
+            ns.name as step_name,
+            nt.name as task_name,
+            tn.name as namespace_name,
+            nt.version,
+            ws.created_at,
+            ws.attempts,
+            ws.retryable,
+            -- Find the completion time
+            wst.created_at as completion_time,
+            wst.to_state as final_state,
+            -- Calculate duration from step creation to completion
+            EXTRACT(EPOCH FROM (wst.created_at - ws.created_at)) as duration_seconds
+        FROM tasker_workflow_steps ws
+        INNER JOIN tasker_named_steps ns ON ns.named_step_id = ws.named_step_id
+        INNER JOIN tasker_tasks t ON t.task_id = ws.task_id
+        INNER JOIN tasker_named_tasks nt ON nt.named_task_id = t.named_task_id
+        INNER JOIN tasker_task_namespaces tn ON tn.task_namespace_id = nt.task_namespace_id
+        INNER JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = ws.workflow_step_id
+        WHERE ws.created_at > analysis_start
+          AND wst.most_recent = true
+          AND wst.to_state = 'complete'  -- Only include completed steps for accurate duration
+          AND (namespace_filter IS NULL OR tn.name = namespace_filter)
+          AND (task_name_filter IS NULL OR nt.name = task_name_filter)
+          AND (version_filter IS NULL OR nt.version = version_filter)
+    )
+    SELECT 
+        sd.workflow_step_id,
+        sd.task_id,
+        sd.step_name,
+        sd.task_name,
+        sd.namespace_name,
+        sd.version,
+        ROUND(sd.duration_seconds, 3),
+        sd.attempts,
+        sd.created_at,
+        sd.completion_time,
+        sd.retryable,
+        sd.final_state
+    FROM step_durations sd
+    WHERE sd.duration_seconds IS NOT NULL
+      AND sd.duration_seconds > 0  -- Filter out negative durations (data integrity check)
+    ORDER BY sd.duration_seconds DESC
+    LIMIT limit_count;
+END;
+$$;
+
+
+--
+-- Name: get_slowest_tasks_v01(timestamp with time zone, integer, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_slowest_tasks_v01(since_timestamp timestamp with time zone DEFAULT NULL::timestamp with time zone, limit_count integer DEFAULT 10, namespace_filter text DEFAULT NULL::text, task_name_filter text DEFAULT NULL::text, version_filter text DEFAULT NULL::text) RETURNS TABLE(task_id bigint, task_name character varying, namespace_name character varying, version character varying, duration_seconds numeric, step_count bigint, completed_steps bigint, error_steps bigint, created_at timestamp with time zone, completed_at timestamp with time zone, initiator character varying, source_system character varying)
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+    analysis_start TIMESTAMPTZ;
+BEGIN
+    -- Set analysis start time (default to 24 hours ago if not provided)
+    analysis_start := COALESCE(since_timestamp, NOW() - INTERVAL '24 hours');
+    
+    RETURN QUERY
+    WITH task_durations AS (
+        SELECT 
+            t.task_id,
+            nt.name as task_name,
+            tn.name as namespace_name,
+            nt.version,
+            t.created_at,
+            t.initiator,
+            t.source_system,
+            -- Find the latest completion time across all steps
+            MAX(wst.created_at) FILTER (
+                WHERE wst.to_state IN ('complete', 'error') AND wst.most_recent = true
+            ) as latest_completion,
+            -- Calculate duration from task creation to latest step completion
+            EXTRACT(EPOCH FROM (
+                MAX(wst.created_at) FILTER (
+                    WHERE wst.to_state IN ('complete', 'error') AND wst.most_recent = true
+                ) - t.created_at
+            )) as duration_seconds,
+            COUNT(ws.workflow_step_id) as total_steps,
+            COUNT(ws.workflow_step_id) FILTER (
+                WHERE complete_wst.to_state = 'complete' AND complete_wst.most_recent = true
+            ) as completed_step_count,
+            COUNT(ws.workflow_step_id) FILTER (
+                WHERE error_wst.to_state = 'error' AND error_wst.most_recent = true
+            ) as error_step_count
+        FROM tasker_tasks t
+        INNER JOIN tasker_named_tasks nt ON nt.named_task_id = t.named_task_id
+        INNER JOIN tasker_task_namespaces tn ON tn.task_namespace_id = nt.task_namespace_id
+        INNER JOIN tasker_workflow_steps ws ON ws.task_id = t.task_id
+        LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = ws.workflow_step_id
+        LEFT JOIN tasker_workflow_step_transitions complete_wst ON complete_wst.workflow_step_id = ws.workflow_step_id
+            AND complete_wst.to_state = 'complete' AND complete_wst.most_recent = true
+        LEFT JOIN tasker_workflow_step_transitions error_wst ON error_wst.workflow_step_id = ws.workflow_step_id
+            AND error_wst.to_state = 'error' AND error_wst.most_recent = true
+        WHERE t.created_at > analysis_start
+          AND (namespace_filter IS NULL OR tn.name = namespace_filter)
+          AND (task_name_filter IS NULL OR nt.name = task_name_filter)
+          AND (version_filter IS NULL OR nt.version = version_filter)
+        GROUP BY t.task_id, nt.name, tn.name, nt.version, t.created_at, t.initiator, t.source_system
+        HAVING MAX(wst.created_at) FILTER (
+            WHERE wst.to_state IN ('complete', 'error') AND wst.most_recent = true
+        ) IS NOT NULL  -- Only include tasks that have at least one completed/failed step
+    )
+    SELECT 
+        td.task_id,
+        td.task_name,
+        td.namespace_name,
+        td.version,
+        ROUND(td.duration_seconds, 3),
+        td.total_steps,
+        td.completed_step_count,
+        td.error_step_count,
+        td.created_at,
+        td.latest_completion,
+        td.initiator,
+        td.source_system
+    FROM task_durations td
+    WHERE td.duration_seconds IS NOT NULL
+    ORDER BY td.duration_seconds DESC
+    LIMIT limit_count;
+END;
+$$;
+
+
+--
 -- Name: get_step_readiness_status(bigint, bigint[]); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2054,6 +2315,7 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250630223643'),
 ('20250628125747'),
 ('20250620125540'),
 ('20250620125433'),

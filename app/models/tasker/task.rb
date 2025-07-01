@@ -134,6 +134,92 @@ module Tasker
         .includes(:task_transitions)
     }
 
+    # Analytics scopes for performance metrics
+
+    # Scopes tasks created within a specific time period
+    #
+    # @scope class
+    # @param since_time [Time] The earliest creation time to include
+    # @return [ActiveRecord::Relation] Tasks created since the specified time
+    scope :created_since, lambda { |since_time|
+      where('tasker_tasks.created_at > ?', since_time)
+    }
+
+    # Scopes tasks completed within a specific time period
+    #
+    # @scope class
+    # @param since_time [Time] The earliest completion time to include
+    # @return [ActiveRecord::Relation] Tasks completed since the specified time
+    scope :completed_since, lambda { |since_time|
+      joins(workflow_steps: :workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'complete', true)
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+        .distinct
+    }
+
+    # Scopes tasks that have failed within a specific time period
+    #
+    # @scope class
+    # @param since_time [Time] The earliest failure time to include
+    # @return [ActiveRecord::Relation] Tasks with errors since the specified time
+    scope :failed_since, lambda { |since_time|
+      joins(workflow_steps: :workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+        .distinct
+    }
+
+    # Scopes tasks that are currently active (not in terminal states)
+    #
+    # @scope class
+    # @return [ActiveRecord::Relation] Tasks that are not complete, error, or cancelled
+    scope :active, lambda {
+      joins(workflow_steps: :workflow_step_transitions)
+        .where.not(
+          tasker_workflow_step_transitions: {
+            to_state: %w[complete error skipped resolved_manually],
+            most_recent: true
+          }
+        ).distinct
+    }
+
+    # Scopes tasks by namespace name through the named_task association
+    #
+    # @scope class
+    # @param namespace_name [String] The namespace name to filter by
+    # @return [ActiveRecord::Relation] Tasks in the specified namespace
+    scope :in_namespace, lambda { |namespace_name|
+      joins(named_task: :task_namespace)
+        .where(tasker_task_namespaces: { name: namespace_name })
+    }
+
+    # Scopes tasks by task name through the named_task association
+    #
+    # @scope class
+    # @param task_name [String] The task name to filter by
+    # @return [ActiveRecord::Relation] Tasks with the specified name
+    scope :with_task_name, lambda { |task_name|
+      joins(:named_task)
+        .where(tasker_named_tasks: { name: task_name })
+    }
+
+    # Scopes tasks by version through the named_task association
+    #
+    # @scope class
+    # @param version [String] The version to filter by
+    # @return [ActiveRecord::Relation] Tasks with the specified version
+    scope :with_version, lambda { |version|
+      joins(:named_task)
+        .where(tasker_named_tasks: { version: version })
+    }
+
+    # Class method for counting unique task types
+    #
+    # @return [Integer] Count of unique task names
+    def self.unique_task_types_count
+      joins(:named_task).distinct.count('tasker_named_tasks.name')
+    end
+
     # Creates a task with default values from a task request and saves it to the database
     #
     # @param task_request [Tasker::Types::TaskRequest] The task request containing task parameters

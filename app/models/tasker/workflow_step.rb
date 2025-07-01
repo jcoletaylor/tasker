@@ -80,6 +80,37 @@ module Tasker
       where(task_id: task.task_id)
     }
 
+    # Scopes workflow steps completed since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest completion time to include
+    # @return [ActiveRecord::Relation] Steps completed since the specified time
+    scope :completed_since, lambda { |since_time|
+      joins(:workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.most_recent = ? AND tasker_workflow_step_transitions.to_state = ?', true, 'complete')
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+    }
+
+    # Scopes workflow steps that failed since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest failure time to include
+    # @return [ActiveRecord::Relation] Steps that failed since the specified time
+    scope :failed_since, lambda { |since_time|
+      joins(:workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.most_recent = ? AND tasker_workflow_step_transitions.to_state = ?', true, 'error')
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+    }
+
+    # Scopes workflow steps for tasks created since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest task creation time to include
+    # @return [ActiveRecord::Relation] Steps for tasks created since the specified time
+    scope :for_tasks_since, lambda { |since_time|
+      joins(:task).where('tasker_tasks.created_at > ?', since_time)
+    }
+
     # Efficient method to get task completion statistics using ActiveRecord scopes
     # This avoids the N+1 query problem while working with the state machine system
     #
