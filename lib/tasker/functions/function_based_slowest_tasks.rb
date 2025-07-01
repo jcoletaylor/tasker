@@ -48,7 +48,8 @@ module Tasker
       # @param version_filter [String, nil] Filter by task version
       # @return [Array<SlowestTask>] Array of slowest task results
       # @raise [ActiveRecord::StatementInvalid] If the SQL function fails
-      def self.call(since_timestamp: nil, limit_count: 10, namespace_filter: nil, task_name_filter: nil, version_filter: nil)
+      def self.call(since_timestamp: nil, limit_count: 10, namespace_filter: nil, task_name_filter: nil,
+                    version_filter: nil)
         # Build SQL with proper parameter binding
         sql = 'SELECT * FROM get_slowest_tasks_v01($1, $2, $3, $4, $5)'
         binds = [
@@ -60,7 +61,7 @@ module Tasker
         ]
 
         result = connection.select_all(sql, 'SlowestTasks Load', binds)
-        
+
         result.map do |row|
           SlowestTask.new(
             task_id: row['task_id'].to_i,

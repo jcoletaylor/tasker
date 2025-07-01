@@ -108,7 +108,7 @@ module Tasker
             created_at: @created_at.iso8601,
             exported_at: Time.current.iso8601,
             total_entries: @logs[:all]&.size || 0,
-            level_counts: LOG_LEVELS.to_h { |l| [l, @logs[l]&.size || 0] }
+            level_counts: LOG_LEVELS.index_with { |l| @logs[l]&.size || 0 }
           }
         }
       end
@@ -126,7 +126,7 @@ module Tasker
       def stats
         {
           total_entries: @logs[:all]&.size || 0,
-          level_counts: LOG_LEVELS.to_h { |level| [level, @logs[level]&.size || 0] },
+          level_counts: LOG_LEVELS.index_with { |level| @logs[level]&.size || 0 },
           backend_uptime: Time.current - @created_at,
           instance_id: @instance_id
         }
@@ -141,7 +141,7 @@ module Tasker
         entries = if level && LOG_LEVELS.include?(level.to_s)
                     @logs[level.to_s].to_a
                   else
-                    @logs[:all]&.to_a || []
+                    @logs[:all].to_a
                   end
 
         entries.last(limit)
@@ -168,16 +168,16 @@ module Tasker
         # Create a human-readable message from the event and payload
         entity_type = extract_entity_type(event_name)
         action = extract_action(event_name)
-        
+
         base_message = "#{entity_type.capitalize} #{action}"
-        
+
         # Add key details from payload
         details = []
         details << "ID: #{payload[:task_id]}" if payload[:task_id]
         details << "Step: #{payload[:workflow_step_id]}" if payload[:workflow_step_id]
         details << "Error: #{payload[:error]}" if payload[:error]
         details << "Duration: #{payload[:duration]}s" if payload[:duration]
-        
+
         details.empty? ? base_message : "#{base_message} (#{details.join(', ')})"
       end
 

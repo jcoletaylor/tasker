@@ -48,7 +48,8 @@ module Tasker
       # @param version_filter [String, nil] Filter by task version
       # @return [Array<SlowestStep>] Array of slowest step results
       # @raise [ActiveRecord::StatementInvalid] If the SQL function fails
-      def self.call(since_timestamp: nil, limit_count: 10, namespace_filter: nil, task_name_filter: nil, version_filter: nil)
+      def self.call(since_timestamp: nil, limit_count: 10, namespace_filter: nil, task_name_filter: nil,
+                    version_filter: nil)
         # Build SQL with proper parameter binding
         sql = 'SELECT * FROM get_slowest_steps_v01($1, $2, $3, $4, $5)'
         binds = [
@@ -60,7 +61,7 @@ module Tasker
         ]
 
         result = connection.select_all(sql, 'SlowestSteps Load', binds)
-        
+
         result.map do |row|
           SlowestStep.new(
             workflow_step_id: row['workflow_step_id'].to_i,
@@ -73,7 +74,7 @@ module Tasker
             attempts: row['attempts'].to_i,
             created_at: Time.zone.parse(row['created_at'].to_s),
             completed_at: Time.zone.parse(row['completed_at'].to_s),
-            retryable: row['retryable'] == 't' || row['retryable'] == true,
+            retryable: ['t', true].include?(row['retryable']),
             step_status: row['step_status'].to_s
           )
         end

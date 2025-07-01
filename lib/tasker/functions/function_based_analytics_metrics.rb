@@ -31,7 +31,7 @@ module Tasker
         # Performance metrics since timestamp
         attribute :task_throughput, Types::Integer
         attribute :completion_count, Types::Integer
-        attribute :error_count, Types::Integer  
+        attribute :error_count, Types::Integer
         attribute :completion_rate, Types::Float
         attribute :error_rate, Types::Float
 
@@ -52,7 +52,7 @@ module Tasker
       # @raise [ActiveRecord::StatementInvalid] If the SQL function fails
       def self.call(since_timestamp = nil)
         if since_timestamp
-          sql = "SELECT * FROM get_analytics_metrics_v01($1)"
+          sql = 'SELECT * FROM get_analytics_metrics_v01($1)'
           result = connection.select_all(sql, 'AnalyticsMetrics Load', [since_timestamp])
         else
           sql = 'SELECT * FROM get_analytics_metrics_v01()'

@@ -1118,9 +1118,6 @@
       <pre class="lines">
 
 
-229
-230
-231
 232
 233
 234
@@ -1132,10 +1129,13 @@
 240
 241
 242
-243</pre>
+243
+244
+245
+246</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/event_router.rb', line 229</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/event_router.rb', line 232</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_bulk_configure'>bulk_configure</span><span class='lparen'>(</span><span class='id identifier rubyid_mappings_config'>mappings_config</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_mappings_config'>mappings_config</span><span class='period'>.</span><span class='id identifier rubyid_blank?'>blank?</span>
@@ -1804,7 +1804,10 @@
 219
 220
 221
-222</pre>
+222
+223
+224
+225</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/event_router.rb', line 210</span>
@@ -1817,9 +1820,12 @@
   <span class='comment'># Route to metrics backend if configured
 </span>  <span class='id identifier rubyid_results'>results</span><span class='lbracket'>[</span><span class='symbol'>:metrics</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="MetricsBackend.html" title="Tasker::Telemetry::MetricsBackend (class)">MetricsBackend</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_mapping'>mapping</span><span class='period'>.</span><span class='id identifier rubyid_routes_to_metrics?'>routes_to_metrics?</span>
 
-  <span class='comment'># TODO: Route to trace backend (Phase 4.2.3)
-</span>  <span class='comment'># TODO: Route to log backend (Phase 4.2.3)
-</span>
+  <span class='comment'># Route to trace backend if configured
+</span>  <span class='id identifier rubyid_results'>results</span><span class='lbracket'>[</span><span class='symbol'>:traces</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="TraceBackend.html" title="Tasker::Telemetry::TraceBackend (class)">TraceBackend</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_mapping'>mapping</span><span class='period'>.</span><span class='id identifier rubyid_routes_to_traces?'>routes_to_traces?</span>
+
+  <span class='comment'># Route to log backend if configured
+</span>  <span class='id identifier rubyid_results'>results</span><span class='lbracket'>[</span><span class='symbol'>:logs</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="LogBackend.html" title="Tasker::Telemetry::LogBackend (class)">LogBackend</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_handle_event'>handle_event</span><span class='lparen'>(</span><span class='id identifier rubyid_event_name'>event_name</span><span class='comma'>,</span> <span class='id identifier rubyid_payload'>payload</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_mapping'>mapping</span><span class='period'>.</span><span class='id identifier rubyid_routes_to_logs?'>routes_to_logs?</span>
+
   <span class='id identifier rubyid_results'>results</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -2162,7 +2168,7 @@
 </div>
 
       <div id="footer">
-  Generated on Mon Jun 30 16:37:24 2025 by
+  Generated on Mon Jun 30 22:07:32 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

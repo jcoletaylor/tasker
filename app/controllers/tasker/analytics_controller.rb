@@ -185,8 +185,8 @@ module Tasker
 
       {
         task_throughput: total_tasks,
-        completion_rate: total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round(2) : 0.0,
-        error_rate: total_tasks > 0 ? (failed_tasks.to_f / total_tasks * 100).round(2) : 0.0,
+        completion_rate: total_tasks.positive? ? (completed_tasks.to_f / total_tasks * 100).round(2) : 0.0,
+        error_rate: total_tasks.positive? ? (failed_tasks.to_f / total_tasks * 100).round(2) : 0.0,
         avg_task_duration: calculate_avg_task_duration(since_time),
         avg_step_duration: calculate_avg_step_duration(since_time),
         step_throughput: total_steps
@@ -252,7 +252,7 @@ module Tasker
     def calculate_health_score_from_metrics
       # Simple health score calculation based on recent performance
       recent_tasks = Task.created_since(1.hour.ago).count
-      return 1.0 if recent_tasks == 0
+      return 1.0 if recent_tasks.zero?
 
       recent_failures = Task.failed_since(1.hour.ago).count
       failure_rate = recent_failures.to_f / recent_tasks
@@ -372,7 +372,7 @@ module Tasker
     # Helper methods for performance calculations using ActiveRecord
     def calculate_completion_rate(since_time)
       total_tasks = Task.created_since(since_time).count
-      return 0.0 if total_tasks == 0
+      return 0.0 if total_tasks.zero?
 
       completed_tasks = Task.completed_since(since_time).count
       (completed_tasks.to_f / total_tasks * 100).round(2)
@@ -380,7 +380,7 @@ module Tasker
 
     def calculate_error_rate(since_time)
       total_tasks = Task.created_since(since_time).count
-      return 0.0 if total_tasks == 0
+      return 0.0 if total_tasks.zero?
 
       failed_tasks = Task.failed_since(since_time).count
       (failed_tasks.to_f / total_tasks * 100).round(2)

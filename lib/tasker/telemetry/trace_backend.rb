@@ -92,7 +92,7 @@ module Tasker
       # @return [Hash] All trace data with metadata
       def export
         {
-          traces: @traces.each_with_object({}) { |(k, v), h| h[k] = v.dup },
+          traces: @traces.transform_values(&:dup),
           metadata: {
             backend: 'trace',
             instance_id: @instance_id,
@@ -168,15 +168,15 @@ module Tasker
         return "task_#{payload[:task_id]}" if payload[:task_id]
         return "step_#{payload[:workflow_step_id]}" if payload[:workflow_step_id]
         return "operation_#{payload[:operation]}" if payload[:operation]
-        
+
         "trace_#{Time.current.to_f}"
       end
 
       def calculate_duration(start_time, end_time)
         return nil unless start_time && end_time
-        
-        start_parsed = Time.parse(start_time)
-        end_parsed = Time.parse(end_time)
+
+        start_parsed = Time.zone.parse(start_time)
+        end_parsed = Time.zone.parse(end_time)
         (end_parsed - start_parsed).round(6)
       rescue StandardError
         nil
