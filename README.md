@@ -29,7 +29,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/tasker-systems' do
-  gem 'tasker', '~> 2.7.0'
+  gem 'tasker-engine', '~> 1.0.0'
 end
 ```
 

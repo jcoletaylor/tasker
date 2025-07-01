@@ -3,7 +3,7 @@
 require_relative 'lib/tasker/version'
 
 Gem::Specification.new do |spec|
-  spec.name        = 'tasker'
+  spec.name        = 'tasker-engine'
   spec.version     = Tasker::VERSION
   spec.authors     = ['Pete Taylor']
   spec.email       = ['pete.jc.taylor@hey.com']
