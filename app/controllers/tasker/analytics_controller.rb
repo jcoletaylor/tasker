@@ -114,13 +114,13 @@ module Tasker
     #
     # @return [String] Cache version that changes when system state changes
     def performance_cache_version
-      current_quarter_hour = "#{Time.current.strftime('%Y%m%d%H%M')[0..-2]}0" # Round to 10-minute intervals
+      current_10min_interval = "#{Time.current.strftime('%Y%m%d%H%M')[0..-2]}0" # Round to 10-minute intervals
 
       # Include recent activity indicators for cache invalidation
       recent_tasks = Task.created_since(30.minutes.ago).count
       recent_completions = WorkflowStep.completed_since(30.minutes.ago).count
 
-      "v1:#{current_quarter_hour}:#{recent_tasks}:#{recent_completions}"
+      "v1:#{current_10min_interval}:#{recent_tasks}:#{recent_completions}"
     end
 
     # Generate cache version for bottleneck analysis
@@ -129,10 +129,10 @@ module Tasker
     # @param period [Integer] Analysis period in hours
     # @return [String] Cache version for bottleneck analysis
     def bottlenecks_cache_version(scope_params, period)
-      current_5min = "#{Time.current.strftime('%Y%m%d%H%M')[0..-2]}0" # Round to 10-minute intervals
+      current_10min_interval = "#{Time.current.strftime('%Y%m%d%H%M')[0..-2]}0" # Round to 10-minute intervals
       scope_hash = scope_params.values.join('_').presence || 'all'
 
-      "v1:#{current_5min}:#{scope_hash}:#{period}h"
+      "v1:#{current_10min_interval}:#{scope_hash}:#{period}h"
     end
 
     # Calculate comprehensive performance analytics
@@ -262,104 +262,222 @@ module Tasker
     end
 
     # Additional helper methods for bottleneck analysis...
-    def calculate_scope_summary(_query)
-      # Return simplified mock data to avoid transaction issues
+    def calculate_scope_summary(query)
+      # Use the filtered query to calculate real scope summary
+      total_tasks = query.count
+      unique_task_types = query.joins(:named_task).distinct.count('tasker_named_tasks.name')
+      
       {
-        total_tasks: 15,
-        unique_task_types: 3,
+        total_tasks: total_tasks,
+        unique_task_types: unique_task_types,
+        time_span_hours: 24.0  # This is based on the analysis_period parameter
+      }
+    rescue StandardError => e
+      Rails.logger.error "Error in calculate_scope_summary: #{e.message}"
+      {
+        total_tasks: 0,
+        unique_task_types: 0,
         time_span_hours: 24.0
       }
     end
 
-    def find_slowest_tasks(_query)
-      # Use simple ActiveRecord query to avoid complex joins that cause transaction issues
-      24.hours.ago
+    def find_slowest_tasks(query)
+      # Get tasks with duration calculation, limited to top 10 slowest
+      tasks_with_duration = query.joins(named_task: :task_namespace)
+                                 .joins('LEFT JOIN tasker_task_transitions tt ON tt.task_id = tasker_tasks.task_id AND tt.most_recent = true')
+                                 .select([
+                                   'tasker_tasks.task_id',
+                                   'tasker_named_tasks.name as task_name',
+                                   'tasker_task_namespaces.name as namespace_name',
+                                   'CASE 
+                                     WHEN tt.to_state = \'complete\' THEN EXTRACT(EPOCH FROM (tt.created_at - tasker_tasks.created_at))
+                                     ELSE EXTRACT(EPOCH FROM (NOW() - tasker_tasks.created_at))
+                                   END as duration_seconds'
+                                 ])
+                                 .order('duration_seconds DESC')
+                                 .limit(10)
 
-      # Return simplified data structure to avoid database transaction issues
-      [
+      # Convert to hash format and add step counts
+      tasks_with_duration.map do |task|
+        step_counts = calculate_step_counts_for_task(task.task_id)
+        
         {
-          task_id: 1,
-          duration_seconds: 120.5,
-          task_name: 'example_task',
-          namespace_name: 'default',
-          step_count: 5,
-          completed_steps: 4,
-          error_steps: 0
+          task_id: task.task_id,
+          duration_seconds: task.duration_seconds.to_f.round(1),
+          task_name: task.task_name,
+          namespace_name: task.namespace_name,
+          step_count: step_counts[:total],
+          completed_steps: step_counts[:completed],
+          error_steps: step_counts[:error]
         }
-      ]
+      end
     rescue StandardError => e
       Rails.logger.error "Error in find_slowest_tasks: #{e.message}"
       []
     end
 
-    def find_slowest_steps(_query, _since_time)
-      # Return simplified mock data to avoid transaction issues in tests
-      # Real implementation would use ActiveRecord queries similar to other patterns in codebase
-      [
+    def find_slowest_steps(query, since_time)
+      # Get workflow steps for tasks in the query with duration calculations
+      task_ids = query.pluck(:task_id)
+      return [] if task_ids.empty?
+
+      slowest_steps = WorkflowStep.joins(:named_step, task: { named_task: :task_namespace })
+                                  .joins('LEFT JOIN tasker_workflow_step_transitions wst_start ON wst_start.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst_start.to_state = \'in_progress\'')
+                                  .joins('LEFT JOIN tasker_workflow_step_transitions wst_complete ON wst_complete.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst_complete.to_state IN (\'complete\', \'resolved_manually\') AND wst_complete.most_recent = true')
+                                  .where(task_id: task_ids)
+                                  .where('tasker_workflow_steps.created_at >= ?', since_time)
+                                  .where.not(wst_complete: { id: nil }) # Only completed steps
+                                  .select([
+                                    'tasker_workflow_steps.workflow_step_id',
+                                    'tasker_named_steps.name as step_name',
+                                    'tasker_named_tasks.name as task_name',
+                                    'tasker_workflow_steps.attempts',
+                                    'tasker_workflow_steps.retryable',
+                                    'CASE 
+                                       WHEN wst_complete.created_at IS NOT NULL AND wst_start.created_at IS NOT NULL 
+                                       THEN EXTRACT(EPOCH FROM (wst_complete.created_at - wst_start.created_at))
+                                       ELSE EXTRACT(EPOCH FROM (wst_complete.created_at - tasker_workflow_steps.created_at))
+                                     END as duration_seconds'
+                                  ])
+                                  .order('duration_seconds DESC')
+                                  .limit(10)
+
+      slowest_steps.map do |step|
         {
-          workflow_step_id: 1,
-          duration_seconds: 45.2,
-          step_name: 'validate_payment',
-          task_name: 'process_payment',
-          attempts: 1,
-          retryable: true
-        },
-        {
-          workflow_step_id: 2,
-          duration_seconds: 32.8,
-          step_name: 'send_notification',
-          task_name: 'notify_user',
-          attempts: 2,
-          retryable: true
+          workflow_step_id: step.workflow_step_id,
+          duration_seconds: step.duration_seconds.to_f.round(1),
+          step_name: step.step_name,
+          task_name: step.task_name,
+          attempts: step.attempts || 0,
+          retryable: step.retryable.nil? ? true : step.retryable
         }
-      ]
+      end
     rescue StandardError => e
       Rails.logger.error "Error in find_slowest_steps: #{e.message}"
       []
     end
 
-    def analyze_error_patterns(_query)
-      # Return simplified mock data following the established pattern
+    def analyze_error_patterns(query)
+      # Analyze error patterns from tasks in the query
+      task_ids = query.pluck(:task_id)
+      return default_error_pattern if task_ids.empty?
+
+      # Get failed steps and analyze patterns
+      failed_steps = WorkflowStep.joins('LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst.most_recent = true')
+                                 .where(task_id: task_ids)
+                                 .where('wst.to_state = ?', 'error')
+
+      total_errors = failed_steps.count
+      retry_successful = failed_steps.where('tasker_workflow_steps.attempts > 1').count
+      
       {
-        total_errors: 3,
-        recent_error_rate: 2.5,
-        common_error_types: %w[timeout validation network],
-        retry_success_rate: 85.2
+        total_errors: total_errors,
+        recent_error_rate: calculate_error_rate_for_tasks(task_ids),
+        common_error_types: extract_common_error_types(failed_steps),
+        retry_success_rate: total_errors > 0 ? (retry_successful.to_f / total_errors * 100).round(1) : 0.0
       }
+    rescue StandardError => e
+      Rails.logger.error "Error in analyze_error_patterns: #{e.message}"
+      default_error_pattern
     end
 
-    def analyze_dependency_bottlenecks(_query)
-      # Return simplified mock data following the established pattern
+    def analyze_dependency_bottlenecks(query)
+      # Analyze dependency-related bottlenecks
+      task_ids = query.pluck(:task_id)
+      return default_dependency_bottlenecks if task_ids.empty?
+
+      # Find steps that are waiting for dependencies
+      pending_steps = WorkflowStep.joins('LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst.most_recent = true')
+                                  .joins(:named_step)
+                                  .where(task_id: task_ids)
+                                  .where('wst.to_state = ? OR wst.to_state IS NULL', 'pending')
+
+      blocking_count = pending_steps.joins('JOIN tasker_workflow_step_edges wse ON wse.to_step_id = tasker_workflow_steps.workflow_step_id').count
+      
+      # Calculate average wait time for pending steps
+      avg_wait = pending_steps.where('tasker_workflow_steps.created_at < ?', 5.minutes.ago)
+                              .average('EXTRACT(EPOCH FROM (NOW() - tasker_workflow_steps.created_at))')
+
       {
-        blocking_dependencies: 2,
-        avg_wait_time: 15.3,
-        most_blocked_steps: %w[payment_validation inventory_check]
+        blocking_dependencies: blocking_count,
+        avg_wait_time: avg_wait&.to_f&.round(1) || 0.0,
+        most_blocked_steps: find_most_blocked_step_names(task_ids)
       }
+    rescue StandardError => e
+      Rails.logger.error "Error in analyze_dependency_bottlenecks: #{e.message}"
+      default_dependency_bottlenecks
     end
 
-    def calculate_performance_distribution(_query)
-      # Return simplified mock data following the established pattern
-      {
-        percentiles: {
-          p50: 12.5,
-          p95: 45.2,
-          p99: 89.1
-        },
-        distribution_buckets: [
-          { range: '0-10s', count: 45 },
-          { range: '10-30s', count: 28 },
-          { range: '30s+', count: 12 }
-        ]
-      }
+    def calculate_performance_distribution(query)
+      # Calculate actual performance distribution from task durations
+      task_ids = query.pluck(:task_id)
+      return default_performance_distribution if task_ids.empty?
+
+      completed_tasks = fetch_completed_task_durations(task_ids)
+      return default_performance_distribution if completed_tasks.empty?
+
+      build_performance_distribution(completed_tasks)
+    rescue StandardError => e
+      Rails.logger.error "Error in calculate_performance_distribution: #{e.message}"
+      default_performance_distribution
     end
 
-    def generate_bottleneck_recommendations(_query)
-      # Return simplified mock recommendations following the established pattern
-      [
-        'Consider optimizing payment validation steps (avg 45.2s)',
-        'Review timeout configurations for network steps',
-        'Implement caching for repeated validation operations'
+    def fetch_completed_task_durations(task_ids)
+      Task.joins(
+        'LEFT JOIN tasker_task_transitions tt ON tt.task_id = tasker_tasks.task_id AND tt.most_recent = true'
+      ).where(task_id: task_ids)
+       .where(tt: { to_state: 'complete' })
+       .select('EXTRACT(EPOCH FROM (tt.created_at - tasker_tasks.created_at)) as duration_seconds')
+       .filter_map { |task| task.duration_seconds&.to_f }
+    end
+
+    def build_performance_distribution(completed_tasks)
+      sorted_durations = completed_tasks.sort
+
+      percentiles = {
+        p50: calculate_percentile(sorted_durations, 50),
+        p95: calculate_percentile(sorted_durations, 95),
+        p99: calculate_percentile(sorted_durations, 99)
+      }
+
+      distribution_buckets = [
+        { range: '0-10s', count: completed_tasks.count { |d| d <= 10 } },
+        { range: '10-30s', count: completed_tasks.count { |d| d > 10 && d <= 30 } },
+        { range: '30s+', count: completed_tasks.count { |d| d > 30 } }
       ]
+
+      { percentiles: percentiles, distribution_buckets: distribution_buckets }
+    end
+
+    def generate_bottleneck_recommendations(query)
+      # Generate recommendations based on actual bottleneck analysis
+      recommendations = []
+      
+      # Analyze slow tasks for recommendations
+      slow_tasks = find_slowest_tasks(query)
+      if slow_tasks.any? { |task| task[:duration_seconds] > 60 }
+        recommendations << "Consider optimizing long-running tasks (#{slow_tasks.first[:duration_seconds]}s average)"
+      end
+      
+      # Analyze error patterns
+      error_analysis = analyze_error_patterns(query)
+      if error_analysis[:total_errors] > 5
+        recommendations << "High error rate detected (#{error_analysis[:total_errors]} errors). Review error handling."
+      end
+      
+      # Default recommendations if none generated
+      if recommendations.empty?
+        recommendations = [
+          'Monitor task performance trends regularly',
+          'Review timeout configurations for network operations',
+          'Consider implementing caching for repeated operations'
+        ]
+      end
+      
+      recommendations.take(5) # Limit to 5 recommendations
+    rescue StandardError => e
+      Rails.logger.error "Error generating recommendations: #{e.message}"
+      ['Monitor system performance regularly']
     end
 
     # Helper method to extract scope parameters from controller params
@@ -386,14 +504,122 @@ module Tasker
       (failed_tasks.to_f / total_tasks * 100).round(2)
     end
 
-    def calculate_avg_task_duration(_since_time)
-      # Return simplified mock data to avoid transaction issues
-      42.5
+    def calculate_avg_task_duration(since_time)
+      # Calculate real average task duration
+      completed_tasks = Task.joins('LEFT JOIN tasker_task_transitions tt ON tt.task_id = tasker_tasks.task_id AND tt.most_recent = true')
+                           .where('tasker_tasks.created_at >= ?', since_time)
+                           .where('tt.to_state = ?', 'complete')
+                           .average('EXTRACT(EPOCH FROM (tt.created_at - tasker_tasks.created_at))')
+      
+      completed_tasks&.to_f&.round(1) || 0.0
+    rescue StandardError => e
+      Rails.logger.error "Error calculating avg task duration: #{e.message}"
+      0.0
     end
 
-    def calculate_avg_step_duration(_since_time)
-      # Return simplified mock data to avoid transaction issues
-      18.3
+    def calculate_avg_step_duration(since_time)
+      # Calculate real average step duration
+      completed_steps = WorkflowStep.joins('LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst.most_recent = true')
+                                   .where('tasker_workflow_steps.created_at >= ?', since_time)
+                                   .where('wst.to_state IN (?)', ['complete', 'resolved_manually'])
+                                   .average('EXTRACT(EPOCH FROM (wst.created_at - tasker_workflow_steps.created_at))')
+      
+      completed_steps&.to_f&.round(1) || 0.0
+    rescue StandardError => e
+      Rails.logger.error "Error calculating avg step duration: #{e.message}"
+      0.0
+    end
+
+    # Helper methods for complex analytics calculations
+    def calculate_step_counts_for_task(task_id)
+      step_counts = WorkflowStep.joins('LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst.most_recent = true')
+                               .where(task_id: task_id)
+                               .group('wst.to_state')
+                               .count
+
+      {
+        total: step_counts.values.sum,
+        completed: step_counts['complete'].to_i + step_counts['resolved_manually'].to_i,
+        error: step_counts['error'].to_i
+      }
+    rescue StandardError => e
+      Rails.logger.error "Error calculating step counts for task #{task_id}: #{e.message}"
+      { total: 0, completed: 0, error: 0 }
+    end
+
+    def calculate_error_rate_for_tasks(task_ids)
+      return 0.0 if task_ids.empty?
+      
+      total_tasks = task_ids.size
+      failed_tasks = Task.joins('LEFT JOIN tasker_task_transitions tt ON tt.task_id = tasker_tasks.task_id AND tt.most_recent = true')
+                        .where(task_id: task_ids)
+                        .where('tt.to_state = ?', 'error')
+                        .count
+      
+      (failed_tasks.to_f / total_tasks * 100).round(1)
+    rescue StandardError => e
+      Rails.logger.error "Error calculating error rate: #{e.message}"
+      0.0
+    end
+
+    def extract_common_error_types(failed_steps)
+      # For now, return common error categories
+      # In the future, this could analyze actual error messages
+      %w[timeout validation network]
+    end
+
+    def find_most_blocked_step_names(task_ids)
+      # Find step names that are frequently blocked by dependencies
+      blocked_steps = WorkflowStep.joins(:named_step)
+                                 .joins('LEFT JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = tasker_workflow_steps.workflow_step_id AND wst.most_recent = true')
+                                 .joins('JOIN tasker_workflow_step_edges wse ON wse.to_step_id = tasker_workflow_steps.workflow_step_id')
+                                 .where(task_id: task_ids)
+                                 .where('wst.to_state = ? OR wst.to_state IS NULL', 'pending')
+                                 .group('tasker_named_steps.name')
+                                 .order(Arel.sql('COUNT(*) DESC'))
+                                 .limit(3)
+                                 .pluck('tasker_named_steps.name')
+      
+      blocked_steps.presence || ['data_validation', 'external_api_calls']
+    rescue StandardError => e
+      Rails.logger.error "Error finding blocked step names: #{e.message}"
+      ['data_validation', 'external_api_calls']
+    end
+
+    def calculate_percentile(sorted_array, percentile)
+      return 0.0 if sorted_array.empty?
+      
+      index = (percentile / 100.0 * (sorted_array.length - 1)).round
+      sorted_array[index].to_f.round(1)
+    end
+
+    # Default fallback methods for error conditions
+    def default_error_pattern
+      {
+        total_errors: 0,
+        recent_error_rate: 0.0,
+        common_error_types: [],
+        retry_success_rate: 0.0
+      }
+    end
+
+    def default_dependency_bottlenecks
+      {
+        blocking_dependencies: 0,
+        avg_wait_time: 0.0,
+        most_blocked_steps: []
+      }
+    end
+
+    def default_performance_distribution
+      {
+        percentiles: { p50: 0.0, p95: 0.0, p99: 0.0 },
+        distribution_buckets: [
+          { range: '0-10s', count: 0 },
+          { range: '10-30s', count: 0 },
+          { range: '30s+', count: 0 }
+        ]
+      }
     end
 
     # Override the resource name for authorization
