@@ -169,6 +169,30 @@
         <li class="public ">
   <span class="summary_signature">
     
+      <a href="#by_current_state-class_method" title="by_current_state (class method)">.<strong>by_current_state</strong>  &#x21d2; ActiveRecord::Relation </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Scopes workflow steps by their current state using state machine transitions.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
       <a href="#completed_since-class_method" title="completed_since (class method)">.<strong>completed_since</strong>  &#x21d2; ActiveRecord::Relation </a>
     
 
@@ -845,34 +869,34 @@
       <pre class="lines">
 
 
-278
-279
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295
-296
-297
-298
-299
 300
 301
-302</pre>
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 278</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 300</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_build_default_step!'>build_default_step!</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_template'>template</span><span class='comma'>,</span> <span class='id identifier rubyid_named_step'>named_step</span><span class='rparen'>)</span>
   <span class='comment'># Create the step first without status
@@ -899,6 +923,111 @@
 </span>
   <span class='id identifier rubyid_step'>step</span>
 <span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="by_current_state-class_method">
+  
+    .<strong>by_current_state</strong>  &#x21d2; <tt>ActiveRecord::Relation</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Scopes workflow steps by their current state using state machine transitions</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>state</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>The state to filter by. If nil, returns all steps with current state information</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>ActiveRecord::Relation</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>Steps with current state, optionally filtered by specific state</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 88</span>
+
+<span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:by_current_state</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='op'>|</span>
+  <span class='id identifier rubyid_relation'>relation</span> <span class='op'>=</span> <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='heredoc_beg'>&lt;&lt;-SQL</span><span class='period'>.</span><span class='id identifier rubyid_squish'>squish</span><span class='rparen'>)</span>
+<span class='tstring_content'>    INNER JOIN (
+      SELECT DISTINCT ON (workflow_step_id) workflow_step_id, to_state
+      FROM tasker_workflow_step_transitions
+      WHERE most_recent = true
+      ORDER BY workflow_step_id, sort_key DESC
+    ) current_transitions ON current_transitions.workflow_step_id = tasker_workflow_steps.workflow_step_id
+</span><span class='heredoc_end'>  SQL
+</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_state'>state</span><span class='period'>.</span><span class='id identifier rubyid_present?'>present?</span>
+    <span class='id identifier rubyid_relation'>relation</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>current_transitions:</span> <span class='lbrace'>{</span> <span class='label'>to_state:</span> <span class='id identifier rubyid_state'>state</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_relation'>relation</span>
+  <span class='kw'>end</span>
+<span class='rbrace'>}</span></pre>
     </td>
   </tr>
 </table>
@@ -968,14 +1097,14 @@
       <pre class="lines">
 
 
-88
-89
-90
-91
-92</pre>
+110
+111
+112
+113
+114</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 88</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 110</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:completed_since</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_since_time'>since_time</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_transitions</span><span class='rparen'>)</span>
@@ -1051,14 +1180,14 @@
       <pre class="lines">
 
 
-99
-100
-101
-102
-103</pre>
+121
+122
+123
+124
+125</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 99</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 121</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:failed_since</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_since_time'>since_time</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:workflow_step_transitions</span><span class='rparen'>)</span>
@@ -1150,12 +1279,12 @@
       <pre class="lines">
 
 
-173
-174
-175</pre>
+195
+196
+197</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 195</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_find_step_by_name'>find_step_by_name</span><span class='lparen'>(</span><span class='id identifier rubyid_steps'>steps</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="WorkflowStep/StepFinder.html" title="Tasker::WorkflowStep::StepFinder (class)">StepFinder</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_by_name'><span class='object_link'><a href="WorkflowStep/StepFinder.html#find_by_name-class_method" title="Tasker::WorkflowStep::StepFinder.find_by_name (method)">find_by_name</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_steps'>steps</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -1229,12 +1358,12 @@
       <pre class="lines">
 
 
-110
-111
-112</pre>
+132
+133
+134</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 110</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 132</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:for_tasks_since</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_since_time'>since_time</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:task</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_tasks.created_at &gt; ?</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_since_time'>since_time</span><span class='rparen'>)</span>
@@ -1259,21 +1388,21 @@
       <pre class="lines">
 
 
-250
-251
-252
-253
-254
-255
-256
-257
-258
-259
-260
-261</pre>
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 272</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_steps_for_task'>get_steps_for_task</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_templates'>templates</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_named_steps'>named_steps</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="NamedStep.html" title="Tasker::NamedStep (class)">NamedStep</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_named_steps_from_templates'><span class='object_link'><a href="NamedStep.html#create_named_steps_from_templates-class_method" title="Tasker::NamedStep.create_named_steps_from_templates (method)">create_named_steps_from_templates</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_templates'>templates</span><span class='rparen'>)</span>
@@ -1307,21 +1436,21 @@
       <pre class="lines">
 
 
-304
-305
-306
-307
-308
-309
-310
-311
-312
-313
-314
-315</pre>
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 304</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 326</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_viable_steps'>get_viable_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='comma'>,</span> <span class='id identifier rubyid_sequence'>sequence</span><span class='rparen'>)</span>
   <span class='comment'># Get step IDs from sequence
@@ -1355,23 +1484,23 @@
       <pre class="lines">
 
 
-263
-264
-265
-266
-267
-268
-269
-270
-271
-272
-273
-274
-275
-276</pre>
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 263</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 285</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_set_up_dependent_steps'>set_up_dependent_steps</span><span class='lparen'>(</span><span class='id identifier rubyid_steps'>steps</span><span class='comma'>,</span> <span class='id identifier rubyid_templates'>templates</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_templates'>templates</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_template'>template</span><span class='op'>|</span>
@@ -1456,38 +1585,38 @@
       <pre class="lines">
 
 
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
 141
 142
 143
 144
 145
 146
-147</pre>
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 119</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 141</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_task_completion_stats'>task_completion_stats</span><span class='lparen'>(</span><span class='id identifier rubyid_task'>task</span><span class='rparen'>)</span>
   <span class='comment'># Use efficient ActiveRecord queries with the state machine
@@ -1544,12 +1673,12 @@
       <pre class="lines">
 
 
-317
-318
-319</pre>
+339
+340
+341</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 317</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 339</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_provides_edge!'>add_provides_edge!</span><span class='lparen'>(</span><span class='id identifier rubyid_to_step'>to_step</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_outgoing_edges'>outgoing_edges</span><span class='period'>.</span><span class='id identifier rubyid_create!'>create!</span><span class='lparen'>(</span><span class='label'>to_step:</span> <span class='id identifier rubyid_to_step'>to_step</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='const'><span class='object_link'><a href="#PROVIDES_EDGE_NAME-constant" title="Tasker::WorkflowStep::PROVIDES_EDGE_NAME (constant)">PROVIDES_EDGE_NAME</a></span></span><span class='rparen'>)</span>
@@ -1596,17 +1725,17 @@
       <pre class="lines">
 
 
-398
-399
-400
-401
-402
-403
-404
-405</pre>
+420
+421
+422
+423
+424
+425
+426
+427</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 398</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 420</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_can_retry_now?'>can_retry_now?</span>
   <span class='comment'># Comprehensive check if step can be retried right now
@@ -1658,13 +1787,13 @@
       <pre class="lines">
 
 
-349
-350
-351
-352</pre>
+371
+372
+373
+374</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 349</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 371</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cancelled?'>cancelled?</span>
   <span class='comment'># Use function-based approach for consistent state checking
@@ -1712,16 +1841,16 @@
       <pre class="lines">
 
 
-326
-327
-328
-329
-330
-331
-332</pre>
+348
+349
+350
+351
+352
+353
+354</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 326</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 348</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_complete?'>complete?</span>
   <span class='comment'># Use function-based approach for consistent state checking
@@ -1774,13 +1903,13 @@
       <pre class="lines">
 
 
-367
-368
-369
-370</pre>
+389
+390
+391
+392</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 367</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 389</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_dependencies_satisfied?'>dependencies_satisfied?</span>
   <span class='comment'># Use function-based approach&#39;s pre-calculated dependency analysis
@@ -1828,13 +1957,13 @@
       <pre class="lines">
 
 
-377
-378
-379
-380</pre>
+399
+400
+401
+402</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 377</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 399</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_has_retry_attempts?'>has_retry_attempts?</span>
   <span class='comment'># Check if step has made retry attempts
@@ -1882,13 +2011,13 @@
       <pre class="lines">
 
 
-344
-345
-346
-347</pre>
+366
+367
+368
+369</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 344</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 366</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_in_error?'>in_error?</span>
   <span class='comment'># Use function-based approach for consistent state checking
@@ -1936,13 +2065,13 @@
       <pre class="lines">
 
 
-334
-335
-336
-337</pre>
+356
+357
+358
+359</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 334</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 356</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_in_progress?'>in_progress?</span>
   <span class='comment'># Use function-based approach for consistent state checking
@@ -1990,13 +2119,13 @@
       <pre class="lines">
 
 
-412
-413
-414
-415</pre>
+434
+435
+436
+437</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 412</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 434</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_leaf_step?'>leaf_step?</span>
   <span class='comment'># Check if this is a leaf step using DAG relationship view
@@ -2044,13 +2173,13 @@
       <pre class="lines">
 
 
-339
-340
-341
-342</pre>
+361
+362
+363
+364</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 339</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 361</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_pending?'>pending?</span>
   <span class='comment'># Use function-based approach for consistent state checking
@@ -2098,13 +2227,13 @@
       <pre class="lines">
 
 
-361
-362
-363
-364</pre>
+383
+384
+385
+386</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 361</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 383</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_ready?'>ready?</span>
   <span class='comment'># Use function-based approach&#39;s comprehensive readiness calculation
@@ -2152,15 +2281,15 @@
       <pre class="lines">
 
 
-354
-355
-356
-357
-358
-359</pre>
+376
+377
+378
+379
+380
+381</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 354</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 376</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_ready_status?'>ready_status?</span>
   <span class='comment'># Use function-based approach for efficient ready status checking
@@ -2188,15 +2317,15 @@
       <pre class="lines">
 
 
-417
-418
-419
-420
-421
-422</pre>
+439
+440
+441
+442
+443
+444</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 417</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 439</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reload'>reload</span>
   <span class='comment'># Override reload to ensure step readiness status is refreshed
@@ -2246,13 +2375,13 @@
       <pre class="lines">
 
 
-372
-373
-374
-375</pre>
+394
+395
+396
+397</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 372</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 394</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_retry_eligible?'>retry_eligible?</span>
   <span class='comment'># Use function-based approach&#39;s retry/backoff calculation
@@ -2300,17 +2429,17 @@
       <pre class="lines">
 
 
-382
-383
-384
-385
-386
-387
-388
-389</pre>
+404
+405
+406
+407
+408
+409
+410
+411</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 382</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 404</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_retry_exhausted?'>retry_exhausted?</span>
   <span class='comment'># Check if step has exhausted retry attempts
@@ -2362,13 +2491,13 @@
       <pre class="lines">
 
 
-407
-408
-409
-410</pre>
+429
+430
+431
+432</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 407</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 429</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_root_step?'>root_step?</span>
   <span class='comment'># Check if this is a root step (no dependencies)
@@ -2405,16 +2534,16 @@
       <pre class="lines">
 
 
-150
-151
-152
-153
-154
-155
-156</pre>
+172
+173
+174
+175
+176
+177
+178</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 150</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 172</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_state_machine'>state_machine</span>
   <span class='ivar'>@state_machine</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine.html" title="Tasker::StateMachine (module)">StateMachine</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StateMachine/StepStateMachine.html" title="Tasker::StateMachine::StepStateMachine (class)">StepStateMachine</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
@@ -2454,18 +2583,18 @@
       <pre class="lines">
 
 
-159
-160
-161
-162
-163
-164
-165
-166
-167</pre>
+181
+182
+183
+184
+185
+186
+187
+188
+189</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 159</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 181</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_new_record?'>new_record?</span>
@@ -2507,12 +2636,12 @@
       <pre class="lines">
 
 
-322
-323
-324</pre>
+344
+345
+346</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 322</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 344</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_step_readiness_status'>step_readiness_status</span>
   <span class='ivar'>@step_readiness_status</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="StepReadinessStatus.html" title="Tasker::StepReadinessStatus (class)">StepReadinessStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_for_task'><span class='object_link'><a href="StepReadinessStatus.html#for_task-class_method" title="Tasker::StepReadinessStatus.for_task (method)">for_task</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='id identifier rubyid_workflow_step_id'>workflow_step_id</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
@@ -2559,15 +2688,15 @@
       <pre class="lines">
 
 
-391
-392
-393
-394
-395
-396</pre>
+413
+414
+415
+416
+417
+418</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 391</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step.rb', line 413</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_waiting_for_backoff?'>waiting_for_backoff?</span>
   <span class='comment'># Check if step is waiting for backoff period to expire
@@ -2585,7 +2714,7 @@
 </div>
 
       <div id="footer">
-  Generated on Tue Jul  1 05:46:22 2025 by
+  Generated on Tue Jul  1 16:47:37 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

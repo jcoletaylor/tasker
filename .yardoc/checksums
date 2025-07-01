@@ -4,12 +4,12 @@ lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
 lib/tasker/errors.rb 1279017c1fc3bc6a7161a01895b5adabecff4e00
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb e84a2689d16eb567c6b3b97dfb1618bf6d15b9bc
+lib/tasker/version.rb 190d95988f461f45bd9d00d5448f89118d59e0d7
 lib/tasker/registry.rb 9111c3bb57bf606fcd4ba09517431366b4dfa3b3
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
 lib/tasker/telemetry.rb 1800be1a908421c172936afff15a78af7183b104
-app/models/tasker/task.rb 865557f03de1f4db74e9a63548683694b4233484
+app/models/tasker/task.rb da69a22668d74a3d5ecd5dd923dda31bf1a6de70
 lib/tasker/task_builder.rb 036c413bdf97e1160b0dfff77a13826f52504a21
 lib/tasker/task_handler.rb c31baf99fc9e6bef390c76391c478fc7e3db2e09
 lib/tasker/authorization.rb 0a297fc19c754fcf29b314cc2e1990bb82d5249b
@@ -38,7 +38,7 @@ lib/tasker/types/step_sequence.rb fc61466ca5384ff06515394144656dfc3af64a19
 lib/tasker/types/step_template.rb ae9e79f1c2595395aca44a3774088ca4467261f2
 app/jobs/tasker/application_job.rb b0e963b20b1102dfa1eec72c809d44e1ce68a28f
 app/jobs/tasker/task_runner_job.rb 2a18ea2f15e205aab9996101518587d90d9dc598
-app/models/tasker/workflow_step.rb 65bd7fbf86beec2f44cc3f0b6b7f3172894f4327
+app/models/tasker/workflow_step.rb bc7c073822562b0aa25449547d426905c15a8cda
 lib/tasker/authorization/errors.rb 205a66140852b0af77d6e108966253de8ebbc813
 lib/tasker/types/backoff_config.rb 6764533ddbb5c0fd1659e7d24a3c97ad7277737f
 app/controllers/tasker/page_sort.rb 949589a400dd58c1caf5ea9cd0a9fc5abed3582d
@@ -82,7 +82,7 @@ lib/tasker/orchestration/coordinator.rb 4bae3c2ec8145b32953572d3624e1fabc032f24c
 lib/tasker/telemetry/metrics_backend.rb 9b2e4bdc60e0ea79d3c2a5e9b5ce98a4e0bf50d8
 lib/tasker/telemetry/plugin_registry.rb eef9f40e61306ab8559ea765aa5c8723c15fe990
 app/graphql/tasker/queries/base_query.rb cda9ad15149a2087d33d370807f96dc88e401e6c
-app/services/tasker/analytics_service.rb 5429c7792f32f8fc5dc2e1532192a77a661491f7
+app/services/tasker/analytics_service.rb 27cf24db1dd987e1838b57aa18ff8b2e8bd8de83
 lib/tasker/authentication/coordinator.rb 042d8897ac72136b3909e248cbff35645d8f3674
 lib/tasker/events/subscription_loader.rb 434ecd02342f3682a57bdfda048089ab30de76d2
 lib/tasker/functions/function_wrapper.rb 74a369006a57f2fadbcc43add678746ce1a70aee
