@@ -22,23 +22,24 @@ RSpec.describe Tasker::AnalyticsService, type: :service do
       allow(Tasker::Telemetry::EventRouter).to receive(:instance).and_return(event_router)
 
       allow(trace_backend).to receive(:stats).and_return({
-        active_traces: 10,
-        backend_uptime: 3600.0,
-        instance_id: 'test-instance'
-      })
+                                                           active_traces: 10,
+                                                           backend_uptime: 3600.0,
+                                                           instance_id: 'test-instance'
+                                                         })
 
       allow(log_backend).to receive(:stats).and_return({
-        total_entries: 125,
-        level_counts: { 'info' => 100, 'error' => 20, 'warn' => 5 },
-        backend_uptime: 3600.0,
-        instance_id: 'test-instance'
-      })
+                                                         total_entries: 125,
+                                                         level_counts: { 'info' => 100, 'error' => 20, 'warn' => 5 },
+                                                         backend_uptime: 3600.0,
+                                                         instance_id: 'test-instance'
+                                                       })
 
       allow(event_router).to receive(:routing_stats).and_return({
-        total_mappings: 56,
-        active_mappings: 56,
-        backend_distribution: { trace: 42, metrics: 56, logs: 35 }
-      })
+                                                                  total_mappings: 56,
+                                                                  active_mappings: 56,
+                                                                  backend_distribution: { trace: 42, metrics: 56,
+                                                                                          logs: 35 }
+                                                                })
 
       # Mock the analytics metrics SQL function
       analytics_metrics = instance_double(
@@ -81,7 +82,7 @@ RSpec.describe Tasker::AnalyticsService, type: :service do
       expect(result[:performance_trends]).to have_key(:last_24_hours)
 
       # Each period should have performance metrics
-      result[:performance_trends].each do |period, metrics|
+      result[:performance_trends].each_value do |metrics|
         expect(metrics).to include(
           task_throughput: 25,
           completion_rate: 85.0,
@@ -109,10 +110,10 @@ RSpec.describe Tasker::AnalyticsService, type: :service do
   end
 
   describe '.calculate_bottleneck_analytics' do
+    subject { described_class.calculate_bottleneck_analytics(scope_params, period_hours) }
+
     let(:scope_params) { { namespace: 'payments', name: 'process_payment', version: '1.0.0' } }
     let(:period_hours) { 24 }
-
-    subject { described_class.calculate_bottleneck_analytics(scope_params, period_hours) }
 
     before do
       # Mock SQL function calls for bottleneck analysis
@@ -417,7 +418,9 @@ RSpec.describe Tasker::AnalyticsService, type: :service do
       end
 
       it 'raises the error for performance analytics' do
-        expect { described_class.calculate_performance_analytics }.to raise_error(StandardError, 'Database connection lost')
+        expect do
+          described_class.calculate_performance_analytics
+        end.to raise_error(StandardError, 'Database connection lost')
       end
     end
 

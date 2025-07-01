@@ -71,7 +71,7 @@ module Tasker
 
       cached_result = @intelligent_cache.intelligent_fetch(cache_key, base_ttl: 2.minutes) do
         bottleneck_analytics = Tasker::AnalyticsService.calculate_bottleneck_analytics(
-          scope_params, 
+          scope_params,
           analysis_period
         )
 
