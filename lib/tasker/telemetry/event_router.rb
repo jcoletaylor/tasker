@@ -215,8 +215,11 @@ module Tasker
         # Route to metrics backend if configured
         results[:metrics] = MetricsBackend.instance.handle_event(event_name, payload) if mapping.routes_to_metrics?
 
-        # TODO: Route to trace backend (Phase 4.2.3)
-        # TODO: Route to log backend (Phase 4.2.3)
+        # Route to trace backend if configured
+        results[:traces] = TraceBackend.instance.handle_event(event_name, payload) if mapping.routes_to_traces?
+
+        # Route to log backend if configured
+        results[:logs] = LogBackend.instance.handle_event(event_name, payload) if mapping.routes_to_logs?
 
         results
       end

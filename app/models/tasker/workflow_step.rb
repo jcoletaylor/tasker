@@ -80,6 +80,59 @@ module Tasker
       where(task_id: task.task_id)
     }
 
+    # Scopes workflow steps by their current state using state machine transitions
+    #
+    # @scope class
+    # @param state [String, nil] The state to filter by. If nil, returns all steps with current state information
+    # @return [ActiveRecord::Relation] Steps with current state, optionally filtered by specific state
+    scope :by_current_state, lambda { |state = nil|
+      relation = joins(<<-SQL.squish)
+        INNER JOIN (
+          SELECT DISTINCT ON (workflow_step_id) workflow_step_id, to_state
+          FROM tasker_workflow_step_transitions
+          WHERE most_recent = true
+          ORDER BY workflow_step_id, sort_key DESC
+        ) current_transitions ON current_transitions.workflow_step_id = tasker_workflow_steps.workflow_step_id
+      SQL
+
+      if state.present?
+        relation.where(current_transitions: { to_state: state })
+      else
+        relation
+      end
+    }
+
+    # Scopes workflow steps completed since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest completion time to include
+    # @return [ActiveRecord::Relation] Steps completed since the specified time
+    scope :completed_since, lambda { |since_time|
+      joins(:workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.most_recent = ? AND tasker_workflow_step_transitions.to_state = ?', true, 'complete')
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+    }
+
+    # Scopes workflow steps that failed since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest failure time to include
+    # @return [ActiveRecord::Relation] Steps that failed since the specified time
+    scope :failed_since, lambda { |since_time|
+      joins(:workflow_step_transitions)
+        .where('tasker_workflow_step_transitions.most_recent = ? AND tasker_workflow_step_transitions.to_state = ?', true, 'error')
+        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
+    }
+
+    # Scopes workflow steps for tasks created since a specific time
+    #
+    # @scope class
+    # @param since_time [Time] The earliest task creation time to include
+    # @return [ActiveRecord::Relation] Steps for tasks created since the specified time
+    scope :for_tasks_since, lambda { |since_time|
+      joins(:task).where('tasker_tasks.created_at > ?', since_time)
+    }
+
     # Efficient method to get task completion statistics using ActiveRecord scopes
     # This avoids the N+1 query problem while working with the state machine system
     #

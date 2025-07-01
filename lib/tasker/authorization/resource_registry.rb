@@ -73,6 +73,12 @@ module Tasker
             ResourceConstants::ACTIONS::INDEX
           ],
           description: 'Prometheus metrics endpoint'
+        },
+        ResourceConstants::RESOURCES::ANALYTICS => {
+          actions: [
+            ResourceConstants::ACTIONS::INDEX
+          ],
+          description: 'Analytics and performance monitoring endpoints'
         }
       }.freeze
 

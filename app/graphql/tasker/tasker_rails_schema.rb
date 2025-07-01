@@ -8,11 +8,25 @@ module Tasker
     mutation(Tasker::GraphQLTypes::MutationType)
     query(Tasker::GraphQLTypes::QueryType)
 
+    # Custom exception for GraphQL type resolution errors
+    class TypeResolutionError < GraphQL::ExecutionError; end
+    class UnknownInterfaceError < TypeResolutionError; end
+    class InvalidObjectTypeError < TypeResolutionError; end
+
     # Union and Interface Resolution
-    def self.resolve_type(_abstract_type, _obj, _ctx)
-      # TODO: Implement this function
-      # to return the correct object type for `obj`
-      raise(GraphQL::RequiredImplementationMissingError)
+    def self.resolve_type(abstract_type, obj, _ctx)
+      case abstract_type.graphql_name
+      when 'TaskInterface'
+        # TaskInterface is only implemented by TaskType
+        unless obj.is_a?(Tasker::Task) || (obj.is_a?(Hash) && obj.key?(:named_task_id))
+          raise InvalidObjectTypeError, "Unable to resolve TaskInterface for object: #{obj.class}"
+        end
+
+        GraphQLTypes::TaskType
+
+      else
+        raise UnknownInterfaceError, "Unknown abstract type: #{abstract_type.graphql_name}"
+      end
     end
 
     # Relay-style Object Identification:

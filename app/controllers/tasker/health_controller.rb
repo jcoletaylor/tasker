@@ -111,12 +111,9 @@ module Tasker
       # This ensures cache invalidation every hour and when major system changes occur
       current_hour = Time.current.strftime('%Y%m%d%H')
 
-      # Include basic system state indicators
-      active_tasks = Task.where('created_at > ?', 1.hour.ago).count
-      recent_errors = WorkflowStep.joins(:workflow_step_transitions)
-                                  .where('tasker_workflow_steps.created_at > ?', 1.hour.ago)
-                                  .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
-                                  .count
+      # Include basic system state indicators using scopes
+      active_tasks = Task.created_since(1.hour.ago).count
+      recent_errors = WorkflowStep.failed_since(1.hour.ago).count
 
       "v1:#{current_hour}:#{active_tasks}:#{recent_errors}"
     end
@@ -158,15 +155,9 @@ module Tasker
       one_hour_ago = 1.hour.ago
 
       {
-        task_creation_rate: Task.where('created_at > ?', one_hour_ago).count,
-        completion_rate: Task.joins(workflow_steps: :workflow_step_transitions)
-                             .where('tasks.created_at > ?', one_hour_ago)
-                             .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'complete', true)
-                             .distinct.count,
-        error_rate: Task.joins(workflow_steps: :workflow_step_transitions)
-                        .where('tasks.created_at > ?', one_hour_ago)
-                        .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
-                        .distinct.count,
+        task_creation_rate: Task.created_since(one_hour_ago).count,
+        completion_rate: Task.completed_since(one_hour_ago).count,
+        error_rate: Task.failed_since(one_hour_ago).count,
         avg_step_duration: calculate_average_step_duration(one_hour_ago)
       }
     end
@@ -176,9 +167,7 @@ module Tasker
     # @param since [Time] Calculate duration since this time
     # @return [Float] Average duration in seconds
     def calculate_average_step_duration(since)
-      completed_steps = WorkflowStep.joins(:workflow_step_transitions)
-                                    .where('tasker_workflow_steps.updated_at > ?', since)
-                                    .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'complete', true)
+      completed_steps = WorkflowStep.completed_since(since)
 
       return 0.0 if completed_steps.empty?
 
