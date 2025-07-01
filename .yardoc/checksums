@@ -9,7 +9,7 @@ lib/tasker/registry.rb 9111c3bb57bf606fcd4ba09517431366b4dfa3b3
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
 lib/tasker/telemetry.rb 1800be1a908421c172936afff15a78af7183b104
-app/models/tasker/task.rb fcd899fc4420e45415ee0aa7c282274bb63983a7
+app/models/tasker/task.rb da69a22668d74a3d5ecd5dd923dda31bf1a6de70
 lib/tasker/task_builder.rb 036c413bdf97e1160b0dfff77a13826f52504a21
 lib/tasker/task_handler.rb c31baf99fc9e6bef390c76391c478fc7e3db2e09
 lib/tasker/authorization.rb 0a297fc19c754fcf29b314cc2e1990bb82d5249b

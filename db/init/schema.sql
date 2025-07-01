@@ -841,27 +841,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: ar_internal_metadata; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.ar_internal_metadata (
-    key character varying NOT NULL,
-    value character varying,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.schema_migrations (
-    version character varying NOT NULL
-);
-
-
---
 -- Name: tasker_annotation_types; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1465,23 +1444,6 @@ ALTER TABLE ONLY public.tasker_workflow_step_transitions ALTER COLUMN id SET DEF
 
 ALTER TABLE ONLY public.tasker_workflow_steps ALTER COLUMN workflow_step_id SET DEFAULT nextval('public.tasker_workflow_steps_workflow_step_id_seq'::regclass);
 
-
---
--- Name: ar_internal_metadata ar_internal_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.ar_internal_metadata
-    ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
-
-
---
--- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.schema_migrations
-    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
-
-
 --
 -- Name: tasker_annotation_types tasker_annotation_types_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
@@ -1807,7 +1769,7 @@ CREATE INDEX index_step_transitions_completed ON public.tasker_workflow_step_tra
 -- Name: index_step_transitions_completed_parents; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_step_transitions_completed_parents ON public.tasker_workflow_step_transitions USING btree (workflow_step_id, most_recent) WHERE (((to_state)::text = ANY (ARRAY[('complete'::character varying)::text, ('resolved_manually'::character varying)::text])) AND (most_recent = true));
+CREATE INDEX index_step_transitions_completed_parents ON public.tasker_workflow_step_transitions USING btree (workflow_step_id, most_recent) WHERE (((to_state)::text = ANY ((ARRAY['complete'::character varying, 'resolved_manually'::character varying])::text[])) AND (most_recent = true));
 
 
 --
@@ -2313,7 +2275,3 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 --
 
 SET search_path TO "$user", public;
-
-INSERT INTO "schema_migrations" (version) VALUES
-('20250701165431');
-

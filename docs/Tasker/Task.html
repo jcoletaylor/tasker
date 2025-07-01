@@ -331,7 +331,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Scopes tasks that have failed within a specific time period.</p>
+<p>Scopes tasks that have failed within a specific time period This scope identifies tasks that are actually in a failed state (task status = ‘error’), not just tasks that have some failed steps but may still be progressing.</p>
 </div></span>
   
 </li>
@@ -813,18 +813,18 @@
       <pre class="lines">
 
 
-176
-177
-178
-179
-180
-181
-182
 183
-184</pre>
+184
+185
+186
+187
+188
+189
+190
+191</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 176</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 183</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:active</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='label'>workflow_steps:</span> <span class='symbol'>:workflow_step_transitions</span><span class='rparen'>)</span>
@@ -1231,14 +1231,14 @@
       <pre class="lines">
 
 
-228
-229
-230
-231
-232</pre>
+235
+236
+237
+238
+239</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 228</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 235</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_create_with_defaults!'>create_with_defaults!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
@@ -1341,7 +1341,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Scopes tasks that have failed within a specific time period</p>
+<p>Scopes tasks that have failed within a specific time period This scope identifies tasks that are actually in a failed state (task status = ‘error’), not just tasks that have some failed steps but may still be progressing.</p>
 
 
   </div>
@@ -1380,7 +1380,7 @@
       
         &mdash;
         <div class='inline'>
-<p>Tasks with errors since the specified time</p>
+<p>Tasks that have transitioned to error state since the specified time</p>
 </div>
       
     </li>
@@ -1393,21 +1393,31 @@
       <pre class="lines">
 
 
-165
-166
 167
 168
 169
-170</pre>
+170
+171
+172
+173
+174
+175
+176
+177</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 165</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 167</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:failed_since</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_since_time'>since_time</span><span class='op'>|</span>
-  <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='label'>workflow_steps:</span> <span class='symbol'>:workflow_step_transitions</span><span class='rparen'>)</span>
-    <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>error</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
-    <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_workflow_step_transitions.created_at &gt; ?</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_since_time'>since_time</span><span class='rparen'>)</span>
-    <span class='period'>.</span><span class='id identifier rubyid_distinct'>distinct</span>
+  <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='heredoc_beg'>&lt;&lt;-SQL</span><span class='period'>.</span><span class='id identifier rubyid_squish'>squish</span><span class='rparen'>)</span>
+<span class='tstring_content'>    INNER JOIN (
+      SELECT DISTINCT ON (task_id) task_id, to_state, created_at
+      FROM tasker_task_transitions
+      ORDER BY task_id, sort_key DESC
+    ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
+</span><span class='heredoc_end'>  SQL
+</span>    <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>current_transitions:</span> <span class='lbrace'>{</span> <span class='label'>to_state:</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants.html" title="Tasker::Constants (module)">Constants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html" title="Tasker::Constants::TaskStatuses (module)">TaskStatuses</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Constants/TaskStatuses.html#ERROR-constant" title="Tasker::Constants::TaskStatuses::ERROR (constant)">ERROR</a></span></span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+    <span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>current_transitions.created_at &gt; ?</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_since_time'>since_time</span><span class='rparen'>)</span>
 <span class='rbrace'>}</span></pre>
     </td>
   </tr>
@@ -1478,21 +1488,21 @@
       <pre class="lines">
 
 
-238
-239
-240
-241
-242
-243
-244
 245
 246
 247
 248
-249</pre>
+249
+250
+251
+252
+253
+254
+255
+256</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 245</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_from_task_request'>from_task_request</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_named_task'>named_task</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="NamedTask.html" title="Tasker::NamedTask (class)">NamedTask</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_or_create_by_full_name!'><span class='object_link'><a href="NamedTask.html#find_or_create_by_full_name!-class_method" title="Tasker::NamedTask.find_or_create_by_full_name! (method)">find_or_create_by_full_name!</a></span></span><span class='lparen'>(</span><span class='label'>name:</span> <span class='id identifier rubyid_task_request'>task_request</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span>
@@ -1575,21 +1585,21 @@
       <pre class="lines">
 
 
-271
-272
-273
-274
-275
-276
-277
 278
 279
 280
 281
-282</pre>
+282
+283
+284
+285
+286
+287
+288
+289</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 271</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 278</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_default_task_request_options'>get_default_task_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_named_task'>named_task</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -1672,20 +1682,20 @@
       <pre class="lines">
 
 
-255
-256
-257
-258
-259
-260
-261
 262
 263
 264
-265</pre>
+265
+266
+267
+268
+269
+270
+271
+272</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 255</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 262</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_get_request_options'>get_request_options</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
   <span class='lbrace'>{</span>
@@ -1767,13 +1777,13 @@
       <pre class="lines">
 
 
-191
-192
-193
-194</pre>
+198
+199
+200
+201</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 191</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 198</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:in_namespace</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_namespace_name'>namespace_name</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='label'>named_task:</span> <span class='symbol'>:task_namespace</span><span class='rparen'>)</span>
@@ -1828,12 +1838,12 @@
       <pre class="lines">
 
 
-219
-220
-221</pre>
+226
+227
+228</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 219</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 226</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_unique_task_types_count'>unique_task_types_count</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_distinct'>distinct</span><span class='period'>.</span><span class='id identifier rubyid_count'>count</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker_named_tasks.name</span><span class='tstring_end'>&#39;</span></span><span class='rparen'>)</span>
@@ -1907,13 +1917,13 @@
       <pre class="lines">
 
 
-201
-202
-203
-204</pre>
+208
+209
+210
+211</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 201</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 208</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_task_name</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_task_name'>task_name</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
@@ -1988,13 +1998,13 @@
       <pre class="lines">
 
 
-211
-212
-213
-214</pre>
+218
+219
+220
+221</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 211</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 218</span>
 
 <span class='id identifier rubyid_scope'>scope</span> <span class='symbol'>:with_version</span><span class='comma'>,</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_version'>version</span><span class='op'>|</span>
   <span class='id identifier rubyid_joins'>joins</span><span class='lparen'>(</span><span class='symbol'>:named_task</span><span class='rparen'>)</span>
@@ -2055,12 +2065,12 @@
       <pre class="lines">
 
 
-315
-316
-317</pre>
+322
+323
+324</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 315</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 322</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_steps_complete?'>all_steps_complete?</span>
   <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="StepReadinessStatus.html" title="Tasker::StepReadinessStatus (class)">StepReadinessStatus</a></span></span><span class='period'>.</span><span class='id identifier rubyid_all_steps_complete_for_task?'><span class='object_link'><a href="StepReadinessStatus.html#all_steps_complete_for_task%3F-class_method" title="Tasker::StepReadinessStatus.all_steps_complete_for_task? (method)">all_steps_complete_for_task?</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='rparen'>)</span>
@@ -2114,12 +2124,12 @@
       <pre class="lines">
 
 
-308
-309
-310</pre>
+315
+316
+317</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 308</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 315</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_dependency_graph'>dependency_graph</span>
   <span class='id identifier rubyid_runtime_analyzer'>runtime_analyzer</span><span class='period'>.</span><span class='id identifier rubyid_analyze'>analyze</span>
@@ -2195,12 +2205,12 @@
       <pre class="lines">
 
 
-296
-297
-298</pre>
+303
+304
+305</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 296</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 303</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_diagram'>diagram</span><span class='lparen'>(</span><span class='id identifier rubyid_base_url'>base_url</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@diagram</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskDiagram.html" title="Tasker::TaskDiagram (class)">TaskDiagram</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskDiagram.html#initialize-instance_method" title="Tasker::TaskDiagram#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='id identifier rubyid_base_url'>base_url</span><span class='rparen'>)</span>
@@ -2274,12 +2284,12 @@
       <pre class="lines">
 
 
-288
-289
-290</pre>
+295
+296
+297</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 288</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 295</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_get_step_by_name'>get_step_by_name</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_workflow_steps'>workflow_steps</span><span class='period'>.</span><span class='id identifier rubyid_includes'>includes</span><span class='lparen'>(</span><span class='symbol'>:named_step</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_where'>where</span><span class='lparen'>(</span><span class='label'>named_step:</span> <span class='lbrace'>{</span> <span class='label'>name:</span> <span class='id identifier rubyid_name'>name</span> <span class='rbrace'>}</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span>
@@ -2304,14 +2314,14 @@
       <pre class="lines">
 
 
-323
-324
-325
-326
-327</pre>
+330
+331
+332
+333
+334</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 323</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 330</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reload'>reload</span>
   <span class='kw'>super</span>
@@ -2338,12 +2348,12 @@
       <pre class="lines">
 
 
-300
-301
-302</pre>
+307
+308
+309</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 300</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 307</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_runtime_analyzer'>runtime_analyzer</span>
   <span class='ivar'>@runtime_analyzer</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Analysis.html" title="Tasker::Analysis (module)">Analysis</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Analysis/RuntimeGraphAnalyzer.html" title="Tasker::Analysis::RuntimeGraphAnalyzer (class)">RuntimeGraphAnalyzer</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Analysis/RuntimeGraphAnalyzer.html#initialize-instance_method" title="Tasker::Analysis::RuntimeGraphAnalyzer#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>task:</span> <span class='kw'>self</span><span class='rparen'>)</span>
@@ -2470,12 +2480,12 @@
       <pre class="lines">
 
 
-319
-320
-321</pre>
+326
+327
+328</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 319</span>
+      <pre class="code"><span class="info file"># File 'app/models/tasker/task.rb', line 326</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_task_execution_context'>task_execution_context</span>
   <span class='ivar'>@task_execution_context</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="TaskExecutionContext.html" title="Tasker::TaskExecutionContext (class)">TaskExecutionContext</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="TaskExecutionContext.html#initialize-instance_method" title="Tasker::TaskExecutionContext#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_task_id'>task_id</span><span class='rparen'>)</span>
@@ -2555,7 +2565,7 @@
 </div>
 
       <div id="footer">
-  Generated on Tue Jul  1 05:46:21 2025 by
+  Generated on Tue Jul  1 16:47:35 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

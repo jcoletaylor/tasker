@@ -172,7 +172,7 @@ module Tasker
           ORDER BY task_id, sort_key DESC
         ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
       SQL
-        .where('current_transitions.to_state = ?', Tasker::Constants::TaskStatuses::ERROR)
+        .where(current_transitions: { to_state: Tasker::Constants::TaskStatuses::ERROR })
         .where('current_transitions.created_at > ?', since_time)
     }
 
@@ -181,13 +181,18 @@ module Tasker
     # @scope class
     # @return [ActiveRecord::Relation] Tasks that are not complete, error, or cancelled
     scope :active, lambda {
-      joins(workflow_steps: :workflow_step_transitions)
-        .where.not(
-          tasker_workflow_step_transitions: {
-            to_state: %w[complete error skipped resolved_manually],
-            most_recent: true
-          }
-        ).distinct
+      # Active tasks are those with at least one workflow step whose most recent transition
+      # is NOT in a terminal state. Using EXISTS subquery for clarity and performance.
+      where(<<-SQL.squish)
+        EXISTS (
+          SELECT 1
+          FROM tasker_workflow_steps ws
+          INNER JOIN tasker_workflow_step_transitions wst ON wst.workflow_step_id = ws.workflow_step_id
+          WHERE ws.task_id = tasker_tasks.task_id
+            AND wst.most_recent = true
+            AND wst.to_state NOT IN ('complete', 'error', 'skipped', 'resolved_manually')
+        )
+      SQL
     }
 
     # Scopes tasks by namespace name through the named_task association

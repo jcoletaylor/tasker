@@ -3,10 +3,10 @@
 namespace :tasker do
   namespace :install do
     # @!method database_objects
-    # @description Copies required database views and functions from Tasker gem to host application
+    # @description Copies required database views, functions, and init schema from Tasker gem to host application
     # @example Install database objects
     #   rake tasker:install:database_objects
-    desc 'Copy Tasker database views and functions to your application'
+    desc 'Copy Tasker database views, functions, and init schema to your application'
     task database_objects: :environment do
       require 'fileutils'
 
@@ -29,6 +29,9 @@ namespace :tasker do
       # Copy database functions
       copy_database_directory(tasker_gem_path, 'functions')
 
+      # Copy init schema
+      copy_database_directory(tasker_gem_path, 'init')
+
       puts '✅ Tasker database objects installed successfully!'
       puts ''
       puts 'Next steps:'
@@ -43,13 +46,13 @@ namespace :tasker do
     # @return [String, nil] Path to Tasker gem or nil if not found
     def find_tasker_gem_path
       # Method 1: Use bundle show (most reliable)
-      tasker_gem_path = `bundle show tasker 2>/dev/null`.strip
+      tasker_gem_path = `bundle show tasker-engine 2>/dev/null`.strip
       return tasker_gem_path unless tasker_gem_path.empty?
 
       # Method 2: Use Bundler specs
       begin
         require 'bundler'
-        spec = Bundler.load.specs.find { |s| s.name == 'tasker' }
+        spec = Bundler.load.specs.find { |s| s.name == 'tasker-engine' }
         return spec.full_gem_path if spec
       rescue StandardError => e
         puts "   ⚠️  Bundler spec detection failed: #{e.message}"
@@ -68,7 +71,7 @@ namespace :tasker do
         gem_paths = Gem.path
         gem_paths.each do |gem_path|
           potential_path = File.join(gem_path, 'gems')
-          Dir.glob(File.join(potential_path, 'tasker-*')).each do |tasker_dir|
+          Dir.glob(File.join(potential_path, 'tasker-engine-*')).each do |tasker_dir|
             return tasker_dir if File.directory?(File.join(tasker_dir, 'db'))
           end
         end
