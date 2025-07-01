@@ -80,6 +80,28 @@ module Tasker
       where(task_id: task.task_id)
     }
 
+    # Scopes workflow steps by their current state using state machine transitions
+    #
+    # @scope class
+    # @param state [String, nil] The state to filter by. If nil, returns all steps with current state information
+    # @return [ActiveRecord::Relation] Steps with current state, optionally filtered by specific state
+    scope :by_current_state, lambda { |state = nil|
+      relation = joins(<<-SQL.squish)
+        INNER JOIN (
+          SELECT DISTINCT ON (workflow_step_id) workflow_step_id, to_state
+          FROM tasker_workflow_step_transitions
+          WHERE most_recent = true
+          ORDER BY workflow_step_id, sort_key DESC
+        ) current_transitions ON current_transitions.workflow_step_id = tasker_workflow_steps.workflow_step_id
+      SQL
+
+      if state.present?
+        relation.where(current_transitions: { to_state: state })
+      else
+        relation
+      end
+    }
+
     # Scopes workflow steps completed since a specific time
     #
     # @scope class

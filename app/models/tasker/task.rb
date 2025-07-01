@@ -158,15 +158,22 @@ module Tasker
     }
 
     # Scopes tasks that have failed within a specific time period
+    # This scope identifies tasks that are actually in a failed state (task status = 'error'),
+    # not just tasks that have some failed steps but may still be progressing.
     #
     # @scope class
     # @param since_time [Time] The earliest failure time to include
-    # @return [ActiveRecord::Relation] Tasks with errors since the specified time
+    # @return [ActiveRecord::Relation] Tasks that have transitioned to error state since the specified time
     scope :failed_since, lambda { |since_time|
-      joins(workflow_steps: :workflow_step_transitions)
-        .where('tasker_workflow_step_transitions.to_state = ? AND tasker_workflow_step_transitions.most_recent = ?', 'error', true)
-        .where('tasker_workflow_step_transitions.created_at > ?', since_time)
-        .distinct
+      joins(<<-SQL.squish)
+        INNER JOIN (
+          SELECT DISTINCT ON (task_id) task_id, to_state, created_at
+          FROM tasker_task_transitions
+          ORDER BY task_id, sort_key DESC
+        ) current_transitions ON current_transitions.task_id = tasker_tasks.task_id
+      SQL
+        .where('current_transitions.to_state = ?', Tasker::Constants::TaskStatuses::ERROR)
+        .where('current_transitions.created_at > ?', since_time)
     }
 
     # Scopes tasks that are currently active (not in terminal states)

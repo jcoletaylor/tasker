@@ -245,7 +245,7 @@ module Tasker
                                   .where(task_id: task_ids)
                                   .by_current_state('pending')
 
-      blocking_count = pending_steps.joins(:workflow_step_edges).count
+      blocking_count = pending_steps.joins(:incoming_edges).count
       avg_wait = pending_steps.where(tasker_workflow_steps: { created_at: ...5.minutes.ago })
                               .average('EXTRACT(EPOCH FROM (NOW() - tasker_workflow_steps.created_at))')
 
