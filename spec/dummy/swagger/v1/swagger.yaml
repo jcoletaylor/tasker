@@ -4,6 +4,57 @@ info:
   title: API V1
   version: v1
 paths:
+  "/tasker/analytics/performance":
+    get:
+      summary: performance analytics
+      tags:
+      - Analytics
+      description: Get system-wide performance metrics and analytics. Authentication
+        requirements depend on configuration.
+      operationId: getPerformanceAnalytics
+      responses:
+        '200':
+          description: successful performance analytics
+        '503':
+          description: analytics unavailable
+  "/tasker/analytics/bottlenecks":
+    get:
+      summary: bottleneck analysis
+      tags:
+      - Analytics
+      description: Get bottleneck analysis scoped by task parameters. Authentication
+        requirements depend on configuration.
+      operationId: getBottleneckAnalysis
+      parameters:
+      - name: namespace
+        in: query
+        description: Filter by task namespace
+        required: false
+        schema:
+          type: string
+      - name: name
+        in: query
+        description: Filter by task name
+        required: false
+        schema:
+          type: string
+      - name: version
+        in: query
+        description: Filter by task version
+        required: false
+        schema:
+          type: string
+      - name: period
+        in: query
+        description: 'Analysis period in hours (default: 24)'
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: scoped bottleneck analysis
+        '503':
+          description: bottleneck analysis unavailable
   "/tasker/handlers":
     get:
       summary: list namespaces - authentication required
