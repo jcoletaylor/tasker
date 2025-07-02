@@ -1,0 +1,87 @@
+---
+name: process_order
+namespace_name: ecommerce
+version: 1.0.0
+task_handler_class: Ecommerce::OrderProcessingHandler
+
+description: "Reliable e-commerce checkout workflow with automatic retry and recovery"
+
+schema:
+  type: object
+  required: ['cart_items', 'payment_info', 'customer_info']
+  properties:
+    cart_items:
+      type: array
+      items:
+        type: object
+        required: ['product_id', 'quantity']
+        properties:
+          product_id:
+            type: integer
+          quantity:
+            type: integer
+            minimum: 1
+          price:
+            type: number
+            minimum: 0
+    payment_info:
+      type: object
+      required: ['token', 'amount']
+      properties:
+        token:
+          type: string
+          minLength: 1
+        amount:
+          type: number
+          minimum: 0
+        payment_method:
+          type: string
+    customer_info:
+      type: object
+      required: ['email', 'name']
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+
+step_templates:
+  - name: validate_cart
+    description: Validate cart items and calculate totals
+    handler_class: Ecommerce::StepHandlers::ValidateCartHandler
+    default_retryable: true
+    default_retry_limit: 3
+
+  - name: process_payment
+    description: Charge payment method
+    depends_on_step: validate_cart
+    handler_class: Ecommerce::StepHandlers::ProcessPaymentHandler
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 30
+
+  - name: update_inventory
+    description: Update inventory levels
+    depends_on_step: process_payment
+    handler_class: Ecommerce::StepHandlers::UpdateInventoryHandler
+    default_retryable: true
+    default_retry_limit: 2
+
+  - name: create_order
+    description: Create order record
+    depends_on_step: update_inventory
+    handler_class: Ecommerce::StepHandlers::CreateOrderHandler
+    default_retryable: true
+    default_retry_limit: 3
+
+  - name: send_confirmation
+    description: Send order confirmation email
+    depends_on_step: create_order
+    handler_class: Ecommerce::StepHandlers::SendConfirmationHandler
+    default_retryable: true
+    default_retry_limit: 5  # Email delivery can be flaky

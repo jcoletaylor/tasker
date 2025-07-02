@@ -1,0 +1,118 @@
+task_name: user_registration
+namespace: user_management
+version: "1.0.0"
+description: "Orchestrated user registration workflow across multiple microservices"
+
+# Input validation schema
+schema:
+  type: object
+  required: ['email', 'name']
+  properties:
+    email:
+      type: string
+      format: email
+    name:
+      type: string
+      minLength: 1
+    phone:
+      type: string
+    plan:
+      type: string
+      enum: ['free', 'pro', 'enterprise']
+      default: 'free'
+    marketing_consent:
+      type: boolean
+      default: false
+    correlation_id:
+      type: string
+      description: "For distributed tracing"
+    referral_code:
+      type: string
+    company_name:
+      type: string
+    source:
+      type: string
+      enum: ['web', 'mobile', 'api']
+      default: 'web'
+
+# Enterprise annotations for monitoring
+annotations:
+  team: "platform-engineering"
+  criticality: "high"
+  sla_minutes: 5
+  services: ["user_service", "billing_service", "preferences_service", "notification_service"]
+
+# Step templates for service orchestration
+step_templates:
+  - name: create_user_account
+    description: "Create user account in UserService"
+    handler_class: "UserManagement::StepHandlers::CreateUserAccountHandler"
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 30
+      service: "user_service"
+      api_method: "POST"
+      endpoint: "/users"
+
+  - name: setup_billing_profile
+    description: "Create billing profile in BillingService"
+    handler_class: "UserManagement::StepHandlers::SetupBillingProfileHandler"
+    depends_on_steps: ["create_user_account"]
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 30
+      service: "billing_service"
+      api_method: "POST"
+      endpoint: "/profiles"
+
+  - name: initialize_preferences
+    description: "Set up user preferences in PreferencesService"
+    handler_class: "UserManagement::StepHandlers::InitializePreferencesHandler"
+    depends_on_steps: ["create_user_account"]  # Can run parallel to billing
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 20
+      service: "preferences_service"
+      api_method: "POST"
+      endpoint: "/preferences"
+
+  - name: send_welcome_sequence
+    description: "Send welcome email via NotificationService"
+    handler_class: "UserManagement::StepHandlers::SendWelcomeSequenceHandler"
+    depends_on_steps: ["setup_billing_profile", "initialize_preferences"]
+    default_retryable: true
+    default_retry_limit: 5  # Email services are often flaky
+    handler_config:
+      timeout_seconds: 15
+      backoff_request_seconds: 30  # Rate limiting protection
+      service: "notification_service"
+      api_method: "POST"
+      endpoint: "/notifications/welcome"
+
+  - name: update_user_status
+    description: "Mark user registration as complete in UserService"
+    handler_class: "UserManagement::StepHandlers::UpdateUserStatusHandler"
+    depends_on_steps: ["send_welcome_sequence"]
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 10
+      service: "user_service"
+      api_method: "PATCH"
+      endpoint: "/users/{user_id}/status"
+
+# Custom events for service monitoring
+custom_events:
+  - name: "service_call_started"
+    description: "Fired when calling external service"
+  - name: "service_call_completed"
+    description: "Fired when service call succeeds"
+  - name: "service_call_failed"
+    description: "Fired when service call fails"
+  - name: "circuit_breaker_opened"
+    description: "Fired when circuit breaker opens for a service"
+  - name: "circuit_breaker_closed"
+    description: "Fired when circuit breaker closes"

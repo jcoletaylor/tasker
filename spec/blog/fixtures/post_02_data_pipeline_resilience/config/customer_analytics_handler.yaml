@@ -1,0 +1,136 @@
+task_name: customer_analytics
+namespace: data_pipeline
+version: "1.0.0"
+description: "Resilient customer analytics pipeline with parallel processing"
+
+# Input validation schema
+schema:
+  type: object
+  required: ['date_range']
+  properties:
+    date_range:
+      type: object
+      required: ['start_date', 'end_date']
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+    force_refresh:
+      type: boolean
+      default: false
+    notification_channels:
+      type: array
+      items:
+        type: string
+      default: ['#data-team']
+    processing_mode:
+      type: string
+      enum: ['standard', 'high_memory', 'distributed']
+      default: 'standard'
+    quality_thresholds:
+      type: object
+      properties:
+        min_customer_records:
+          type: integer
+          default: 100
+        max_null_percentage:
+          type: number
+          default: 0.05
+        min_order_records:
+          type: integer
+          default: 50
+
+# Enterprise annotations for monitoring
+annotations:
+  team: "data-engineering"
+  criticality: "high"
+  sla_hours: 8
+  dependencies: ["postgresql", "redis", "crm_api"]
+
+# Parallel data extraction phase
+step_templates:
+  - name: extract_orders
+    description: "Extract order data from transactional database"
+    handler_class: "DataPipeline::StepHandlers::ExtractOrdersHandler"
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 1800  # 30 minutes
+      retry_backoff: exponential
+
+  - name: extract_users
+    description: "Extract user data from CRM system"
+    handler_class: "DataPipeline::StepHandlers::ExtractUsersHandler"
+    default_retryable: true
+    default_retry_limit: 5  # CRM can be flaky
+    handler_config:
+      timeout_seconds: 1200  # 20 minutes
+      retry_backoff: exponential
+
+  - name: extract_products
+    description: "Extract product data from inventory system"
+    handler_class: "DataPipeline::StepHandlers::ExtractProductsHandler"
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 900   # 15 minutes
+      retry_backoff: exponential
+
+  # Dependent transformations (wait for all extractions)
+  - name: transform_customer_metrics
+    description: "Calculate customer behavior metrics"
+    handler_class: "DataPipeline::StepHandlers::TransformCustomerMetricsHandler"
+    depends_on_steps: ["extract_orders", "extract_users"]
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 2700  # 45 minutes
+
+  - name: transform_product_metrics
+    description: "Calculate product performance metrics"
+    handler_class: "DataPipeline::StepHandlers::TransformProductMetricsHandler"
+    depends_on_steps: ["extract_orders", "extract_products"]
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 1800  # 30 minutes
+
+  # Final aggregation and output
+  - name: generate_insights
+    description: "Generate business insights and recommendations"
+    handler_class: "DataPipeline::StepHandlers::GenerateInsightsHandler"
+    depends_on_steps: ["transform_customer_metrics", "transform_product_metrics"]
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 1200  # 20 minutes
+
+  - name: update_dashboard
+    description: "Update executive dashboard with new metrics"
+    handler_class: "DataPipeline::StepHandlers::UpdateDashboardHandler"
+    depends_on_steps: ["generate_insights"]
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      retry_backoff: exponential
+
+  - name: send_notifications
+    description: "Send completion notifications to stakeholders"
+    handler_class: "DataPipeline::StepHandlers::SendNotificationsHandler"
+    depends_on_steps: ["update_dashboard"]
+    default_retryable: true
+    default_retry_limit: 5
+    handler_config:
+      retry_backoff: exponential
+
+# Custom events for this pipeline
+custom_events:
+  - name: "data_extraction_started"
+    description: "Fired when any extraction step begins"
+  - name: "data_extraction_completed"
+    description: "Fired when extraction step completes with metrics"
+  - name: "pipeline_milestone_reached"
+    description: "Fired at key pipeline milestones"
