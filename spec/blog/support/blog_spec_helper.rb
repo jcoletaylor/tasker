@@ -16,9 +16,19 @@ module BlogSpecHelpers
       raise "Blog code file not found: #{full_path}"
     end
 
-    # Load the file and track it for cleanup
-    require full_path
-    track_loaded_file(full_path)
+    # Load the file using 'load' instead of 'require' to allow reloading
+    # This helps avoid conflicts and allows for better isolation
+    begin
+      load full_path
+      track_loaded_file(full_path)
+    rescue => e
+      # If there's an enum conflict or other loading issue, provide a helpful error
+      if e.message.include?("enum") || e.message.include?("already defined")
+        raise "Blog code loading conflict (likely enum collision): #{e.message}. This is expected during development - the blog examples use models that conflict with Tasker's existing models."
+      else
+        raise e
+      end
+    end
   end
 
   # Load all step handlers for a blog post
@@ -28,6 +38,20 @@ module BlogSpecHelpers
     handler_names.each do |handler_name|
       load_blog_code(post_name, "step_handlers/#{handler_name}.rb")
     end
+  end
+
+  # Register a blog task handler with the Tasker system
+  # @param handler_class [Class] The handler class to register
+  # @param name [String] Task name
+  # @param namespace [String] Task namespace (defaults to 'blog_examples')
+  def register_blog_task_handler(handler_class, name:, namespace: 'blog_examples')
+    Tasker::HandlerFactory.instance.register(
+      name,
+      handler_class,
+      namespace_name: namespace,
+      version: '0.1.0',
+      replace: true
+    )
   end
 
   # Create a test task with realistic context for blog examples
@@ -79,22 +103,14 @@ module BlogSpecHelpers
   # @param task [Tasker::Task] The task to execute
   # @param timeout [Integer] Maximum wait time in seconds (default: 30)
   def execute_workflow(task, timeout: 30)
-    # Start workflow execution
-    coordinator = Tasker::Orchestration::WorkflowCoordinator.new
-    coordinator.process_task(task)
+    # Get the task handler for the task
+    handler = Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name)
 
-    # Wait for completion or timeout
-    start_time = Time.current
-    while task.status == 'pending' && (Time.current - start_time) < timeout
-      sleep(0.1)
-      task.reload
-    end
+    # Execute the workflow using the task handler
+    handler.handle(task)
 
-    if task.status == 'pending'
-      raise "Workflow execution timed out after #{timeout} seconds"
-    end
-
-    task
+    # The task should be completed synchronously in test mode
+    task.reload
   end
 
   # Verify workflow execution results
@@ -149,9 +165,10 @@ module BlogSpecHelpers
       ],
       payment_info: {
         method: 'credit_card',
-        amount: 109.97,
+        amount: 124.76,
         currency: 'USD',
-        card_last_four: '1234'
+        card_last_four: '1234',
+        token: 'tok_visa_valid'
       },
       shipping_info: {
         address: '123 Main St',
@@ -206,6 +223,7 @@ module BlogSpecHelpers
     def reset_blog_environment!
       @loaded_files = []
       reset_mock_services!
+      cleanup_blog_namespaces!
     end
 
     # Reset all mock services
@@ -230,6 +248,17 @@ module BlogSpecHelpers
     def loaded_files
       @loaded_files ||= []
     end
+
+        # Remove blog-specific namespaces from the handler factory
+    def cleanup_blog_namespaces!
+      factory = Tasker::HandlerFactory.instance
+
+      # Remove the entire blog_examples namespace
+      factory.handler_classes.delete(:blog_examples)
+
+      # Remove blog_examples from the namespaces set
+      factory.namespaces.delete(:blog_examples)
+    end
   end
 
   private
@@ -250,8 +279,20 @@ RSpec.configure do |config|
     BlogSpecHelpers.reset_blog_environment!
   end
 
-  config.before(:each, type: :blog_example) do
+  config.around(:each, type: :blog_example) do |example|
     # Reset mock services before each blog test
     BlogSpecHelpers.reset_mock_services!
+
+    begin
+      example.run
+    ensure
+      # Always clean up blog namespaces after each blog test, even if test fails
+      BlogSpecHelpers.cleanup_blog_namespaces!
+    end
+  end
+
+  # Global cleanup to ensure blog namespaces don't leak to other tests
+  config.after(:suite) do
+    BlogSpecHelpers.cleanup_blog_namespaces!
   end
 end

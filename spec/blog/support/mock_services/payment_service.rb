@@ -18,26 +18,39 @@ class MockPaymentService < BaseMockService
   # @return [Hash] Payment result
   def self.process_payment(amount:, method:, currency: 'USD', **options)
     instance = new
-    instance.log_call(:process_payment, {
+    instance.process_payment_call(
       amount: amount,
+      method: method,
+      currency: currency,
+      **options
+    )
+  end
+
+  # Instance method for processing payment
+  def process_payment_call(amount:, method:, currency: 'USD', **options)
+    # Ensure amount is stored as a numeric value for test assertions
+    numeric_amount = amount.is_a?(String) ? amount.to_f : amount
+
+    log_call(:process_payment, {
+      amount: numeric_amount,
       method: method,
       currency: currency,
       **options
     })
 
     default_response = {
-      payment_id: instance.generate_id('pay'),
+      payment_id: generate_id('pay'),
       status: 'succeeded',
       amount_charged: amount,
       currency: currency,
       payment_method_type: method,
-      transaction_id: instance.generate_id('txn'),
-      processed_at: instance.generate_timestamp,
-      fees: calculate_fees(amount),
+      transaction_id: generate_id('txn'),
+      processed_at: generate_timestamp,
+      fees: self.class.calculate_fees(amount),
       **options.slice(:customer_id, :card_last_four)
     }
 
-    instance.handle_response(:process_payment, default_response)
+    handle_response(:process_payment, default_response)
   end
 
   # Refund a payment
@@ -111,7 +124,10 @@ class MockPaymentService < BaseMockService
   # @param amount [Float] Transaction amount
   # @return [Hash] Fee breakdown
   def self.calculate_fees(amount)
-    processing_fee = (amount * 0.029).round(2) # 2.9%
+    # Convert amount to float to handle BigDecimal, String, or other numeric types
+    numeric_amount = amount.to_f
+
+    processing_fee = (numeric_amount * 0.029).round(2) # 2.9%
     fixed_fee = 0.30
 
     {

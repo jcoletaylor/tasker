@@ -1,6 +1,7 @@
-module Ecommerce
-  module StepHandlers
-    class ValidateCartHandler < Tasker::StepHandler::Base
+module BlogExamples
+  module Post01
+    module StepHandlers
+      class ValidateCartHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
         cart_items = task.context['cart_items']
 
@@ -11,7 +12,7 @@ module Ecommerce
 
         # Validate each item exists and is available
         validated_items = cart_items.map do |item|
-          product = Product.find_by(id: item['product_id'])
+          product = BlogExamples::Post01::Product.find_by(id: item['product_id'])
 
           unless product
             Rails.logger.error "Product not found: #{item['product_id']}"
@@ -70,6 +71,7 @@ module Ecommerce
         else
           14.99
         end
+      end
       end
     end
   end

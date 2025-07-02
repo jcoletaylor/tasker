@@ -15,7 +15,15 @@ class MockInventoryService < BaseMockService
   # @return [Hash] Availability result
   def self.check_availability(product_id:, quantity:)
     instance = new
-    instance.log_call(:check_availability, {
+    instance.check_availability_call(
+      product_id: product_id,
+      quantity: quantity
+    )
+  end
+
+  # Instance method for checking availability
+  def check_availability_call(product_id:, quantity:)
+    log_call(:check_availability, {
       product_id: product_id,
       quantity: quantity
     })
@@ -29,7 +37,7 @@ class MockInventoryService < BaseMockService
       reserved_until: (Time.current + 15.minutes).iso8601
     }
 
-    instance.handle_response(:check_availability, default_response)
+    handle_response(:check_availability, default_response)
   end
 
   # Reserve inventory for an order
@@ -40,7 +48,17 @@ class MockInventoryService < BaseMockService
   # @return [Hash] Reservation result
   def self.reserve_inventory(product_id:, quantity:, order_id:, customer_id: nil)
     instance = new
-    instance.log_call(:reserve_inventory, {
+    instance.reserve_inventory_call(
+      product_id: product_id,
+      quantity: quantity,
+      order_id: order_id,
+      customer_id: customer_id
+    )
+  end
+
+  # Instance method for reserving inventory
+  def reserve_inventory_call(product_id:, quantity:, order_id:, customer_id: nil)
+    log_call(:reserve_inventory, {
       product_id: product_id,
       quantity: quantity,
       order_id: order_id,
@@ -48,17 +66,17 @@ class MockInventoryService < BaseMockService
     })
 
     default_response = {
-      reservation_id: instance.generate_id('res'),
+      reservation_id: generate_id('res'),
       product_id: product_id,
       quantity_reserved: quantity,
       order_id: order_id,
       customer_id: customer_id,
-      reserved_at: instance.generate_timestamp,
+      reserved_at: generate_timestamp,
       expires_at: (Time.current + 15.minutes).iso8601,
       status: 'reserved'
     }
 
-    instance.handle_response(:reserve_inventory, default_response)
+    handle_response(:reserve_inventory, default_response)
   end
 
   # Commit inventory reservation (finalize the stock reduction)

@@ -1,73 +1,52 @@
-module Ecommerce
-  class OrderProcessingHandler < Tasker::ConfiguredTask
-    # Configuration is driven by the YAML file: config/order_processing_handler.yaml
-    # This class handles runtime behavior and enterprise features
+module BlogExamples
+  module Post01
+    class OrderProcessingHandler
+      include Tasker::TaskHandler
 
-    def establish_step_dependencies_and_defaults(task, steps)
-      # Add runtime optimizations based on order context
-      if task.context['priority'] == 'express'
-        # Express orders get faster timeouts and fewer retries
-        payment_step = steps.find { |s| s.name == 'process_payment' }
-        payment_step&.update(timeout: 15000, retry_limit: 1)
+      # Simplified task handler for blog example validation
+      # This class demonstrates the core workflow without requiring YAML configuration
 
-        email_step = steps.find { |s| s.name == 'send_confirmation' }
-        email_step&.update(retry_limit: 2)
-      end
 
-      # Add customer tier optimizations
-      if task.context.dig('customer_info', 'tier') == 'premium'
-        # Premium customers get priority processing
-        steps.each { |step| step.update(priority: 'high') }
-      end
-    end
 
-    def update_annotations(task, sequence, steps)
-      # Track order processing metrics for business intelligence
-      payment_step = steps.find { |s| s.name == 'process_payment' }
-      if payment_step&.status == 'complete'
-        payment_results = payment_step.results
+      def establish_step_dependencies_and_defaults(task, steps)
+        # Note: In this simplified blog example, we don't modify step attributes
+        # directly since WorkflowStep doesn't have timeout/priority attributes.
+        # In a real implementation, these would be handled through:
+        # 1. Step handler configuration
+        # 2. Task context inspection within step handlers
+        # 3. Custom step metadata
 
-        task.annotations.create!(
-          annotation_type: 'payment_processed',
-          content: {
-            payment_id: payment_results['payment_id'],
-            amount_charged: payment_results['amount_charged'],
-            processing_time_ms: calculate_step_duration(payment_step),
-            payment_method_type: payment_results['payment_method_type']
+        # For blog demo purposes, we'll track these preferences in task context
+        if task.context['priority'] == 'express'
+          # Express order preferences tracked in context
+          task.context['express_processing'] = {
+            payment_timeout_ms: 15000,
+            payment_retries: 1,
+            email_retries: 2
           }
-        )
-      end
+        end
 
-      # Track completion metrics
-      if task.status == 'complete'
-        total_duration = steps.sum { |s| calculate_step_duration(s) }
-        task.annotations.create!(
-          annotation_type: 'checkout_completed',
-          content: {
-            total_duration_ms: total_duration,
-            steps_completed: steps.count,
-            customer_email: task.context['customer_info']['email'],
-            order_total: task.context.dig('payment_info', 'amount'),
-            workflow_version: '1.0.0',
-            environment: Rails.env
+        if task.context.dig('customer_info', 'tier') == 'premium'
+          # Premium customer preferences tracked in context
+          task.context['premium_processing'] = {
+            priority: 'high',
+            faster_processing: true
           }
-        )
-      end
-
-      # Track failure analysis
-      if task.status == 'error'
-        failed_step = steps.find { |s| s.status == 'error' }
-        if failed_step
-          task.annotations.create!(
-            annotation_type: 'checkout_failed',
-            content: {
-              failed_step: failed_step.name,
-              attempts: failed_step.attempts,
-              customer_email: task.context['customer_info']['email']
-            }
-          )
         end
       end
+
+    def update_annotations(task, sequence, steps)
+      # Note: In this blog example, we skip annotations since Task model doesn't have
+      # an annotations association in the test environment
+      #
+      # In a real implementation, this would track order processing metrics for business intelligence
+      Rails.logger.info "Skipping annotations update for blog example (task_id: #{task.task_id})"
+
+      # Original implementation would track:
+      # - Payment processing metrics
+      # - Completion metrics
+      # - Failure analysis
+      # For example validation, we just log the intent
     end
 
     private
@@ -83,5 +62,48 @@ module Ecommerce
       return 0 unless step.processed_at && step.created_at
       ((step.processed_at - step.created_at) * 1000).round
     end
+    end
   end
+end
+
+# Define step templates after class is loaded and constants are available
+BlogExamples::Post01::OrderProcessingHandler.define_step_templates do |definer|
+  definer.define(
+    name: 'validate_cart',
+    handler_class: BlogExamples::Post01::StepHandlers::ValidateCartHandler,
+    default_retryable: true,
+    default_retry_limit: 3
+  )
+
+  definer.define(
+    name: 'process_payment',
+    handler_class: BlogExamples::Post01::StepHandlers::ProcessPaymentHandler,
+    depends_on_step: 'validate_cart',
+    default_retryable: true,
+    default_retry_limit: 3
+  )
+
+  definer.define(
+    name: 'update_inventory',
+    handler_class: BlogExamples::Post01::StepHandlers::UpdateInventoryHandler,
+    depends_on_step: 'process_payment',
+    default_retryable: true,
+    default_retry_limit: 2
+  )
+
+  definer.define(
+    name: 'create_order',
+    handler_class: BlogExamples::Post01::StepHandlers::CreateOrderHandler,
+    depends_on_step: 'update_inventory',
+    default_retryable: true,
+    default_retry_limit: 3
+  )
+
+  definer.define(
+    name: 'send_confirmation',
+    handler_class: BlogExamples::Post01::StepHandlers::SendConfirmationHandler,
+    depends_on_step: 'create_order',
+    default_retryable: true,
+    default_retry_limit: 5
+  )
 end

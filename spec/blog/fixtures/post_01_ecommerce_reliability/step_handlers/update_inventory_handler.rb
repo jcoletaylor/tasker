@@ -1,6 +1,7 @@
-module Ecommerce
-  module StepHandlers
-    class UpdateInventoryHandler < Tasker::StepHandler::Base
+module BlogExamples
+  module Post01
+    module StepHandlers
+      class UpdateInventoryHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
         cart_validation = step_results(sequence, 'validate_cart')
         validated_items = cart_validation['validated_items']
@@ -8,27 +9,37 @@ module Ecommerce
         updated_products = []
         inventory_changes = []
 
-        # Update inventory for each item
+        # Update inventory for each item using mock service for blog validation
         validated_items.each do |item|
           product = Product.find(item['product_id'])
 
-          # Double-check stock availability (race condition protection)
-          if product.stock < item['quantity']
-            # Temporary failure - stock might be replenished
-            Rails.logger.warn "Stock changed during checkout for #{product.name}. Available: #{product.stock}, Needed: #{item['quantity']}"
-            raise StandardError, "Stock changed during checkout for #{product.name}. Available: #{product.stock}, Needed: #{item['quantity']}"
+          # Check availability using mock service
+          availability_result = MockInventoryService.check_availability(
+            product_id: product.id,
+            quantity: item['quantity']
+          )
+
+          unless availability_result[:available]
+            Rails.logger.warn "Stock not available for #{product.name}. Available: #{availability_result[:stock_level]}, Needed: #{item['quantity']}"
+            raise StandardError, "Stock not available for #{product.name}. Available: #{availability_result[:stock_level]}, Needed: #{item['quantity']}"
           end
 
-          # Perform atomic inventory update
-          new_stock = product.stock - item['quantity']
+          # Reserve inventory using mock service
+          reservation_result = MockInventoryService.reserve_inventory(
+            product_id: product.id,
+            quantity: item['quantity'],
+            order_id: "order_#{task.task_id}",
+            customer_id: task.context['customer_info']['id']
+          )
 
-          if product.update!(stock: new_stock)
+          if reservation_result[:status] == 'reserved'
             updated_products << {
               product_id: product.id,
               name: product.name,
-              previous_stock: product.stock + item['quantity'],
-              new_stock: new_stock,
-              quantity_reserved: item['quantity']
+              previous_stock: availability_result[:stock_level],
+              new_stock: availability_result[:stock_level] - item['quantity'],
+              quantity_reserved: item['quantity'],
+              reservation_id: reservation_result[:reservation_id]
             }
 
             inventory_changes << {
@@ -36,25 +47,26 @@ module Ecommerce
               change_type: 'reservation',
               quantity: -item['quantity'],
               reason: 'order_checkout',
-              timestamp: Time.current.iso8601
+              timestamp: Time.current.iso8601,
+              reservation_id: reservation_result[:reservation_id]
             }
+
+            # Update the PORO model stock for consistency
+            product.stock = availability_result[:stock_level] - item['quantity']
           else
-            Rails.logger.warn "Failed to update inventory for #{product.name}"
-            raise StandardError, "Failed to update inventory for #{product.name}"
+            Rails.logger.warn "Failed to reserve inventory for #{product.name}"
+            raise StandardError, "Failed to reserve inventory for #{product.name}"
           end
         end
 
-        # Log inventory changes for audit trail
-        InventoryLog.create!(
-          changes: inventory_changes,
-          task_id: task.id,
-          reason: 'checkout_reservation'
-        )
+        # Note: In a real implementation, you would log inventory changes to an audit trail
+        # For this blog example, we'll skip the audit logging to avoid additional dependencies
+        # InventoryLog.create!(changes: inventory_changes, task_id: task.id, reason: 'checkout_reservation')
 
         {
           updated_products: updated_products,
           total_items_reserved: validated_items.sum { |item| item['quantity'] },
-          inventory_log_id: InventoryLog.last.id,
+          inventory_changes: inventory_changes,
           updated_at: Time.current.iso8601
         }
             rescue ActiveRecord::RecordInvalid => e
@@ -72,6 +84,7 @@ module Ecommerce
       def step_results(sequence, step_name)
         step = sequence.steps.find { |s| s.name == step_name }
         step&.results || {}
+      end
       end
     end
   end

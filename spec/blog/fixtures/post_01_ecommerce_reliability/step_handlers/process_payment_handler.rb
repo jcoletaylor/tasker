@@ -1,66 +1,52 @@
-module Ecommerce
-  module StepHandlers
-    class ProcessPaymentHandler < Tasker::StepHandler::Base
+module BlogExamples
+  module Post01
+    module StepHandlers
+      class ProcessPaymentHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
         payment_info = task.context['payment_info']
         cart_validation = step_results(sequence, 'validate_cart')
 
         amount_to_charge = cart_validation['total']
 
-        Rails.logger.info "Processing payment", {
-          task_id: task.task_id,
-          amount: amount_to_charge
-        }
+        Rails.logger.info "Processing payment: task_id=#{task.task_id}, amount=#{amount_to_charge}"
 
         # Validate payment amount matches cart total
-        if payment_info['amount'] != amount_to_charge
-          Rails.logger.error "Payment amount mismatch. Expected: #{amount_to_charge}, Provided: #{payment_info['amount']}"
-          raise StandardError, "Payment amount mismatch. Expected: #{amount_to_charge}, Provided: #{payment_info['amount']}"
+        # Convert both amounts to BigDecimal to handle precision correctly
+        expected_amount = BigDecimal(amount_to_charge.to_s)
+        provided_amount = BigDecimal(payment_info['amount'].to_s)
+
+        if provided_amount != expected_amount
+          Rails.logger.error "Payment amount mismatch. Expected: #{expected_amount}, Provided: #{provided_amount}"
+          raise StandardError, "Payment amount mismatch. Expected: #{expected_amount}, Provided: #{provided_amount}"
         end
 
-        # Process payment using payment simulator
-        result = PaymentSimulator.charge(
+        # Process payment using mock service for blog validation
+        result = MockPaymentService.process_payment(
           amount: amount_to_charge,
-          payment_method: payment_info['token']
+          method: payment_info['method'] || 'credit_card',
+          token: payment_info['token']
         )
 
-        case result.status
-        when :success
-          Rails.logger.info "Payment processed successfully", {
-            task_id: task.task_id,
-            payment_id: result.id,
-            amount_charged: result.amount
-          }
+        # Handle mock service response (Hash format)
+        if result[:status] == 'succeeded' || result['status'] == 'succeeded'
+          payment_id = result[:payment_id] || result['payment_id']
+          amount_charged = result[:amount_charged] || result['amount_charged']
+
+          Rails.logger.info "Payment processed successfully: task_id=#{task.task_id}, payment_id=#{payment_id}, amount_charged=#{amount_charged}"
 
           {
-            payment_id: result.id,
-            amount_charged: result.amount,
-            currency: result.currency,
-            payment_method_type: result.payment_method_type,
-            transaction_id: result.transaction_id,
+            payment_id: payment_id,
+            amount_charged: amount_charged,
+            currency: result[:currency] || result['currency'] || 'USD',
+            payment_method_type: result[:payment_method_type] || result['payment_method_type'] || 'credit_card',
+            transaction_id: result[:transaction_id] || result['transaction_id'],
             processed_at: Time.current.iso8601
           }
-        when :insufficient_funds
-          Rails.logger.error "Payment declined: Insufficient funds"
-          raise StandardError, "Payment declined: Insufficient funds"
-        when :invalid_card
-          Rails.logger.error "Payment declined: Invalid card"
-          raise StandardError, "Payment declined: Invalid card"
-        when :gateway_timeout
-          # Temporary failure - will retry based on step configuration
-          Rails.logger.warn "Payment gateway timeout - will retry"
-          raise StandardError, "Payment gateway timeout - will retry"
-        when :rate_limited
-          # Temporary failure - will retry based on step configuration
-          Rails.logger.warn "Payment gateway rate limited - will retry"
-          raise StandardError, "Payment gateway rate limited - will retry"
-        when :temporary_failure
-          # Temporary failure - will retry based on step configuration
-          Rails.logger.warn "Temporary payment failure: #{result.error}"
-          raise StandardError, "Temporary payment failure: #{result.error}"
         else
-          Rails.logger.error "Unknown payment error: #{result.error}"
-          raise StandardError, "Unknown payment error: #{result.error}"
+          # Handle payment failures - in a real implementation, you'd check specific error types
+          error_message = result[:error] || result['error'] || 'Payment processing failed'
+          Rails.logger.error "Payment failed: #{error_message}"
+          raise StandardError, "Payment failed: #{error_message}"
         end
       end
 
@@ -69,6 +55,7 @@ module Ecommerce
       def step_results(sequence, step_name)
         step = sequence.steps.find { |s| s.name == step_name }
         step&.results || {}
+      end
       end
     end
   end

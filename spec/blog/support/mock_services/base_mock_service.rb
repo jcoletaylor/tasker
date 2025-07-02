@@ -8,6 +8,7 @@ class BaseMockService
       @call_log = []
       @responses = {}
       @failures = {}
+      @failure_counts = {}
       @delays = {}
     end
 
@@ -23,9 +24,12 @@ class BaseMockService
     # @param method [Symbol] The method name to fail
     # @param error_class [Class] The exception class to raise (default: StandardError)
     # @param message [String] Optional error message
-    def stub_failure(method, error_class = StandardError, message = nil)
+    # @param fail_count [Integer] Number of times to fail before succeeding (nil = always fail)
+    def stub_failure(method, error_class = StandardError, message = nil, fail_count: nil)
       @failures ||= {}
+      @failure_counts ||= {}
       @failures[method] = { class: error_class, message: message }
+      @failure_counts[method] = { remaining: fail_count, original: fail_count } if fail_count
     end
 
     # Configure a delay for a method (simulates slow network calls)
@@ -103,10 +107,26 @@ class BaseMockService
 
     # Check for configured failure
     failures = self.class.instance_variable_get(:@failures)
+    failure_counts = self.class.instance_variable_get(:@failure_counts)
+
     if failures&.key?(method)
-      failure_config = failures[method]
-      error_message = failure_config[:message] || "Mock failure for #{method}"
-      raise failure_config[:class], error_message
+      # Check if we should fail based on failure count
+      if failure_counts&.key?(method)
+        count_info = failure_counts[method]
+        if count_info[:remaining] && count_info[:remaining] > 0
+          # Decrement the failure count and fail
+          count_info[:remaining] -= 1
+          failure_config = failures[method]
+          error_message = failure_config[:message] || "Mock failure for #{method}"
+          raise failure_config[:class], error_message
+        end
+        # If remaining count is 0 or nil, don't fail (success)
+      else
+        # No count limit, always fail
+        failure_config = failures[method]
+        error_message = failure_config[:message] || "Mock failure for #{method}"
+        raise failure_config[:class], error_message
+      end
     end
 
     # Return configured response or default

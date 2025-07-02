@@ -1,6 +1,7 @@
-module Ecommerce
-  module StepHandlers
-    class SendConfirmationHandler < Tasker::StepHandler::Base
+module BlogExamples
+  module Post01
+    module StepHandlers
+      class SendConfirmationHandler < Tasker::StepHandler::Base
       def process(task, sequence, step)
         order_result = step_results(sequence, 'create_order')
         customer_info = task.context['customer_info']
@@ -18,46 +19,27 @@ module Ecommerce
           total_amount: order_result['total_amount'],
           estimated_delivery: order_result['estimated_delivery'],
           items: cart_validation['validated_items'],
-          order_url: "#{Rails.application.config.base_url}/orders/#{order_id}"
+          order_url: "https://example.com/orders/#{order_id}"
         }
 
-        # Send confirmation email
+        # Send confirmation email using mock service for blog validation
         begin
-          delivery_result = OrderMailer.confirmation_email(email_data).deliver_now
+          delivery_result = MockEmailService.send_confirmation(**email_data)
 
-          # Log successful email delivery
-          EmailLog.create!(
-            order_id: order_id,
-            email_type: 'order_confirmation',
-            recipient: customer_info['email'],
-            status: 'delivered',
-            sent_at: Time.current,
-            task_id: task.id
-          )
+          # Note: In a real implementation, you would log to EmailLog model
+          # For this blog example, we'll skip the audit logging to avoid additional dependencies
+          # EmailLog.create!(order_id: order_id, email_type: 'order_confirmation', ...)
 
           {
             email_sent: true,
             recipient: customer_info['email'],
             email_type: 'order_confirmation',
             sent_at: Time.current.iso8601,
-            message_id: delivery_result.message_id
+            message_id: delivery_result[:message_id] || "mock_#{SecureRandom.hex(8)}"
           }
-        rescue Net::SMTPServerBusy => e
-          # Temporary failure - will retry based on step configuration
-          Rails.logger.warn "SMTP server busy, will retry: #{e.message}"
-          raise StandardError, "SMTP server busy: #{e.message}"
-        rescue Net::SMTPFatalError => e
-          # Permanent failure - won't retry
-          Rails.logger.error "SMTP fatal error: #{e.message}"
-          raise StandardError, "SMTP fatal error: #{e.message}"
-        rescue Net::SMTPAuthenticationError => e
-          # Permanent failure - configuration issue
-          Rails.logger.error "SMTP authentication failed: #{e.message}"
-          raise StandardError, "SMTP authentication failed: #{e.message}"
-        rescue Timeout::Error => e
-          # Temporary failure - will retry based on step configuration
-          Rails.logger.warn "Email service timeout, will retry: #{e.message}"
-          raise StandardError, "Email service timeout: #{e.message}"
+        # Note: In a production environment, you would handle specific SMTP errors:
+        # rescue Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPAuthenticationError, Timeout::Error
+        # For this blog example, we'll use generic error handling to avoid dependency issues
         rescue StandardError => e
           # Log the error for debugging
           Rails.logger.error "Email delivery error: #{e.class} - #{e.message}"
@@ -72,6 +54,7 @@ module Ecommerce
       def step_results(sequence, step_name)
         step = sequence.steps.find { |s| s.name == step_name }
         step&.results || {}
+      end
       end
     end
   end

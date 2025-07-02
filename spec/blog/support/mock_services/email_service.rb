@@ -17,7 +17,17 @@ class MockEmailService < BaseMockService
   # @return [Hash] Send result
   def self.send_confirmation(to:, template: 'order_confirmation', subject: nil, **data)
     instance = new
-    instance.log_call(:send_confirmation, {
+    instance.send_confirmation_email(
+      to: to,
+      template: template,
+      subject: subject,
+      **data
+    )
+  end
+
+  # Instance method for sending confirmation email
+  def send_confirmation_email(to:, template: 'order_confirmation', subject: nil, **data)
+    log_call(:send_confirmation, {
       to: to,
       template: template,
       subject: subject,
@@ -25,16 +35,16 @@ class MockEmailService < BaseMockService
     })
 
     default_response = {
-      message_id: instance.generate_id('msg'),
+      message_id: generate_id('msg'),
       status: 'sent',
       recipient: to,
       template: template,
-      subject: subject || generate_subject(template),
-      sent_at: instance.generate_timestamp,
+      subject: subject || self.class.generate_subject(template),
+      sent_at: generate_timestamp,
       delivery_status: 'delivered'
     }
 
-    instance.handle_response(:send_confirmation, default_response)
+    handle_response(:send_confirmation, default_response)
   end
 
   # Send welcome email
