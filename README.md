@@ -29,7 +29,7 @@ Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
 source 'https://rubygems.pkg.github.com/tasker-systems' do
-  gem 'tasker-engine', '~> 1.0.0'
+  gem 'tasker-engine', '~> 1.0.1'
 end
 ```
 
@@ -125,7 +125,7 @@ This creates a complete workflow structure:
 ---
 name: order_process
 namespace_name: default
-version: 1.0.0
+version: 1.0.1
 task_handler_class: OrderProcess
 
 step_templates:
@@ -171,7 +171,7 @@ end
 task_request = Tasker::Types::TaskRequest.new(
   name: 'order_process',
   namespace: 'default',        # Optional - defaults to 'default'
-  version: '1.0.0',           # Optional - defaults to '0.1.0'
+  version: '1.0.1',           # Optional - defaults to '0.1.0'
   context: { order_id: 12345 }
 )
 
@@ -179,7 +179,7 @@ task_request = Tasker::Types::TaskRequest.new(
 handler = Tasker::HandlerFactory.instance.get(
   'order_process',
   namespace_name: 'default',   # Optional - defaults to 'default'
-  version: '1.0.0'            # Optional - defaults to '0.1.0'
+  version: '1.0.1'            # Optional - defaults to '0.1.0'
 )
 task = handler.initialize_task!(task_request)
 
@@ -294,7 +294,7 @@ Tasker.configuration do |config|
   config.telemetry do |tel|
     tel.enabled = true
     tel.service_name = 'my-app-workflows'
-    tel.service_version = '1.0.0'
+    tel.service_version = '1.0.1'
   end
 end
 ```

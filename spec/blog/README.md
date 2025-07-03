@@ -1,6 +1,6 @@
 # Blog Example Validation Framework
 
-This directory contains a comprehensive testing framework that validates all blog post code examples against Tasker Engine 1.0.0, ensuring every code sample works correctly and follows best practices.
+This directory contains a comprehensive testing framework that validates all blog post code examples against Tasker Engine 1.0.1, ensuring every code sample works correctly and follows best practices.
 
 ## Overview
 
@@ -213,7 +213,7 @@ Simulates inventory management with support for:
 
 ### Code Quality
 - ✅ Syntax validation (all Ruby code compiles)
-- ✅ API compatibility (uses Tasker Engine 1.0.0 APIs)
+- ✅ API compatibility (uses Tasker Engine 1.0.1 APIs)
 - ✅ Style compliance (follows Tasker conventions)
 - ✅ Error handling (proper exception handling)
 
