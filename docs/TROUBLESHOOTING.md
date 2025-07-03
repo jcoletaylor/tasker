@@ -580,7 +580,7 @@ Tasker.configuration do |config|
   config.telemetry do |tel|
     tel.enabled = true
     tel.service_name = 'your-application'
-    tel.service_version = ENV['APP_VERSION'] || '1.0.0'
+    tel.service_version = ENV['APP_VERSION'] || '1.0.1'
     tel.environment = Rails.env
   end
 end

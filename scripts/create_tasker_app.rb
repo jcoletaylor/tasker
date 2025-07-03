@@ -946,7 +946,7 @@ class TaskerAppGenerator < Thor
         # Configure OpenTelemetry
         OpenTelemetry::SDK.configure do |c|
           c.service_name = '#{@app_name}'
-          c.service_version = '1.0.0'
+          c.service_version = '1.0.1'
 
           # Configure exporter - Jaeger is one example of many OTLP-compatible targets
           # Other options: Zipkin, Honeycomb, Datadog, New Relic, etc.
@@ -966,7 +966,7 @@ class TaskerAppGenerator < Thor
           # Configure resource with additional attributes
           c.resource = OpenTelemetry::SDK::Resources::Resource.create({
                                                                         'service.name' => '#{@app_name}',
-                                                                        'service.version' => '1.0.0',
+                                                                        'service.version' => '1.0.1',
                                                                         'service.framework' => 'tasker'
                                                                       })
 

@@ -12,7 +12,7 @@ OpenTelemetry::SDK.configure do |c|
   c.service_name = Tasker.configuration.telemetry.service_name
 
   # Service version must be configured for instrumentation to work properly
-  c.service_version = 'v1.0.0'
+  c.service_version = 'v1.0.1'
 
   # Configure OTLP exporter to send to local Jaeger
   otlp_exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(

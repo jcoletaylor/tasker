@@ -366,7 +366,7 @@ Once installed, developers can immediately:
 task = Tasker::HandlerFactory.instance.get(
   'order_processing',
   namespace_name: 'ecommerce',
-  version: '1.0.0'
+  version: '1.0.1'
 ).initialize_task!(
   Tasker::Types::TaskRequest.new(
     name: 'order_processing',

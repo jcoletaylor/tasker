@@ -1,14 +1,3 @@
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
 --
 -- Name: calculate_dependency_levels(bigint); Type: FUNCTION; Schema: public; Owner: -
 --
@@ -834,11 +823,6 @@ BEGIN
   ORDER BY ti.task_id;
 END;
 $$;
-
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: tasker_annotation_types; Type: TABLE; Schema: public; Owner: -
@@ -2268,10 +2252,3 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 
 ALTER TABLE ONLY public.tasker_workflow_steps
     ADD CONSTRAINT workflow_steps_task_id_foreign FOREIGN KEY (task_id) REFERENCES public.tasker_tasks(task_id);
-
-
---
--- PostgreSQL database dump complete
---
-
-SET search_path TO "$user", public;

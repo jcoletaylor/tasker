@@ -94,7 +94,7 @@
 <p>Add Tasker to your Rails app’s <code>Gemfile</code>:</p>
 
 <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_source'>source</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>https://rubygems.pkg.github.com/tasker-systems</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>do</span>
-  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker-engine</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 1.0.0</span><span class='tstring_end'>&#39;</span></span>
+  <span class='id identifier rubyid_gem'>gem</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>tasker-engine</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>~&gt; 1.0.1</span><span class='tstring_end'>&#39;</span></span>
 <span class='kw'>end</span>
 </code></pre>
 
@@ -185,7 +185,7 @@ curl -fsSL https://raw.githubusercontent.com/tasker-systems/tasker/main/scripts/
 <pre class="code ruby"><code class="ruby">---
 name: order_process
 namespace_name: default
-version: 1.0.0
+version: 1.0.1
 task_handler_class: OrderProcess
 
 step_templates:
@@ -231,7 +231,7 @@ step_templates:
 </span><span class='id identifier rubyid_task_request'>task_request</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types.html" title="Tasker::Types (module)">Types</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/Types/TaskRequest.html" title="Tasker::Types::TaskRequest (class)">TaskRequest</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span>
   <span class='label'>name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
   <span class='label'>namespace:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>        <span class='comment'># Optional - defaults to &#39;default&#39;
-</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>           <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
+</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.1</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>           <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
 </span>  <span class='label'>context:</span> <span class='lbrace'>{</span> <span class='label'>order_id:</span> <span class='int'>12345</span> <span class='rbrace'>}</span>
 <span class='rparen'>)</span>
 
@@ -239,7 +239,7 @@ step_templates:
 </span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tasker/HandlerFactory.html" title="Tasker::HandlerFactory (class)">HandlerFactory</a></span></span><span class='period'>.</span><span class='id identifier rubyid_instance'>instance</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span>
   <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>order_process</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
   <span class='label'>namespace_name:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>default</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>   <span class='comment'># Optional - defaults to &#39;default&#39;
-</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span>            <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
+</span>  <span class='label'>version:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.1</span><span class='tstring_end'>&#39;</span></span>            <span class='comment'># Optional - defaults to &#39;0.1.0&#39;
 </span><span class='rparen'>)</span>
 <span class='id identifier rubyid_task'>task</span> <span class='op'>=</span> <span class='id identifier rubyid_handler'>handler</span><span class='period'>.</span><span class='id identifier rubyid_initialize_task!'>initialize_task!</span><span class='lparen'>(</span><span class='id identifier rubyid_task_request'>task_request</span><span class='rparen'>)</span>
 
@@ -351,7 +351,7 @@ curl -H &quot;Authorization: Bearer YOUR_JWT_TOKEN&quot; \
   <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tel'>tel</span><span class='op'>|</span>
     <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_enabled'>enabled</span> <span class='op'>=</span> <span class='kw'>true</span>
     <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>my-app-workflows</span><span class='tstring_end'>&#39;</span></span>
-    <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_service_version'>service_version</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.0</span><span class='tstring_end'>&#39;</span></span>
+    <span class='id identifier rubyid_tel'>tel</span><span class='period'>.</span><span class='id identifier rubyid_service_version'>service_version</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>1.0.1</span><span class='tstring_end'>&#39;</span></span>
   <span class='kw'>end</span>
 <span class='kw'>end</span>
 </code></pre>
@@ -531,7 +531,7 @@ bundle exec rubocop
 </div></div>
 
       <div id="footer">
-  Generated on Tue Jul  1 16:47:34 2025 by
+  Generated on Thu Jul  3 17:33:00 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
