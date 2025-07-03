@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# API Request Handling for Microservices Coordination
+#
+# This concern demonstrates how to handle API requests in a microservices architecture
+# using Tasker's built-in circuit breaker functionality through proper error classification.
+#
+# KEY INSIGHT: Tasker provides superior circuit breaker functionality through its
+# SQL-driven retry architecture. Custom circuit breaker patterns are unnecessary and
+# actually work against Tasker's distributed coordination capabilities.
+#
 module BlogExamples
   module Post03
     module Concerns
@@ -7,7 +16,7 @@ module BlogExamples
         extend ActiveSupport::Concern
 
         included do
-          # Initialize with mock service access
+          # Initialize with mock service access for blog examples
           def initialize(*args, **kwargs)
             # For blog examples, provide a dummy URL to satisfy Api::Config requirements
             # since we use mock services instead of real HTTP requests
@@ -32,55 +41,55 @@ module BlogExamples
         end
 
         # Enhanced response handler leveraging Tasker's error classification
+        # This is where Tasker's circuit breaker logic is implemented - through error types!
         def handle_microservice_response(response, service_name)
           case response.status
           when 200..299
-            # Success - return parsed body
+            # Success - circuit breaker records success automatically
             response.body
-          when 400
-            # Bad request - permanent failure, don't retry
+
+          when 400, 422
+            # Client errors - PERMANENT failures
+            # Tasker's circuit breaker will NOT retry these (circuit stays "open" indefinitely)
             raise Tasker::PermanentError.new(
-              "Bad request to #{service_name}: #{response.body}",
-              error_code: 'BAD_REQUEST',
+              "#{service_name} validation error: #{response.body}",
+              error_code: 'CLIENT_VALIDATION_ERROR',
               context: { service: service_name, status: response.status }
             )
-          when 401
-            # Unauthorized - permanent failure, likely configuration issue
+
+          when 401, 403
+            # Authentication/authorization errors - PERMANENT failures
             raise Tasker::PermanentError.new(
-              "Unauthorized request to #{service_name}. Check API credentials.",
-              error_code: 'UNAUTHORIZED',
+              "#{service_name} authentication failed: #{response.status}",
+              error_code: 'AUTH_ERROR',
               context: { service: service_name }
             )
-          when 403
-            # Forbidden - permanent failure
-            raise Tasker::PermanentError.new(
-              "Forbidden request to #{service_name}: #{response.body}",
-              error_code: 'FORBIDDEN',
-              context: { service: service_name }
-            )
+
           when 404
-            # Not found - might be retryable if resource is being created
-            nil # Let calling method decide what to do
+            # Not found - usually PERMANENT, but depends on context
+            raise Tasker::PermanentError.new(
+              "#{service_name} resource not found",
+              error_code: 'RESOURCE_NOT_FOUND',
+              context: { service: service_name }
+            )
+
           when 409
             # Conflict - resource already exists, typically idempotent success
             response.body
-          when 422
-            # Unprocessable entity - permanent failure, validation failed
-            raise Tasker::PermanentError.new(
-              "Validation failed in #{service_name}: #{response.body}",
-              error_code: 'VALIDATION_ERROR',
-              context: { service: service_name, validation_errors: response.body }
-            )
+
           when 429
-            # Rate limited - transient failure, use server-suggested delay
+            # Rate limiting - RETRYABLE with server-specified backoff
+            # This is where Tasker's intelligent backoff shines!
             retry_after = response.headers['retry-after']&.to_i || 60
             raise Tasker::RetryableError.new(
-              "Rate limited by #{service_name}",
+              "#{service_name} rate limited",
               retry_after: retry_after,
               context: { service: service_name, rate_limit_type: 'server_requested' }
             )
+
           when 500..599
-            # Server error - transient failure, let Tasker's exponential backoff handle timing
+            # Server errors - RETRYABLE with exponential backoff
+            # Tasker's circuit breaker will handle intelligent retry timing
             raise Tasker::RetryableError.new(
               "#{service_name} server error: #{response.status}",
               context: {
@@ -89,11 +98,11 @@ module BlogExamples
                 error_type: 'server_error'
               }
             )
+
           else
-            # Unexpected response - treat as permanent failure
-            raise Tasker::PermanentError.new(
-              "Unexpected response from #{service_name}: #{response.status}",
-              error_code: 'UNEXPECTED_RESPONSE',
+            # Unknown status codes - treat as retryable to be safe
+            raise Tasker::RetryableError.new(
+              "#{service_name} unknown error: #{response.status}",
               context: { service: service_name, status: response.status }
             )
           end
@@ -191,3 +200,23 @@ module BlogExamples
     end
   end
 end
+
+# WHY NO CUSTOM CIRCUIT BREAKER?
+#
+# Tasker's architecture already implements sophisticated circuit breaker patterns:
+#
+# 1. **Fail-Fast**: Through error classification (PermanentError vs RetryableError)
+# 2. **Intelligent Backoff**: SQL-driven exponential backoff with jitter
+# 3. **Automatic Recovery**: Steps become retry_eligible when backoff expires
+# 4. **Distributed Coordination**: Multiple workers coordinate through database state
+# 5. **Persistent State**: Circuit state survives process restarts and deployments
+# 6. **Rich Observability**: SQL queries show circuit health across all services
+#
+# Custom circuit breaker patterns would:
+# - Duplicate functionality already provided by the framework
+# - Create coordination issues between in-memory and database state
+# - Reduce observability (harder to query circuit state)
+# - Add unnecessary complexity and potential bugs
+#
+# The key insight: **Persistence + distributed coordination > in-memory circuit objects**
+# for workflow orchestration systems.

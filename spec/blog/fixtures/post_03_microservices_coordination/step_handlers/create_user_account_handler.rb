@@ -2,6 +2,17 @@
 
 require_relative '../concerns/api_request_handling'
 
+# CreateUserAccountHandler - Microservices Coordination Example
+#
+# This handler demonstrates how to coordinate with external microservices
+# using Tasker's built-in circuit breaker functionality through proper error classification.
+#
+# KEY ARCHITECTURAL DECISIONS:
+# 1. NO custom circuit breaker logic - Tasker handles this at the framework level
+# 2. Focus on proper error classification (PermanentError vs RetryableError)
+# 3. Let Tasker's SQL-driven retry system handle intelligent backoff and recovery
+# 4. Use structured logging for observability instead of custom circuit breaker metrics
+#
 module BlogExamples
   module Post03
     module StepHandlers
@@ -14,12 +25,10 @@ module BlogExamples
           # Extract and validate all required inputs
           user_inputs = extract_and_validate_inputs(task, sequence, step)
 
-          log_structured(:info, 'Creating user account', {
-                           email: user_inputs[:email],
-                           plan: user_inputs[:plan]
-                         })
+          Rails.logger.info "Creating user account for #{user_inputs[:email]}"
 
-          # Create user account - this is the core integration
+          # Create user account through microservice
+          # Tasker's circuit breaker logic is handled automatically through error classification
           create_user_account(user_inputs)
         rescue StandardError => e
           Rails.logger.error "User account creation failed: #{e.message}"
@@ -55,6 +64,7 @@ module BlogExamples
           context = task.context.deep_symbolize_keys
           user_info = context[:user_info] || {}
 
+          # Validate required fields - these are PERMANENT errors (don't retry)
           unless user_info[:email]
             raise Tasker::PermanentError.new(
               'Email is required but was not provided',
@@ -87,7 +97,7 @@ module BlogExamples
 
           log_api_call(:post, 'user_service/users', timeout: 30)
 
-          # Use mock service - Tasker's circuit breaker logic handled by retry system
+          # Call the mock service - demonstrates Tasker's circuit breaker through error classification
           user_service = get_service(:user_service)
           response = user_service.create_user(user_inputs)
 
@@ -102,13 +112,12 @@ module BlogExamples
         def process_successful_creation(response)
           user_response = response.body.deep_symbolize_keys
 
+          # Validate the response structure
           ensure_user_creation_successful!(user_response)
 
-          log_structured_info('User account created successfully', {
-                                user_id: user_response[:id],
-                                email: user_response[:email]
-                              })
+          Rails.logger.info "User account created successfully: #{user_response[:id]}"
 
+          # Return structured results for the next step
           {
             user_id: user_response[:id],
             email: user_response[:email],
@@ -119,35 +128,14 @@ module BlogExamples
           }
         end
 
-        # Ensure user creation was successful
-        def ensure_user_creation_successful!(user_response)
-          unless user_response[:id]
-            raise Tasker::PermanentError.new(
-              'User creation appeared successful but no user ID was returned',
-              error_code: 'MISSING_USER_ID_IN_RESPONSE'
-            )
-          end
-
-          return if user_response[:email]
-
-          raise Tasker::PermanentError.new(
-            'User creation appeared successful but no email was returned',
-            error_code: 'MISSING_EMAIL_IN_RESPONSE'
-          )
-        end
-
         # Process existing user with idempotency check
         def process_existing_user(user_inputs, _response)
-          log_structured_info('User already exists, checking for idempotency', {
-                                email: user_inputs[:email]
-                              })
+          Rails.logger.info "User already exists, checking for idempotency: #{user_inputs[:email]}"
 
           existing_user = get_existing_user(user_inputs[:email])
 
           if existing_user && user_matches?(existing_user, user_inputs)
-            log_structured_info('Existing user matches, treating as idempotent success', {
-                                  user_id: existing_user[:id]
-                                })
+            Rails.logger.info "Existing user matches, treating as idempotent success: #{existing_user[:id]}"
 
             {
               user_id: existing_user[:id],
@@ -173,17 +161,11 @@ module BlogExamples
           response.success? ? response.body.deep_symbolize_keys : nil
         rescue Tasker::PermanentError => e
           # Don't retry permanent failures (like 404s)
-          log_structured_error('Permanent error checking existing user', {
-                                 error: e.message,
-                                 email: email
-                               })
+          Rails.logger.error "Permanent error checking existing user: #{e.message}"
           nil
         rescue StandardError => e
           # Re-raise other errors for Tasker's retry system to handle
-          log_structured_error('Failed to check existing user', {
-                                 error: e.message,
-                                 email: email
-                               })
+          Rails.logger.error "Failed to check existing user: #{e.message}"
           raise
         end
 
@@ -196,14 +178,50 @@ module BlogExamples
             existing_user[:plan] == new_user_data[:plan]
         end
 
-        def log_structured_info(message, context = {})
-          log_structured(:info, message, { step_name: 'create_user_account', service: 'user_service' }.merge(context))
-        end
+        # Ensure user creation was successful
+        def ensure_user_creation_successful!(user_response)
+          unless user_response[:id]
+            raise Tasker::PermanentError.new(
+              'User creation appeared successful but no user ID was returned',
+              error_code: 'MISSING_USER_ID_IN_RESPONSE'
+            )
+          end
 
-        def log_structured_error(message, context = {})
-          log_structured(:error, message, { step_name: 'create_user_account', service: 'user_service' }.merge(context))
+          return if user_response[:email]
+
+          raise Tasker::PermanentError.new(
+            'User creation appeared successful but no email was returned',
+            error_code: 'MISSING_EMAIL_IN_RESPONSE'
+          )
         end
       end
     end
   end
 end
+
+# WHY THIS APPROACH WORKS BETTER THAN CUSTOM CIRCUIT BREAKERS:
+#
+# 1. **Distributed Coordination**: Multiple Tasker workers coordinate through database state,
+#    not in-memory circuit breaker objects that can get out of sync
+#
+# 2. **Persistent State**: Circuit breaker state (retry timing, failure counts) survives
+#    process restarts and deployments - no lost state
+#
+# 3. **Intelligent Backoff**: Tasker's SQL-driven exponential backoff with jitter is more
+#    sophisticated than most custom implementations
+#
+# 4. **Rich Observability**: You can query circuit breaker state with SQL:
+#    ```sql
+#    SELECT name, current_state, retry_eligible, next_retry_at, attempts
+#    FROM get_step_readiness_status(task_id)
+#    WHERE current_state = 'error';
+#    ```
+#
+# 5. **Proper Error Classification**: By using PermanentError vs RetryableError,
+#    we tell Tasker's circuit breaker exactly what should and shouldn't be retried
+#
+# 6. **Dependency Awareness**: Tasker's circuit breaker considers workflow dependencies
+#    when deciding whether to retry steps
+#
+# The key insight: **Framework-level circuit breakers > Application-level circuit breakers**
+# for distributed workflow orchestration systems.
