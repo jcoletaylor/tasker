@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Demo controller showing how to use the e-commerce workflow
 class CheckoutController < ApplicationController
   before_action :authenticate_user!, except: [:demo_page]
@@ -48,7 +50,7 @@ class CheckoutController < ApplicationController
     }, status: :internal_server_error
   end
 
-    # Check the status of an order workflow
+  # Check the status of an order workflow
   def order_status
     task = Tasker::Task.find(params[:task_id])
 
@@ -112,7 +114,7 @@ class CheckoutController < ApplicationController
       # Use the Tasker orchestration to retry the task
       task.update!(status: 'pending')
       Tasker::TaskRunnerJob.perform_later(task.task_id)
-      
+
       render json: {
         success: true,
         message: 'Checkout retry initiated',
@@ -132,7 +134,7 @@ class CheckoutController < ApplicationController
     }, status: :not_found
   end
 
-    # Show detailed workflow execution for debugging
+  # Show detailed workflow execution for debugging
   def workflow_details
     task = Tasker::Task.find(params[:task_id])
 
@@ -167,9 +169,9 @@ class CheckoutController < ApplicationController
 
   def checkout_params
     params.require(:checkout).permit(
-      cart_items: [:product_id, :quantity, :price],
-      payment_info: [:token, :amount, :payment_method],
-      customer_info: [:email, :name, :phone]
+      cart_items: %i[product_id quantity price],
+      payment_info: %i[token amount payment_method],
+      customer_info: %i[email name phone]
     )
   end
 end

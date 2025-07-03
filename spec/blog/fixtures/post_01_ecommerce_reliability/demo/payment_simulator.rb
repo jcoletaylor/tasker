@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 # Payment Simulator for demo purposes
 # Simulates various payment gateway scenarios including failures
 class PaymentSimulator
   PaymentResult = Struct.new(:status, :id, :amount, :currency, :payment_method_type, :transaction_id, :error)
-  
+
   class << self
     def charge(amount:, payment_method:)
       # Simulate different payment scenarios based on payment method token
@@ -21,16 +23,16 @@ class PaymentSimulator
         temporary_failure_result
       else
         # Default to success for other tokens (production-like behavior)
-        if rand < 0.95  # 95% success rate
+        if rand < 0.95 # 95% success rate
           success_result(amount, payment_method)
         else
           random_failure_result
         end
       end
     end
-    
+
     private
-    
+
     def success_result(amount, payment_method)
       PaymentResult.new(
         :success,
@@ -42,7 +44,7 @@ class PaymentSimulator
         nil
       )
     end
-    
+
     def insufficient_funds_result
       PaymentResult.new(
         :insufficient_funds,
@@ -54,7 +56,7 @@ class PaymentSimulator
         "Your card was declined. Your card's limit was exceeded."
       )
     end
-    
+
     def invalid_card_result
       PaymentResult.new(
         :invalid_card,
@@ -63,10 +65,10 @@ class PaymentSimulator
         nil,
         nil,
         nil,
-        "Your card number is incorrect."
+        'Your card number is incorrect.'
       )
     end
-    
+
     def timeout_result
       PaymentResult.new(
         :gateway_timeout,
@@ -75,10 +77,10 @@ class PaymentSimulator
         nil,
         nil,
         nil,
-        "Payment gateway timed out after 30 seconds"
+        'Payment gateway timed out after 30 seconds'
       )
     end
-    
+
     def rate_limit_result
       PaymentResult.new(
         :rate_limited,
@@ -87,10 +89,10 @@ class PaymentSimulator
         nil,
         nil,
         nil,
-        "Too many requests. Please try again in a moment."
+        'Too many requests. Please try again in a moment.'
       )
     end
-    
+
     def temporary_failure_result
       PaymentResult.new(
         :temporary_failure,
@@ -99,21 +101,21 @@ class PaymentSimulator
         nil,
         nil,
         nil,
-        "Temporary payment processing error. Please try again."
+        'Temporary payment processing error. Please try again.'
       )
     end
-    
+
     def random_failure_result
-      failures = [
-        :gateway_timeout,
-        :rate_limited,
-        :temporary_failure
+      failures = %i[
+        gateway_timeout
+        rate_limited
+        temporary_failure
       ]
-      
+
       failure_type = failures.sample
       send("#{failure_type}_result")
     end
-    
+
     def payment_method_type(payment_method)
       case payment_method
       when /visa/

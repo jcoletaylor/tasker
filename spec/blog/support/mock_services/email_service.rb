@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'base_mock_service'
 
 # Mock Email Service
@@ -28,11 +30,11 @@ class MockEmailService < BaseMockService
   # Instance method for sending confirmation email
   def send_confirmation_email(to:, template: 'order_confirmation', subject: nil, **data)
     log_call(:send_confirmation, {
-      to: to,
-      template: template,
-      subject: subject,
-      **data
-    })
+               to: to,
+               template: template,
+               subject: subject,
+               **data
+             })
 
     default_response = {
       message_id: generate_id('msg'),
@@ -55,10 +57,10 @@ class MockEmailService < BaseMockService
   def self.send_welcome(to:, customer_name:, **welcome_data)
     instance = new
     instance.log_call(:send_welcome, {
-      to: to,
-      customer_name: customer_name,
-      **welcome_data
-    })
+                        to: to,
+                        customer_name: customer_name,
+                        **welcome_data
+                      })
 
     default_response = {
       message_id: instance.generate_id('msg'),
@@ -85,11 +87,11 @@ class MockEmailService < BaseMockService
   def self.send_notification(to:, notification_type:, message:, priority: 'normal')
     instance = new
     instance.log_call(:send_notification, {
-      to: to,
-      notification_type: notification_type,
-      message: message,
-      priority: priority
-    })
+                        to: to,
+                        notification_type: notification_type,
+                        message: message,
+                        priority: priority
+                      })
 
     default_response = {
       message_id: instance.generate_id('msg'),
@@ -133,11 +135,11 @@ class MockEmailService < BaseMockService
   def self.send_bulk(recipients:, template:, subject:, **data)
     instance = new
     instance.log_call(:send_bulk, {
-      recipients: recipients,
-      template: template,
-      subject: subject,
-      **data
-    })
+                        recipients: recipients,
+                        template: template,
+                        subject: subject,
+                        **data
+                      })
 
     default_response = {
       batch_id: instance.generate_id('batch'),
@@ -146,13 +148,11 @@ class MockEmailService < BaseMockService
       template: template,
       subject: subject,
       queued_at: instance.generate_timestamp,
-      estimated_delivery: (Time.current + 5.minutes).iso8601
+      estimated_delivery: 5.minutes.from_now.iso8601
     }
 
     instance.handle_response(:send_bulk, default_response)
   end
-
-  private
 
   # Generate subject line based on template
   # @param template [String] Template name

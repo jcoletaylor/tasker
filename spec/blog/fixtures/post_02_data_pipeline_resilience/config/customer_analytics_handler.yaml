@@ -1,7 +1,10 @@
-task_name: customer_analytics
-namespace: data_pipeline
+---
+name: customer_analytics
+namespace_name: blog_examples
+task_handler_class: BlogExamples::Post02::CustomerAnalyticsHandler
 version: "1.0.0"
 description: "Resilient customer analytics pipeline with parallel processing"
+default_dependent_system: "analytics_system"
 
 # Input validation schema
 schema:
@@ -43,18 +46,11 @@ schema:
           type: integer
           default: 50
 
-# Enterprise annotations for monitoring
-annotations:
-  team: "data-engineering"
-  criticality: "high"
-  sla_hours: 8
-  dependencies: ["postgresql", "redis", "crm_api"]
-
 # Parallel data extraction phase
 step_templates:
   - name: extract_orders
     description: "Extract order data from transactional database"
-    handler_class: "DataPipeline::StepHandlers::ExtractOrdersHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::ExtractOrdersHandler"
     default_retryable: true
     default_retry_limit: 3
     handler_config:
@@ -63,7 +59,7 @@ step_templates:
 
   - name: extract_users
     description: "Extract user data from CRM system"
-    handler_class: "DataPipeline::StepHandlers::ExtractUsersHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::ExtractUsersHandler"
     default_retryable: true
     default_retry_limit: 5  # CRM can be flaky
     handler_config:
@@ -72,7 +68,7 @@ step_templates:
 
   - name: extract_products
     description: "Extract product data from inventory system"
-    handler_class: "DataPipeline::StepHandlers::ExtractProductsHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::ExtractProductsHandler"
     default_retryable: true
     default_retry_limit: 3
     handler_config:
@@ -82,7 +78,7 @@ step_templates:
   # Dependent transformations (wait for all extractions)
   - name: transform_customer_metrics
     description: "Calculate customer behavior metrics"
-    handler_class: "DataPipeline::StepHandlers::TransformCustomerMetricsHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::TransformCustomerMetricsHandler"
     depends_on_steps: ["extract_orders", "extract_users"]
     default_retryable: true
     default_retry_limit: 2
@@ -91,7 +87,7 @@ step_templates:
 
   - name: transform_product_metrics
     description: "Calculate product performance metrics"
-    handler_class: "DataPipeline::StepHandlers::TransformProductMetricsHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::TransformProductMetricsHandler"
     depends_on_steps: ["extract_orders", "extract_products"]
     default_retryable: true
     default_retry_limit: 2
@@ -101,7 +97,7 @@ step_templates:
   # Final aggregation and output
   - name: generate_insights
     description: "Generate business insights and recommendations"
-    handler_class: "DataPipeline::StepHandlers::GenerateInsightsHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::GenerateInsightsHandler"
     depends_on_steps: ["transform_customer_metrics", "transform_product_metrics"]
     default_retryable: true
     default_retry_limit: 3
@@ -110,7 +106,7 @@ step_templates:
 
   - name: update_dashboard
     description: "Update executive dashboard with new metrics"
-    handler_class: "DataPipeline::StepHandlers::UpdateDashboardHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::UpdateDashboardHandler"
     depends_on_steps: ["generate_insights"]
     default_retryable: true
     default_retry_limit: 3
@@ -119,7 +115,7 @@ step_templates:
 
   - name: send_notifications
     description: "Send completion notifications to stakeholders"
-    handler_class: "DataPipeline::StepHandlers::SendNotificationsHandler"
+    handler_class: "BlogExamples::Post02::StepHandlers::SendNotificationsHandler"
     depends_on_steps: ["update_dashboard"]
     default_retryable: true
     default_retry_limit: 5

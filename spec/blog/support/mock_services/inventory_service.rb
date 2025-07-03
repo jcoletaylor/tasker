@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'base_mock_service'
 
 # Mock Inventory Service
@@ -24,9 +26,9 @@ class MockInventoryService < BaseMockService
   # Instance method for checking availability
   def check_availability_call(product_id:, quantity:)
     log_call(:check_availability, {
-      product_id: product_id,
-      quantity: quantity
-    })
+               product_id: product_id,
+               quantity: quantity
+             })
 
     default_response = {
       product_id: product_id,
@@ -34,7 +36,7 @@ class MockInventoryService < BaseMockService
       stock_level: 100,
       requested_quantity: quantity,
       can_fulfill: true,
-      reserved_until: (Time.current + 15.minutes).iso8601
+      reserved_until: 15.minutes.from_now.iso8601
     }
 
     handle_response(:check_availability, default_response)
@@ -59,11 +61,11 @@ class MockInventoryService < BaseMockService
   # Instance method for reserving inventory
   def reserve_inventory_call(product_id:, quantity:, order_id:, customer_id: nil)
     log_call(:reserve_inventory, {
-      product_id: product_id,
-      quantity: quantity,
-      order_id: order_id,
-      customer_id: customer_id
-    })
+               product_id: product_id,
+               quantity: quantity,
+               order_id: order_id,
+               customer_id: customer_id
+             })
 
     default_response = {
       reservation_id: generate_id('res'),
@@ -72,7 +74,7 @@ class MockInventoryService < BaseMockService
       order_id: order_id,
       customer_id: customer_id,
       reserved_at: generate_timestamp,
-      expires_at: (Time.current + 15.minutes).iso8601,
+      expires_at: 15.minutes.from_now.iso8601,
       status: 'reserved'
     }
 
@@ -103,9 +105,9 @@ class MockInventoryService < BaseMockService
   def self.release_reservation(reservation_id:, reason: 'order_cancelled')
     instance = new
     instance.log_call(:release_reservation, {
-      reservation_id: reservation_id,
-      reason: reason
-    })
+                        reservation_id: reservation_id,
+                        reason: reason
+                      })
 
     default_response = {
       reservation_id: reservation_id,
@@ -126,10 +128,10 @@ class MockInventoryService < BaseMockService
   def self.update_inventory(product_id:, adjustment:, reason: 'manual_adjustment')
     instance = new
     instance.log_call(:update_inventory, {
-      product_id: product_id,
-      adjustment: adjustment,
-      reason: reason
-    })
+                        product_id: product_id,
+                        adjustment: adjustment,
+                        reason: reason
+                      })
 
     default_response = {
       product_id: product_id,

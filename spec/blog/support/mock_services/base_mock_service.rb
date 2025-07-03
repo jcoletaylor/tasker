@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Base Mock Service
 # Provides a foundation for creating mock external services for blog example testing
 class BaseMockService
@@ -77,6 +79,73 @@ class BaseMockService
     # Clear the call log
     def clear_log!
       @call_log = []
+    end
+
+    # Reset all mock services that inherit from BaseMockService
+    def reset_all_mocks!
+      # Find all classes that inherit from BaseMockService
+      ObjectSpace.each_object(Class).select { |klass| klass < BaseMockService }.each(&:reset!)
+    end
+
+    # Get call log from all mock services
+    def get_call_log
+      all_calls = []
+      ObjectSpace.each_object(Class).select { |klass| klass < BaseMockService }.each do |service_class|
+        all_calls.concat(service_class.call_log)
+      end
+      all_calls.sort_by { |call| call[:timestamp] }
+    end
+
+    # Configure failures for multiple services
+    # @param failure_config [Hash] Service => method => should_fail mapping
+    def configure_failures(failure_config)
+      failure_config.each do |service_key, methods|
+        service_class = case service_key
+                        when 'data_warehouse'
+                          MockDataWarehouseService
+                        when 'dashboard'
+                          MockDashboardService
+                        when 'payment'
+                          MockPaymentService
+                        when 'email'
+                          MockEmailService
+                        when 'inventory'
+                          MockInventoryService
+                        else
+                          next
+                        end
+
+        methods.each do |method, should_fail|
+          next unless should_fail
+
+          # Use specific error classes and messages that step handlers expect
+          error_class, error_message = case service_key
+                                       when 'data_warehouse'
+                                         case method
+                                         when 'extract_orders'
+                                           [MockDataWarehouseService::TimeoutError, 'Database connection timeout']
+                                         when 'transform_customer_metrics'
+                                           [MockDataWarehouseService::TimeoutError,
+                                            'Out of memory during transformation']
+                                         else
+                                           [MockDataWarehouseService::TimeoutError, "Mock failure for #{method}"]
+                                         end
+                                       when 'dashboard'
+                                         case method
+                                         when 'update_dashboard'
+                                           [MockDashboardService::TimeoutError, 'Dashboard API authentication failed']
+                                         when 'send_notifications'
+                                           [MockDashboardService::TimeoutError, 'Slack API rate limit exceeded']
+                                         else
+                                           [MockDashboardService::TimeoutError, "Mock failure for #{method}"]
+                                         end
+                                       else
+                                         [StandardError, "Mock failure for #{method}"]
+                                       end
+
+          service_class.stub_failure(method.to_sym, error_class, error_message)
+        end
+      end
     end
   end
 

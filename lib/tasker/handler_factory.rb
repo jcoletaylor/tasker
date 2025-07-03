@@ -43,7 +43,8 @@ module Tasker
       namespace_name = namespace_name.to_sym
       name_sym = name.to_sym
 
-      thread_safe_operation do
+      # Find the handler class within the mutex lock
+      handler_class = thread_safe_operation do
         # Direct namespace lookup - allows same name in different systems
         handler_class = @handler_classes.dig(namespace_name, name_sym, version)
         raise_handler_not_found(name, namespace_name, version) unless handler_class
@@ -53,8 +54,12 @@ module Tasker
                                entity_id: "#{namespace_name}/#{name_sym}/#{version}",
                                handler_class: handler_class.is_a?(Class) ? handler_class.name : handler_class)
 
-        instantiate_handler(handler_class)
+        handler_class
       end
+
+      # Instantiate the handler OUTSIDE the mutex lock to avoid recursive locking
+      # when ConfiguredTask handlers try to register themselves during instantiation
+      instantiate_handler(handler_class)
     end
 
     # Register a task handler class with a name and optional dependent system

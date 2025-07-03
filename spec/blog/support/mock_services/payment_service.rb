@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'base_mock_service'
 
 # Mock Payment Service
@@ -16,13 +18,13 @@ class MockPaymentService < BaseMockService
   # @param card_last_four [String] Last four digits of card (optional)
   # @param customer_id [Integer] Customer ID (optional)
   # @return [Hash] Payment result
-  def self.process_payment(amount:, method:, currency: 'USD', **options)
+  def self.process_payment(amount:, method:, currency: 'USD', **)
     instance = new
     instance.process_payment_call(
       amount: amount,
       method: method,
       currency: currency,
-      **options
+      **
     )
   end
 
@@ -32,11 +34,11 @@ class MockPaymentService < BaseMockService
     numeric_amount = amount.is_a?(String) ? amount.to_f : amount
 
     log_call(:process_payment, {
-      amount: numeric_amount,
-      method: method,
-      currency: currency,
-      **options
-    })
+               amount: numeric_amount,
+               method: method,
+               currency: currency,
+               **options
+             })
 
     default_response = {
       payment_id: generate_id('pay'),
@@ -61,10 +63,10 @@ class MockPaymentService < BaseMockService
   def self.refund_payment(payment_id:, amount: nil, reason: 'requested_by_customer')
     instance = new
     instance.log_call(:refund_payment, {
-      payment_id: payment_id,
-      amount: amount,
-      reason: reason
-    })
+                        payment_id: payment_id,
+                        amount: amount,
+                        reason: reason
+                      })
 
     default_response = {
       refund_id: instance.generate_id('ref'),
@@ -104,9 +106,9 @@ class MockPaymentService < BaseMockService
   def self.verify_payment_method(method:, **details)
     instance = new
     instance.log_call(:verify_payment_method, {
-      method: method,
-      **details
-    })
+                        method: method,
+                        **details
+                      })
 
     default_response = {
       valid: true,
@@ -117,8 +119,6 @@ class MockPaymentService < BaseMockService
 
     instance.handle_response(:verify_payment_method, default_response)
   end
-
-  private
 
   # Calculate processing fees
   # @param amount [Float] Transaction amount

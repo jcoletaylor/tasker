@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Demo Product model for the e-commerce example
 # Using PORO with ActiveModel concerns to avoid ActiveRecord conflicts
 module BlogExamples
@@ -33,36 +35,36 @@ module BlogExamples
       def self.find_by(attributes)
         # In a real test, this would use mock data or the actual Tasker database
         # Return mock products that match the test context expectations
-        if attributes[:id]
-          case attributes[:id]
-          when 1
-            new(
-              id: 1,
-              name: "Widget A",
-              price: 29.99,
-              stock: 10,
-              active: true,
-              sku: "WIDGET-A"
-            )
-          when 2
-            new(
-              id: 2,
-              name: "Widget B",
-              price: 49.99,
-              stock: 10,
-              active: true,
-              sku: "WIDGET-B"
-            )
-          else
-            new(
-              id: attributes[:id],
-              name: "Mock Product #{attributes[:id]}",
-              price: 29.99,
-              stock: 10,
-              active: true,
-              sku: "MOCK-#{attributes[:id]}"
-            )
-          end
+        return unless attributes[:id]
+
+        case attributes[:id]
+        when 1
+          new(
+            id: 1,
+            name: 'Widget A',
+            price: 29.99,
+            stock: 10,
+            active: true,
+            sku: 'WIDGET-A'
+          )
+        when 2
+          new(
+            id: 2,
+            name: 'Widget B',
+            price: 49.99,
+            stock: 10,
+            active: true,
+            sku: 'WIDGET-B'
+          )
+        else
+          new(
+            id: attributes[:id],
+            name: "Mock Product #{attributes[:id]}",
+            price: 29.99,
+            stock: 10,
+            active: true,
+            sku: "MOCK-#{attributes[:id]}"
+          )
         end
       end
 

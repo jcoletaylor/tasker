@@ -1,206 +1,119 @@
-module DataPipeline
-  module StepHandlers
-    class SendNotificationsHandler < Tasker::StepHandler::Base
-      def process(task, sequence, step)
-        insights_data = step_results(sequence, 'generate_insights')
-        dashboard_data = step_results(sequence, 'update_dashboard')
+# frozen_string_literal: true
 
-        notification_channels = task.context['notification_channels'] || ['#data-team']
+module BlogExamples
+  module Post02
+    module StepHandlers
+      class SendNotificationsHandler < Tasker::StepHandler::Base
+        def process(task, sequence, step)
+          # Extract and validate all required inputs
+          notification_inputs = extract_and_validate_inputs(task, sequence, step)
 
-        log_structured_info("Processing notification requirements", {
-          channels: notification_channels,
-          insights_available: insights_data.present?,
-          dashboard_updated: dashboard_data.present?
-        })
+          Rails.logger.info "Starting notification delivery: task_id=#{task.task_id}"
 
-        # Business logic: Determine what notifications need to be sent
-        # The actual sending is handled by event subscribers
-        notification_requirements = build_notification_requirements(
-          insights_data,
-          dashboard_data,
-          notification_channels
-        )
+          # Send notifications - this is the core integration
+          begin
+            send_pipeline_notifications(notification_inputs)
 
-        # Record the notification requirements (this is the business logic)
-        notification_record = {
-          status: 'scheduled',
-          requirements: notification_requirements,
-          channels_configured: notification_channels,
-          total_notifications: notification_requirements.length,
-          scheduled_at: Time.current.iso8601,
-          pipeline_task_id: task.id
-        }
+            # Return raw notification results for process_results to handle
+          rescue StandardError => e
+            Rails.logger.error "Notification delivery failed: #{e.message}"
+            raise
+          end
+        end
 
-        log_structured_info("Notification requirements processed", {
-          total_notifications: notification_requirements.length,
-          types: notification_requirements.map { |n| n[:type] }.uniq
-        })
+        # Override process_results to handle business logic and result formatting
+        def process_results(step, notification_response, _initial_results)
+          # At this point we know the notification sending succeeded
+          # Now safely format the business results
 
-        # Fire event for actual notification sending (handled by event subscribers)
-        # This ensures notifications don't block the pipeline if they fail
-        publish_event('pipeline_notifications_ready', {
-          notification_requirements: notification_requirements,
-          channels: notification_channels,
-          insights_data: insights_data,
-          dashboard_data: dashboard_data,
-          task_id: task.id
-        })
+          notification_channels = notification_response[:notification_channels]
 
-        notification_record
-      end
+          Rails.logger.info "Notifications sent successfully to #{notification_channels.length} channels"
 
-      private
-
-      def step_results(sequence, step_name)
-        step = sequence.steps.find { |s| s.name == step_name }
-        step&.results || {}
-      end
-
-      def build_notification_requirements(insights_data, dashboard_data, channels)
-        requirements = []
-
-        # Always send completion notification
-        requirements << {
-          type: 'completion',
-          priority: 'standard',
-          channels: channels,
-          data: {
-            insights_summary: extract_insights_summary(insights_data),
-            dashboard_summary: extract_dashboard_summary(dashboard_data)
+          step.results = {
+            notifications_sent: notification_response[:data],
+            notification_metadata: notification_response[:metadata],
+            sent_at: Time.current.iso8601
           }
-        }
-
-        # Add alert notifications for critical issues
-        if insights_data['performance_alerts']&.any?
-          critical_alerts = insights_data['performance_alerts'].select { |a| a['severity'] == 'critical' }
-          warning_alerts = insights_data['performance_alerts'].select { |a| a['severity'] == 'warning' }
-
-          critical_alerts.each do |alert|
-            requirements << {
-              type: 'critical_alert',
-              priority: 'urgent',
-              alert_data: alert,
-              escalation_required: true
-            }
-          end
-
-          warning_alerts.each do |alert|
-            requirements << {
-              type: 'warning_alert',
-              priority: 'high',
-              alert_data: alert,
-              escalation_required: false
-            }
-          end
-        end
-
-        # Add recommendation notifications
-        if insights_data['business_recommendations']&.any?
-          insights_data['business_recommendations'].each do |recommendation|
-            requirements << {
-              type: 'recommendation',
-              priority: recommendation['priority'] || 'medium',
-              recommendation_data: recommendation,
-              target_team: determine_target_team(recommendation['type'])
-            }
-          end
-        end
-
-        # Add summary email requirement
-        if should_send_summary_email?(insights_data)
-          requirements << {
-            type: 'summary_email',
-            priority: 'standard',
-            recipients: determine_email_recipients(insights_data),
-            data: {
-              executive_summary: insights_data['executive_summary'],
-              period_covered: extract_period_info(insights_data)
-            }
+        rescue StandardError => e
+          # If result processing fails, we don't want to retry the notification sending
+          # Log the error and set a failure result without retrying
+          Rails.logger.error "Failed to process notification sending results: #{e.message}"
+          step.results = {
+            error: true,
+            error_message: "Notification sending succeeded but result processing failed: #{e.message}",
+            error_code: 'RESULT_PROCESSING_FAILED',
+            raw_notification_response: notification_response,
+            status: 'processing_error'
           }
         end
 
-        requirements
-      end
+        private
 
-      def extract_insights_summary(insights_data)
-        return {} unless insights_data.present?
+        # Extract and validate all required inputs for notification sending
+        def extract_and_validate_inputs(task, sequence, _step)
+          # Get insights and notification channels from task context with normalized keys
+          insights_step = get_dependent_step(sequence, 'generate_insights')
+          insights = insights_step&.results&.deep_symbolize_keys&.dig(:insights)
 
-        {
-          total_customers_analyzed: insights_data.dig('executive_summary', 'period_overview', 'total_customers_analyzed'),
-          total_revenue_processed: insights_data.dig('executive_summary', 'period_overview', 'total_revenue'),
-          key_metrics: insights_data.dig('executive_summary', 'customer_highlights'),
-          recommendations_count: insights_data['business_recommendations']&.length || 0,
-          alerts_count: insights_data['performance_alerts']&.length || 0
-        }
-      end
+          task_context = task.context.deep_symbolize_keys
+          notification_channels = task_context[:notification_channels] || ['#data-team']
 
-      def extract_dashboard_summary(dashboard_data)
-        return {} unless dashboard_data.present?
+          unless insights
+            raise Tasker::PermanentError.new(
+              'Insights data is required but was not found from generate_insights step',
+              error_code: 'MISSING_INSIGHTS_DATA'
+            )
+          end
 
-        {
-          dashboards_updated: dashboard_data['dashboards_updated'] || [],
-          update_status: dashboard_data['status'],
-          last_updated: dashboard_data['updated_at']
-        }
-      end
+          unless notification_channels&.any?
+            raise Tasker::PermanentError.new(
+              'At least one notification channel is required',
+              error_code: 'MISSING_NOTIFICATION_CHANNELS'
+            )
+          end
 
-      def extract_period_info(insights_data)
-        {
-          start_date: task.context.dig('date_range', 'start_date'),
-          end_date: task.context.dig('date_range', 'end_date'),
-          processing_completed_at: Time.current.iso8601
-        }
-      end
-
-      def determine_target_team(recommendation_type)
-        case recommendation_type
-        when 'customer_retention'
-          'customer-success'
-        when 'inventory_optimization'
-          'operations'
-        when 'pricing_strategy'
-          'revenue'
-        when 'marketing_campaign'
-          'marketing'
-        else
-          'data-team'
-        end
-      end
-
-      def should_send_summary_email?(insights_data)
-        # Business logic: Send email if we have meaningful insights
-        return false unless insights_data.present?
-
-        executive_summary = insights_data['executive_summary']
-        return false unless executive_summary.present?
-
-        # Send if we have customer data or significant revenue
-        customers_analyzed = executive_summary.dig('period_overview', 'total_customers_analyzed') || 0
-        revenue_processed = executive_summary.dig('period_overview', 'total_revenue') || 0
-
-        customers_analyzed > 0 || revenue_processed > 0
-      end
-
-      def determine_email_recipients(insights_data)
-        # Business logic: Determine who should receive the summary
-        base_recipients = ['executives@company.com', 'data-team@company.com']
-
-        # Add specific recipients based on alerts and recommendations
-        additional_recipients = []
-
-        if insights_data['performance_alerts']&.any? { |a| a['severity'] == 'critical' }
-          additional_recipients << 'operations@company.com'
+          {
+            insights: insights,
+            notification_channels: notification_channels,
+            task_context: task_context
+          }
         end
 
-        if insights_data['business_recommendations']&.any? { |r| r['type'] == 'customer_retention' }
-          additional_recipients << 'customer-success@company.com'
+        # Send pipeline notifications using validated inputs
+        def send_pipeline_notifications(notification_inputs)
+          # Use mock dashboard service for notifications
+          result = MockDashboardService.send_notifications(
+            notification_channels: notification_inputs[:notification_channels],
+            insights: notification_inputs[:insights],
+            timeout_seconds: 10 # Default timeout for notifications
+          )
+
+          # Add notification channels to result for logging
+          result.merge(notification_channels: notification_inputs[:notification_channels])
+        rescue MockDashboardService::TimeoutError => e
+          # Temporary failure - can be retried
+          raise Tasker::RetryableError, "Notification sending timed out: #{e.message}"
+        rescue MockDashboardService::ConnectionError => e
+          # Temporary failure - connection issues
+          raise Tasker::RetryableError, "Notification service connection error: #{e.message}"
+        rescue MockDashboardService::RateLimitedError => e
+          # Temporary failure - rate limited
+          raise Tasker::RetryableError.new(
+            "Notification service rate limited: #{e.message}",
+            retry_after: 60
+          )
+        rescue MockDashboardService::InvalidChannelError => e
+          # Permanent failure - invalid notification channels
+          raise Tasker::PermanentError.new(
+            "Invalid notification channels: #{e.message}",
+            error_code: 'INVALID_NOTIFICATION_CHANNELS'
+          )
         end
 
-        (base_recipients + additional_recipients).uniq
-      end
-
-      def log_structured_info(message, **context)
-        log_structured(:info, message, step_name: 'send_notifications', **context)
+        def get_dependent_step(sequence, step_name)
+          sequence.steps.find { |s| s.name == step_name }
+        end
       end
     end
   end

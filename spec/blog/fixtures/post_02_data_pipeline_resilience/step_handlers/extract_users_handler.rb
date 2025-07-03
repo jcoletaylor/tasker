@@ -1,211 +1,105 @@
-module DataPipeline
-  module StepHandlers
-    class ExtractUsersHandler < Tasker::StepHandler::Base
-      def process(task, sequence, step)
-        date_range = task.context['date_range']
-        start_date = Date.parse(date_range['start_date'])
-        end_date = Date.parse(date_range['end_date'])
-        force_refresh = task.context['force_refresh'] || false
+# frozen_string_literal: true
 
-        # Fire custom event for monitoring
-        publish_event('data_extraction_started', {
-          step_name: 'extract_users',
-          date_range: date_range,
-          estimated_records: estimate_record_count(start_date, end_date),
-          task_id: task.id
-        })
+module BlogExamples
+  module Post02
+    module StepHandlers
+      class ExtractUsersHandler < Tasker::StepHandler::Base
+        def process(task, sequence, step)
+          # Extract and validate all required inputs
+          extraction_inputs = extract_and_validate_inputs(task, sequence, step)
 
-        # Check cache first unless force refresh
-        cached_data = get_cached_extraction('users', start_date, end_date)
-        if cached_data && !force_refresh
-          log_structured_info("Using cached user data", {
-            cache_key: cache_key('users', start_date, end_date),
-            records_count: cached_data['total_count']
-          })
-          return cached_data
-        end
+          Rails.logger.info "Starting user extraction: task_id=#{task.task_id}"
 
-        log_structured_info("Starting user extraction", {
-          date_range: date_range,
-          force_refresh: force_refresh
-        })
+          # Fire custom event for monitoring
+          publish_event('data_extraction_started', {
+                          step_name: 'extract_users',
+                          task_id: task.id
+                        })
 
-        # Extract users who had activity in the date range
-        user_ids_from_orders = Order.where(created_at: start_date..end_date)
-                                   .distinct
-                                   .pluck(:customer_id)
-
-        total_count = user_ids_from_orders.length
-        processed_count = 0
-        users = []
-
-        log_structured_info("Processing user extraction", {
-          user_ids_count: total_count,
-          batch_size: batch_size
-        })
-
-        # Process in batches
-        user_ids_from_orders.each_slice(batch_size) do |user_ids_batch|
+          # Extract users data - this is the core integration
           begin
-            batch_users = User.where(id: user_ids_batch).includes(:profile)
+            result = extract_users_data(extraction_inputs)
 
-            batch_data = batch_users.map do |user|
-              {
-                user_id: user.id,
-                email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                phone: user.phone,
-                created_at: user.created_at.iso8601,
-                updated_at: user.updated_at.iso8601,
-                status: user.status,
-                marketing_opt_in: user.marketing_opt_in,
-                profile: user.profile ? {
-                  age: user.profile.age,
-                  gender: user.profile.gender,
-                  location: {
-                    city: user.profile.city,
-                    state: user.profile.state,
-                    country: user.profile.country,
-                    zip_code: user.profile.zip_code
-                  },
-                  preferences: user.profile.preferences || {}
-                } : nil
-              }
-            end
+            # Fire completion event with metrics
+            publish_event('data_extraction_completed', {
+                            step_name: 'extract_users',
+                            records_extracted: result[:metadata][:total_records],
+                            task_id: task.id
+                          })
 
-            users.concat(batch_data)
-            processed_count += batch_data.length
-
-            # Update progress
-            update_progress(step, processed_count, total_count)
-
-          rescue ActiveRecord::ConnectionTimeoutError => e
-            log_structured_error("Database connection timeout during user extraction", {
-              error: e.message,
-              batch_size: user_ids_batch.size,
-              processed_so_far: processed_count
-            })
-            raise e  # Let Tasker handle retries
+            # Return raw extraction results for process_results to handle
+            result
           rescue StandardError => e
-            log_structured_error("User extraction error", {
-              error: e.message,
-              error_class: e.class.name,
-              batch_size: user_ids_batch.size,
-              processed_so_far: processed_count
-            })
-            raise e  # Let Tasker handle retries
+            Rails.logger.error "User extraction failed: #{e.message}"
+
+            # Fire failure event
+            publish_event('data_extraction_failed', {
+                            step_name: 'extract_users',
+                            error: e.message,
+                            task_id: task.id
+                          })
+
+            raise
           end
         end
 
-        # Calculate data quality metrics
-        data_quality = calculate_data_quality(users)
+        # Override process_results to handle business logic and result formatting
+        def process_results(step, extraction_response, _initial_results)
+          # At this point we know the user extraction succeeded
+          # Now safely format the business results
 
-        result = {
-          users: users,
-          total_count: users.length,
-          date_range: {
-            start_date: start_date.iso8601,
-            end_date: end_date.iso8601
-          },
-          extracted_at: Time.current.iso8601,
-          data_quality: data_quality,
-          processing_stats: {
-            batches_processed: (processed_count.to_f / batch_size).ceil,
-            batch_size: batch_size,
-            processing_time_seconds: step.duration_seconds
+          metadata = extraction_response[:metadata]
+
+          Rails.logger.info "User extraction completed successfully: #{metadata[:total_records]} records"
+
+          step.results = {
+            users_data: extraction_response[:data],
+            extraction_metadata: metadata,
+            extracted_at: Time.current.iso8601
           }
-        }
+        rescue StandardError => e
+          # If result processing fails, we don't want to retry the extraction
+          # Log the error and set a failure result without retrying
+          Rails.logger.error "Failed to process user extraction results: #{e.message}"
+          step.results = {
+            error: true,
+            error_message: "User extraction succeeded but result processing failed: #{e.message}",
+            error_code: 'RESULT_PROCESSING_FAILED',
+            raw_extraction_response: extraction_response,
+            status: 'processing_error'
+          }
+        end
 
-        # Cache the result
-        cache_extraction('users', start_date, end_date, result)
+        private
 
-        log_structured_info("User extraction completed successfully", {
-          records_extracted: users.length,
-          processing_time_seconds: step.duration_seconds,
-          data_quality_score: data_quality[:quality_score]
-        })
+        # Extract and validate all required inputs for user extraction
+        def extract_and_validate_inputs(task, _sequence, _step)
+          # For user extraction, we don't need specific inputs beyond task context
+          # But we can validate any optional parameters
+          {
+            task_context: task.context.deep_symbolize_keys
+          }
+        end
 
-        # Fire completion event with metrics
-        publish_event('data_extraction_completed', {
-          step_name: 'extract_users',
-          records_extracted: users.length,
-          processing_time_seconds: step.duration_seconds,
-          data_quality: data_quality,
-          date_range: date_range,
-          task_id: task.id
-        })
-
-        result
-      end
-
-      private
-
-      def batch_size
-        base_size = 500  # Smaller batches for user data with joins
-        multiplier = task.annotations['batch_size_multiplier']&.to_f || 1.0
-        (base_size * multiplier).to_i
-      end
-
-      def estimate_record_count(start_date, end_date)
-        # Estimate based on order activity
-        Order.where(created_at: start_date..end_date).distinct.count(:customer_id)
-      end
-
-      def update_progress(step, processed, total)
-        progress_percent = (processed.to_f / total * 100).round(1)
-        step.annotations.merge!({
-          progress_message: "Processed #{processed}/#{total} users (#{progress_percent}%)",
-          progress_percent: progress_percent,
-          last_updated: Time.current.iso8601
-        })
-        step.save!
-      end
-
-      def calculate_data_quality(users)
-        return { quality_score: 0 } if users.empty?
-
-        users_with_email = users.count { |u| u[:email].present? }
-        users_with_names = users.count { |u| u[:first_name].present? && u[:last_name].present? }
-        users_with_profile = users.count { |u| u[:profile].present? }
-        users_with_location = users.count { |u| u[:profile]&.dig(:location, :city).present? }
-
-        quality_score = [
-          (users_with_email.to_f / users.length * 100).round(1),
-          (users_with_names.to_f / users.length * 100).round(1),
-          (users_with_profile.to_f / users.length * 100).round(1),
-          (users_with_location.to_f / users.length * 100).round(1)
-        ].sum / 4.0
-
-        {
-          quality_score: quality_score.round(1),
-          users_with_email: users_with_email,
-          users_with_names: users_with_names,
-          users_with_profile: users_with_profile,
-          users_with_location: users_with_location,
-          email_completeness: (users_with_email.to_f / users.length * 100).round(1),
-          profile_completeness: (users_with_profile.to_f / users.length * 100).round(1)
-        }
-      end
-
-      def cache_key(data_type, start_date, end_date)
-        "extraction:#{data_type}:#{start_date}:#{end_date}"
-      end
-
-      def get_cached_extraction(data_type, start_date, end_date)
-        Rails.cache.read(cache_key(data_type, start_date, end_date))
-      end
-
-      def cache_extraction(data_type, start_date, end_date, data)
-        Rails.cache.write(cache_key(data_type, start_date, end_date), data, expires_in: 6.hours)
-      end
-
-      def log_structured_info(message, **context)
-        log_structured(:info, message, step_name: 'extract_users', **context)
-      end
-
-      def log_structured_error(message, **context)
-        log_structured(:error, message, step_name: 'extract_users', **context)
+        # Extract users data using validated inputs
+        def extract_users_data(_extraction_inputs)
+          # Use mock data warehouse service for user extraction
+          MockDataWarehouseService.extract_users(
+            timeout_seconds: 45 # Default timeout for CRM extraction
+          )
+        rescue MockDataWarehouseService::TimeoutError => e
+          # Temporary failure - can be retried
+          raise Tasker::RetryableError, "CRM extraction timed out: #{e.message}"
+        rescue MockDataWarehouseService::ConnectionError => e
+          # Temporary failure - connection issues
+          raise Tasker::RetryableError, "CRM connection error: #{e.message}"
+        rescue MockDataWarehouseService::AuthenticationError => e
+          # Permanent failure - authentication issues
+          raise Tasker::PermanentError.new(
+            "CRM authentication failed: #{e.message}",
+            error_code: 'CRM_AUTH_FAILED'
+          )
+        end
       end
     end
   end

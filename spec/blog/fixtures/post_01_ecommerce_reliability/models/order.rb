@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Demo Order model for the e-commerce example
 # Using PORO with ActiveModel concerns to avoid ActiveRecord conflicts
 module BlogExamples
@@ -86,6 +88,7 @@ module BlogExamples
       # Utility methods
       def items_array
         return [] if items.blank?
+
         JSON.parse(items)
       rescue JSON::ParserError
         []
@@ -101,7 +104,7 @@ module BlogExamples
       end
 
       def formatted_total
-        "$%.2f" % total_amount
+        '$%.2f' % total_amount
       end
 
       def formatted_order_number

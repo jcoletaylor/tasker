@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../../support/blog_spec_helper'
 
 RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_example do
@@ -11,7 +13,7 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
     require_relative '../../support/mock_services/inventory_service'
   end
 
-  before(:each) do
+  before do
     # Reset mock services before each test
     MockPaymentService.reset!
     MockEmailService.reset!
@@ -19,38 +21,32 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
   end
 
   # Helper method to load blog code with better error handling
-  def load_blog_code_safely(&block)
-    begin
-      # Load blog example code dynamically
-      load_blog_code(blog_post, 'models/product.rb')
-      load_blog_code(blog_post, 'models/order.rb')
-      load_blog_code(blog_post, 'demo/payment_simulator.rb')
+  def load_blog_code_safely
+    # Load blog example code dynamically
+    load_blog_code(blog_post, 'models/product.rb')
+    load_blog_code(blog_post, 'models/order.rb')
+    load_blog_code(blog_post, 'demo/payment_simulator.rb')
 
-      # Load all step handlers first so constants are available
-      load_step_handlers(blog_post, [
-        'validate_cart_handler',
-        'process_payment_handler',
-        'update_inventory_handler',
-        'create_order_handler',
-        'send_confirmation_handler'
-      ])
+    # Load all step handlers first so constants are available
+    load_step_handlers(blog_post, %w[
+                         validate_cart_handler
+                         process_payment_handler
+                         update_inventory_handler
+                         create_order_handler
+                         send_confirmation_handler
+                       ])
 
-      # Now load the task handler (which references the step handler constants)
-      load_blog_code(blog_post, 'task_handler/order_processing_handler.rb')
+    # Now load the task handler (which references the step handler constants)
+    load_blog_code(blog_post, 'task_handler/order_processing_handler.rb')
 
-      # Register the task handler with Tasker
-      register_blog_task_handler(
-        BlogExamples::Post01::OrderProcessingHandler,
-        name: 'order_processing',
-        namespace: 'blog_examples'
-      )
+    # NOTE: Handler registration is now done at test suite startup to avoid threading issues
+    # The handler is pre-registered in handler_registration_helpers.rb
 
-      # Execute the test block if loading succeeded
-      block.call if block_given?
-    rescue => e
-      # If we can't load the blog code, skip the test with a clear message
-      skip "Could not load blog code: #{e.message}"
-    end
+    # Execute the test block if loading succeeded
+    yield if block_given?
+  rescue StandardError => e
+    # If we can't load the blog code, skip the test with a clear message
+    skip "Could not load blog code: #{e.message}"
   end
 
   describe 'successful checkout flow' do
@@ -62,26 +58,26 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
           context: sample_ecommerce_context
         )
 
-      expect(task.status).to eq('pending')
+        expect(task.status).to eq('pending')
 
-      # Execute the workflow
-      execute_workflow(task)
+        # Execute the workflow
+        execute_workflow(task)
 
-      # Verify final state
-      verify_workflow_execution(task, expected_status: 'complete')
+        # Verify final state
+        verify_workflow_execution(task, expected_status: 'complete')
 
-      # Verify each step completed successfully
-      step_names = %w[validate_cart process_payment update_inventory create_order send_confirmation]
-      step_names.each do |step_name|
-        step = task.workflow_steps.find { |s| s.name == step_name }
-        expect(step).to be_present, "Expected step '#{step_name}' to exist"
-        expect(step.status).to eq('complete'), "Expected step '#{step_name}' to be complete, got '#{step.status}'"
-      end
+        # Verify each step completed successfully
+        step_names = %w[validate_cart process_payment update_inventory create_order send_confirmation]
+        step_names.each do |step_name|
+          step = task.workflow_steps.find { |s| s.name == step_name }
+          expect(step).to be_present, "Expected step '#{step_name}' to exist"
+          expect(step.status).to eq('complete'), "Expected step '#{step_name}' to be complete, got '#{step.status}'"
+        end
 
-      # Verify external service interactions
-      verify_payment_processing
-      verify_email_delivery
-      verify_inventory_management
+        # Verify external service interactions
+        verify_payment_processing
+        verify_email_delivery
+        verify_inventory_management
       end
     end
 
@@ -128,13 +124,14 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
   end
 
   describe 'error handling and recovery' do
-        it 'retries payment failures with exponential backoff' do
+    it 'retries payment failures with exponential backoff' do
       load_blog_code_safely do
         # Test the retry configuration and failure handling
         # Note: In test environment, retries may be handled differently than production
 
         # Simulate payment service failure for the first attempt only
-        MockPaymentService.stub_failure(:process_payment, MockPaymentService::PaymentError, 'Temporary payment gateway error', fail_count: 1)
+        MockPaymentService.stub_failure(:process_payment, MockPaymentService::PaymentError,
+                                        'Temporary payment gateway error', fail_count: 1)
 
         task = create_test_task(
           name: 'order_processing',
@@ -157,7 +154,7 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
         expect(payment_step.status).to eq('error')
 
         # Verify the task is in the correct state for retry scenarios
-        expect(['pending', 'error']).to include(task.status)
+        expect(%w[pending error]).to include(task.status)
 
         # Test that retry configuration is properly set up for production scenarios
         # (This validates the blog post's retry configuration examples)
@@ -169,7 +166,8 @@ RSpec.describe 'Post 01: E-commerce Order Processing Workflow', type: :blog_exam
     it 'handles inventory shortage gracefully' do
       load_blog_code_safely do
         # Simulate insufficient inventory
-        MockInventoryService.stub_failure(:check_availability, MockInventoryService::InsufficientStockError, 'Insufficient stock')
+        MockInventoryService.stub_failure(:check_availability, MockInventoryService::InsufficientStockError,
+                                          'Insufficient stock')
 
         task = create_test_task(
           name: 'order_processing',

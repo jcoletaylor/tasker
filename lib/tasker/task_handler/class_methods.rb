@@ -312,10 +312,13 @@ module Tasker
       # Register a task handler with the handler factory
       #
       # @param name [String, Symbol] The name to register the handler under
-      # @param concurrent [Boolean] Whether to use concurrent processing
+      # @param namespace_name [String] The namespace to register under
+      # @param version [String] The version to register
+      # @param concurrent [Boolean] Whether to use concurrent processing (unused parameter for compatibility)
       # @return [void]
       def register_handler(name, namespace_name: 'default', version: '0.1.0', concurrent: true)
         # Register the handler with the factory
+        # Note: concurrent parameter is not passed to register method as it's not supported
         Tasker::HandlerFactory.instance.register(name, self, namespace_name: namespace_name, version: version,
                                                              replace: true)
       end

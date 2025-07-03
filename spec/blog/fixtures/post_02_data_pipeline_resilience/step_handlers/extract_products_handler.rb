@@ -1,170 +1,105 @@
-module DataPipeline
-  module StepHandlers
-    class ExtractProductsHandler < Tasker::StepHandler::Base
-      def process(task, sequence, step)
-        date_range = task.context['date_range']
-        start_date = Date.parse(date_range['start_date'])
-        end_date = Date.parse(date_range['end_date'])
-        force_refresh = task.context['force_refresh'] || false
-        
-        # Check cache first unless force refresh
-        cached_data = get_cached_extraction('products', start_date, end_date)
-        return cached_data if cached_data && !force_refresh
-        
-        # Get products that were ordered during the date range
-        ordered_product_ids = get_ordered_product_ids(start_date, end_date)
-        total_count = ordered_product_ids.length
-        processed_count = 0
-        
-        products = []
-        
-        # Process in batches
-        ordered_product_ids.each_slice(1000) do |product_id_batch|
+# frozen_string_literal: true
+
+module BlogExamples
+  module Post02
+    module StepHandlers
+      class ExtractProductsHandler < Tasker::StepHandler::Base
+        def process(task, sequence, step)
+          # Extract and validate all required inputs
+          extraction_inputs = extract_and_validate_inputs(task, sequence, step)
+
+          Rails.logger.info "Starting product extraction: task_id=#{task.task_id}"
+
+          # Fire custom event for monitoring
+          publish_event('data_extraction_started', {
+                          step_name: 'extract_products',
+                          task_id: task.id
+                        })
+
+          # Extract products data - this is the core integration
           begin
-            # Fetch product data from inventory system
-            batch_products = fetch_products_from_inventory(product_id_batch)
-            
-            product_data = batch_products.map do |product|
-              {
-                product_id: product['id'],
-                name: product['name'],
-                description: product['description'],
-                category: product['category'],
-                subcategory: product['subcategory'],
-                price: product['price'],
-                cost: product['cost'],
-                inventory: {
-                  current_stock: product['stock_quantity'],
-                  reorder_level: product['reorder_level'],
-                  warehouse_location: product['warehouse_location']
-                },
-                attributes: {
-                  brand: product['brand'],
-                  color: product['color'],
-                  size: product['size'],
-                  weight: product['weight'],
-                  dimensions: product['dimensions']
-                },
-                performance_metrics: calculate_product_performance(product['id'], start_date, end_date),
-                created_at: product['created_at'],
-                updated_at: product['updated_at']
-              }
-            end
-            
-            products.concat(product_data)
-            processed_count += product_id_batch.length
-            
-            # Update progress for monitoring
-            progress_percent = (processed_count.to_f / total_count * 100).round(1)
-            update_progress_annotation(
-              step, 
-              "Processed #{processed_count}/#{total_count} products (#{progress_percent}%)"
-            )
-            
-            # Brief pause to avoid overwhelming inventory system
-            sleep(0.1)
-            
-          rescue Net::TimeoutError => e
-            raise Tasker::RetryableError, "Inventory API timeout: #{e.message}"
+            result = extract_products_data(extraction_inputs)
+
+            # Fire completion event with metrics
+            publish_event('data_extraction_completed', {
+                            step_name: 'extract_products',
+                            records_extracted: result[:metadata][:total_records],
+                            task_id: task.id
+                          })
+
+            # Return raw extraction results for process_results to handle
+            result
           rescue StandardError => e
-            Rails.logger.error "Product extraction error: #{e.class} - #{e.message}"
-            raise Tasker::RetryableError, "Product extraction failed, will retry: #{e.message}"
+            Rails.logger.error "Product extraction failed: #{e.message}"
+
+            # Fire failure event
+            publish_event('data_extraction_failed', {
+                            step_name: 'extract_products',
+                            error: e.message,
+                            task_id: task.id
+                          })
+
+            raise
           end
         end
-        
-        result = {
-          products: products,
-          total_count: products.length,
-          date_range: {
-            start_date: start_date.iso8601,
-            end_date: end_date.iso8601
-          },
-          extracted_at: Time.current.iso8601,
-          data_quality: {
-            products_with_sales: products.count { |p| p[:performance_metrics][:units_sold] > 0 },
-            avg_inventory_level: products.sum { |p| p[:inventory][:current_stock] } / products.length.to_f,
-            categories_represented: products.map { |p| p[:category] }.uniq.length,
-            low_stock_products: products.count { |p| 
-              p[:inventory][:current_stock] <= p[:inventory][:reorder_level] 
-            }
+
+        # Override process_results to handle business logic and result formatting
+        def process_results(step, extraction_response, _initial_results)
+          # At this point we know the product extraction succeeded
+          # Now safely format the business results
+
+          metadata = extraction_response[:metadata]
+
+          Rails.logger.info "Product extraction completed successfully: #{metadata[:total_records]} records"
+
+          step.results = {
+            products_data: extraction_response[:data],
+            extraction_metadata: metadata,
+            extracted_at: Time.current.iso8601
           }
-        }
-        
-        # Cache the result
-        cache_extraction('products', start_date, end_date, result)
-        
-        result
-      end
-      
-      private
-      
-      def get_ordered_product_ids(start_date, end_date)
-        OrderItem.joins(:order)
-                 .where(orders: { created_at: start_date..end_date })
-                 .distinct
-                 .pluck(:product_id)
-      end
-      
-      def fetch_products_from_inventory(product_ids)
-        # Simulate inventory system API call
-        # In real implementation, this would call external inventory service
-        Product.where(id: product_ids).map do |product|
-          {
-            'id' => product.id,
-            'name' => product.name,
-            'description' => product.description,
-            'category' => product.category,
-            'subcategory' => product.subcategory,
-            'price' => product.price,
-            'cost' => product.cost,
-            'stock_quantity' => product.stock_quantity,
-            'reorder_level' => product.reorder_level,
-            'warehouse_location' => product.warehouse_location,
-            'brand' => product.brand,
-            'color' => product.color,
-            'size' => product.size,
-            'weight' => product.weight,
-            'dimensions' => "#{product.length}x#{product.width}x#{product.height}",
-            'created_at' => product.created_at.iso8601,
-            'updated_at' => product.updated_at.iso8601
+        rescue StandardError => e
+          # If result processing fails, we don't want to retry the extraction
+          # Log the error and set a failure result without retrying
+          Rails.logger.error "Failed to process product extraction results: #{e.message}"
+          step.results = {
+            error: true,
+            error_message: "Product extraction succeeded but result processing failed: #{e.message}",
+            error_code: 'RESULT_PROCESSING_FAILED',
+            raw_extraction_response: extraction_response,
+            status: 'processing_error'
           }
         end
-      end
-      
-      def calculate_product_performance(product_id, start_date, end_date)
-        order_items = OrderItem.joins(:order)
-                              .where(product_id: product_id)
-                              .where(orders: { created_at: start_date..end_date })
-        
-        units_sold = order_items.sum(:quantity)
-        revenue = order_items.sum(:line_total)
-        num_orders = order_items.count
-        
-        {
-          units_sold: units_sold,
-          revenue: revenue,
-          number_of_orders: num_orders,
-          average_quantity_per_order: num_orders > 0 ? units_sold.to_f / num_orders : 0,
-          revenue_per_unit: units_sold > 0 ? revenue / units_sold : 0
-        }
-      end
-      
-      def update_progress_annotation(step, message)
-        step.annotations.merge!({
-          progress_message: message,
-          last_updated: Time.current.iso8601
-        })
-        step.save!
-      end
-      
-      def get_cached_extraction(data_type, start_date, end_date)
-        cache_key = "extraction:#{data_type}:#{start_date}:#{end_date}"
-        Rails.cache.read(cache_key)
-      end
-      
-      def cache_extraction(data_type, start_date, end_date, data)
-        cache_key = "extraction:#{data_type}:#{start_date}:#{end_date}"
-        Rails.cache.write(cache_key, data, expires_in: 6.hours)
+
+        private
+
+        # Extract and validate all required inputs for product extraction
+        def extract_and_validate_inputs(task, _sequence, _step)
+          # For product extraction, we don't need specific inputs beyond task context
+          # But we can validate any optional parameters
+          {
+            task_context: task.context.deep_symbolize_keys
+          }
+        end
+
+        # Extract products data using validated inputs
+        def extract_products_data(_extraction_inputs)
+          # Use mock data warehouse service for product extraction
+          MockDataWarehouseService.extract_products(
+            timeout_seconds: 20 # Default timeout for inventory extraction
+          )
+        rescue MockDataWarehouseService::TimeoutError => e
+          # Temporary failure - can be retried
+          raise Tasker::RetryableError, "Inventory extraction timed out: #{e.message}"
+        rescue MockDataWarehouseService::ConnectionError => e
+          # Temporary failure - connection issues
+          raise Tasker::RetryableError, "Inventory connection error: #{e.message}"
+        rescue MockDataWarehouseService::AuthenticationError => e
+          # Permanent failure - authentication issues
+          raise Tasker::PermanentError.new(
+            "Inventory authentication failed: #{e.message}",
+            error_code: 'INVENTORY_AUTH_FAILED'
+          )
+        end
       end
     end
   end
