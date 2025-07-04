@@ -191,13 +191,6 @@
     <span class='rbracket'>]</span><span class='comma'>,</span>
     <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Individual workflow steps</span><span class='tstring_end'>&#39;</span></span>
   <span class='rbrace'>}</span><span class='comma'>,</span>
-  <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#TASK_DIAGRAM-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM (constant)">TASK_DIAGRAM</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
-    <span class='label'>actions:</span> <span class='lbracket'>[</span>
-      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span><span class='comma'>,</span>
-      <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#SHOW-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::SHOW (constant)">SHOW</a></span></span>
-    <span class='rbracket'>]</span><span class='comma'>,</span>
-    <span class='label'>description:</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Task workflow diagrams</span><span class='tstring_end'>&#39;</span></span>
-  <span class='rbrace'>}</span><span class='comma'>,</span>
   <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html" title="Tasker::Authorization::ResourceConstants::RESOURCES (module)">RESOURCES</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/RESOURCES.html#HEALTH_STATUS-constant" title="Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS (constant)">HEALTH_STATUS</a></span></span> <span class='op'>=&gt;</span> <span class='lbrace'>{</span>
     <span class='label'>actions:</span> <span class='lbracket'>[</span>
       <span class='const'><span class='object_link'><a href="ResourceConstants.html" title="Tasker::Authorization::ResourceConstants (module)">ResourceConstants</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html" title="Tasker::Authorization::ResourceConstants::ACTIONS (module)">ACTIONS</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="ResourceConstants/ACTIONS.html#INDEX-constant" title="Tasker::Authorization::ResourceConstants::ACTIONS::INDEX (constant)">INDEX</a></span></span>
@@ -481,14 +474,14 @@
       <pre class="lines">
 
 
-106
-107
-108
-109
-110</pre>
+99
+100
+101
+102
+103</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 106</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 99</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_action_exists?'>action_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_action'>action</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -564,14 +557,14 @@
       <pre class="lines">
 
 
-125
-126
-127
-128
-129</pre>
+118
+119
+120
+121
+122</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 125</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 118</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_actions_for_resource'>actions_for_resource</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -627,14 +620,14 @@
       <pre class="lines">
 
 
-115
-116
-117
-118
-119</pre>
+108
+109
+110
+111
+112</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 115</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_permissions'>all_permissions</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_flat_map'>flat_map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_resource'>resource</span><span class='comma'>,</span> <span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
@@ -710,14 +703,14 @@
       <pre class="lines">
 
 
-135
-136
-137
-138
-139</pre>
+128
+129
+130
+131
+132</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 135</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 128</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resource_description'>resource_description</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -793,12 +786,12 @@
       <pre class="lines">
 
 
-97
-98
-99</pre>
+90
+91
+92</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 97</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 90</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resource_exists?'>resource_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span><span class='period'>.</span><span class='id identifier rubyid_key?'>key?</span><span class='lparen'>(</span><span class='id identifier rubyid_resource'>resource</span><span class='rparen'>)</span>
@@ -852,12 +845,12 @@
       <pre class="lines">
 
 
-89
-90
-91</pre>
+82
+83
+84</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 89</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/authorization/resource_registry.rb', line 82</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_resources'>resources</span>
   <span class='const'><span class='object_link'><a href="#RESOURCES-constant" title="Tasker::Authorization::ResourceRegistry::RESOURCES (constant)">RESOURCES</a></span></span>
@@ -872,7 +865,7 @@
 </div>
 
       <div id="footer">
-  Generated on Thu Jul  3 17:33:06 2025 by
+  Generated on Thu Jul  3 20:27:37 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

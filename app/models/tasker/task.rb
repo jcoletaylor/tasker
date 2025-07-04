@@ -64,7 +64,6 @@ module Tasker
     validate :unique_identity_hash, on: :create
 
     delegate :name, to: :named_task
-    delegate :to_mermaid, to: :diagram
     delegate :workflow_summary, to: :task_execution_context
 
     # State machine integration
@@ -301,14 +300,6 @@ module Tasker
       workflow_steps.includes(:named_step).where(named_step: { name: name }).first
     end
 
-    # Gets or creates a diagram representation of this task
-    #
-    # @param base_url [String, nil] The base URL to use for links in the diagram, defaults to nil
-    # @return [Tasker::TaskDiagram] The diagram representation of this task
-    def diagram(base_url = nil)
-      @diagram ||= Tasker::TaskDiagram.new(self, base_url)
-    end
-
     def runtime_analyzer
       @runtime_analyzer ||= Tasker::Analysis::RuntimeGraphAnalyzer.new(task: self)
     end
@@ -335,7 +326,6 @@ module Tasker
     def reload
       super
       @task_execution_context = nil
-      @diagram = nil
     end
 
     delegate :namespace_name, to: :named_task

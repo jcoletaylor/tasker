@@ -2,7 +2,8 @@
 name: process_order
 namespace_name: ecommerce
 version: 1.0.0
-task_handler_class: Ecommerce::OrderProcessingHandler
+task_handler_class: BlogExamples::Post01::OrderProcessingHandler
+default_dependent_system: "ecommerce_platform"
 
 description: "Reliable e-commerce checkout workflow with automatic retry and recovery"
 
@@ -14,7 +15,7 @@ schema:
       type: array
       items:
         type: object
-        required: ['product_id', 'quantity']
+        required: ['product_id', 'quantity', 'price']
         properties:
           product_id:
             type: integer
@@ -24,42 +25,71 @@ schema:
           price:
             type: number
             minimum: 0
+          name:
+            type: string
     payment_info:
       type: object
-      required: ['token', 'amount']
+      required: ['method', 'amount', 'currency']
       properties:
-        token:
+        method:
           type: string
-          minLength: 1
+          enum: ['credit_card', 'debit_card', 'paypal', 'bank_transfer']
         amount:
           type: number
           minimum: 0
-        payment_method:
+        currency:
+          type: string
+          enum: ['USD', 'EUR', 'GBP']
+        card_last_four:
+          type: string
+        token:
           type: string
     customer_info:
       type: object
       required: ['email', 'name']
       properties:
+        id:
+          type: integer
         email:
           type: string
           format: email
         name:
           type: string
           minLength: 1
+        tier:
+          type: string
+          enum: ['standard', 'premium', 'enterprise']
         phone:
           type: string
+    shipping_info:
+      type: object
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+    priority:
+      type: string
+      enum: ['standard', 'express', 'overnight']
+      default: 'standard'
 
 step_templates:
   - name: validate_cart
     description: Validate cart items and calculate totals
-    handler_class: Ecommerce::StepHandlers::ValidateCartHandler
+    handler_class: BlogExamples::Post01::StepHandlers::ValidateCartHandler
     default_retryable: true
     default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 15
 
   - name: process_payment
     description: Charge payment method
     depends_on_step: validate_cart
-    handler_class: Ecommerce::StepHandlers::ProcessPaymentHandler
+    handler_class: BlogExamples::Post01::StepHandlers::ProcessPaymentHandler
     default_retryable: true
     default_retry_limit: 3
     handler_config:
@@ -68,20 +98,26 @@ step_templates:
   - name: update_inventory
     description: Update inventory levels
     depends_on_step: process_payment
-    handler_class: Ecommerce::StepHandlers::UpdateInventoryHandler
+    handler_class: BlogExamples::Post01::StepHandlers::UpdateInventoryHandler
     default_retryable: true
     default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 20
 
   - name: create_order
     description: Create order record
     depends_on_step: update_inventory
-    handler_class: Ecommerce::StepHandlers::CreateOrderHandler
+    handler_class: BlogExamples::Post01::StepHandlers::CreateOrderHandler
     default_retryable: true
     default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 15
 
   - name: send_confirmation
     description: Send order confirmation email
     depends_on_step: create_order
-    handler_class: Ecommerce::StepHandlers::SendConfirmationHandler
+    handler_class: BlogExamples::Post01::StepHandlers::SendConfirmationHandler
     default_retryable: true
     default_retry_limit: 5  # Email delivery can be flaky
+    handler_config:
+      timeout_seconds: 10

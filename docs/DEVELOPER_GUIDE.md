@@ -1079,7 +1079,6 @@ Authorization uses a simple resource:action permission model:
 'tasker.task:index'           # List all tasks
 'tasker.task:create'          # Create new tasks
 'tasker.workflow_step:show'   # View individual workflow steps
-'tasker.task_diagram:index'   # List task diagrams
 ```
 
 ### Complete Documentation
@@ -2614,13 +2613,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      
+
       - name: Validate Application Templates
         run: |
           # Test all template combinations
           ruby scripts/create_tasker_app.rb dry_run --mode=all
           ruby scripts/create_tasker_app.rb dry_run --docker --with-observability
-          
+
       - name: Validate Specific Categories
         run: |
           ruby scripts/create_tasker_app.rb dry_run --mode=templates

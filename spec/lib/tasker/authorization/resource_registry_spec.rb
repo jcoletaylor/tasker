@@ -13,7 +13,7 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
 
       expect(resources).to be_a(Hash)
       expect(resources).to be_frozen
-      expect(resources.keys).to include(RESOURCES::TASK, RESOURCES::WORKFLOW_STEP, RESOURCES::TASK_DIAGRAM)
+      expect(resources.keys).to include(RESOURCES::TASK, RESOURCES::WORKFLOW_STEP)
     end
 
     it 'contains expected structure for each resource' do
@@ -32,7 +32,6 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
     it 'returns true for existing resources' do
       expect(described_class.resource_exists?(RESOURCES::TASK)).to be(true)
       expect(described_class.resource_exists?(RESOURCES::WORKFLOW_STEP)).to be(true)
-      expect(described_class.resource_exists?(RESOURCES::TASK_DIAGRAM)).to be(true)
     end
 
     it 'returns false for non-existing resources' do
@@ -89,19 +88,6 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
         expect(described_class.action_exists?(RESOURCES::WORKFLOW_STEP, ACTIONS::CREATE)).to be(false)
       end
     end
-
-    context 'with task_diagram resource' do
-      it 'returns true for index and show actions' do
-        expect(described_class.action_exists?(RESOURCES::TASK_DIAGRAM, ACTIONS::INDEX)).to be(true)
-        expect(described_class.action_exists?(RESOURCES::TASK_DIAGRAM, ACTIONS::SHOW)).to be(true)
-      end
-
-      it 'returns false for other actions' do
-        expect(described_class.action_exists?(RESOURCES::TASK_DIAGRAM, ACTIONS::CREATE)).to be(false)
-        expect(described_class.action_exists?(RESOURCES::TASK_DIAGRAM, ACTIONS::UPDATE)).to be(false)
-        expect(described_class.action_exists?(RESOURCES::TASK_DIAGRAM, ACTIONS::DESTROY)).to be(false)
-      end
-    end
   end
 
   describe '.all_permissions' do
@@ -111,7 +97,6 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
       expect(permissions).to be_an(Array)
       expect(permissions).to include("#{RESOURCES::TASK}:index", "#{RESOURCES::TASK}:show", "#{RESOURCES::TASK}:create")
       expect(permissions).to include("#{RESOURCES::WORKFLOW_STEP}:index", "#{RESOURCES::WORKFLOW_STEP}:show")
-      expect(permissions).to include("#{RESOURCES::TASK_DIAGRAM}:show")
     end
 
     it 'returns permissions for all defined resources' do
@@ -142,9 +127,6 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
       step_actions = described_class.actions_for_resource(RESOURCES::WORKFLOW_STEP)
       expect(step_actions).to eq([ACTIONS::INDEX, ACTIONS::SHOW, ACTIONS::UPDATE, ACTIONS::DESTROY, ACTIONS::RETRY,
                                   ACTIONS::CANCEL])
-
-      diagram_actions = described_class.actions_for_resource(RESOURCES::TASK_DIAGRAM)
-      expect(diagram_actions).to eq([ACTIONS::INDEX, ACTIONS::SHOW])
     end
 
     it 'returns empty array for non-existing resources' do
@@ -157,7 +139,6 @@ RSpec.describe Tasker::Authorization::ResourceRegistry do
     it 'returns descriptions for existing resources' do
       expect(described_class.resource_description(RESOURCES::TASK)).to eq('Tasker workflow tasks')
       expect(described_class.resource_description(RESOURCES::WORKFLOW_STEP)).to eq('Individual workflow steps')
-      expect(described_class.resource_description(RESOURCES::TASK_DIAGRAM)).to eq('Task workflow diagrams')
     end
 
     it 'returns nil for non-existing resources' do

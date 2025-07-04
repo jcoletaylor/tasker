@@ -28,8 +28,6 @@ class <%= @coordinator_class_name %> < Tasker::Authorization::BaseCoordinator
       authorize_task(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP
       authorize_workflow_step(action, context)
-    when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
-      authorize_task_diagram(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS
       authorize_system_status(action, context)
     else
@@ -65,17 +63,6 @@ class <%= @coordinator_class_name %> < Tasker::Authorization::BaseCoordinator
       # TODO: Implement your step write logic
       # Example: Only admins can modify steps
       user.tasker_admin?
-    else
-      false
-    end
-  end
-
-  # Authorize task diagram operations
-  def authorize_task_diagram(action, context)
-    case action
-    when :index, :show
-      # TODO: Implement your diagram access logic
-      user.has_tasker_permission?("tasker.task_diagram:#{action}")
     else
       false
     end

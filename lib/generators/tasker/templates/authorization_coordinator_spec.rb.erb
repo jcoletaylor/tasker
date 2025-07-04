@@ -20,8 +20,7 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
       permissions: [
         'tasker.task:index',
         'tasker.task:show',
-        'tasker.workflow_step:index',
-        'tasker.task_diagram:index'
+        'tasker.workflow_step:index'
       ],
       roles: ['user'],
       admin: false
@@ -55,7 +54,6 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
         expect { coordinator.authorize!('tasker.task', :index) }.not_to raise_error
         expect { coordinator.authorize!('tasker.task', :create) }.not_to raise_error
         expect { coordinator.authorize!('tasker.workflow_step', :update) }.not_to raise_error
-        expect { coordinator.authorize!('tasker.task_diagram', :show) }.not_to raise_error
       end
     end
 
@@ -66,7 +64,6 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
         expect { coordinator.authorize!('tasker.task', :index) }.not_to raise_error
         expect { coordinator.authorize!('tasker.task', :show) }.not_to raise_error
         expect { coordinator.authorize!('tasker.workflow_step', :index) }.not_to raise_error
-        expect { coordinator.authorize!('tasker.task_diagram', :index) }.not_to raise_error
       end
 
       it 'denies access to forbidden resources' do
@@ -82,7 +79,6 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
       it 'denies all operations' do
         expect { coordinator.authorize!('tasker.task', :index) }.to raise_error(Tasker::Authorization::UnauthorizedError)
         expect { coordinator.authorize!('tasker.workflow_step', :show) }.to raise_error(Tasker::Authorization::UnauthorizedError)
-        expect { coordinator.authorize!('tasker.task_diagram', :show) }.to raise_error(Tasker::Authorization::UnauthorizedError)
       end
     end
   end
@@ -95,7 +91,6 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
         expect(coordinator.can?('tasker.task', :index)).to be true
         expect(coordinator.can?('tasker.task', :create)).to be true
         expect(coordinator.can?('tasker.workflow_step', :update)).to be true
-        expect(coordinator.can?('tasker.task_diagram', :show)).to be true
       end
     end
 
@@ -106,7 +101,6 @@ RSpec.describe <%= @coordinator_class_name %>, type: :model do
         expect(coordinator.can?('tasker.task', :index)).to be true
         expect(coordinator.can?('tasker.task', :show)).to be true
         expect(coordinator.can?('tasker.workflow_step', :index)).to be true
-        expect(coordinator.can?('tasker.task_diagram', :index)).to be true
       end
 
       it 'returns false for forbidden operations' do

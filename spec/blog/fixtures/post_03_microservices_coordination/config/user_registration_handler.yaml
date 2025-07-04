@@ -8,34 +8,63 @@ default_dependent_system: "user_management_system"
 # Input validation schema
 schema:
   type: object
-  required: ['email', 'name']
+  required: ['user_info']
   properties:
-    email:
-      type: string
-      format: email
-    name:
-      type: string
-      minLength: 1
-    phone:
-      type: string
-    plan:
-      type: string
-      enum: ['free', 'pro', 'enterprise']
-      default: 'free'
-    marketing_consent:
-      type: boolean
-      default: false
+    user_info:
+      type: object
+      required: ['email', 'name']
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        plan:
+          type: string
+          enum: ['free', 'pro', 'enterprise']
+          default: 'free'
+        referral_code:
+          type: string
+        company:
+          type: string
+        source:
+          type: string
+          enum: ['web', 'mobile', 'api']
+          default: 'web'
+    billing_info:
+      type: object
+      properties:
+        payment_method:
+          type: string
+        billing_address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            zip:
+              type: string
+    preferences:
+      type: object
+      properties:
+        marketing_emails:
+          type: boolean
+          default: false
+        product_updates:
+          type: boolean
+          default: false
+        newsletter:
+          type: boolean
+          default: false
     correlation_id:
       type: string
       description: "For distributed tracing"
-    referral_code:
-      type: string
-    company_name:
-      type: string
-    source:
-      type: string
-      enum: ['web', 'mobile', 'api']
-      default: 'web'
 
 # Step templates for service orchestration
 step_templates:
@@ -44,6 +73,8 @@ step_templates:
     handler_class: "BlogExamples::Post03::StepHandlers::CreateUserAccountHandler"
     default_retryable: true
     default_retry_limit: 3
+    handler_config:
+      url: 'https://api.userservice.com'
 
   - name: setup_billing_profile
     description: "Create billing profile in BillingService"
@@ -51,6 +82,8 @@ step_templates:
     depends_on_steps: ["create_user_account"]
     default_retryable: true
     default_retry_limit: 3
+    handler_config:
+      url: 'https://api.billingservice.com'
 
   - name: initialize_preferences
     description: "Set up user preferences in PreferencesService"
@@ -58,6 +91,8 @@ step_templates:
     depends_on_steps: ["create_user_account"]  # Can run parallel to billing
     default_retryable: true
     default_retry_limit: 3
+    handler_config:
+      url: 'https://api.preferencesservice.com'
 
   - name: send_welcome_sequence
     description: "Send welcome email via NotificationService"
@@ -65,6 +100,8 @@ step_templates:
     depends_on_steps: ["setup_billing_profile", "initialize_preferences"]
     default_retryable: true
     default_retry_limit: 5  # Email services are often flaky
+    handler_config:
+      url: 'https://api.notificationservice.com'
 
   - name: update_user_status
     description: "Mark user registration as complete in UserService"
@@ -72,6 +109,8 @@ step_templates:
     depends_on_steps: ["send_welcome_sequence"]
     default_retryable: true
     default_retry_limit: 2
+    handler_config:
+      url: 'https://api.userservice.com'
 
 # Custom events for service monitoring (using Tasker's native circuit breaker)
 custom_events:

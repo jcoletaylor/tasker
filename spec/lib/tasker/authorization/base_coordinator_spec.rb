@@ -31,7 +31,6 @@ RSpec.describe Tasker::Authorization::BaseCoordinator do
       it 'returns true for any resource and action' do
         expect(coordinator.authorize!('tasker.task', :show)).to be(true)
         expect(coordinator.authorize!('tasker.workflow_step', :index)).to be(true)
-        expect(coordinator.authorize!('tasker.task_diagram', :show)).to be(true)
       end
 
       it 'works without a user' do
@@ -67,10 +66,6 @@ RSpec.describe Tasker::Authorization::BaseCoordinator do
         expect do
           coordinator.authorize!('tasker.workflow_step', :index)
         end.to raise_error(Tasker::Authorization::UnauthorizedError)
-
-        expect do
-          coordinator.authorize!('tasker.task_diagram', :show)
-        end.to raise_error(Tasker::Authorization::UnauthorizedError)
       end
 
       it 'accepts string actions' do
@@ -96,7 +91,6 @@ RSpec.describe Tasker::Authorization::BaseCoordinator do
       it 'returns true for any resource and action' do
         expect(coordinator.can?('tasker.task', :show)).to be(true)
         expect(coordinator.can?('tasker.workflow_step', :index)).to be(true)
-        expect(coordinator.can?('tasker.task_diagram', :show)).to be(true)
       end
     end
 
@@ -106,7 +100,6 @@ RSpec.describe Tasker::Authorization::BaseCoordinator do
       it 'returns false for default implementation' do
         expect(coordinator.can?('tasker.task', :show)).to be(false)
         expect(coordinator.can?('tasker.workflow_step', :index)).to be(false)
-        expect(coordinator.can?('tasker.task_diagram', :show)).to be(false)
       end
 
       it 'raises ArgumentError for invalid resource:action combinations' do

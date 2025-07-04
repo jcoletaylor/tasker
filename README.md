@@ -28,9 +28,7 @@ Perfect for processes that involve multiple interdependent steps, require automa
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
-source 'https://rubygems.pkg.github.com/tasker-systems' do
-  gem 'tasker-engine', '~> 1.0.1'
-end
+gem 'tasker-engine', '~> 1.0.2'
 ```
 
 Install and run the migrations:
@@ -54,7 +52,7 @@ end
 bundle exec rails tasker:setup
 ```
 
-### Option 2: Generate Complete Application (v2.6.1)
+### Option 2: Generate Complete Application
 
 Create a production-ready Rails application with Tasker integration in one command:
 
@@ -406,7 +404,6 @@ end
 ### 📚 Additional Resources
 - **[Application Generator](docs/APPLICATION_GENERATOR.md)** - One-line app creation with Docker support and validation
 - **[System Overview](docs/OVERVIEW.md)** - Architecture and configuration
-- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual workflow representation
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## Requirements & Dependencies

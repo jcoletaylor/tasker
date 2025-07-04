@@ -24,11 +24,11 @@ Tasker::Engine.routes.draw do
   get '/handlers/:namespace', to: 'handlers#show_namespace' # List handlers in namespace
   get '/handlers/:namespace/:name', to: 'handlers#show'     # Show specific handler with dependency graph
 
+  # GraphQL endpoint
   post '/graphql', to: 'graphql#execute'
-  # mount Rswag::Ui::Engine => '/api-docs'
-  # mount Rswag::Api::Engine => '/api-docs'
+
+  # Task endpoints
   resources :tasks do
     resources :workflow_steps
-    resources :task_diagrams, only: %i[index]
   end
 end

@@ -48,13 +48,6 @@ module Tasker
           ],
           description: 'Individual workflow steps'
         },
-        ResourceConstants::RESOURCES::TASK_DIAGRAM => {
-          actions: [
-            ResourceConstants::ACTIONS::INDEX,
-            ResourceConstants::ACTIONS::SHOW
-          ],
-          description: 'Task workflow diagrams'
-        },
         ResourceConstants::RESOURCES::HEALTH_STATUS => {
           actions: [
             ResourceConstants::ACTIONS::INDEX

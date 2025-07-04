@@ -18,10 +18,17 @@ module BlogExamples
         included do
           # Initialize with mock service access for blog examples
           def initialize(*args, **kwargs)
-            # For blog examples, provide a dummy URL to satisfy Api::Config requirements
-            # since we use mock services instead of real HTTP requests
-            dummy_config = Tasker::StepHandler::Api::Config.new(url: 'http://localhost:3000')
-            kwargs[:config] ||= dummy_config
+            # Handle config properly - if we get a hash from handler_config, convert it to a proper Config object
+            if kwargs[:config].is_a?(Hash)
+              config_hash = kwargs[:config]
+              kwargs[:config] = Tasker::StepHandler::Api::Config.new(
+                url: config_hash['url'] || config_hash[:url] || 'http://localhost:3000'
+              )
+            elsif kwargs[:config].nil?
+              # For blog examples, provide a dummy URL to satisfy Api::Config requirements
+              # since we use mock services instead of real HTTP requests
+              kwargs[:config] = Tasker::StepHandler::Api::Config.new(url: 'http://localhost:3000')
+            end
 
             super
             @mock_services = {

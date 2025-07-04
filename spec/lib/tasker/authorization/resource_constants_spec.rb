@@ -7,7 +7,6 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
     it 'defines expected resource constants' do
       expect(described_class::RESOURCES::TASK).to eq('tasker.task')
       expect(described_class::RESOURCES::WORKFLOW_STEP).to eq('tasker.workflow_step')
-      expect(described_class::RESOURCES::TASK_DIAGRAM).to eq('tasker.task_diagram')
       expect(described_class::RESOURCES::HEALTH_STATUS).to eq('tasker.health_status')
       expect(described_class::RESOURCES::HANDLER).to eq('tasker.handler')
       expect(described_class::RESOURCES::METRICS).to eq('tasker.metrics')
@@ -21,7 +20,6 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
         expect(all_resources).to contain_exactly(
           'tasker.task',
           'tasker.workflow_step',
-          'tasker.task_diagram',
           'tasker.health_status',
           'tasker.handler',
           'tasker.metrics',
@@ -34,7 +32,6 @@ RSpec.describe Tasker::Authorization::ResourceConstants do
       it 'returns true for defined resources' do
         expect(described_class::RESOURCES.include?('tasker.task')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.workflow_step')).to be(true)
-        expect(described_class::RESOURCES.include?('tasker.task_diagram')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.health_status')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.handler')).to be(true)
         expect(described_class::RESOURCES.include?('tasker.metrics')).to be(true)
