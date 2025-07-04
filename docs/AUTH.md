@@ -126,8 +126,6 @@ class YourAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_task_action(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP
       authorize_step_action(action, context)
-    when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
-      authorize_diagram_action(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::HEALTH_STATUS
       authorize_health_status_action(action, context)
     else
@@ -157,15 +155,6 @@ class YourAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when :update, :destroy, :retry, :cancel
       # Step modifications require admin access
       user.tasker_admin?
-    else
-      false
-    end
-  end
-
-  def authorize_diagram_action(action, context)
-    case action
-    when :index, :show
-      user.tasker_admin? || user.has_tasker_permission?("#{Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM}:#{action}")
     else
       false
     end
@@ -554,13 +543,11 @@ All authorization revolves around the central resource registry:
 Resources:
   - tasker.task (index, show, create, update, destroy, retry, cancel)
   - tasker.workflow_step (index, show, update, destroy, retry, cancel)
-  - tasker.task_diagram (index, show)
 
 # Permission Examples:
 'tasker.task:index'           # List all tasks
 'tasker.task:create'          # Create new tasks
 'tasker.workflow_step:show'   # View individual workflow steps
-'tasker.task_diagram:index'   # List task diagrams
 ```
 
 ### Authorization Coordinator Interface
@@ -622,10 +609,6 @@ end
 - `retry` - Retry failed step
 - `cancel` - Cancel running step
 
-#### Task Diagrams (`tasker.task_diagram`)
-- `index` - List task diagrams
-- `show` - View specific diagram
-
 ## Building Authorization Coordinators
 
 Authorization coordinators provide the business logic for permission checking. Here's how to build effective coordinators:
@@ -643,8 +626,6 @@ class CompanyAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_task(action, context)
     when Tasker::Authorization::ResourceConstants::RESOURCES::WORKFLOW_STEP
       authorize_workflow_step(action, context)
-    when Tasker::Authorization::ResourceConstants::RESOURCES::TASK_DIAGRAM
-      authorize_task_diagram(action, context)
     else
       false
     end
@@ -673,16 +654,6 @@ class CompanyAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when :update, :destroy, :retry, :cancel
       # Write operations - admin only for steps
       user.tasker_admin?
-    else
-      false
-    end
-  end
-
-  def authorize_task_diagram(action, context)
-    case action
-    when :index, :show
-      # Diagram viewing
-      user.has_tasker_permission?("tasker.task_diagram:#{action}")
     else
       false
     end
@@ -1121,9 +1092,6 @@ DELETE /tasker/tasks/123      → tasker.task:destroy
 GET    /tasker/tasks/123/workflow_steps     → tasker.workflow_step:index
 GET    /tasker/workflow_steps/456           → tasker.workflow_step:show
 PATCH  /tasker/workflow_steps/456           → tasker.workflow_step:update
-
-GET    /tasker/tasks/123/task_diagrams      → tasker.task_diagram:index
-GET    /tasker/task_diagrams/789            → tasker.task_diagram:show
 ```
 
 ### GraphQL Integration
@@ -1345,8 +1313,7 @@ RSpec.describe 'Authorization Integration', type: :request do
       permissions: [
         'tasker.task:index',
         'tasker.task:show',
-        'tasker.workflow_step:index',
-        'tasker.task_diagram:index'
+        'tasker.workflow_step:index'
       ],
       roles: ['user'],
       admin: false
@@ -1623,8 +1590,6 @@ class CompanyAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_task(action, context)
     when ResourceConstants::RESOURCES::WORKFLOW_STEP
       authorize_workflow_step(action, context)
-    when ResourceConstants::RESOURCES::TASK_DIAGRAM
-      authorize_task_diagram(action, context)
     else
       false
     end
@@ -1639,10 +1604,6 @@ class CompanyAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
 
   def authorize_workflow_step(action, context)
     # Workflow step authorization logic
-  end
-
-  def authorize_task_diagram(action, context)
-    # Diagram authorization logic
   end
 end
 ```

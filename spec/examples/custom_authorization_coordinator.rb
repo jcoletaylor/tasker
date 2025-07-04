@@ -43,8 +43,6 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
       authorize_task_action(action, context)
     when RESOURCES::WORKFLOW_STEP
       authorize_step_action(action, context)
-    when RESOURCES::TASK_DIAGRAM
-      authorize_diagram_action(action, context)
     when RESOURCES::HEALTH_STATUS
       authorize_health_status_action(action, context)
     when RESOURCES::METRICS
@@ -98,23 +96,6 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when :update, :destroy, :retry, :cancel
       # Write operations: admin only (steps are critical workflow components)
       user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::WORKFLOW_STEP}:#{action}")
-    else
-      false
-    end
-  end
-
-  # Authorization logic for task diagram operations
-  #
-  # Implements the following rules:
-  # - Anyone with appropriate permissions can view diagrams
-  # - Diagrams are read-only (generated dynamically)
-  def authorize_diagram_action(action, _context)
-    return false unless user.respond_to?(:has_tasker_permission?)
-
-    case action
-    when :index, :show
-      # Diagram viewing: admin or explicit permissions
-      user.tasker_admin? || user.has_tasker_permission?("#{RESOURCES::TASK_DIAGRAM}:#{action}")
     else
       false
     end
@@ -199,8 +180,6 @@ class CustomAuthorizationCoordinator < Tasker::Authorization::BaseCoordinator
     when RESOURCES::WORKFLOW_STEP
       user.has_tasker_permission?("#{RESOURCES::WORKFLOW_STEP}:index") ||
         user.has_tasker_permission?("#{RESOURCES::WORKFLOW_STEP}:show")
-    when RESOURCES::TASK_DIAGRAM
-      user.has_tasker_permission?("#{RESOURCES::TASK_DIAGRAM}:show")
     else
       false
     end

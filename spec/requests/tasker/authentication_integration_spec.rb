@@ -35,11 +35,6 @@ RSpec.describe 'Authentication Integration', type: :request do
         get "/tasker/tasks/#{task.task_id}/workflow_steps"
         expect(response).to have_http_status(:ok)
       end
-
-      it 'allows access to task_diagrams without authentication' do
-        get "/tasker/tasks/#{task.task_id}/task_diagrams"
-        expect(response).to have_http_status(:ok)
-      end
     end
 
     describe 'with custom authentication (authenticated)' do
@@ -71,11 +66,6 @@ RSpec.describe 'Authentication Integration', type: :request do
 
       it 'allows access to workflow_steps when authenticated' do
         get "/tasker/tasks/#{task.task_id}/workflow_steps"
-        expect(response).to have_http_status(:ok)
-      end
-
-      it 'allows access to task_diagrams when authenticated' do
-        get "/tasker/tasks/#{task.task_id}/task_diagrams"
         expect(response).to have_http_status(:ok)
       end
 
@@ -117,11 +107,6 @@ RSpec.describe 'Authentication Integration', type: :request do
 
       it 'returns 401 for workflow_steps when unauthenticated' do
         get "/tasker/tasks/#{task.task_id}/workflow_steps"
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it 'returns 401 for task_diagrams when unauthenticated' do
-        get "/tasker/tasks/#{task.task_id}/task_diagrams"
         expect(response).to have_http_status(:unauthorized)
       end
 

@@ -43,9 +43,7 @@ RSpec.describe 'Authorization Integration', type: :request do
         'tasker.task:index',
         'tasker.task:show',
         'tasker.workflow_step:index',
-        'tasker.workflow_step:show',
-        'tasker.task_diagram:index',
-        'tasker.task_diagram:show'
+        'tasker.workflow_step:show'
       ],
       roles: ['user'],
       admin: false
@@ -107,9 +105,6 @@ RSpec.describe 'Authorization Integration', type: :request do
 
         get "/tasker/tasks/#{test_task.task_id}/workflow_steps"
         expect(response).to have_http_status(:ok)
-
-        get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
-        expect(response).to have_http_status(:ok)
       end
     end
 
@@ -169,11 +164,6 @@ RSpec.describe 'Authorization Integration', type: :request do
         expect(response).to have_http_status(:ok)
 
         delete "/tasker/tasks/#{test_task.task_id}/workflow_steps/#{workflow_step.workflow_step_id}"
-        expect(response).to have_http_status(:ok)
-      end
-
-      it 'allows admin access to task diagrams' do
-        get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
         expect(response).to have_http_status(:ok)
       end
     end
@@ -243,11 +233,6 @@ RSpec.describe 'Authorization Integration', type: :request do
         delete "/tasker/tasks/#{test_task.task_id}/workflow_steps/#{workflow_step.workflow_step_id}"
         expect(response).to have_http_status(:forbidden)
       end
-
-      it 'allows access to task diagrams' do
-        get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
-        expect(response).to have_http_status(:ok)
-      end
     end
 
     describe 'with authorization enabled and limited user' do
@@ -294,11 +279,6 @@ RSpec.describe 'Authorization Integration', type: :request do
         get "/tasker/tasks/#{test_task.task_id}/workflow_steps/#{workflow_step.workflow_step_id}"
         expect(response).to have_http_status(:forbidden)
       end
-
-      it 'denies access to task diagrams' do
-        get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
-        expect(response).to have_http_status(:forbidden)
-      end
     end
 
     describe 'with authorization enabled and unauthenticated user' do
@@ -324,11 +304,6 @@ RSpec.describe 'Authorization Integration', type: :request do
 
       it 'returns 401 for workflow step endpoints when unauthenticated' do
         get "/tasker/tasks/#{test_task.task_id}/workflow_steps"
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it 'returns 401 for task diagram endpoints when unauthenticated' do
-        get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
         expect(response).to have_http_status(:unauthorized)
       end
     end
@@ -538,9 +513,6 @@ RSpec.describe 'Authorization Integration', type: :request do
       expect(response).to have_http_status(:ok)
 
       get "/tasker/tasks/#{test_task.task_id}/workflow_steps"
-      expect(response).to have_http_status(:ok)
-
-      get "/tasker/tasks/#{test_task.task_id}/task_diagrams"
       expect(response).to have_http_status(:ok)
     end
   end

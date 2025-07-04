@@ -406,7 +406,6 @@ end
 ### 📚 Additional Resources
 - **[Application Generator](docs/APPLICATION_GENERATOR.md)** - One-line app creation with Docker support and validation
 - **[System Overview](docs/OVERVIEW.md)** - Architecture and configuration
-- **[Task Diagrams](docs/TASK_DIAGRAM.md)** - Visual workflow representation
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## Requirements & Dependencies
