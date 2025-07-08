@@ -17,19 +17,19 @@ module BlogExamples
         # The observability happens through event subscribers, not here
         def establish_step_dependencies_and_defaults(task, _steps)
           # Add business context for observability
-          if task.context['customer_tier'] == 'premium'
-            task.context['business_context'] = {
-              domain: 'ecommerce',
-              impact_level: 'high',
-              sla_tier: 'premium'
-            }
-          else
-            task.context['business_context'] = {
-              domain: 'ecommerce',
-              impact_level: 'standard',
-              sla_tier: 'standard'
-            }
-          end
+          task.context['business_context'] = if task.context['customer_tier'] == 'premium'
+                                               {
+                                                 domain: 'ecommerce',
+                                                 impact_level: 'high',
+                                                 sla_tier: 'premium'
+                                               }
+                                             else
+                                               {
+                                                 domain: 'ecommerce',
+                                                 impact_level: 'standard',
+                                                 sla_tier: 'standard'
+                                               }
+                                             end
 
           # Add monitoring context
           task.context['monitoring_target'] = 'checkout_workflow'

@@ -58,7 +58,7 @@ class MockMetricsService < BaseMockService
 
     def get_metric_values(name, metric_type = nil)
       metrics = metric_type ? metric_types[metric_type] : metrics_submitted
-      metrics.select { |m| m[:name] == name }.map { |m| m[:value] }
+      metrics.select { |m| m[:name] == name }.pluck(:value)
     end
   end
 
@@ -69,7 +69,7 @@ class MockMetricsService < BaseMockService
   # @param timestamp [Time] Metric timestamp (optional)
   def counter(name, value: 1, **tags)
     log_call(:counter, { name: name, value: value, tags: tags })
-    
+
     metric = {
       name: name,
       value: value,
@@ -77,10 +77,10 @@ class MockMetricsService < BaseMockService
       timestamp: Time.current,
       type: :counter
     }
-    
+
     self.class.metrics_submitted << metric
     self.class.metric_types[:counters] << metric
-    
+
     handle_response(:counter, { status: 'ok', metric_id: generate_id('counter') })
   end
 
@@ -91,7 +91,7 @@ class MockMetricsService < BaseMockService
   # @param timestamp [Time] Metric timestamp (optional)
   def histogram(name, value:, **tags)
     log_call(:histogram, { name: name, value: value, tags: tags })
-    
+
     metric = {
       name: name,
       value: value,
@@ -99,10 +99,10 @@ class MockMetricsService < BaseMockService
       timestamp: Time.current,
       type: :histogram
     }
-    
+
     self.class.metrics_submitted << metric
     self.class.metric_types[:histograms] << metric
-    
+
     handle_response(:histogram, { status: 'ok', metric_id: generate_id('histogram') })
   end
 
@@ -113,7 +113,7 @@ class MockMetricsService < BaseMockService
   # @param timestamp [Time] Metric timestamp (optional)
   def gauge(name, value:, **tags)
     log_call(:gauge, { name: name, value: value, tags: tags })
-    
+
     metric = {
       name: name,
       value: value,
@@ -121,10 +121,10 @@ class MockMetricsService < BaseMockService
       timestamp: Time.current,
       type: :gauge
     }
-    
+
     self.class.metrics_submitted << metric
     self.class.metric_types[:gauges] << metric
-    
+
     handle_response(:gauge, { status: 'ok', metric_id: generate_id('gauge') })
   end
 
@@ -134,7 +134,7 @@ class MockMetricsService < BaseMockService
   # @param tags [Hash] Metric tags
   def timer(name, value:, **tags)
     log_call(:timer, { name: name, value: value, tags: tags })
-    
+
     metric = {
       name: name,
       value: value,
@@ -142,10 +142,10 @@ class MockMetricsService < BaseMockService
       timestamp: Time.current,
       type: :timer
     }
-    
+
     self.class.metrics_submitted << metric
     self.class.metric_types[:timers] << metric
-    
+
     handle_response(:timer, { status: 'ok', metric_id: generate_id('timer') })
   end
 
@@ -153,11 +153,11 @@ class MockMetricsService < BaseMockService
   # @param name [String] Metric name
   # @param tags [Hash] Metric tags
   # @param block [Proc] Code block to time
-  def time(name, **tags, &block)
+  def time(name, **tags)
     start_time = Time.current
-    result = block.call
+    result = yield
     duration = Time.current - start_time
-    
+
     histogram(name, value: duration, **tags)
     result
   end
@@ -166,7 +166,7 @@ class MockMetricsService < BaseMockService
   # @param metrics [Array<Hash>] Array of metric hashes
   def batch_submit(metrics)
     log_call(:batch_submit, { count: metrics.length })
-    
+
     metrics.each do |metric|
       case metric[:type]
       when :counter
@@ -179,12 +179,12 @@ class MockMetricsService < BaseMockService
         timer(metric[:name], value: metric[:value], **metric[:tags])
       end
     end
-    
+
     handle_response(:batch_submit, {
-      status: 'ok',
-      submitted_count: metrics.length,
-      batch_id: generate_id('batch')
-    })
+                      status: 'ok',
+                      submitted_count: metrics.length,
+                      batch_id: generate_id('batch')
+                    })
   end
 
   # Query metrics (for testing)
@@ -192,32 +192,32 @@ class MockMetricsService < BaseMockService
   # @param time_range [Hash] Time range for query
   def query(query, time_range: { start: 1.hour.ago, end: Time.current })
     log_call(:query, { query: query, time_range: time_range })
-    
+
     # Simple mock query - return metrics that match the query name
     matching_metrics = self.class.metrics_submitted.select do |metric|
       metric[:name].include?(query) &&
         metric[:timestamp] >= time_range[:start] &&
         metric[:timestamp] <= time_range[:end]
     end
-    
+
     handle_response(:query, {
-      status: 'ok',
-      query: query,
-      results: matching_metrics,
-      count: matching_metrics.length
-    })
+                      status: 'ok',
+                      query: query,
+                      results: matching_metrics,
+                      count: matching_metrics.length
+                    })
   end
 
   # Health check for metrics service
   def health_check
     log_call(:health_check)
-    
+
     handle_response(:health_check, {
-      status: 'healthy',
-      version: '2.1.0',
-      uptime: '24h',
-      metrics_processed: self.class.metrics_submitted.length
-    })
+                      status: 'healthy',
+                      version: '2.1.0',
+                      uptime: '24h',
+                      metrics_processed: self.class.metrics_submitted.length
+                    })
   end
 end
 

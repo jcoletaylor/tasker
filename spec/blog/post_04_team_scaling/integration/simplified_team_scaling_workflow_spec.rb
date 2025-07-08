@@ -18,20 +18,20 @@ RSpec.describe 'Post 04: Team Scaling - Simplified Demonstrations', type: :blog_
     {
       'ticket_id' => 'TICKET-98765',
       'customer_id' => 'CUST-54321',
-      'refund_amount' => 12000,
+      'refund_amount' => 12_000,
       'refund_reason' => 'Product defect reported by customer',
       'agent_notes' => 'Customer reported product malfunction after 2 weeks of use',
       'requires_approval' => true,
       'correlation_id' => 'cs_workflow_456',
       'customer_email' => 'customer@example.com',
-      'payment_id' => 'pay_987654321'  # Adding payment_id for execute_refund_workflow step
+      'payment_id' => 'pay_987654321' # Adding payment_id for execute_refund_workflow step
     }
   end
 
   before do
     # Reset mock services
     BaseMockService.reset_all_mocks!
-    
+
     # Load Post 04 blog code
     load_blog_code_safely('post_04_team_scaling')
   end
@@ -56,43 +56,43 @@ RSpec.describe 'Post 04: Team Scaling - Simplified Demonstrations', type: :blog_
       expect(customer_success_task.name).to eq('process_refund')
       expect(payments_task.namespace_name).to eq('payments')
       expect(customer_success_task.namespace_name).to eq('customer_success')
-      
+
       # Verify tasks are created in pending state (async system)
       expect(payments_task.status).to eq('pending')
       expect(customer_success_task.status).to eq('pending')
-      
+
       # Show they are configured for different business logic
       # (Step creation is async, so we verify task configuration instead)
       expect(payments_task.name).to eq('process_refund')
       expect(customer_success_task.name).to eq('process_refund')
       expect(payments_task.object_id).not_to eq(customer_success_task.object_id)
-      
+
       puts '✅ Demonstrated: Same workflow name can exist in different namespaces'
     end
 
     it 'shows independent versioning per namespace' do
       # Get handlers to show version differences
-      payments_handler = Tasker::HandlerFactory.instance.get('process_refund', 
-        namespace_name: 'payments', version: '2.1.0')
-      cs_handler = Tasker::HandlerFactory.instance.get('process_refund', 
-        namespace_name: 'customer_success', version: '1.3.0')
+      payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
+                                                             namespace_name: 'payments', version: '2.1.0')
+      cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
+                                                       namespace_name: 'customer_success', version: '1.3.0')
 
       expect(payments_handler).to be_present
       expect(cs_handler).to be_present
-      
+
       # Show different versions from config
       expect(payments_handler.config['version']).to eq('2.1.0')
       expect(cs_handler.config['version']).to eq('1.3.0')
-      
+
       puts '✅ Demonstrated: Each namespace can have its own version'
     end
 
     it 'shows step handler organization by team' do
       # Get handlers to show team organization
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                               namespace_name: 'payments', version: '2.1.0')
+                                                             namespace_name: 'payments', version: '2.1.0')
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
 
       # Verify different teams have different step configurations
       payments_config = payments_handler.config
@@ -135,7 +135,7 @@ RSpec.describe 'Post 04: Team Scaling - Simplified Demonstrations', type: :blog_
     it 'shows cross-namespace coordination capability' do
       # Get handlers to show cross-namespace coordination configuration
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
 

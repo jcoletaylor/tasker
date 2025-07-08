@@ -25,25 +25,25 @@ module BlogExamples
         def process_results(step, service_response, _initial_results)
           # Safe result processing - format the approval results
           # Handle auto-approval case (when service_response is nil)
-          if service_response.nil?
-            step.results = {
-              approval_obtained: true,
-              approval_method: 'auto_approval',
-              approval_reason: 'policy_exemption',
-              approved_by: 'system',
-              approval_id: "auto_#{SecureRandom.hex(8)}",
-              approval_timestamp: Time.current.iso8601
-            }
-          else
-            step.results = {
-              approval_obtained: true,
-              approval_method: 'manager_approval',
-              approved_by: service_response[:approved_by],
-              approval_id: service_response[:approval_id],
-              approval_notes: service_response[:notes],
-              approval_timestamp: service_response[:approved_at]
-            }
-          end
+          step.results = if service_response.nil?
+                           {
+                             approval_obtained: true,
+                             approval_method: 'auto_approval',
+                             approval_reason: 'policy_exemption',
+                             approved_by: 'system',
+                             approval_id: "auto_#{SecureRandom.hex(8)}",
+                             approval_timestamp: Time.current.iso8601
+                           }
+                         else
+                           {
+                             approval_obtained: true,
+                             approval_method: 'manager_approval',
+                             approved_by: service_response[:approved_by],
+                             approval_id: service_response[:approval_id],
+                             approval_notes: service_response[:notes],
+                             approval_timestamp: service_response[:approved_at]
+                           }
+                         end
         rescue StandardError => e
           # If result processing fails, don't retry the API call
           raise Tasker::PermanentError,
@@ -52,7 +52,7 @@ module BlogExamples
 
         private
 
-        def extract_and_validate_inputs(context, sequence, step)
+        def extract_and_validate_inputs(context, sequence, _step)
           # Normalize all hash keys to symbols immediately
           normalized_context = context.deep_symbolize_keys
 

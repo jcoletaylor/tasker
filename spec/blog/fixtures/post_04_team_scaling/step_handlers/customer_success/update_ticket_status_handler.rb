@@ -97,7 +97,7 @@ module BlogExamples
           }
         end
 
-        def build_internal_notes(step, sequence)
+        def build_internal_notes(_step, sequence)
           # Build comprehensive internal notes for the ticket
           approval_step = sequence.find_step_by_name('get_manager_approval')
           approval_results = approval_step&.results&.deep_symbolize_keys
@@ -106,10 +106,10 @@ module BlogExamples
           policy_results = policy_step&.results&.deep_symbolize_keys
 
           notes = []
-          notes << "Refund processed via automated workflow"
+          notes << 'Refund processed via automated workflow'
           notes << "Policy compliance: #{policy_results[:policy_version]}" if policy_results
           notes << "Approval method: #{approval_results[:approval_method]}" if approval_results
-          notes << "Cross-team coordination: customer_success → payments"
+          notes << 'Cross-team coordination: customer_success → payments'
 
           notes.join('; ')
         end
@@ -118,8 +118,8 @@ module BlogExamples
           # Build customer-facing message about the refund
           task_id = workflow_results[:delegated_task_id]
 
-          "Your refund request has been processed and sent to our payments team. " \
-          "Task ID: #{task_id}. Please allow 3-5 business days for the refund to appear in your account."
+          'Your refund request has been processed and sent to our payments team. ' \
+            "Task ID: #{task_id}. Please allow 3-5 business days for the refund to appear in your account."
         end
 
         def ensure_ticket_updated!(service_response)

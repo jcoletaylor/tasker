@@ -42,12 +42,12 @@ RSpec.describe 'Post 04: Team Scaling - YAML Configuration', type: :blog_example
       expect(step_templates.count).to eq(4)
 
       step_names = step_templates.map { |s| s['name'] }
-      expect(step_names).to eq([
-        'validate_payment_eligibility',
-        'process_gateway_refund',
-        'update_payment_records',
-        'notify_customer'
-      ])
+      expect(step_names).to eq(%w[
+                                 validate_payment_eligibility
+                                 process_gateway_refund
+                                 update_payment_records
+                                 notify_customer
+                               ])
     end
 
     it 'has correct payments step dependencies' do
@@ -115,13 +115,13 @@ RSpec.describe 'Post 04: Team Scaling - YAML Configuration', type: :blog_example
       expect(step_templates.count).to eq(5)
 
       step_names = step_templates.map { |s| s['name'] }
-      expect(step_names).to eq([
-        'validate_refund_request',
-        'check_refund_policy',
-        'get_manager_approval',
-        'execute_refund_workflow',
-        'update_ticket_status'
-      ])
+      expect(step_names).to eq(%w[
+                                 validate_refund_request
+                                 check_refund_policy
+                                 get_manager_approval
+                                 execute_refund_workflow
+                                 update_ticket_status
+                               ])
     end
 
     it 'has correct customer success step dependencies' do
@@ -166,8 +166,12 @@ RSpec.describe 'Post 04: Team Scaling - YAML Configuration', type: :blog_example
   end
 
   describe 'Cross-Namespace Configuration Comparison' do
-    let(:payments_config) { validate_yaml_config(blog_config_path('post_04_team_scaling', 'payments_process_refund.yaml')) }
-    let(:cs_config) { validate_yaml_config(blog_config_path('post_04_team_scaling', 'customer_success_process_refund.yaml')) }
+    let(:payments_config) do
+      validate_yaml_config(blog_config_path('post_04_team_scaling', 'payments_process_refund.yaml'))
+    end
+    let(:cs_config) do
+      validate_yaml_config(blog_config_path('post_04_team_scaling', 'customer_success_process_refund.yaml'))
+    end
 
     it 'demonstrates same workflow name in different namespaces' do
       expect(payments_config['name']).to eq('process_refund')

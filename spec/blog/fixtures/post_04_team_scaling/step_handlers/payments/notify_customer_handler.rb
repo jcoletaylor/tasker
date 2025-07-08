@@ -9,7 +9,7 @@ module BlogExamples
           inputs = extract_and_validate_inputs(task.context, step, sequence)
 
           # Mock call to notification service for blog examples
-          notification_data = {
+          {
             customer_email: inputs[:customer_email],
             payment_id: inputs[:payment_id],
             refund_id: inputs[:refund_id],
@@ -50,7 +50,7 @@ module BlogExamples
 
         private
 
-        def extract_and_validate_inputs(context, step, sequence)
+        def extract_and_validate_inputs(context, _step, sequence)
           # Normalize context to symbols early
           normalized_context = context.deep_symbolize_keys
 
@@ -84,10 +84,10 @@ module BlogExamples
                   'Customer notification failed, will retry'
           end
 
-          unless notification_result[:notification_id]
-            raise Tasker::PermanentError,
-                  'Notification sent but no tracking ID returned'
-          end
+          return if notification_result[:notification_id]
+
+          raise Tasker::PermanentError,
+                'Notification sent but no tracking ID returned'
         end
       end
     end

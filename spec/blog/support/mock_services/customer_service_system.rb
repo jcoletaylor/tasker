@@ -14,6 +14,7 @@ class MockCustomerServiceSystem < BaseMockService
       @error_code = error_code
     end
   end
+
   # Validate refund request
   # @param inputs [Hash] Request inputs with ticket_id, customer_id, etc.
   # @return [Hash] Validation result
@@ -27,9 +28,7 @@ class MockCustomerServiceSystem < BaseMockService
     log_call(:validate_refund_request, inputs)
 
     # Check for invalid ticket IDs to simulate error conditions
-    if inputs[:ticket_id] == 'INVALID-TICKET'
-      raise ServiceError.new('Ticket not found', error_code: 'TICKET_NOT_FOUND')
-    end
+    raise ServiceError.new('Ticket not found', error_code: 'TICKET_NOT_FOUND') if inputs[:ticket_id] == 'INVALID-TICKET'
 
     default_response = {
       ticket_id: inputs[:ticket_id],

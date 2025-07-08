@@ -37,7 +37,7 @@ module BlogExamples
 
         private
 
-        def extract_and_validate_inputs(context, sequence, step)
+        def extract_and_validate_inputs(context, sequence, _step)
           # Normalize all hash keys to symbols immediately
           normalized_context = context.deep_symbolize_keys
 

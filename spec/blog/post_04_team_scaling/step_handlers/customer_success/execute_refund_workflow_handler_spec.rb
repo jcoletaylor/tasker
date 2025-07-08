@@ -72,8 +72,7 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
           .with('/tasker/tasks', hash_including(namespace: 'payments'))
           .and_return(mock_response)
 
-        allow(mock_response).to receive(:status).and_return(201)
-        allow(mock_response).to receive(:body).and_return({
+        allow(mock_response).to receive_messages(status: 201, body: {
           task_id: 'TASK-PAY-123',
           status: 'created',
           workflow_name: 'process_refund',
@@ -118,8 +117,8 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
 
         expect(mock_connection).to receive(:post)
           .with('/tasker/tasks', hash_including(
-            context: hash_including(correlation_id: 'cs-generated123')
-          ))
+                                   context: hash_including(correlation_id: 'cs-generated123')
+                                 ))
 
         handler.process(task_without_correlation, mock_sequence, mock_step)
       end
@@ -249,13 +248,13 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
       handler.process_results(mock_step, service_response, {})
 
       expect(mock_step).to have_received(:results=).with(hash_including(
-        task_delegated: true,
-        target_namespace: 'payments',
-        target_workflow: 'process_refund',
-        delegated_task_id: 'TASK-PAY-123',
-        delegated_task_status: 'created',
-        correlation_id: 'cs-abc123def456'
-      ))
+                                                           task_delegated: true,
+                                                           target_namespace: 'payments',
+                                                           target_workflow: 'process_refund',
+                                                           delegated_task_id: 'TASK-PAY-123',
+                                                           delegated_task_status: 'created',
+                                                           correlation_id: 'cs-abc123def456'
+                                                         ))
     end
 
     it 'handles result processing errors' do
@@ -274,7 +273,7 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
       customer_service_context = {
         ticket_id: 'TICKET-999',
         customer_id: 'CUST-888',
-        refund_amount: 12000,
+        refund_amount: 12_000,
         refund_reason: 'Service issue',
         agent_notes: 'Customer complained about service quality'
       }
@@ -283,7 +282,7 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
 
       expected_payments_context = {
         payment_id: 'pay_987654321', # Mapped from validation results
-        refund_amount: 12000,
+        refund_amount: 12_000,
         refund_reason: 'Service issue',
         initiated_by: 'customer_success',
         approval_id: 'APPR-789',
@@ -293,15 +292,14 @@ RSpec.describe 'BlogExamples::Post04::StepHandlers::ExecuteRefundWorkflowHandler
 
       expect(mock_connection).to receive(:post)
         .with('/tasker/tasks', hash_including(
-          namespace: 'payments',
-          workflow_name: 'process_refund',
-          workflow_version: '2.1.0',
-          context: hash_including(expected_payments_context)
-        ))
+                                 namespace: 'payments',
+                                 workflow_name: 'process_refund',
+                                 workflow_version: '2.1.0',
+                                 context: hash_including(expected_payments_context)
+                               ))
         .and_return(mock_response)
 
-      allow(mock_response).to receive(:status).and_return(201)
-      allow(mock_response).to receive(:body).and_return({
+      allow(mock_response).to receive_messages(status: 201, body: {
         task_id: 'TASK-PAY-999',
         status: 'created'
       }.to_json)

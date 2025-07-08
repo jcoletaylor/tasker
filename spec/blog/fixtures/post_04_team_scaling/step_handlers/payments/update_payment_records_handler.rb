@@ -9,7 +9,7 @@ module BlogExamples
           inputs = extract_and_validate_inputs(task.context, step, sequence)
 
           # Mock call to internal payment records service for blog examples
-          update_data = {
+          {
             payment_id: inputs[:payment_id],
             refund_id: inputs[:refund_id],
             refund_amount: inputs[:refund_amount],
@@ -53,7 +53,7 @@ module BlogExamples
 
         private
 
-        def extract_and_validate_inputs(context, step, sequence)
+        def extract_and_validate_inputs(context, _step, sequence)
           # Normalize context to symbols early
           normalized_context = context.deep_symbolize_keys
 
@@ -89,10 +89,10 @@ module BlogExamples
                   'Payment record update failed'
           end
 
-          unless update_result[:audit_trail_id]
-            raise Tasker::PermanentError,
-                  'Payment record updated but audit trail not created'
-          end
+          return if update_result[:audit_trail_id]
+
+          raise Tasker::PermanentError,
+                'Payment record updated but audit trail not created'
         end
       end
     end

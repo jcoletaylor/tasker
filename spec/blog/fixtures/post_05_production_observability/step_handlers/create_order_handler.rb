@@ -8,17 +8,17 @@ module BlogExamples
           # Get previous step results
           payment_step = sequence.find_step_by_name('process_payment')
           payment_results = payment_step&.results&.deep_symbolize_keys
-          
+
           inventory_step = sequence.find_step_by_name('update_inventory')
           inventory_results = inventory_step&.results&.deep_symbolize_keys
-          
+
           unless inventory_results&.dig(:inventory_updated)
-            raise Tasker::PermanentError, "Inventory must be updated before creating order"
+            raise Tasker::PermanentError, 'Inventory must be updated before creating order'
           end
-          
+
           # Create order record
           order_id = "order_#{SecureRandom.hex(8)}"
-          
+
           {
             order_created: true,
             order_id: order_id,

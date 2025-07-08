@@ -8,16 +8,14 @@ module BlogExamples
           # Get cart validation results
           cart_step = sequence.find_step_by_name('validate_cart')
           cart_results = cart_step&.results&.deep_symbolize_keys
-          
-          unless cart_results&.dig(:validated)
-            raise Tasker::PermanentError, "Cart must be validated before payment"
-          end
-          
+
+          raise Tasker::PermanentError, 'Cart must be validated before payment' unless cart_results&.dig(:validated)
+
           # Simulate payment processing with variable timing
           # This helps demonstrate performance monitoring
           payment_method = task.context['payment_method'] || 'credit_card'
           amount = cart_results[:cart_total]
-          
+
           # Simulate occasional slow payments for monitoring
           # Disabled for testing to avoid randomness
           # if rand > 0.9
@@ -25,13 +23,13 @@ module BlogExamples
           # else
           #   sleep(rand(0.5..2.0))
           # end
-          
+
           # Simulate occasional failures for error monitoring
           # Disabled for testing to avoid randomness
           # if rand > 0.95
           #   raise Tasker::RetryableError, "Payment gateway timeout"
           # end
-          
+
           # Return payment results
           {
             payment_successful: true,

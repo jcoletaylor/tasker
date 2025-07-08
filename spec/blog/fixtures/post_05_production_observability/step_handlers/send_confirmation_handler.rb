@@ -8,26 +8,24 @@ module BlogExamples
           # Get order results
           order_step = sequence.find_step_by_name('create_order')
           order_results = order_step&.results&.deep_symbolize_keys
-          
+
           unless order_results&.dig(:order_created)
-            raise Tasker::PermanentError, "Order must be created before sending confirmation"
+            raise Tasker::PermanentError, 'Order must be created before sending confirmation'
           end
-          
+
           customer_email = task.context['customer_email']
-          unless customer_email
-            raise Tasker::PermanentError, "Customer email required for confirmation"
-          end
-          
+          raise Tasker::PermanentError, 'Customer email required for confirmation' unless customer_email
+
           # Simulate email sending
           # Disabled for testing to avoid randomness
           # sleep(rand(0.5..1.5))
-          
+
           # Simulate occasional email service issues
           # Disabled for testing to avoid randomness
           # if rand > 0.97
           #   raise Tasker::RetryableError, "Email service temporarily unavailable"
           # end
-          
+
           {
             confirmation_sent: true,
             email_id: "email_#{SecureRandom.hex(8)}",

@@ -69,7 +69,7 @@ module BlogExamples
 
         private
 
-        def extract_and_validate_inputs(context, step, sequence)
+        def extract_and_validate_inputs(context, _step, sequence)
           # Normalize context to symbols early
           normalized_context = context.deep_symbolize_keys
 

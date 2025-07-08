@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Note: BaseSubscriber will be loaded by the test environment
+# NOTE: BaseSubscriber will be loaded by the test environment
 
 module BlogExamples
   module Post05
@@ -9,7 +9,7 @@ module BlogExamples
       class PerformanceMonitoringSubscriber < Tasker::Events::Subscribers::BaseSubscriber
         # Subscribe to performance-related events
         subscribe_to 'task.completed', 'task.failed', 'step.completed', 'step.failed'
-        
+
         def initialize(*args, **kwargs)
           super
           # Initialize observability services
@@ -22,7 +22,7 @@ module BlogExamples
           execution_time = safe_get(event, :execution_duration_seconds)
           namespace = safe_get(event, :namespace_name)
           task_name = safe_get(event, :task_name)
-          
+
           # Track task completion metrics
           @metrics_service.histogram(
             'task_execution_duration_seconds',
@@ -30,10 +30,10 @@ module BlogExamples
             namespace: namespace,
             task_name: task_name
           )
-          
+
           # Track namespace-level performance
           track_namespace_performance(namespace, execution_time)
-          
+
           # Monitor SLA compliance
           check_sla_compliance(event)
         end
@@ -43,7 +43,7 @@ module BlogExamples
           step_name = safe_get(event, :step_name)
           execution_time = safe_get(event, :execution_duration_seconds)
           retry_count = safe_get(event, :retry_count, 0)
-          
+
           # Track step performance
           @metrics_service.histogram(
             'step_execution_duration_seconds',
@@ -52,15 +52,15 @@ module BlogExamples
             namespace: safe_get(event, :task_namespace),
             retry_count: retry_count
           )
-          
+
           # Monitor retry patterns
-          if retry_count > 0
-            @metrics_service.counter(
-              'step_retries_total',
-              step_name: step_name,
-              namespace: safe_get(event, :task_namespace)
-            )
-          end
+          return unless retry_count > 0
+
+          @metrics_service.counter(
+            'step_retries_total',
+            step_name: step_name,
+            namespace: safe_get(event, :task_namespace)
+          )
         end
 
         # Track failed executions for error rate monitoring
@@ -68,7 +68,7 @@ module BlogExamples
           namespace = safe_get(event, :namespace_name)
           task_name = safe_get(event, :task_name)
           error_type = classify_error(safe_get(event, :error_message))
-          
+
           # Track failure metrics
           @metrics_service.counter(
             'task_failures_total',
@@ -76,9 +76,9 @@ module BlogExamples
             task_name: task_name,
             error_type: error_type
           )
-          
+
           # Report critical errors
-          if error_type == 'timeout' || error_type == 'connection'
+          if %w[timeout connection].include?(error_type)
             @error_reporter.capture_message(
               "Critical task failure: #{error_type}",
               context: {
@@ -90,7 +90,7 @@ module BlogExamples
               level: 'error'
             )
           end
-          
+
           # Calculate and track error rates
           update_error_rate_metrics(namespace, task_name)
         end
@@ -100,7 +100,7 @@ module BlogExamples
           step_name = safe_get(event, :step_name)
           error_message = safe_get(event, :error_message)
           retry_count = safe_get(event, :retry_count, 0)
-          
+
           # Track step failure patterns
           @metrics_service.counter(
             'step_failures_total',
@@ -109,29 +109,29 @@ module BlogExamples
             error_type: classify_error(error_message),
             final_failure: safe_get(event, :max_retries_reached, false)
           )
-          
+
           # Monitor retry exhaustion
-          if safe_get(event, :max_retries_reached)
-            Rails.logger.error(
-              message: "Step exhausted all retries",
-              event_type: "performance.step.retry_exhausted",
+          return unless safe_get(event, :max_retries_reached)
+
+          Rails.logger.error(
+            message: 'Step exhausted all retries',
+            event_type: 'performance.step.retry_exhausted',
+            step_name: step_name,
+            retry_count: retry_count,
+            task_id: safe_get(event, :task_id)
+          )
+
+          # Report retry exhaustion to error tracking
+          @error_reporter.capture_message(
+            "Step retry exhaustion: #{step_name}",
+            context: {
               step_name: step_name,
               retry_count: retry_count,
-              task_id: safe_get(event, :task_id)
-            )
-            
-            # Report retry exhaustion to error tracking
-            @error_reporter.capture_message(
-              "Step retry exhaustion: #{step_name}",
-              context: {
-                step_name: step_name,
-                retry_count: retry_count,
-                task_id: safe_get(event, :task_id),
-                error_message: error_message
-              },
-              level: 'error'
-            )
-          end
+              task_id: safe_get(event, :task_id),
+              error_message: error_message
+            },
+            level: 'error'
+          )
         end
 
         private
@@ -149,76 +149,76 @@ module BlogExamples
           # Check if task met its SLA
           handler_config = safe_get(event, :handler_config, {})
           sla_seconds = handler_config.dig('monitoring', 'sla_seconds')
-          
+
           return unless sla_seconds
-          
+
           execution_time = safe_get(event, :execution_duration_seconds)
           sla_met = execution_time <= sla_seconds
-          
+
           @metrics_service.counter(
             'sla_compliance_total',
             namespace: safe_get(event, :namespace_name),
             task_name: safe_get(event, :task_name),
             sla_met: sla_met
           )
-          
-          unless sla_met
-            Rails.logger.warn(
-              message: "SLA violation detected",
-              event_type: "performance.sla.violation",
+
+          return if sla_met
+
+          Rails.logger.warn(
+            message: 'SLA violation detected',
+            event_type: 'performance.sla.violation',
+            task_id: safe_get(event, :task_id),
+            execution_time_seconds: execution_time,
+            sla_seconds: sla_seconds,
+            violation_seconds: execution_time - sla_seconds
+          )
+
+          # Report SLA violations
+          @error_reporter.capture_message(
+            "SLA violation: #{safe_get(event, :task_name)}",
+            context: {
               task_id: safe_get(event, :task_id),
-              execution_time_seconds: execution_time,
+              execution_time: execution_time,
               sla_seconds: sla_seconds,
               violation_seconds: execution_time - sla_seconds
-            )
-            
-            # Report SLA violations
-            @error_reporter.capture_message(
-              "SLA violation: #{safe_get(event, :task_name)}",
-              context: {
-                task_id: safe_get(event, :task_id),
-                execution_time: execution_time,
-                sla_seconds: sla_seconds,
-                violation_seconds: execution_time - sla_seconds
-              },
-              tags: {
-                namespace: safe_get(event, :namespace_name),
-                task_name: safe_get(event, :task_name)
-              },
-              level: 'warning'
-            )
-          end
+            },
+            tags: {
+              namespace: safe_get(event, :namespace_name),
+              task_name: safe_get(event, :task_name)
+            },
+            level: 'warning'
+          )
         end
 
         def update_error_rate_metrics(namespace, task_name)
           # Calculate error rate over sliding window
           # In a real implementation, this would use a time-series database
           error_rate = calculate_error_rate(namespace, task_name)
-          
+
           @metrics_service.gauge(
             'task_error_rate_percent',
             value: error_rate,
             namespace: namespace,
             task_name: task_name
           )
-          
+
           # Alert on high error rates
-          if error_rate > 10.0
-            @error_reporter.capture_message(
-              "High error rate detected: #{error_rate}%",
-              context: {
-                namespace: namespace,
-                task_name: task_name,
-                error_rate: error_rate
-              },
-              level: 'error'
-            )
-          end
+          return unless error_rate > 10.0
+
+          @error_reporter.capture_message(
+            "High error rate detected: #{error_rate}%",
+            context: {
+              namespace: namespace,
+              task_name: task_name,
+              error_rate: error_rate
+            },
+            level: 'error'
+          )
         end
 
         def classify_error(error_message)
           return 'unknown' if error_message.nil?
-          
+
           case error_message
           when /timeout/i
             'timeout'
@@ -233,13 +233,13 @@ module BlogExamples
           end
         end
 
-        def calculate_rolling_average(namespace, new_value)
+        def calculate_rolling_average(_namespace, new_value)
           # Calculate rolling average for namespace
           # In a real implementation, this would maintain a sliding window
-          new_value * 0.9 + rand(5)
+          (new_value * 0.9) + rand(5)
         end
 
-        def calculate_error_rate(namespace, task_name)
+        def calculate_error_rate(_namespace, _task_name)
           # Calculate error rate percentage
           # In a real implementation, this would query metrics storage
           rand(0.1..5.0).round(2)

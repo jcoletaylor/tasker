@@ -18,31 +18,30 @@ module BlogExamples
         def process_results(step, service_response, _initial_results)
           # Safe result processing - format the task creation results
           # Note: We get task creation confirmation, not execution results
-          begin
-            # Handle both response objects (with .body) and direct hashes
-            parsed_response = if service_response.respond_to?(:body)
-                               JSON.parse(service_response.body).deep_symbolize_keys
-                             else
-                               service_response.deep_symbolize_keys
-                             end
-            
-            step.results = {
-              task_delegated: true,
-              target_namespace: 'payments',
-              target_workflow: 'process_refund',
-              delegated_task_id: parsed_response[:task_id],
-              delegated_task_status: parsed_response[:status],
-              delegation_timestamp: Time.current.iso8601,
-              correlation_id: parsed_response[:correlation_id]
-            }
-          rescue JSON::ParserError => e
-            raise Tasker::PermanentError,
-                  "Failed to parse task creation response: #{e.message}"
-          rescue StandardError => e
-            # If result processing fails, don't retry the API call
-            raise Tasker::PermanentError,
-                  "Failed to process task creation results: #{e.message}"
-          end
+
+          # Handle both response objects (with .body) and direct hashes
+          parsed_response = if service_response.respond_to?(:body)
+                              JSON.parse(service_response.body).deep_symbolize_keys
+                            else
+                              service_response.deep_symbolize_keys
+                            end
+
+          step.results = {
+            task_delegated: true,
+            target_namespace: 'payments',
+            target_workflow: 'process_refund',
+            delegated_task_id: parsed_response[:task_id],
+            delegated_task_status: parsed_response[:status],
+            delegation_timestamp: Time.current.iso8601,
+            correlation_id: parsed_response[:correlation_id]
+          }
+        rescue JSON::ParserError => e
+          raise Tasker::PermanentError,
+                "Failed to parse task creation response: #{e.message}"
+        rescue StandardError => e
+          # If result processing fails, don't retry the API call
+          raise Tasker::PermanentError,
+                "Failed to process task creation results: #{e.message}"
         end
 
         private
@@ -144,7 +143,7 @@ module BlogExamples
           end
         end
 
-        # Note: Configuration in YAML step template or test setup:
+        # NOTE: Configuration in YAML step template or test setup:
         # step_templates:
         #   - name: execute_refund_workflow
         #     handler_class: "ExecuteRefundWorkflowHandler"

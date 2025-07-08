@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Note: BaseSubscriber will be loaded by the test environment
+# NOTE: BaseSubscriber will be loaded by the test environment
 
 module BlogExamples
   module Post05
@@ -9,7 +9,7 @@ module BlogExamples
       class BusinessMetricsSubscriber < Tasker::Events::Subscribers::BaseSubscriber
         # Subscribe to events we care about
         subscribe_to 'task.completed', 'task.failed', 'step.completed', 'step.failed'
-        
+
         def initialize(*args, **kwargs)
           super
           # Initialize observability services
@@ -24,19 +24,17 @@ module BlogExamples
 
           # Extract business context from task
           context = safe_get(event, :context, {})
-          
+
           # Track successful checkout conversion
           track_checkout_conversion(event)
-          
+
           # Track revenue metrics
-          if context[:order_value]
-            track_revenue_metrics(context[:order_value], context[:customer_tier])
-          end
-          
+          track_revenue_metrics(context[:order_value], context[:customer_tier]) if context[:order_value]
+
           # Log for observability
           Rails.logger.info(
-            message: "Checkout completed successfully",
-            event_type: "business.checkout.completed",
+            message: 'Checkout completed successfully',
+            event_type: 'business.checkout.completed',
             task_id: safe_get(event, :task_id),
             order_value: context[:order_value],
             customer_tier: context[:customer_tier],
@@ -51,19 +49,17 @@ module BlogExamples
           return unless safe_get(event, :namespace_name) == 'blog_examples'
 
           context = safe_get(event, :context, {})
-          
+
           # Track failed checkout
           track_checkout_failure(event)
-          
+
           # Calculate revenue impact
-          if context[:order_value]
-            track_revenue_loss(context[:order_value], context[:customer_tier])
-          end
-          
+          track_revenue_loss(context[:order_value], context[:customer_tier]) if context[:order_value]
+
           # Log critical business impact
           Rails.logger.error(
-            message: "Checkout failed - revenue impact",
-            event_type: "business.checkout.failed",
+            message: 'Checkout failed - revenue impact',
+            event_type: 'business.checkout.failed',
             task_id: safe_get(event, :task_id),
             order_value: context[:order_value],
             customer_tier: context[:customer_tier],
@@ -77,26 +73,26 @@ module BlogExamples
         # Track individual step performance for bottleneck identification
         def handle_step_completed(event)
           return unless safe_get(event, :task_namespace) == 'blog_examples'
-          
+
           step_name = safe_get(event, :step_name)
           execution_time = safe_get(event, :execution_duration_seconds)
-          
+
           # Track step-level metrics
           track_step_performance(step_name, execution_time)
-          
+
           # Identify bottlenecks
           threshold = bottleneck_threshold_for(step_name)
           if execution_time > threshold
             Rails.logger.warn(
-              message: "Step performance degradation detected",
-              event_type: "business.performance.bottleneck",
+              message: 'Step performance degradation detected',
+              event_type: 'business.performance.bottleneck',
               step_name: step_name,
               execution_time_seconds: execution_time,
               threshold_seconds: threshold,
               task_id: safe_get(event, :task_id),
               correlation_id: safe_get(event, :correlation_id)
             )
-            
+
             # Report performance bottleneck
             @error_reporter.capture_message(
               "Performance bottleneck: #{step_name}",
@@ -109,36 +105,36 @@ module BlogExamples
               level: 'warning'
             )
           end
-          
+
           # Track payment-specific metrics
-          if step_name == 'process_payment'
-            results = safe_get(event, :results, {})
-            
-            if results[:payment_successful]
-              track_payment_metrics(
-                amount: results[:amount],
-                payment_method: results[:payment_method],
-                processing_time: execution_time
-              )
-            end
-          end
+          return unless step_name == 'process_payment'
+
+          results = safe_get(event, :results, {})
+
+          return unless results[:payment_successful]
+
+          track_payment_metrics(
+            amount: results[:amount],
+            payment_method: results[:payment_method],
+            processing_time: execution_time
+          )
         end
 
         # Track inventory impact
         def handle_step_failed(event)
           return unless safe_get(event, :step_name) == 'update_inventory'
-          
+
           Rails.logger.error(
-            message: "Inventory update failed - potential oversell risk",
-            event_type: "business.inventory.failure",
+            message: 'Inventory update failed - potential oversell risk',
+            event_type: 'business.inventory.failure',
             task_id: safe_get(event, :task_id),
             error_message: safe_get(event, :error_message),
             correlation_id: safe_get(event, :correlation_id)
           )
-          
+
           # Report critical inventory failure
           @error_reporter.capture_message(
-            "Critical: Inventory update failed - oversell risk",
+            'Critical: Inventory update failed - oversell risk',
             context: {
               task_id: safe_get(event, :task_id),
               error_message: safe_get(event, :error_message),
@@ -161,10 +157,10 @@ module BlogExamples
             namespace: safe_get(event, :namespace_name),
             version: safe_get(event, :task_version)
           )
-          
+
           # Add breadcrumb for successful conversion
           @error_reporter.add_breadcrumb(
-            "Checkout conversion successful",
+            'Checkout conversion successful',
             category: 'business',
             data: {
               task_id: safe_get(event, :task_id),
@@ -175,14 +171,14 @@ module BlogExamples
 
         def track_checkout_failure(event)
           error_type = classify_error(safe_get(event, :error_message))
-          
+
           @metrics_service.counter(
             'checkout_failures_total',
             namespace: safe_get(event, :namespace_name),
             failed_step: safe_get(event, :failed_step_name),
             error_type: error_type
           )
-          
+
           # Report checkout failure as error
           @error_reporter.capture_message(
             "Checkout failure: #{error_type}",
@@ -206,18 +202,18 @@ module BlogExamples
             value: order_value,
             customer_tier: customer_tier || 'standard'
           )
-          
+
           # Track high-value orders
-          if order_value > 1000
-            @error_reporter.add_breadcrumb(
-              "High-value order processed: $#{order_value}",
-              category: 'business',
-              data: {
-                order_value: order_value,
-                customer_tier: customer_tier
-              }
-            )
-          end
+          return unless order_value > 1000
+
+          @error_reporter.add_breadcrumb(
+            "High-value order processed: $#{order_value}",
+            category: 'business',
+            data: {
+              order_value: order_value,
+              customer_tier: customer_tier
+            }
+          )
         end
 
         def track_revenue_loss(order_value, customer_tier)
@@ -226,18 +222,18 @@ module BlogExamples
             value: order_value,
             customer_tier: customer_tier || 'standard'
           )
-          
+
           # Report significant revenue loss
-          if order_value > 500
-            @error_reporter.capture_message(
-              "Significant revenue loss: $#{order_value}",
-              context: {
-                order_value: order_value,
-                customer_tier: customer_tier || 'standard'
-              },
-              level: 'error'
-            )
-          end
+          return unless order_value > 500
+
+          @error_reporter.capture_message(
+            "Significant revenue loss: $#{order_value}",
+            context: {
+              order_value: order_value,
+              customer_tier: customer_tier || 'standard'
+            },
+            level: 'error'
+          )
         end
 
         def track_step_performance(step_name, execution_time)
@@ -254,19 +250,19 @@ module BlogExamples
             'payments_processed_total',
             payment_method: payment_method
           )
-          
+
           @metrics_service.counter(
             'payment_volume',
             value: amount,
             payment_method: payment_method
           )
-          
+
           @metrics_service.histogram(
             'payment_processing_duration_seconds',
             value: processing_time,
             payment_method: payment_method
           )
-          
+
           # Add breadcrumb for payment processing
           @error_reporter.add_breadcrumb(
             "Payment processed: #{payment_method}",
@@ -292,7 +288,7 @@ module BlogExamples
 
         def classify_error(error_message)
           return 'unknown' if error_message.nil?
-          
+
           case error_message
           when /timeout/i
             'timeout'

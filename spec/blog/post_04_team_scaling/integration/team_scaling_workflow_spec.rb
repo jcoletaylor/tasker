@@ -69,16 +69,16 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
       config = payments_handler.config
-      
+
       # Verify step configuration
       step_templates = config['step_templates']
       expect(step_templates.count).to eq(4)
-      
+
       # Verify validation step exists
       validate_step = step_templates.find { |s| s['name'] == 'validate_payment_eligibility' }
       expect(validate_step).to be_present
       expect(validate_step['handler_class']).to include('ValidatePaymentEligibilityHandler')
-      
+
       # Verify gateway step depends on validation
       gateway_step = step_templates.find { |s| s['name'] == 'process_gateway_refund' }
       expect(gateway_step).to be_present
@@ -93,12 +93,12 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
                                                              namespace_name: 'payments', version: '2.1.0')
       config = payments_handler.config
       step_templates = config['step_templates']
-      
+
       # Verify dependency chain structure
       gateway_step = step_templates.find { |s| s['name'] == 'process_gateway_refund' }
       records_step = step_templates.find { |s| s['name'] == 'update_payment_records' }
       notify_step = step_templates.find { |s| s['name'] == 'notify_customer' }
-      
+
       expect(gateway_step['depends_on_step']).to eq('validate_payment_eligibility')
       expect(records_step['depends_on_step']).to eq('process_gateway_refund')
       expect(notify_step['depends_on_step']).to eq('update_payment_records')
@@ -126,7 +126,7 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify customer success team configuration
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       expect(cs_handler).to be_present
       expect(cs_handler.config['version']).to eq('1.3.0')
 
@@ -159,14 +159,14 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes validation step
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find validation step in configuration
       validate_step_config = cs_config['step_templates'].find { |s| s['name'] == 'validate_refund_request' }
       expect(validate_step_config).to be_present
       expect(validate_step_config['handler_class']).to include('ValidateRefundRequestHandler')
-      
+
       # Verify task created in pending state (async system)
       expect(task.status).to eq('pending')
       expect(task.context['ticket_id']).to eq('TICKET-98765')
@@ -183,17 +183,17 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes policy check step
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find policy check step in configuration
       policy_step_config = cs_config['step_templates'].find { |s| s['name'] == 'check_refund_policy' }
       expect(policy_step_config).to be_present
       expect(policy_step_config['handler_class']).to include('CheckRefundPolicyHandler')
-      
+
       # Verify dependency configuration
       expect(policy_step_config['depends_on_step']).to eq('validate_refund_request')
-      
+
       # Verify task created in pending state (async system)
       expect(task.status).to eq('pending')
 
@@ -209,17 +209,17 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes manager approval step
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find approval step in configuration
       approval_step_config = cs_config['step_templates'].find { |s| s['name'] == 'get_manager_approval' }
       expect(approval_step_config).to be_present
       expect(approval_step_config['handler_class']).to include('GetManagerApprovalHandler')
-      
+
       # Verify dependency configuration
       expect(approval_step_config['depends_on_step']).to eq('check_refund_policy')
-      
+
       # Verify task created in pending state (async system)
       expect(task.status).to eq('pending')
 
@@ -257,7 +257,7 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       expect(payments_handler.config['step_templates'].count).to eq(4)
       expect(cs_handler.config['step_templates'].count).to eq(5)
 
@@ -274,14 +274,14 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes cross-namespace coordination step
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find the cross-namespace coordination step in configuration
       workflow_step_config = cs_config['step_templates'].find { |s| s['name'] == 'execute_refund_workflow' }
       expect(workflow_step_config).to be_present
       expect(workflow_step_config['handler_class']).to include('ExecuteRefundWorkflowHandler')
-      
+
       # Verify task created in pending state (async system)
       expect(task.status).to eq('pending')
       expect(task.namespace_name).to eq('customer_success')
@@ -342,10 +342,10 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
     it 'handles failures gracefully in payments workflow' do
       # Configure payment gateway to fail
       BaseMockService.configure_failures({
-        'payment_gateway' => {
-          'process_gateway_refund' => true
-        }
-      })
+                                           'payment_gateway' => {
+                                             'process_gateway_refund' => true
+                                           }
+                                         })
 
       task = create_test_task(
         name: 'process_refund',
@@ -357,12 +357,12 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
       payments_config = payments_handler.config
-      
+
       # Find gateway step in configuration
       gateway_step_config = payments_config['step_templates'].find { |s| s['name'] == 'process_gateway_refund' }
       expect(gateway_step_config).to be_present
       expect(gateway_step_config['handler_class']).to include('ProcessGatewayRefundHandler')
-      
+
       # Verify task created in pending state (async system handles failures during execution)
       expect(task.status).to eq('pending')
       expect(task.context['payment_id']).to eq('pay_123456789')
@@ -373,10 +373,10 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
     it 'handles failures gracefully in customer success workflow' do
       # Configure approval system to fail
       BaseMockService.configure_failures({
-        'approval_system' => {
-          'get_manager_approval' => true
-        }
-      })
+                                           'approval_system' => {
+                                             'get_manager_approval' => true
+                                           }
+                                         })
 
       task = create_test_task(
         name: 'process_refund',
@@ -386,14 +386,14 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes approval step for failure handling
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find approval step in configuration
       approval_step_config = cs_config['step_templates'].find { |s| s['name'] == 'get_manager_approval' }
       expect(approval_step_config).to be_present
       expect(approval_step_config['handler_class']).to include('GetManagerApprovalHandler')
-      
+
       # Verify task created in pending state (async system handles failures during execution)
       expect(task.status).to eq('pending')
       expect(task.context['ticket_id']).to eq('TICKET-98765')
@@ -429,7 +429,7 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       expect(payments_handler.config['step_templates'].count).to eq(4)
       expect(cs_handler.config['step_templates'].count).to eq(5)
 
@@ -446,24 +446,24 @@ RSpec.describe 'Post 04: Team Scaling - Cross-Namespace Refund Workflows', type:
 
       # Verify task configuration includes coordination step
       cs_handler = Tasker::HandlerFactory.instance.get('process_refund',
-                                                        namespace_name: 'customer_success', version: '1.3.0')
+                                                       namespace_name: 'customer_success', version: '1.3.0')
       cs_config = cs_handler.config
-      
+
       # Find the coordination step in configuration
       workflow_step_config = cs_config['step_templates'].find { |s| s['name'] == 'execute_refund_workflow' }
       expect(workflow_step_config).to be_present
       expect(workflow_step_config['handler_class']).to include('ExecuteRefundWorkflowHandler')
-      
+
       # Customer Success doesn't need to know Payments internal steps
       # They just coordinate through the workflow handler as a black box
       expect(task.status).to eq('pending')
       expect(task.namespace_name).to eq('customer_success')
-      
+
       # Verify loose coupling - CS handler doesn't know about payments internal steps
       payments_handler = Tasker::HandlerFactory.instance.get('process_refund',
                                                              namespace_name: 'payments', version: '2.1.0')
-      expect(cs_config['step_templates'].count).to eq(5)  # CS has 5 steps
-      expect(payments_handler.config['step_templates'].count).to eq(4)  # Payments has 4 steps
+      expect(cs_config['step_templates'].count).to eq(5) # CS has 5 steps
+      expect(payments_handler.config['step_templates'].count).to eq(4) # Payments has 4 steps
 
       puts '✅ Loose coupling with coordination demonstrated'
     end

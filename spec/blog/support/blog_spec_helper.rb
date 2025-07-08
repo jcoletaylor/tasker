@@ -119,11 +119,12 @@ module BlogSpecHelpers
     # Get the task handler for the task
     # For blog examples, use version 1.0.0 from YAML configurations
     # For Post 04, use specific versions from YAML
-    handler = if task.namespace_name == 'blog_examples'
+    handler = case task.namespace_name
+              when 'blog_examples'
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '1.0.0')
-              elsif task.namespace_name == 'payments'
+              when 'payments'
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '2.1.0')
-              elsif task.namespace_name == 'customer_success'
+              when 'customer_success'
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '1.3.0')
               else
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name)
@@ -268,7 +269,7 @@ module BlogSpecHelpers
     {
       'ticket_id' => 'TICKET-98765',
       'customer_id' => 'CUST-54321',
-      'refund_amount' => 12000,
+      'refund_amount' => 12_000,
       'refund_reason' => 'Product defect reported by customer',
       'agent_notes' => 'Customer reported product malfunction after 2 weeks of use',
       'requires_approval' => true,
@@ -327,47 +328,42 @@ module BlogSpecHelpers
     def cleanup_blog_database_state!
       # Remove blog-specific namespaces that might leak to other tests
       blog_namespaces = %w[blog_examples payments customer_success]
-      
+
       blog_namespaces.each do |namespace_name|
         namespace = Tasker::TaskNamespace.find_by(name: namespace_name)
-        if namespace
-          # Clean up tasks in this namespace using the correct scope
-          Tasker::Task.in_namespace(namespace_name).destroy_all
-          
-          # Get named tasks that need to be cleaned up
-          named_tasks = Tasker::NamedTask.where(task_namespace: namespace)
-          
-          # Clean up join table records first to avoid foreign key constraint violations
-          named_tasks.each do |named_task|
-            Tasker::NamedTasksNamedStep.where(named_task: named_task).destroy_all
-          end
-          
-          # Now clean up named tasks in this namespace
-          named_tasks.destroy_all
-          
-          # Clean up the namespace itself
-          namespace.destroy
+        next unless namespace
+
+        # Clean up tasks in this namespace using the correct scope
+        Tasker::Task.in_namespace(namespace_name).destroy_all
+
+        # Get named tasks that need to be cleaned up
+        named_tasks = Tasker::NamedTask.where(task_namespace: namespace)
+
+        # Clean up join table records first to avoid foreign key constraint violations
+        named_tasks.each do |named_task|
+          Tasker::NamedTasksNamedStep.where(named_task: named_task).destroy_all
         end
-      end
-      
-      # Clean up any remaining orphaned tasks from blog tests
-      blog_namespaces.each do |namespace_name|
-        # Use find_by to avoid errors if namespace doesn't exist
-        if Tasker::TaskNamespace.find_by(name: namespace_name)
-          Tasker::Task.in_namespace(namespace_name).destroy_all
-        end
+
+        # Now clean up named tasks in this namespace
+        named_tasks.destroy_all
+
+        # Clean up the namespace itself
+        namespace.destroy
+
+        # Clean up any remaining orphaned tasks from blog tests
+        Tasker::Task.in_namespace(namespace_name).destroy_all if Tasker::TaskNamespace.find_by(name: namespace_name)
       end
     end
 
     # Clean up blog-specific handler registrations to prevent test leakage
     def cleanup_blog_handler_registrations!
       factory = Tasker::HandlerFactory.instance
-      
+
       # Remove blog handlers that interfere with core tests
       # Post 04 registers process_refund in payments namespace, which conflicts with core process_payment handlers
       cleanup_blog_handlers_in_namespace('payments', %w[process_refund])
       cleanup_blog_handlers_in_namespace('customer_success', %w[process_refund])
-      
+
       # Clean up blog_examples namespace entirely if it exists
       factory.handler_classes.delete(:blog_examples)
       factory.namespaces.delete(:blog_examples)
@@ -377,21 +373,21 @@ module BlogSpecHelpers
     def cleanup_blog_handlers_in_namespace(namespace_name, handler_names)
       factory = Tasker::HandlerFactory.instance
       namespace_sym = namespace_name.to_sym
-      
+
       # Only clean up if the namespace exists
       return unless factory.handler_classes.key?(namespace_sym)
-      
+
       handler_names.each do |handler_name|
         handler_sym = handler_name.to_sym
         # Remove all versions of this handler
         factory.handler_classes[namespace_sym]&.delete(handler_sym)
       end
-      
+
       # If namespace is now empty, remove it entirely
-      if factory.handler_classes[namespace_sym]&.empty?
-        factory.handler_classes.delete(namespace_sym)
-        factory.namespaces.delete(namespace_sym)
-      end
+      return unless factory.handler_classes[namespace_sym] && factory.handler_classes[namespace_sym].empty?
+
+      factory.handler_classes.delete(namespace_sym)
+      factory.namespaces.delete(namespace_sym)
     end
 
     # Get list of loaded blog files
@@ -538,12 +534,12 @@ module BlogSpecHelpers
 
     # Load step handlers
     load_step_handlers(post, %w[
-      validate_cart_handler
-      process_payment_handler
-      update_inventory_handler
-      create_order_handler
-      send_confirmation_handler
-    ])
+                         validate_cart_handler
+                         process_payment_handler
+                         update_inventory_handler
+                         create_order_handler
+                         send_confirmation_handler
+                       ])
 
     # Load task handler (ConfiguredTask automatically loads YAML and defines step templates)
     load_blog_code(post, 'task_handlers/monitored_checkout_handler.rb')

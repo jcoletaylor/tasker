@@ -7,17 +7,15 @@ module BlogExamples
         def process(task, _sequence, _step)
           # Simple cart validation logic
           # The real observability happens through events
-          
+
           cart_items = task.context['cart_items'] || []
-          
+
           # Validate cart has items
-          if cart_items.empty?
-            raise Tasker::PermanentError, "Cart is empty"
-          end
-          
+          raise Tasker::PermanentError, 'Cart is empty' if cart_items.empty?
+
           # Calculate total
           total = cart_items.sum { |item| item['price'] * item['quantity'] }
-          
+
           # Return validation results
           {
             validated: true,

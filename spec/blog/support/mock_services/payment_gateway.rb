@@ -38,7 +38,7 @@ class MockPaymentGateway < BaseMockService
     default_response = {
       status: 'eligible',
       payment_id: inputs[:payment_id],
-      original_amount: 15000,
+      original_amount: 15_000,
       payment_method: 'credit_card',
       gateway_provider: 'stripe',
       transaction_date: '2024-01-15T10:30:00Z',
@@ -59,7 +59,7 @@ class MockPaymentGateway < BaseMockService
       currency: 'usd',
       gateway_transaction_id: "gtx_#{SecureRandom.hex(6)}",
       processed_at: generate_timestamp,
-      estimated_arrival: (Time.current + 3.days).iso8601
+      estimated_arrival: 3.days.from_now.iso8601
     }
 
     handle_response(:process_refund, default_response)

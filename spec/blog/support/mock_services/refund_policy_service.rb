@@ -43,18 +43,18 @@ class MockRefundPolicyService < BaseMockService
 
   def determine_approval_requirement(inputs)
     # Business logic: require approval for amounts over $100
-    (inputs[:refund_amount] || 0) > 10000 # amounts in cents
+    (inputs[:refund_amount] || 0) > 10_000 # amounts in cents
   end
 
   def calculate_max_refund(inputs)
     # Business logic: max refund based on customer tier
     case inputs[:customer_tier]
     when 'premium'
-      50000 # $500 in cents
+      50_000 # $500 in cents
     when 'standard'
-      20000 # $200 in cents
+      20_000 # $200 in cents
     else
-      10000 # $100 in cents
+      10_000 # $100 in cents
     end
   end
 end
