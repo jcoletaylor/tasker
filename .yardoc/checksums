@@ -4,7 +4,7 @@ lib/tasker/engine.rb e9816d1700f44954d34051315e67b5f8a3089f17
 lib/tasker/errors.rb 1279017c1fc3bc6a7161a01895b5adabecff4e00
 lib/tasker/events.rb 6d0eab4136a9f4b254ab882e078ddb11ddc10bba
 lib/tasker/railtie.rb 193d139de2ceefe9696861daa50ee538b6ca9c21
-lib/tasker/version.rb 748b5833a9f391ba50ba565c0deec957fb609e12
+lib/tasker/version.rb 9e1875f3428ee76223e85b91e3dfa605c00ea2f8
 lib/tasker/registry.rb 9111c3bb57bf606fcd4ba09517431366b4dfa3b3
 lib/tasker/constants.rb d9cbdc1b1f8e7ae071615d8755445d4ef3f5e4cc
 lib/tasker/functions.rb 8b4ff269df4bf0d5bd71b1152a10f0a8b813a3cc
@@ -72,7 +72,7 @@ lib/tasker/health/readiness_checker.rb 6ffab98fec934d16528ff5a88d3cd0f720e30801
 lib/tasker/registry/event_publisher.rb 5c07399c12b8d2b92008b66f0b9a2b22d1551405
 app/graphql/tasker/queries/all_tasks.rb 38c6f26750cf55ec101a092dde5971e2c72d3dab
 app/models/tasker/application_record.rb 5c2bb1aa84f8ee49812e979239316a385657cb1c
-app/models/tasker/workflow_step_edge.rb 4e90d2f89be8a02515f334afea1e4cf241ef3571
+app/models/tasker/workflow_step_edge.rb 30c02a5db9fa002bea964f7d363397a866b663b2
 lib/tasker/constants/registry_events.rb ae003502d8ffd8f7eac5f5017e8e4d5f4f79c164
 lib/tasker/orchestration/coordinator.rb 4bae3c2ec8145b32953572d3624e1fabc032f24c
 lib/tasker/telemetry/metrics_backend.rb 9b2e4bdc60e0ea79d3c2a5e9b5ce98a4e0bf50d8
