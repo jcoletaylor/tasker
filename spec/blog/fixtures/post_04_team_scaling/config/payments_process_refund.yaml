@@ -1,0 +1,63 @@
+name: process_refund
+namespace_name: payments
+version: 2.1.0
+task_handler_class: Payments::ProcessRefundHandler
+description: "Process payment gateway refunds with direct API integration"
+default_dependent_system: "payment_gateway"
+
+schema:
+  type: object
+  required: ['payment_id', 'refund_amount']
+  properties:
+    payment_id:
+      type: string
+      description: "Payment gateway transaction ID"
+    refund_amount:
+      type: number
+      minimum: 0
+      description: "Amount to refund in cents"
+    refund_reason:
+      type: string
+      enum: ['customer_request', 'fraud', 'system_error', 'chargeback']
+      description: "Reason for the refund"
+    partial_refund:
+      type: boolean
+      default: false
+      description: "Whether this is a partial refund"
+    correlation_id:
+      type: string
+      description: "Correlation ID for tracking across systems"
+
+step_templates:
+  - name: validate_payment_eligibility
+    description: "Check if payment can be refunded via gateway"
+    handler_class: "BlogExamples::Post04::StepHandlers::ValidatePaymentEligibilityHandler"
+    default_retryable: true
+    default_retry_limit: 3
+
+  - name: process_gateway_refund
+    description: "Execute refund through payment processor"
+    handler_class: "BlogExamples::Post04::StepHandlers::ProcessGatewayRefundHandler"
+    depends_on_step: validate_payment_eligibility
+    default_retryable: true
+    default_retry_limit: 2
+
+  - name: update_payment_records
+    description: "Update internal payment status and history"
+    handler_class: "BlogExamples::Post04::StepHandlers::UpdatePaymentRecordsHandler"
+    depends_on_step: process_gateway_refund
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 20
+      api_endpoint: "payments/records"
+
+  - name: notify_customer
+    description: "Send refund confirmation to customer"
+    handler_class: "BlogExamples::Post04::StepHandlers::NotifyCustomerHandler"
+    depends_on_step: update_payment_records
+    default_retryable: true
+    default_retry_limit: 5
+    handler_config:
+      timeout_seconds: 10
+      notification_type: "refund_confirmation"

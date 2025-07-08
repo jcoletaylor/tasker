@@ -261,3 +261,104 @@ Strategic separation enables infrastructure consistency with workload flexibilit
 - **Query Optimization**: 3-layer index strategy with N+1 prevention (migrations 2025-06-03 to 2025-06-28)
 - **Dynamic Concurrency**: System health-based concurrency calculation (StepExecutor:97-683)
 - **Test Validation**: 1,692 passing tests confirm comprehensive performance infrastructure
+
+## Blog Example Development Status
+
+The blog examples demonstrate Tasker's capabilities through progressive real-world scenarios. Each post builds on previous concepts with complete, working implementations.
+
+### Completed Blog Posts
+
+#### Post 01: E-commerce Reliability ✅ 
+- **Status**: Complete - All tests passing
+- **Features**: Basic workflow orchestration, retry logic, error handling
+- **Location**: `spec/blog/fixtures/post_01_ecommerce_reliability/`
+- **Demonstrates**: Order processing workflow with cart validation, payment processing, inventory management, order creation, and confirmation emails
+
+#### Post 02: Data Pipeline Resilience ✅
+- **Status**: Complete - All tests passing  
+- **Features**: Complex data processing workflows, batch operations, analytics
+- **Location**: `spec/blog/fixtures/post_02_data_pipeline_resilience/`
+- **Demonstrates**: Customer analytics pipeline with data extraction, transformation, insight generation, and reporting
+
+#### Post 03: Microservices Coordination ✅
+- **Status**: Complete - All tests passing
+- **Features**: Cross-service orchestration, API request handling, distributed transactions
+- **Location**: `spec/blog/fixtures/post_03_microservices_coordination/`
+- **Demonstrates**: User registration workflow coordinating user accounts, billing, preferences, and notifications
+
+#### Post 04: Team Scaling ✅
+- **Status**: Complete - All 27 tests passing
+- **Features**: Cross-namespace workflows, team separation, shared resources
+- **Location**: `spec/blog/fixtures/post_04_team_scaling/`
+- **Demonstrates**: Refund processing showing payments and customer success teams working together
+- **Key Pattern**: Cross-namespace workflow coordination with `execute_refund_workflow_handler.rb`
+
+### In Progress Blog Posts
+
+#### Post 05: Production Observability 🔧
+- **Status**: 90% Complete - Infrastructure ready, debugging workflow execution
+- **Features**: Event-driven observability, metrics collection, error reporting, SLA monitoring
+- **Location**: `spec/blog/fixtures/post_05_production_observability/`
+- **Demonstrates**: E-commerce checkout with comprehensive event tracking and business metrics
+
+**Completed Components**:
+- ✅ Handler registration and YAML configuration
+- ✅ Event subscribers for business metrics and performance monitoring
+- ✅ Mock metrics service (DataDog-like) with counters, histograms, gauges, timers
+- ✅ Mock error reporting service (Sentry-like) with exception tracking, breadcrumbs, user context
+- ✅ Complete step handlers for monitored checkout workflow
+- ✅ Integration test framework setup
+
+**Current Issue**:
+- 🔧 Workflow execution debugging - task remains pending instead of executing steps
+- 🔧 Event subscriber registration needs re-enabling after core workflow works
+
+**Mock Services Created**:
+- `MockMetricsService`: Simulates DataDog-style metrics with comprehensive test helpers
+- `MockErrorReportingService`: Simulates Sentry-style error tracking with context management
+
+### Planned Blog Posts
+
+#### Post 06: Enterprise Security 📋
+- **Status**: Pending
+- **Features**: Authentication, authorization, audit trails, compliance
+- **Planned Demonstrations**: Secure workflows with role-based access, audit logging, compliance reporting
+
+### Blog Example Infrastructure
+
+#### Handler Registration System
+- **Pre-registration**: All blog handlers registered at test suite startup via `handler_registration_helpers.rb`
+- **Namespace Management**: Clean separation between `blog_examples`, `payments`, and `customer_success` namespaces
+- **Version Management**: Proper semantic versioning (1.0.0 for blog_examples, 2.1.0 for payments, 1.3.0 for customer_success)
+
+#### Mock Services Architecture
+- **Base Pattern**: All mock services extend `BaseMockService` with consistent call logging and failure simulation
+- **Service Coverage**: Payment, email, inventory, data warehouse, dashboard, user, billing, preferences, notifications, metrics, error reporting
+- **Test Integration**: Automatic reset and cleanup between tests with comprehensive assertion helpers
+
+#### Test Patterns
+- **Blog Spec Helper**: Centralized utilities for loading blog code, creating test tasks, executing workflows
+- **Consistent Structure**: All posts follow same directory pattern with `step_handlers/`, `task_handlers/`, `config/`, `event_subscribers/`
+- **Error Handling**: Graceful handling of missing files and configuration issues with clear skip messages
+
+### Development Commands for Blog Examples
+
+```bash
+# Run specific blog post tests
+bundle exec rspec spec/blog/post_01_ecommerce_reliability/
+bundle exec rspec spec/blog/post_04_team_scaling/
+bundle exec rspec spec/blog/post_05_production_observability/
+
+# Run all blog tests
+bundle exec rspec spec/blog/
+
+# Debug specific blog workflow
+bundle exec rspec spec/blog/post_05_production_observability/integration/production_observability_workflow_spec.rb:79 -f d
+```
+
+### Next Steps
+
+1. **Complete Post 05**: Debug workflow execution issue and re-enable event subscriber testing
+2. **Implement Post 06**: Create enterprise security features with authentication, authorization, and audit trails
+3. **Documentation**: Update blog posts with working code examples and setup instructions
+4. **Cross-project Integration**: Ensure blog examples work with tasker-core-rs performance optimizations
