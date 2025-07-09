@@ -20,17 +20,18 @@ module Tasker
     end
 
     def self.sibling_sql(step_id)
+      sanitized_id = connection.quote(step_id)
       <<~SQL.squish
         WITH step_parents AS (
           SELECT from_step_id
           FROM tasker_workflow_step_edges
-          WHERE to_step_id = #{step_id}
+          WHERE to_step_id = #{sanitized_id}
         ),
         potential_siblings AS (
           SELECT to_step_id
           FROM tasker_workflow_step_edges
           WHERE from_step_id IN (SELECT from_step_id FROM step_parents)
-          AND to_step_id != #{step_id}
+          AND to_step_id != #{sanitized_id}
         ),
         siblings AS (
           SELECT to_step_id
