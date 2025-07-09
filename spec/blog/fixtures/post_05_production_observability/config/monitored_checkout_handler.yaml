@@ -1,0 +1,67 @@
+# Monitored Checkout Handler Configuration
+# This handler demonstrates a workflow that generates observable events
+
+name: monitored_checkout
+namespace_name: blog_examples
+version: 1.0.0
+description: "E-commerce checkout workflow with comprehensive event tracking"
+task_handler_class: "BlogExamples::Post05::TaskHandlers::MonitoredCheckoutHandler"
+default_dependent_system: "ecommerce_platform"
+
+# Step templates configuration  
+step_templates:
+  - name: validate_cart
+    description: "Validate cart contents and pricing"
+    handler_class: "BlogExamples::Post05::StepHandlers::ValidateCartHandler"
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 10
+
+  - name: process_payment
+    description: "Process payment through gateway"
+    depends_on_step: validate_cart
+    handler_class: "BlogExamples::Post05::StepHandlers::ProcessPaymentHandler"
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 30
+
+  - name: update_inventory
+    description: "Update inventory levels"
+    depends_on_step: process_payment
+    handler_class: "BlogExamples::Post05::StepHandlers::UpdateInventoryHandler"
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 15
+
+  - name: create_order
+    description: "Create order record"
+    depends_on_step: update_inventory
+    handler_class: "BlogExamples::Post05::StepHandlers::CreateOrderHandler"
+    default_retryable: true
+    default_retry_limit: 2
+    handler_config:
+      timeout_seconds: 10
+
+  - name: send_confirmation
+    description: "Send order confirmation"
+    depends_on_step: create_order
+    handler_class: "BlogExamples::Post05::StepHandlers::SendConfirmationHandler"
+    default_retryable: true
+    default_retry_limit: 3
+    handler_config:
+      timeout_seconds: 20
+
+# Handler-level configuration
+handler_config:
+  business_metrics:
+    track_revenue: true
+    track_conversion: true
+    customer_tier_tracking: true
+  
+  monitoring:
+    critical_workflow: true
+    sla_seconds: 45
+    alert_on_failure: true

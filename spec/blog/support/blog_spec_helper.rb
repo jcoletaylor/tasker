@@ -15,6 +15,8 @@ require_relative 'mock_services/user_service'
 require_relative 'mock_services/billing_service'
 require_relative 'mock_services/preferences_service'
 require_relative 'mock_services/notification_service'
+require_relative 'mock_services/metrics_service'
+require_relative 'mock_services/error_reporting_service'
 
 module BlogSpecHelpers
   # Path to the blog fixtures within the Tasker repository
@@ -65,12 +67,18 @@ module BlogSpecHelpers
     )
 
     # Get the handler and initialize the task
-    # If no version specified, use 1.0.0 for blog examples (from YAML configs)
+    # If no version specified, use defaults based on namespace
     handler = if version
                 Tasker::HandlerFactory.instance.get(name, namespace_name: namespace, version: version)
               elsif namespace == 'blog_examples'
                 # Blog examples use version 1.0.0 from YAML configurations
                 Tasker::HandlerFactory.instance.get(name, namespace_name: namespace, version: '1.0.0')
+              elsif namespace == 'payments'
+                # Post 04 payments namespace uses version 2.1.0
+                Tasker::HandlerFactory.instance.get(name, namespace_name: namespace, version: '2.1.0')
+              elsif namespace == 'customer_success'
+                # Post 04 customer_success namespace uses version 1.3.0
+                Tasker::HandlerFactory.instance.get(name, namespace_name: namespace, version: '1.3.0')
               else
                 Tasker::HandlerFactory.instance.get(name, namespace_name: namespace)
               end
@@ -110,17 +118,35 @@ module BlogSpecHelpers
   def execute_workflow(task, timeout: 30)
     # Get the task handler for the task
     # For blog examples, use version 1.0.0 from YAML configurations
-    handler = if task.namespace_name == 'blog_examples'
+    # For Post 04, use specific versions from YAML
+    handler = case task.namespace_name
+              when 'blog_examples'
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '1.0.0')
+              when 'payments'
+                Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '2.1.0')
+              when 'customer_success'
+                Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name, version: '1.3.0')
               else
                 Tasker::HandlerFactory.instance.get(task.name, namespace_name: task.namespace_name)
               end
 
+    puts "Debug: About to execute handler.handle(task) for task #{task.name}"
+    puts "Debug: Task status before handler.handle: #{task.status}"
+    puts "Debug: Handler class: #{handler.class}"
+
     # Execute the workflow using the task handler
-    handler.handle(task)
+    begin
+      result = handler.handle(task)
+      puts "Debug: Handler.handle returned: #{result.inspect}"
+    rescue StandardError => e
+      puts "Debug: Handler.handle raised error: #{e.class} - #{e.message}"
+      puts "Debug: Error backtrace: #{e.backtrace.first(5).join('\n')}"
+      raise e
+    end
 
     # The task should be completed synchronously in test mode
     task.reload
+    puts "Debug: Task status after handler.handle and reload: #{task.status}"
   end
 
   # Verify workflow execution results
@@ -227,12 +253,40 @@ module BlogSpecHelpers
     }
   end
 
+  # Create sample test data for Post 04 payments refund examples
+  def sample_payments_refund_context
+    {
+      'payment_id' => 'pay_123456789',
+      'refund_amount' => 7500,
+      'refund_reason' => 'customer_request',
+      'partial_refund' => false,
+      'correlation_id' => 'test_correlation_123'
+    }
+  end
+
+  # Create sample test data for Post 04 customer success refund examples
+  def sample_customer_success_refund_context
+    {
+      'ticket_id' => 'TICKET-98765',
+      'customer_id' => 'CUST-54321',
+      'refund_amount' => 12_000,
+      'refund_reason' => 'Product defect reported by customer',
+      'agent_notes' => 'Customer reported product malfunction after 2 weeks of use',
+      'requires_approval' => true,
+      'correlation_id' => 'cs_workflow_456',
+      'customer_email' => 'customer@example.com',
+      'payment_id' => 'pay_987654321'
+    }
+  end
+
   # Class methods for environment management
   class << self
     # Reset the blog test environment
     def reset_blog_environment!
       @loaded_files = []
       reset_mock_services!
+      cleanup_blog_database_state!
+      cleanup_blog_handler_registrations!
       # NOTE: We no longer cleanup blog namespaces since handlers are pre-registered
       # cleanup_blog_namespaces!
     end
@@ -247,9 +301,15 @@ module BlogSpecHelpers
         MockDataWarehouseService
         MockDashboardService
         MockAnalyticsService
+        MockMetricsService
+        MockErrorReportingService
       ].each do |service_name|
         Object.const_get(service_name).reset! if Object.const_defined?(service_name)
       end
+
+      # Reset global Tasker service instances
+      Tasker.reset_metrics! if defined?(Tasker.reset_metrics!)
+      Tasker.reset_error_reporter! if defined?(Tasker.reset_error_reporter!)
 
       # Reset new-style mock services (instance-level reset)
       %w[
@@ -262,6 +322,72 @@ module BlogSpecHelpers
           BlogExamples::MockServices.const_get(service_name).new.reset!
         end
       end
+    end
+
+    # Clean up blog-specific database state to prevent test leakage
+    def cleanup_blog_database_state!
+      # Remove blog-specific namespaces that might leak to other tests
+      blog_namespaces = %w[blog_examples payments customer_success]
+
+      blog_namespaces.each do |namespace_name|
+        namespace = Tasker::TaskNamespace.find_by(name: namespace_name)
+        next unless namespace
+
+        # Clean up tasks in this namespace using the correct scope
+        Tasker::Task.in_namespace(namespace_name).destroy_all
+
+        # Get named tasks that need to be cleaned up
+        named_tasks = Tasker::NamedTask.where(task_namespace: namespace)
+
+        # Clean up join table records first to avoid foreign key constraint violations
+        named_tasks.each do |named_task|
+          Tasker::NamedTasksNamedStep.where(named_task: named_task).destroy_all
+        end
+
+        # Now clean up named tasks in this namespace
+        named_tasks.destroy_all
+
+        # Clean up the namespace itself
+        namespace.destroy
+
+        # Clean up any remaining orphaned tasks from blog tests
+        Tasker::Task.in_namespace(namespace_name).destroy_all if Tasker::TaskNamespace.find_by(name: namespace_name)
+      end
+    end
+
+    # Clean up blog-specific handler registrations to prevent test leakage
+    def cleanup_blog_handler_registrations!
+      factory = Tasker::HandlerFactory.instance
+
+      # Remove blog handlers that interfere with core tests
+      # Post 04 registers process_refund in payments namespace, which conflicts with core process_payment handlers
+      cleanup_blog_handlers_in_namespace('payments', %w[process_refund])
+      cleanup_blog_handlers_in_namespace('customer_success', %w[process_refund])
+
+      # Clean up blog_examples namespace entirely if it exists
+      factory.handler_classes.delete(:blog_examples)
+      factory.namespaces.delete(:blog_examples)
+    end
+
+    # Clean up specific handlers in a namespace
+    def cleanup_blog_handlers_in_namespace(namespace_name, handler_names)
+      factory = Tasker::HandlerFactory.instance
+      namespace_sym = namespace_name.to_sym
+
+      # Only clean up if the namespace exists
+      return unless factory.handler_classes.key?(namespace_sym)
+
+      handler_names.each do |handler_name|
+        handler_sym = handler_name.to_sym
+        # Remove all versions of this handler
+        factory.handler_classes[namespace_sym]&.delete(handler_sym)
+      end
+
+      # If namespace is now empty, remove it entirely
+      return unless factory.handler_classes[namespace_sym] && factory.handler_classes[namespace_sym].empty?
+
+      factory.handler_classes.delete(namespace_sym)
+      factory.namespaces.delete(namespace_sym)
     end
 
     # Get list of loaded blog files
@@ -298,6 +424,10 @@ module BlogSpecHelpers
       load_post_02_code
     when 'post_03_microservices_coordination'
       load_post_03_code
+    when 'post_04_team_scaling'
+      load_post_04_code
+    when 'post_05_production_observability'
+      load_post_05_code
     else
       raise "Unknown blog post: #{post_name}"
     end
@@ -372,6 +502,55 @@ module BlogSpecHelpers
     # NOTE: Handler registration is now done at test suite startup to avoid threading issues
     # The handler is pre-registered in handler_registration_helpers.rb
   end
+
+  # Load Post 04 (Team Scaling) code
+  def load_post_04_code
+    post = 'post_04_team_scaling'
+
+    # Load payments team step handlers
+    load_blog_code(post, 'step_handlers/payments/validate_payment_eligibility_handler.rb')
+    load_blog_code(post, 'step_handlers/payments/process_gateway_refund_handler.rb')
+    load_blog_code(post, 'step_handlers/payments/update_payment_records_handler.rb')
+    load_blog_code(post, 'step_handlers/payments/notify_customer_handler.rb')
+
+    # Load customer success team step handlers
+    load_blog_code(post, 'step_handlers/customer_success/validate_refund_request_handler.rb')
+    load_blog_code(post, 'step_handlers/customer_success/check_refund_policy_handler.rb')
+    load_blog_code(post, 'step_handlers/customer_success/get_manager_approval_handler.rb')
+    load_blog_code(post, 'step_handlers/customer_success/execute_refund_workflow_handler.rb')
+    load_blog_code(post, 'step_handlers/customer_success/update_ticket_status_handler.rb')
+
+    # Load task handlers (ConfiguredTask automatically loads YAML and defines step templates)
+    load_blog_code(post, 'task_handlers/payments_process_refund_handler.rb')
+    load_blog_code(post, 'task_handlers/customer_success_process_refund_handler.rb')
+
+    # NOTE: Handler registration is now done at test suite startup to avoid threading issues
+    # The handler is pre-registered in handler_registration_helpers.rb
+  end
+
+  # Load Post 05 (Production Observability) code
+  def load_post_05_code
+    post = 'post_05_production_observability'
+
+    # Load step handlers
+    load_step_handlers(post, %w[
+                         validate_cart_handler
+                         process_payment_handler
+                         update_inventory_handler
+                         create_order_handler
+                         send_confirmation_handler
+                       ])
+
+    # Load task handler (ConfiguredTask automatically loads YAML and defines step templates)
+    load_blog_code(post, 'task_handlers/monitored_checkout_handler.rb')
+
+    # Load event subscribers (for observability testing)
+    load_blog_code(post, 'event_subscribers/business_metrics_subscriber.rb')
+    load_blog_code(post, 'event_subscribers/performance_monitoring_subscriber.rb')
+
+    # NOTE: Handler registration is now done at test suite startup to avoid threading issues
+    # The handler is pre-registered in handler_registration_helpers.rb
+  end
 end
 
 # Configure RSpec to include blog helpers
@@ -392,20 +571,32 @@ RSpec.configure do |config|
     begin
       example.run
     ensure
-      # Clean up mock services after each blog test
-      # NOTE: We no longer clean up blog namespaces since handlers are pre-registered
+      # Clean up mock services and database state after each blog test
+      # NOTE: Don't clean up handler registrations since they're pre-registered at test suite startup
+      # and cleaning them up would cause "handler not found" errors in subsequent tests
       BlogSpecHelpers.reset_mock_services!
+      BlogSpecHelpers.cleanup_blog_database_state!
+      # BlogSpecHelpers.cleanup_blog_handler_registrations! # Commented out to prevent handler cleanup
     end
   end
 
   # Global cleanup to ensure mock services don't leak to NON-BLOG tests
   config.before do |example|
     # Reset mock services for non-blog tests to ensure clean state
-    BlogSpecHelpers.reset_mock_services! unless example.file_path.include?('/blog/')
+    unless example.file_path.include?('/blog/')
+      BlogSpecHelpers.reset_mock_services!
+      BlogSpecHelpers.cleanup_blog_database_state!
+      # NOTE: Don't clean up handler registrations for non-blog tests either
+      # since handlers_spec.rb now expects blog handlers to coexist
+      # BlogSpecHelpers.cleanup_blog_handler_registrations! # Commented out
+    end
   end
 
   # Final cleanup to ensure mock services don't leak to other tests
   config.after(:suite) do
     BlogSpecHelpers.reset_mock_services!
+    BlogSpecHelpers.cleanup_blog_database_state!
+    # NOTE: Don't cleanup handlers at suite end since they may be needed by other test files
+    # BlogSpecHelpers.cleanup_blog_handler_registrations! # Commented out
   end
 end

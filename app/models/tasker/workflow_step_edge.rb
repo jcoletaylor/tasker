@@ -11,26 +11,27 @@ module Tasker
 
     scope :children_of, ->(step) { where(from_step: step) }
     scope :parents_of, ->(step) { where(to_step: step) }
-    scope :siblings_of, ->(step) { find_by_sql(sibling_sql(step.id)) }
+    scope :siblings_of, ->(step) { find_by_sql(sibling_sql(step.workflow_step_id)) }
     scope :provides_edges, -> { where(name: WorkflowStep::PROVIDES_EDGE_NAME) }
-    scope :provides_to_children, -> { where(name: WorkflowStep::PROVIDES_EDGE_NAME, to_step: children_of(from_step)) }
+    scope :provides_to_children, ->(step) { where(name: WorkflowStep::PROVIDES_EDGE_NAME, to_step: children_of(step)) }
 
     def self.create_edge!(from_step, to_step, name)
       create!(from_step: from_step, to_step: to_step, name: name)
     end
 
     def self.sibling_sql(step_id)
+      sanitized_id = connection.quote(step_id)
       <<~SQL.squish
         WITH step_parents AS (
           SELECT from_step_id
           FROM tasker_workflow_step_edges
-          WHERE to_step_id = #{step_id}
+          WHERE to_step_id = #{sanitized_id}
         ),
         potential_siblings AS (
           SELECT to_step_id
           FROM tasker_workflow_step_edges
           WHERE from_step_id IN (SELECT from_step_id FROM step_parents)
-          AND to_step_id != #{step_id}
+          AND to_step_id != #{sanitized_id}
         ),
         siblings AS (
           SELECT to_step_id

@@ -107,6 +107,8 @@ class BaseMockService
                           MockDashboardService
                         when 'payment'
                           MockPaymentService
+                        when 'payment_gateway'
+                          MockPaymentGateway
                         when 'email'
                           MockEmailService
                         when 'inventory'
@@ -138,6 +140,15 @@ class BaseMockService
                                            [MockDashboardService::TimeoutError, 'Slack API rate limit exceeded']
                                          else
                                            [MockDashboardService::TimeoutError, "Mock failure for #{method}"]
+                                         end
+                                       when 'payment_gateway'
+                                         case method
+                                         when 'process_refund'
+                                           [MockPaymentGateway::ServiceError, 'Payment gateway connection failed']
+                                         when 'validate_payment_eligibility'
+                                           [MockPaymentGateway::ServiceError, 'Payment validation service unavailable']
+                                         else
+                                           [MockPaymentGateway::ServiceError, "Mock failure for #{method}"]
                                          end
                                        else
                                          [StandardError, "Mock failure for #{method}"]

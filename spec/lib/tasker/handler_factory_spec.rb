@@ -171,7 +171,7 @@ module Tasker
           end
 
           # Namespace should not be polluted with failed registrations
-          expect(factory.handler_classes).not_to have_key(:payments)
+          expect(factory.handler_classes.dig(:payments, :broken_handler)).to be_nil
         end
 
         it 'successfully registers handlers with valid custom event configuration' do

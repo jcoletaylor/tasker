@@ -103,7 +103,8 @@ module HandlerRegistrationHelpers
     blog_handlers = {
       'order_processing' => 'BlogExamples::Post01::OrderProcessingHandler',
       'customer_analytics' => 'BlogExamples::Post02::CustomerAnalyticsHandler',
-      'user_registration' => 'BlogExamples::Post03::UserRegistrationHandler'
+      'user_registration' => 'BlogExamples::Post03::UserRegistrationHandler',
+      'monitored_checkout' => 'BlogExamples::Post05::TaskHandlers::MonitoredCheckoutHandler'
     }
 
     blog_options = {
@@ -121,6 +122,9 @@ module HandlerRegistrationHelpers
     rescue StandardError => e
       Rails.logger.error { "Error registering blog handler #{name}: #{e.class} - #{e.message}" }
     end
+
+    # Register Post 04 handlers in their specific namespaces
+    register_post_04_handlers
   end
 
   # Override factory.register method calls to use safe registration
@@ -183,6 +187,20 @@ module HandlerRegistrationHelpers
     rescue StandardError => e
       Rails.logger.warn { "Could not load Post 03 blog code: #{e.message}" }
     end
+
+    # Load Post 04 code
+    begin
+      load_blog_post_code('post_04_team_scaling', blog_fixtures_root)
+    rescue StandardError => e
+      Rails.logger.warn { "Could not load Post 04 blog code: #{e.message}" }
+    end
+
+    # Load Post 05 code
+    begin
+      load_blog_post_code('post_05_production_observability', blog_fixtures_root)
+    rescue StandardError => e
+      Rails.logger.warn { "Could not load Post 05 blog code: #{e.message}" }
+    end
   end
 
   # Load blog post code for a specific post
@@ -198,6 +216,10 @@ module HandlerRegistrationHelpers
       load_post_02_code(blog_fixtures_root)
     when 'post_03_microservices_coordination'
       load_post_03_code(blog_fixtures_root)
+    when 'post_04_team_scaling'
+      load_post_04_code(blog_fixtures_root)
+    when 'post_05_production_observability'
+      load_post_05_code(blog_fixtures_root)
     end
   end
 
@@ -266,6 +288,81 @@ module HandlerRegistrationHelpers
 
     # Load task handler
     require File.join(post_path, 'task_handler', 'user_registration_handler.rb')
+  end
+
+  # Load Post 04 code
+  #
+  # @param blog_fixtures_root [String] Root path to blog fixtures
+  # @return [void]
+  def load_post_04_code(blog_fixtures_root)
+    post_path = File.join(blog_fixtures_root, 'post_04_team_scaling')
+
+    # Load payments team step handlers
+    require File.join(post_path, 'step_handlers', 'payments', 'validate_payment_eligibility_handler.rb')
+    require File.join(post_path, 'step_handlers', 'payments', 'process_gateway_refund_handler.rb')
+    require File.join(post_path, 'step_handlers', 'payments', 'update_payment_records_handler.rb')
+    require File.join(post_path, 'step_handlers', 'payments', 'notify_customer_handler.rb')
+
+    # Load customer success team step handlers
+    require File.join(post_path, 'step_handlers', 'customer_success', 'validate_refund_request_handler.rb')
+    require File.join(post_path, 'step_handlers', 'customer_success', 'check_refund_policy_handler.rb')
+    require File.join(post_path, 'step_handlers', 'customer_success', 'get_manager_approval_handler.rb')
+    require File.join(post_path, 'step_handlers', 'customer_success', 'execute_refund_workflow_handler.rb')
+    require File.join(post_path, 'step_handlers', 'customer_success', 'update_ticket_status_handler.rb')
+
+    # Load task handlers
+    require File.join(post_path, 'task_handlers', 'payments_process_refund_handler.rb')
+    require File.join(post_path, 'task_handlers', 'customer_success_process_refund_handler.rb')
+  end
+
+  # Load Post 05 code
+  def load_post_05_code(blog_fixtures_root)
+    post_path = File.join(blog_fixtures_root, 'post_05_production_observability')
+
+    # Load event subscribers
+    require File.join(post_path, 'event_subscribers', 'business_metrics_subscriber.rb')
+    require File.join(post_path, 'event_subscribers', 'performance_monitoring_subscriber.rb')
+
+    # Load step handlers
+    %w[
+      validate_cart_handler
+      process_payment_handler
+      update_inventory_handler
+      create_order_handler
+      send_confirmation_handler
+    ].each do |handler_name|
+      require File.join(post_path, 'step_handlers', "#{handler_name}.rb")
+    end
+
+    # Load task handler
+    require File.join(post_path, 'task_handlers', 'monitored_checkout_handler.rb')
+  end
+
+  # Register Post 04 handlers in their specific namespaces
+  #
+  # @return [void]
+  def register_post_04_handlers
+    # Register payments namespace handlers
+    payments_options = {
+      namespace_name: 'payments',
+      version: '2.1.0',
+      replace: true
+    }
+
+    safe_register_handler('process_refund', Payments::ProcessRefundHandler, **payments_options)
+
+    # Register customer success namespace handlers
+    customer_success_options = {
+      namespace_name: 'customer_success',
+      version: '1.3.0',
+      replace: true
+    }
+
+    safe_register_handler('process_refund', CustomerSuccess::ProcessRefundHandler, **customer_success_options)
+  rescue NameError => e
+    Rails.logger.warn { "Could not register Post 04 handlers: #{e.message}" }
+  rescue StandardError => e
+    Rails.logger.error { "Error registering Post 04 handlers: #{e.class} - #{e.message}" }
   end
 end
 
