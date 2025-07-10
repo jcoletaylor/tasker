@@ -674,7 +674,7 @@ class TaskerAppGenerator < Thor
     tasker_gem_lines = <<~GEMS
 
       # Tasker workflow orchestration
-      gem 'tasker-engine', "'#{TASKER_VERSION}'"
+      gem 'tasker-engine', TASKER_VERSION
     GEMS
 
     # Add production-ready infrastructure gems
@@ -1396,7 +1396,7 @@ class TaskerAppGenerator < Thor
       gem 'redis', '~> 5.0'
 
       # Tasker workflow orchestration
-      gem 'tasker-engine', "'#{TASKER_VERSION}'"
+      gem 'tasker-engine', TASKER_VERSION
 
       # Production infrastructure
       gem 'sidekiq', '~> 7.0'
