@@ -253,23 +253,25 @@
 44
 45
 46
-47</pre>
+47
+48</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'app/models/tasker/workflow_step_edge.rb', line 22</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_sibling_sql'>sibling_sql</span><span class='lparen'>(</span><span class='id identifier rubyid_step_id'>step_id</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_sanitized_id'>sanitized_id</span> <span class='op'>=</span> <span class='id identifier rubyid_connection'>connection</span><span class='period'>.</span><span class='id identifier rubyid_quote'>quote</span><span class='lparen'>(</span><span class='id identifier rubyid_step_id'>step_id</span><span class='rparen'>)</span>
   <span class='heredoc_beg'>&lt;&lt;~SQL</span><span class='period'>.</span><span class='id identifier rubyid_squish'>squish</span>
 <span class='tstring_content'>    WITH step_parents AS (
 </span><span class='tstring_content'>      SELECT from_step_id
 </span><span class='tstring_content'>      FROM tasker_workflow_step_edges
-</span><span class='tstring_content'>      WHERE to_step_id = </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step_id'>step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>
+</span><span class='tstring_content'>      WHERE to_step_id = </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_sanitized_id'>sanitized_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>
 </span><span class='tstring_content'>    ),
 </span><span class='tstring_content'>    potential_siblings AS (
 </span><span class='tstring_content'>      SELECT to_step_id
 </span><span class='tstring_content'>      FROM tasker_workflow_step_edges
 </span><span class='tstring_content'>      WHERE from_step_id IN (SELECT from_step_id FROM step_parents)
-</span><span class='tstring_content'>      AND to_step_id != </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_step_id'>step_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>
+</span><span class='tstring_content'>      AND to_step_id != </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_sanitized_id'>sanitized_id</span><span class='embexpr_end'>}</span><span class='tstring_content'>
 </span><span class='tstring_content'>    ),
 </span><span class='tstring_content'>    siblings AS (
 </span><span class='tstring_content'>      SELECT to_step_id
@@ -294,7 +296,7 @@
 </div>
 
       <div id="footer">
-  Generated on Tue Jul  8 17:57:05 2025 by
+  Generated on Thu Jul 10 08:40:44 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
