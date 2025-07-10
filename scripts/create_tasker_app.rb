@@ -22,8 +22,6 @@ require 'fileutils'
 require 'yaml'
 require 'active_support/core_ext/string'
 
-TASKER_VERSION = '~> 1.0.4' # Use latest published version
-
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
   # Fix Thor deprecation warning
@@ -60,7 +58,7 @@ class TaskerAppGenerator < Thor
     say "🚀 Generating Tasker Application: #{@app_name}", :green
     say "📋 Selected templates: #{@tasks.join(', ')}", :cyan
     say "📍 Output directory: #{@output_dir}", :cyan
-    say "🔗 Using Tasker gem version: #{TASKER_VERSION}", :cyan
+    say "🔗 Using Latest Tasker gem version", :cyan
 
     # Validate templates directory and required files
     validate_templates_directory
@@ -674,7 +672,7 @@ class TaskerAppGenerator < Thor
     tasker_gem_lines = <<~GEMS
 
       # Tasker workflow orchestration
-      gem 'tasker-engine', TASKER_VERSION
+      gem 'tasker-engine'
     GEMS
 
     # Add production-ready infrastructure gems
@@ -1396,7 +1394,7 @@ class TaskerAppGenerator < Thor
       gem 'redis', '~> 5.0'
 
       # Tasker workflow orchestration
-      gem 'tasker-engine', TASKER_VERSION
+      gem 'tasker-engine'
 
       # Production infrastructure
       gem 'sidekiq', '~> 7.0'
