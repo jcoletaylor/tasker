@@ -24,7 +24,7 @@ require 'active_support/core_ext/string'
 
 class TaskerAppGenerator < Thor
   TEMPLATES_DIR = File.expand_path('templates', __dir__)
-  TASKER_VERSION = '~> 2.6.1' # Use latest published version
+  TASKER_VERSION = '~> 1.0.4' # Use latest published version
 
   # Fix Thor deprecation warning
   def self.exit_on_failure?
