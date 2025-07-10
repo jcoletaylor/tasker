@@ -331,36 +331,28 @@ BEGIN
     -- Current State Information (optimized using most_recent flag)
     COALESCE(current_state.to_state, 'pending')::TEXT as current_state,
 
-    -- Dependency Analysis (calculated from direct joins)
+    -- Dependency Satisfaction Analysis
     CASE
-      WHEN dep_edges.to_step_id IS NULL THEN true  -- Root steps (no parents)
-      WHEN COUNT(dep_edges.from_step_id) = 0 THEN true  -- Steps with zero dependencies
-      WHEN COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id) THEN true
-      ELSE false
+      WHEN dep_edges.to_step_id IS NULL OR
+           COUNT(dep_edges.from_step_id) = 0 THEN true
+      ELSE
+        COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id)
     END as dependencies_satisfied,
 
-    -- Simplified Retry & Backoff Analysis
+    -- Retry Eligibility
     CASE
-      WHEN ws.attempts >= COALESCE(ws.retry_limit, 3) THEN false
-      WHEN ws.attempts > 0 AND COALESCE(ws.retryable, true) = false THEN false
-      WHEN last_failure.created_at IS NULL THEN true
-      WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
-        ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()
-      WHEN last_failure.created_at IS NOT NULL THEN
-        last_failure.created_at + (
-          LEAST(power(2, COALESCE(ws.attempts, 1)) * interval '1 second', interval '30 seconds')
-        ) <= NOW()
-      ELSE true
+      WHEN COALESCE(ws.attempts, 0) < COALESCE(ws.retry_limit, 3) THEN true
+      ELSE false
     END as retry_eligible,
 
-    -- Simplified Final Readiness Calculation
+    -- Overall Ready for Execution (complex business logic)
     CASE
       WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
       AND (ws.processed = false OR ws.processed IS NULL)  -- CRITICAL: Only unprocessed steps can be ready
       AND (dep_edges.to_step_id IS NULL OR
            COUNT(dep_edges.from_step_id) = 0 OR
            COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
-      AND (ws.attempts < COALESCE(ws.retry_limit, 3))
+      AND (COALESCE(ws.attempts, 0) < COALESCE(ws.retry_limit, 3))  -- FIXED: Handle NULL attempts
       AND (COALESCE(ws.retryable, true) = true)
       AND (ws.in_process = false OR ws.in_process IS NULL)
       AND (
@@ -395,7 +387,7 @@ BEGIN
     COALESCE(COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END), 0)::INTEGER as completed_parents,
 
     -- Retry Context
-    ws.attempts,
+    COALESCE(ws.attempts, 0)::INTEGER as attempts,  -- FIXED: Return 0 instead of NULL
     COALESCE(ws.retry_limit, 3) as retry_limit,
     ws.backoff_request_seconds,
     ws.last_attempted_at
@@ -455,36 +447,28 @@ BEGIN
     -- Current State Information (optimized using most_recent flag)
     COALESCE(current_state.to_state, 'pending')::TEXT as current_state,
 
-    -- Dependency Analysis (calculated from direct joins)
+    -- Dependency Satisfaction Analysis
     CASE
-      WHEN dep_edges.to_step_id IS NULL THEN true  -- Root steps (no parents)
-      WHEN COUNT(dep_edges.from_step_id) = 0 THEN true  -- Steps with zero dependencies
-      WHEN COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id) THEN true
-      ELSE false
+      WHEN dep_edges.to_step_id IS NULL OR
+           COUNT(dep_edges.from_step_id) = 0 THEN true
+      ELSE
+        COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id)
     END as dependencies_satisfied,
 
-    -- Simplified Retry & Backoff Analysis
+    -- Retry Eligibility
     CASE
-      WHEN ws.attempts >= COALESCE(ws.retry_limit, 3) THEN false
-      WHEN ws.attempts > 0 AND COALESCE(ws.retryable, true) = false THEN false
-      WHEN last_failure.created_at IS NULL THEN true
-      WHEN ws.backoff_request_seconds IS NOT NULL AND ws.last_attempted_at IS NOT NULL THEN
-        ws.last_attempted_at + (ws.backoff_request_seconds * interval '1 second') <= NOW()
-      WHEN last_failure.created_at IS NOT NULL THEN
-        last_failure.created_at + (
-          LEAST(power(2, COALESCE(ws.attempts, 1)) * interval '1 second', interval '30 seconds')
-        ) <= NOW()
-      ELSE true
+      WHEN COALESCE(ws.attempts, 0) < COALESCE(ws.retry_limit, 3) THEN true
+      ELSE false
     END as retry_eligible,
 
-    -- Simplified Final Readiness Calculation
+    -- Overall Ready for Execution (complex business logic)
     CASE
       WHEN COALESCE(current_state.to_state, 'pending') IN ('pending', 'error')
-      AND (ws.processed = false OR ws.processed IS NULL)  -- CRITICAL: Only unprocessed steps can be ready
+      AND (ws.processed = false OR ws.processed IS NULL)
       AND (dep_edges.to_step_id IS NULL OR
            COUNT(dep_edges.from_step_id) = 0 OR
            COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END) = COUNT(dep_edges.from_step_id))
-      AND (ws.attempts < COALESCE(ws.retry_limit, 3))
+      AND (COALESCE(ws.attempts, 0) < COALESCE(ws.retry_limit, 3))  -- FIXED: Handle NULL attempts
       AND (COALESCE(ws.retryable, true) = true)
       AND (ws.in_process = false OR ws.in_process IS NULL)
       AND (
@@ -519,7 +503,7 @@ BEGIN
     COALESCE(COUNT(CASE WHEN parent_states.to_state IN ('complete', 'resolved_manually') THEN 1 END), 0)::INTEGER as completed_parents,
 
     -- Retry Context
-    ws.attempts,
+    COALESCE(ws.attempts, 0)::INTEGER as attempts,  -- FIXED: Return 0 instead of NULL
     COALESCE(ws.retry_limit, 3) as retry_limit,
     ws.backoff_request_seconds,
     ws.last_attempted_at
@@ -545,19 +529,15 @@ BEGIN
     AND last_failure.to_state = 'error'
     AND last_failure.most_recent = true
 
-  -- KEY PERFORMANCE IMPROVEMENT: Filter by multiple tasks at once
-  -- CRITICAL FIX: Include ALL steps for task execution context calculation
-  -- Only filter by processed status when specifically querying for ready steps
+  -- KEY PERFORMANCE IMPROVEMENT: Filter by task first, then optionally by step IDs
   WHERE ws.task_id = ANY(input_task_ids)
 
   GROUP BY
     ws.workflow_step_id, ws.task_id, ws.named_step_id, ns.name,
     current_state.to_state, last_failure.created_at,
     ws.attempts, ws.retry_limit, ws.backoff_request_seconds, ws.last_attempted_at,
-    ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id
-
-  -- IMPORTANT: Order by task_id, then workflow_step_id for consistent grouping
-  ORDER BY ws.task_id, ws.workflow_step_id;
+    ws.in_process, ws.processed, ws.retryable, dep_edges.to_step_id,
+    current_state.workflow_step_id, last_failure.workflow_step_id;
 END;
 $$;
 
@@ -2315,5 +2295,6 @@ ALTER TABLE ONLY public.tasker_workflow_steps
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250710110830'),
 ('20250701165431');
 
