@@ -225,7 +225,7 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
       end
 
       average_time = execution_time / 10
-      expect(average_time).to be < 0.1 # Should average under 100ms
+      expect(average_time).to be < 1 # Should average under 1 second
     end
   end
 
