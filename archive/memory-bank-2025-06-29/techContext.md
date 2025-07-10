@@ -181,8 +181,7 @@ bundle exec rspec spec/path/to/failing_spec.rb:123
 ### Host Application Integration
 ```ruby
 # In host application's Gemfile
-gem 'tasker', path: '../tasker'  # Development
-gem 'tasker', '~> 1.0'          # Production
+gem 'tasker-engine', '~> 1.0.4'          # Production
 
 # Mount engine in routes
 Rails.application.routes.draw do
