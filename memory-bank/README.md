@@ -72,7 +72,7 @@ Creating comprehensive learning resources at https://docs.tasker.systems with:
 ## Developer Resources
 
 ### Getting Started
-- **Installation**: `gem 'tasker-engine', '~> 1.0.0'`
+- **Installation**: `gem 'tasker-engine', '~> 1.0.4'`
 - **Quick Start**: 5-minute workflow creation
 - **Generators**: Complete scaffolding for workflows, auth, and subscribers
 
