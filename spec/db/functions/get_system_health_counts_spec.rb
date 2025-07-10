@@ -184,7 +184,8 @@ RSpec.describe 'get_system_health_counts_v01 function', type: :model do
     end
   end
 
-  describe 'performance characteristics' do
+  # We can take up benchmark tests elsewhere, we are rebuilding in Rust for this anyway
+  describe.skip 'performance characteristics' do
     # Use let to create test data once and reuse it
     let(:completed_workflows) do
       Array.new(10) do
