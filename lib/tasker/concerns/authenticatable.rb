@@ -34,7 +34,7 @@ module Tasker
       end
 
       def skip_authentication?
-        !Tasker.configuration.auth.authentication_enabled
+        !Tasker::Configuration.configuration.auth.authentication_enabled
       end
     end
   end

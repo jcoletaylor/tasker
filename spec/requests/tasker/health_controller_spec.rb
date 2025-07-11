@@ -7,7 +7,7 @@ require_relative '../../examples/custom_authorization_coordinator'
 RSpec.describe 'Health API', type: :request do
   around do |example|
     # Store original configuration
-    original_config = Tasker.configuration.dup
+    original_config = Tasker::Configuration.configuration.dup
 
     # Configure basic health settings for tests
     Tasker.configure do |config|
@@ -226,7 +226,7 @@ RSpec.describe 'Health API', type: :request do
   # Test authentication scenarios as separate contexts
   describe 'authentication scenarios' do
     it 'never requires authentication for ready endpoint' do
-      original_config = Tasker.configuration.dup
+      original_config = Tasker::Configuration.configuration.dup
 
       # Configure authentication and authorization as enabled
       Tasker.configure do |config|
@@ -254,7 +254,7 @@ RSpec.describe 'Health API', type: :request do
     end
 
     it 'never requires authentication for live endpoint' do
-      original_config = Tasker.configuration.dup
+      original_config = Tasker::Configuration.configuration.dup
 
       # Configure authentication and authorization as enabled
       Tasker.configure do |config|
@@ -277,7 +277,7 @@ RSpec.describe 'Health API', type: :request do
 
     context 'status endpoint with authorization enabled' do
       around do |example|
-        original_config = Tasker.configuration.dup
+        original_config = Tasker::Configuration.configuration.dup
         example.run
         Tasker.instance_variable_set(:@configuration, original_config)
       end
@@ -378,7 +378,7 @@ RSpec.describe 'Health API', type: :request do
       Rails.cache = ActiveSupport::Cache::MemoryStore.new
       Rails.cache.clear
 
-      original_config = Tasker.configuration.dup
+      original_config = Tasker::Configuration.configuration.dup
 
       Tasker.configure do |config|
         config.auth do |auth|

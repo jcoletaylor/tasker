@@ -16,7 +16,7 @@ module ConfigurationHelpers
     authorization_coordinator_class: nil,
     user_class: nil
   )
-    Tasker.configuration do |config|
+    Tasker::Configuration.configuration do |config|
       config.auth.authentication_enabled = authentication_enabled
       config.auth.authenticator_class = authenticator_class
       config.auth.authorization_enabled = authorization_enabled
@@ -36,7 +36,7 @@ module ConfigurationHelpers
   )
     warn '[DEPRECATION] configure_tasker_auth_legacy is deprecated. Use configure_tasker_auth instead.'
 
-    Tasker.configuration do |config|
+    Tasker::Configuration.configuration do |config|
       # Map old style to new style
       case strategy
       when :none

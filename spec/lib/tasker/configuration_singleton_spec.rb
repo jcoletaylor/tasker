@@ -76,17 +76,17 @@ RSpec.describe Tasker::Configuration, 'Singleton Behavior' do
     end
   end
 
-  describe 'Tasker.configuration delegation' do
+  describe 'Tasker::Configuration.configuration delegation' do
     it 'delegates to Configuration.configuration' do
       expect(described_class).to receive(:configuration).and_call_original
-      Tasker.configuration
+      Tasker::Configuration.configuration
     end
 
     it 'passes block to Configuration.configuration' do
       block_called = false
       config_received = nil
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         block_called = true
         config_received = config
       end

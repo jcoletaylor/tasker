@@ -169,7 +169,7 @@ end
 **Pattern**: Dry-struct based configuration with nested blocks
 
 ```ruby
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'MyAuthenticator'

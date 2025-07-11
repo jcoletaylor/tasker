@@ -451,7 +451,7 @@ Tasker::Types::ValidationError: Invalid task context
 3. **Enable telemetry**
    ```ruby
    # config/initializers/tasker.rb
-   Tasker.configuration do |config|
+   Tasker::Configuration.configuration do |config|
      config.telemetry do |tel|
        tel.enabled = true
        tel.service_name = 'your-app'
@@ -576,7 +576,7 @@ end
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     tel.enabled = true
     tel.service_name = 'your-application'

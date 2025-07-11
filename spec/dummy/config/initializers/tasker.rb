@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Configure Tasker
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   # Engine configuration
   config.engine do |engine|
     # engine.task_handler_directory = 'custom_tasks'

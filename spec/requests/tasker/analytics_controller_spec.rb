@@ -12,7 +12,7 @@ RSpec.describe 'Analytics API', type: :request do
 
   around do |example|
     # Store original configuration
-    original_config = Tasker.configuration.dup
+    original_config = Tasker::Configuration.configuration.dup
 
     # Configure basic telemetry settings for tests
     Tasker.configure do |config|
@@ -79,7 +79,7 @@ RSpec.describe 'Analytics API', type: :request do
           expect(response.content_type).to eq('application/json; charset=utf-8')
 
           json_response = JSON.parse(response.body)
-          
+
           # Verify main structure
           expect(json_response).to have_key('system_overview')
           expect(json_response).to have_key('performance_trends')
@@ -140,7 +140,7 @@ RSpec.describe 'Analytics API', type: :request do
 
         run_test! do |response|
           expect(response).to have_http_status(:service_unavailable)
-          
+
           json_response = JSON.parse(response.body)
           expect(json_response['error']).to eq('Performance analytics failed')
           expect(json_response['message']).to eq('Analytics service unavailable')
@@ -176,7 +176,7 @@ RSpec.describe 'Analytics API', type: :request do
           expect(response.content_type).to eq('application/json; charset=utf-8')
 
           json_response = JSON.parse(response.body)
-          
+
           # Verify main structure
           expect(json_response).to have_key('scope_summary')
           expect(json_response).to have_key('bottleneck_analysis')
@@ -230,9 +230,9 @@ RSpec.describe 'Analytics API', type: :request do
 
         run_test! do |response|
           expect(response).to have_http_status(:ok)
-          
+
           json_response = JSON.parse(response.body)
-          
+
           # Verify scoped parameters are applied
           expect(json_response['analysis_period_hours']).to eq(12)
           expect(json_response['scope']).to eq({
@@ -259,7 +259,7 @@ RSpec.describe 'Analytics API', type: :request do
 
         run_test! do |response|
           expect(response).to have_http_status(:service_unavailable)
-          
+
           json_response = JSON.parse(response.body)
           expect(json_response['error']).to eq('Bottleneck analysis failed')
           expect(json_response['message']).to eq('Database connection lost')
@@ -302,7 +302,7 @@ RSpec.describe 'Analytics API', type: :request do
     context 'when metrics_auth_required is true' do
       around do |example|
         # Store original configuration
-        original_config = Tasker.configuration.dup
+        original_config = Tasker::Configuration.configuration.dup
 
         # Configure with auth required
         Tasker.configure do |config|

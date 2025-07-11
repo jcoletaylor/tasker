@@ -7,7 +7,7 @@ require_relative '../../examples/custom_authorization_coordinator'
 RSpec.describe 'Metrics API', type: :request do
   around do |example|
     # Store original configuration
-    original_config = Tasker.configuration.dup
+    original_config = Tasker::Configuration.configuration.dup
 
     # Configure basic telemetry settings for tests
     Tasker.configure do |config|

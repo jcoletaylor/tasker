@@ -16,7 +16,7 @@ module Tasker
 
       def initialize
         @mutex = Mutex.new
-        @telemetry_config = Tasker.configuration.telemetry
+        @telemetry_config = Tasker::Configuration.configuration.telemetry
         @registry_name = self.class.name.demodulize.underscore
         @created_at = Time.current
       end

@@ -1027,7 +1027,7 @@ Tasker provides a comprehensive, production-ready authentication and authorizati
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     # Authentication
     auth.authentication_enabled = true
@@ -1111,18 +1111,18 @@ Tasker provides optional multi-database support using Rails' standard multi-data
 # config/initializers/tasker.rb
 
 # Default: Use host application database (shared)
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.database.enable_secondary_database = false
 end
 
 # Use dedicated Tasker database
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.database.enable_secondary_database = true
   config.database.name = :tasker
 end
 
 # Environment-specific configuration
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.database.enable_secondary_database = Rails.env.production?
   config.database.name = Rails.env.production? ? :tasker : nil
 end
@@ -1192,7 +1192,7 @@ Tasker provides advanced dependency graph analysis and bottleneck detection capa
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.dependency_graph do |graph|
     # Prioritize blocked steps more heavily
     graph.impact_multipliers = {
@@ -1965,7 +1965,7 @@ module PriorityWorkflow
 end
 
 # Configure in initializer
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.orchestration.coordinator_class = 'PriorityWorkflow::Coordinator'
 end
 ```

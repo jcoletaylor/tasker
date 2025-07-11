@@ -28,7 +28,7 @@ Perfect for processes that involve multiple interdependent steps, require automa
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
-gem 'tasker-engine', '~> 1.0.5'
+gem 'tasker-engine', '~> 1.0.6'
 ```
 
 Install and run the migrations:
@@ -192,7 +192,7 @@ Tasker includes enterprise-grade security that works with any Rails authenticati
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'YourAuthenticator'
@@ -288,7 +288,7 @@ Built-in OpenTelemetry integration provides complete observability:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     tel.enabled = true
     tel.service_name = 'my-app-workflows'
@@ -347,7 +347,7 @@ GET /tasker/health/status
 **Optional Authentication & Authorization**:
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.health do |health|
     health.status_requires_authentication = true  # Secure detailed status
   end

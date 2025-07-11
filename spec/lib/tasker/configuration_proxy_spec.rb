@@ -173,8 +173,8 @@ RSpec.describe Tasker::Configuration::ConfigurationProxy, 'Configuration Proxy I
   end
 
   describe 'global configuration integration' do
-    it 'works with Tasker.configuration and ConfigurationProxy' do
-      Tasker.configuration do |global_config|
+    it 'works with Tasker::Configuration.configuration and ConfigurationProxy' do
+      Tasker::Configuration.configuration do |global_config|
         # Test multiple configuration types in one block
         global_config.auth do |auth|
           auth.authentication_enabled = true
@@ -200,7 +200,7 @@ RSpec.describe Tasker::Configuration::ConfigurationProxy, 'Configuration Proxy I
       end
 
       # Verify all configurations were set correctly
-      global_config = Tasker.configuration
+      global_config = Tasker::Configuration.configuration
 
       expect(global_config.auth.authentication_enabled).to be(true)
       expect(global_config.auth.authenticator_class).to eq('GlobalAuthenticator')

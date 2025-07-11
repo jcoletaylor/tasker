@@ -68,7 +68,7 @@ RSpec.describe Tasker::Telemetry::IntelligentCacheManager do
                                      log_format: 'json',
                                      log_level: 'info')
       mock_config = double('config', cache: cache_config, telemetry: telemetry_config_mock)
-      allow(Tasker).to receive(:configuration).and_return(mock_config)
+      allow(Tasker::Configuration).to receive(:configuration).and_return(mock_config)
 
       manager = described_class.new
 

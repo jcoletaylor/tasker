@@ -24,7 +24,7 @@ module Tasker
         private
 
         def build_authenticator
-          auth_config = Tasker.configuration.auth
+          auth_config = Tasker::Configuration.configuration.auth
 
           if auth_config.authentication_enabled
             build_custom_authenticator(auth_config)
@@ -43,7 +43,7 @@ module Tasker
 
           # Instantiate the host app's authenticator
           klass = authenticator_class.constantize
-          # Pass empty options hash for now - authenticators can get config from Tasker.configuration
+          # Pass empty options hash for now - authenticators can get config from Tasker::Configuration.configuration
           authenticator = klass.new({})
 
           # Validate it implements the interface

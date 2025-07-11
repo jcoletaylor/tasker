@@ -127,7 +127,7 @@ module Tasker
       # @return [Tasker::Types::DependencyGraphConfig] Configuration for calculations
       # @api private
       def dependency_graph_config
-        @dependency_graph_config ||= Tasker.configuration.dependency_graph
+        @dependency_graph_config ||= Tasker::Configuration.configuration.dependency_graph
       end
 
       # Generate cache version based on task state for intelligent cache invalidation

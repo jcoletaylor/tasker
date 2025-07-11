@@ -85,13 +85,13 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
 
       parsed = JSON.parse(captured_logs.first[:message])
       expect(parsed['environment']).to eq(Rails.env)
-      expect(parsed['tasker_version']).to eq(Tasker::VERSION)
+      expect(parsed['tasker_version']).to eq(Tasker::Version)
       expect(parsed['process_id']).to be_present
       expect(parsed['thread_id']).to be_present
     end
 
     context 'with different log level configuration' do
-      let(:original_config) { Tasker.configuration.telemetry }
+      let(:original_config) { Tasker::Configuration.configuration.telemetry }
       let(:new_config) do
         original_config.class.new(
           original_config.to_h.merge(log_level: 'warn')
@@ -99,11 +99,11 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
       end
 
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(new_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(new_config)
       end
 
       after do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(original_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(original_config)
       end
 
       it 'respects log level configuration' do
@@ -162,7 +162,7 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
 
   describe '#log_performance_event' do
     context 'with debug logging enabled' do
-      let(:original_config) { Tasker.configuration.telemetry }
+      let(:original_config) { Tasker::Configuration.configuration.telemetry }
       let(:debug_config) do
         original_config.class.new(
           original_config.to_h.merge(log_level: 'debug')
@@ -170,11 +170,11 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
       end
 
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(debug_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(debug_config)
       end
 
       after do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(original_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(original_config)
       end
 
       it 'logs performance events with timing categorization' do
@@ -193,7 +193,7 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
     end
 
     context 'with custom slow threshold configuration' do
-      let(:original_config) { Tasker.configuration.telemetry }
+      let(:original_config) { Tasker::Configuration.configuration.telemetry }
       let(:slow_threshold_config) do
         original_config.class.new(
           original_config.to_h.merge(
@@ -204,11 +204,11 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
       end
 
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(slow_threshold_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(slow_threshold_config)
       end
 
       after do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(original_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(original_config)
       end
 
       it 'marks slow operations appropriately' do
@@ -273,7 +273,7 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
 
   describe 'parameter filtering' do
     context 'with parameter filtering enabled' do
-      let(:original_config) { Tasker.configuration.telemetry }
+      let(:original_config) { Tasker::Configuration.configuration.telemetry }
       let(:filtered_config) do
         original_config.class.new(
           original_config.to_h.merge(filter_parameters: %i[password token])
@@ -281,11 +281,11 @@ RSpec.describe Tasker::Concerns::StructuredLogging, type: :concern do
       end
 
       before do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(filtered_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(filtered_config)
       end
 
       after do
-        allow(Tasker.configuration).to receive(:telemetry).and_return(original_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(original_config)
       end
 
       it 'filters sensitive parameters from logs' do

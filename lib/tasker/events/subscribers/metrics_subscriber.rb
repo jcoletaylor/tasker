@@ -79,7 +79,7 @@ module Tasker
         # @return [Boolean] True if the event should be processed
         def should_process_event?(event_constant)
           # Only process if telemetry is enabled
-          return false unless Tasker.configuration.telemetry.enabled
+          return false unless Tasker::Configuration.configuration.telemetry.enabled
 
           # Convert constant to event name if needed
           event_name = event_constant.respond_to?(:name) ? event_constant.name : event_constant.to_s

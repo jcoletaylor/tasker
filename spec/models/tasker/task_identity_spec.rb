@@ -18,7 +18,7 @@ RSpec.describe Tasker::Task, '#set_identity_hash' do
 
   context 'with default strategy' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.engine do |engine|
           engine.identity_strategy = :default
         end
@@ -43,7 +43,7 @@ RSpec.describe Tasker::Task, '#set_identity_hash' do
 
   context 'with hash strategy' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.engine do |engine|
           engine.identity_strategy = :hash
         end
@@ -80,7 +80,7 @@ RSpec.describe Tasker::Task, '#set_identity_hash' do
 
   context 'with custom strategy' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.engine do |engine|
           engine.identity_strategy = :custom
           engine.identity_strategy_class = 'CustomIdentityStrategy'

@@ -25,7 +25,7 @@ OpenTelemetry::SDK.configure do |c|
   # Configure resource with additional attributes
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
                                                                 'service.name' => 'tasker',
-                                                                'service.version' => Tasker::VERSION,
+                                                                'service.version' => Tasker::Version,
                                                                 'service.framework' => 'tasker'
                                                               })
 

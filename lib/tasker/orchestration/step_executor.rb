@@ -22,11 +22,11 @@ module Tasker
       include Tasker::Concerns::StructuredLogging
 
       # Configuration-driven execution settings
-      # These delegate to Tasker.configuration.execution for configurable values
+      # These delegate to Tasker::Configuration.configuration.execution for configurable values
       # while maintaining architectural constants for Ruby-specific optimizations
 
       def execution_config
-        @execution_config ||= Tasker.configuration.execution
+        @execution_config ||= Tasker::Configuration.configuration.execution
       end
 
       # Execute a collection of viable steps

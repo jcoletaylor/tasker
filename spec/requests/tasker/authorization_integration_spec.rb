@@ -520,7 +520,7 @@ RSpec.describe 'Authorization Integration', type: :request do
   private
 
   def configure_tasker_auth(authentication_enabled: false, authenticator_class: nil, authorization_enabled: false, authorization_coordinator_class: nil)
-    Tasker.configuration do |config|
+    Tasker::Configuration.configuration do |config|
       config.auth do |auth|
         auth.authentication_enabled = authentication_enabled
         auth.authenticator_class = authenticator_class if authenticator_class

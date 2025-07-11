@@ -14,7 +14,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = false
           end
@@ -41,7 +41,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -82,7 +82,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -134,7 +134,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = false
           end
@@ -159,7 +159,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -208,7 +208,7 @@ RSpec.describe 'Authentication Integration', type: :request do
       around do |example|
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -242,7 +242,7 @@ RSpec.describe 'Authentication Integration', type: :request do
     around do |example|
       original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'TestAuthenticator'
@@ -279,7 +279,7 @@ RSpec.describe 'Authentication Integration', type: :request do
     end
 
     it 'handles invalid authenticator class' do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'NonExistentAuthenticator'
@@ -299,7 +299,7 @@ RSpec.describe 'Authentication Integration', type: :request do
         original_config = Tasker::Configuration.instance_variable_get(:@configuration)
 
         begin
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = 'BadAuthenticator'
@@ -324,7 +324,7 @@ RSpec.describe 'Authentication Integration', type: :request do
           # Set up validation to fail BEFORE setting configuration
           TestAuthenticator.set_validation_errors(['Configuration validation failed'])
 
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = 'TestAuthenticator'

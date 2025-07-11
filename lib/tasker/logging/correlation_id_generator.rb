@@ -66,7 +66,7 @@ module Tasker
         #   id = from_headers(request.headers)
         #   id = from_headers(env, 'X-Request-ID')
         def from_headers(headers, header_name = nil)
-          header_name ||= Tasker.configuration.telemetry.correlation_id_header
+          header_name ||= Tasker::Configuration.configuration.telemetry.correlation_id_header
 
           # Handle different header formats (rack vs rails)
           header_value = headers[header_name] ||

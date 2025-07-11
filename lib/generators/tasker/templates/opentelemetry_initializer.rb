@@ -9,7 +9,7 @@ require 'opentelemetry/instrumentation/all'
 
 # Configure OpenTelemetry
 OpenTelemetry::SDK.configure do |c|
-  c.service_name = Tasker.configuration.telemetry.service_name
+  c.service_name = Tasker::Configuration.configuration.telemetry.service_name
 
   # Service version must be configured for instrumentation to work properly
   c.service_version = 'v1.0.1'
@@ -27,8 +27,8 @@ OpenTelemetry::SDK.configure do |c|
   # Resource configuration
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
                                                                 # Core service identification
-                                                                'service.name' => Tasker.configuration.telemetry.service_name,
-                                                                'service.version' => Tasker.configuration.telemetry.service_version,
+                                                                'service.name' => Tasker::Configuration.configuration.telemetry.service_name,
+                                                                'service.version' => Tasker::Configuration.configuration.telemetry.service_version,
                                                                 'service.framework' => 'tasker'
                                                               })
 

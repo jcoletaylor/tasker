@@ -325,7 +325,7 @@ module Tasker
       #
       # @return [Hash] Default Prometheus configuration
       def default_prometheus_config
-        Tasker.configuration.telemetry.prometheus
+        Tasker::Configuration.configuration.telemetry.prometheus
       rescue StandardError
         {}
       end

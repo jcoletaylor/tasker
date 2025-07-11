@@ -134,7 +134,7 @@ module Tasker
     # @return [Integer] Timeout duration in seconds
     def job_timeout_duration
       prometheus_config = begin
-        Tasker.configuration.telemetry.prometheus
+        Tasker::Configuration.configuration.telemetry.prometheus
       rescue StandardError
         {}
       end

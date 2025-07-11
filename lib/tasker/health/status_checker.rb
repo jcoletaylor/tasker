@@ -25,7 +25,7 @@ module Tasker
       #
       # @param cache_duration [Integer] Cache duration in seconds (default from config)
       def initialize(cache_duration: nil)
-        @cache_duration = cache_duration || Tasker.configuration.health.cache_duration_seconds
+        @cache_duration = cache_duration || Tasker::Configuration.configuration.health.cache_duration_seconds
       end
 
       # Class method for status check

@@ -186,21 +186,21 @@ RSpec.describe Tasker::MetricsExportJob do
     let(:job) { described_class.new }
 
     it 'uses configured timeout when available' do
-      allow(Tasker).to receive_message_chain(:configuration, :telemetry, :prometheus)
+      allow(Tasker::Configuration).to receive_message_chain(:configuration, :telemetry, :prometheus)
         .and_return({ job_timeout: 10.minutes })
 
       expect(job.send(:job_timeout_duration)).to eq(10.minutes)
     end
 
     it 'uses default timeout when not configured' do
-      allow(Tasker).to receive_message_chain(:configuration, :telemetry, :prometheus)
+      allow(Tasker::Configuration).to receive_message_chain(:configuration, :telemetry, :prometheus)
         .and_return({})
 
       expect(job.send(:job_timeout_duration)).to eq(5.minutes)
     end
 
     it 'handles configuration errors gracefully' do
-      allow(Tasker).to receive(:configuration).and_raise(StandardError)
+      allow(Tasker::Configuration).to receive(:configuration).and_raise(StandardError)
 
       expect(job.send(:job_timeout_duration)).to eq(5.minutes)
     end

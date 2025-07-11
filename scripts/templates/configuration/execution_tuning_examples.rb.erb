@@ -151,7 +151,7 @@
 # Examples of how to monitor configuration effectiveness
 
 # # Access current configuration
-# current_config = Tasker.configuration.execution
+# current_config = Tasker::Configuration.configuration.execution
 #
 # # Monitor dynamic concurrency decisions
 # Rails.logger.info "Current max concurrency: #{step_executor.max_concurrent_steps}"
@@ -174,7 +174,7 @@
 # Validate your configuration before deployment
 
 # # Manual validation with detailed errors
-# config = Tasker.configuration.execution
+# config = Tasker::Configuration.configuration.execution
 # errors = config.validate_concurrency_bounds + config.validate_timeout_configuration
 #
 # if errors.any?

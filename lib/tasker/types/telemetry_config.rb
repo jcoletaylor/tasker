@@ -41,7 +41,7 @@ module Tasker
       #
       # @!attribute [r] service_version
       #   @return [String] Service version for telemetry
-      attribute :service_version, Types::String.default(proc { Tasker::VERSION }.freeze, shared: true)
+      attribute :service_version, Types::String.default('0.1.0', shared: true)
 
       # Parameters to filter from logs and telemetry
       # Can contain symbols, strings, or regex patterns as supported by Rails

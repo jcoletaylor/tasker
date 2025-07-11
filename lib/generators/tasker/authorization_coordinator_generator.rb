@@ -101,7 +101,7 @@ module Tasker
 
           ```ruby
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authorization_enabled = true
               auth.authorization_coordinator_class = '#{coordinator_class_name}'

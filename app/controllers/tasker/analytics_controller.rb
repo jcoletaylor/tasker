@@ -158,7 +158,7 @@ module Tasker
     #
     # @return [Boolean] True if authentication should be skipped
     def skip_authentication?
-      !Tasker.configuration.telemetry.metrics_auth_required
+      !Tasker::Configuration.configuration.telemetry.metrics_auth_required
     end
 
     # Override authorization check for analytics endpoint
@@ -166,7 +166,7 @@ module Tasker
     #
     # @return [Boolean] True if authorization should be skipped
     def skip_authorization?
-      !Tasker.configuration.telemetry.metrics_auth_required
+      !Tasker::Configuration.configuration.telemetry.metrics_auth_required
     end
 
     # Set appropriate cache control headers for analytics endpoints

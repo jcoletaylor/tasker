@@ -140,9 +140,9 @@ namespace :tasker do
     end
 
     # Create necessary directories based on configuration
-    task_handler_dir = Rails.root.join('app', Tasker.configuration.engine.task_handler_directory)
-    task_config_dir = Rails.root.join('config', Tasker.configuration.engine.task_config_directory)
-    task_spec_dir = Rails.root.join('spec', Tasker.configuration.engine.task_handler_directory)
+    task_handler_dir = Rails.root.join('app', Tasker::Configuration.configuration.engine.task_handler_directory)
+    task_config_dir = Rails.root.join('config', Tasker::Configuration.configuration.engine.task_config_directory)
+    task_spec_dir = Rails.root.join('spec', Tasker::Configuration.configuration.engine.task_handler_directory)
 
     [task_handler_dir, task_config_dir, task_spec_dir].each do |dir|
       unless File.directory?(dir)
@@ -278,7 +278,7 @@ namespace :tasker do
       end
 
       # Configuration
-      config = Tasker.configuration.telemetry
+      config = Tasker::Configuration.configuration.telemetry
       puts "\nTelemetry Configuration:"
       puts "  Enabled: #{config.enabled}"
       puts "  Metrics Enabled: #{config.metrics_enabled}"

@@ -517,7 +517,7 @@ end
 
 **Basic Configuration**
 ```ruby
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.backoff do |backoff|
     backoff.default_backoff_seconds = [1, 2, 4, 8, 16, 32]
     backoff.max_backoff_seconds = 300

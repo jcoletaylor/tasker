@@ -25,7 +25,7 @@ module Tasker
       #
       # @param timeout [Float] Maximum time to wait for checks (default: 5.0 seconds)
       def initialize(timeout: nil)
-        @timeout = timeout || Tasker.configuration.health.readiness_timeout_seconds
+        @timeout = timeout || Tasker::Configuration.configuration.health.readiness_timeout_seconds
       end
 
       # Class method for simple readiness check

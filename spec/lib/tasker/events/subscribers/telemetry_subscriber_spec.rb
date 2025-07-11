@@ -209,7 +209,7 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
         # Create a test double for telemetry config instead of mocking the frozen object
         telemetry_config_double = double('telemetry_config')
         allow(telemetry_config_double).to receive_messages(parameter_filter: filter_double, service_name: 'tasker')
-        allow(Tasker.configuration).to receive(:telemetry).and_return(telemetry_config_double)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(telemetry_config_double)
 
         attributes = { task_id: 'task-123', password: 'secret123' }
 
@@ -319,7 +319,7 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
     describe 'when telemetry is disabled' do
       before do
         allow(mock_telemetry_config).to receive(:enabled).and_return(false)
-        allow(Tasker.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
       end
 
       it 'skips processing events' do
@@ -335,7 +335,7 @@ RSpec.describe Tasker::Events::Subscribers::TelemetrySubscriber do
     describe 'when telemetry is enabled' do
       before do
         allow(mock_telemetry_config).to receive(:enabled).and_return(true)
-        allow(Tasker.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
+        allow(Tasker::Configuration.configuration).to receive(:telemetry).and_return(mock_telemetry_config)
         allow(subscriber).to receive(:opentelemetry_available?).and_return(false)
       end
 

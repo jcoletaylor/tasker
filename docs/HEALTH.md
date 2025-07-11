@@ -113,7 +113,7 @@ Control authentication requirements for the status endpoint:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.health do |health|
     # Optional authentication for status endpoint
     health.status_requires_authentication = true  # Default: false
@@ -135,7 +135,7 @@ Enable fine-grained authorization for the status endpoint:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authorization_enabled = true
     auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
@@ -346,7 +346,7 @@ end
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.health do |health|
     # Authentication requirement for status endpoint
     health.status_requires_authentication = false  # Default: false
