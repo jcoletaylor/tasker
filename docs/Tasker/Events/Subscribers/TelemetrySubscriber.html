@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
   Class: Tasker::Events::Subscribers::TelemetrySubscriber
-
+  
     &mdash; Documentation by YARD 0.9.37
-
+  
 </title>
 
   <link rel="stylesheet" href="../../../css/style.css" type="text/css" />
@@ -35,16 +35,16 @@
     <div id="main" tabindex="-1">
       <div id="header">
         <div id="menu">
-
+  
     <a href="../../../_index.html">Index (T)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../Events.html" title="Tasker::Events (module)">Events</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Subscribers.html" title="Tasker::Events::Subscribers (module)">Subscribers</a></span></span>
-     &raquo;
+     &raquo; 
     <span class="title">TelemetrySubscriber</span>
-
+  
 </div>
 
         <div id="search">
-
+  
     <a class="full_list_link" id="class_list_link"
         href="../../../class_list.html">
 
@@ -54,56 +54,56 @@
           <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
         </svg>
     </a>
-
+  
 </div>
         <div class="clear"></div>
       </div>
 
       <div id="content"><h1>Class: Tasker::Events::Subscribers::TelemetrySubscriber
-
-
-
+  
+  
+  
 </h1>
 <div class="box_info">
-
+  
   <dl>
     <dt>Inherits:</dt>
     <dd>
       <span class="inheritName"><span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></span>
-
+      
         <ul class="fullTree">
           <li>Object</li>
-
+          
             <li class="next"><span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></li>
-
+          
             <li class="next">Tasker::Events::Subscribers::TelemetrySubscriber</li>
-
+          
         </ul>
         <a href="#" class="inheritanceTree">show all</a>
-
+      
     </dd>
   </dl>
+  
 
+  
+  
+  
+  
+  
 
+  
 
-
-
-
-
-
-
-
-
+  
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/tasker/events/subscribers/telemetry_subscriber.rb</dd>
   </dl>
-
+  
 </div>
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-
+    
 <p>TelemetrySubscriber handles telemetry events for observability</p>
 
 <p>This subscriber creates OpenTelemetry spans with proper hierarchical context for distributed tracing in systems like Jaeger. It follows OpenTelemetry best practices by creating detailed spans for debugging while allowing metrics to be derived from span data.</p>
@@ -114,28 +114,28 @@
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div>
-
+  
     <h2>
       Constant Summary
       <small><a href="#" class="constants_summary_toggle">collapse</a></small>
     </h2>
 
     <dl class="constants">
-
+      
         <dt id="EVENT_ANNOTATION_MAP-constant" class="">EVENT_ANNOTATION_MAP =
           <div class="docstring">
   <div class="discussion">
-
+    
 <p>Event type to annotation name mapping</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div>
         </dt>
@@ -144,574 +144,574 @@
   <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>execution_requested</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step.queued</span><span class='tstring_end'>&#39;</span></span><span class='comma'>,</span>
   <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>retry_requested</span><span class='tstring_end'>&#39;</span></span> <span class='op'>=&gt;</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>step.retry</span><span class='tstring_end'>&#39;</span></span>
 <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
-
+      
     </dl>
-
+  
 
 
 
 
   <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
   <ul class="summary">
-
+    
       <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#tracer-instance_method" title="#tracer (instance method)">#<strong>tracer</strong>  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Returns the value of attribute tracer.</p>
 </div></span>
-
+  
 </li>
 
-
+    
   </ul>
 
 
 
 
-
+  
     <h2>
       Instance Method Summary
       <small><a href="#" class="summary_toggle">collapse</a></small>
     </h2>
 
     <ul class="summary">
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#convert_attributes_for_otel-instance_method" title="#convert_attributes_for_otel (instance method)">#<strong>convert_attributes_for_otel</strong>(attributes)  &#x21d2; Hash </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Convert event attributes to OpenTelemetry format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#create_simple_span-instance_method" title="#create_simple_span (instance method)">#<strong>create_simple_span</strong>(event, span_name, attributes)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Create a simple span for events that don’t need complex hierarchy.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#create_step_span-instance_method" title="#create_step_span (instance method)">#<strong>create_step_span</strong>(event, span_name, attributes, status)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Create a step span as a child of the task span.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#create_task_span-instance_method" title="#create_task_span (instance method)">#<strong>create_task_span</strong>(event, span_name, attributes)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Create a root span for a task and store it for child spans.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#create_tracer-instance_method" title="#create_tracer (instance method)">#<strong>create_tracer</strong>  &#x21d2; OpenTelemetry::Tracer </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Create the OpenTelemetry tracer.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#event_to_annotation_name-instance_method" title="#event_to_annotation_name (instance method)">#<strong>event_to_annotation_name</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Convert event to annotation name.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#extract_step_attributes-instance_method" title="#extract_step_attributes (instance method)">#<strong>extract_step_attributes</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Extract step-specific attributes (enhanced from BaseSubscriber).</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#finish_task_span-instance_method" title="#finish_task_span (instance method)">#<strong>finish_task_span</strong>(event, status, attributes)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Finish a task span with the appropriate status.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_step_completed-instance_method" title="#handle_step_completed (instance method)">#<strong>handle_step_completed</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle step completion events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_step_execution_requested-instance_method" title="#handle_step_execution_requested (instance method)">#<strong>handle_step_execution_requested</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle step execution requested events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_step_failed-instance_method" title="#handle_step_failed (instance method)">#<strong>handle_step_failed</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle step failure events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_step_retry_requested-instance_method" title="#handle_step_retry_requested (instance method)">#<strong>handle_step_retry_requested</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle step retry events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_task_completed-instance_method" title="#handle_task_completed (instance method)">#<strong>handle_task_completed</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle task completion events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_task_failed-instance_method" title="#handle_task_failed (instance method)">#<strong>handle_task_failed</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle task failure events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_task_initialize_requested-instance_method" title="#handle_task_initialize_requested (instance method)">#<strong>handle_task_initialize_requested</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle task initialization events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#handle_task_start_requested-instance_method" title="#handle_task_start_requested (instance method)">#<strong>handle_task_start_requested</strong>(event)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Handle task start events.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>  &#x21d2; TelemetrySubscriber </a>
+    
 
-
-
+    
   </span>
-
-
+  
+  
     <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>A new instance of TelemetrySubscriber.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#opentelemetry_available%3F-instance_method" title="#opentelemetry_available? (instance method)">#<strong>opentelemetry_available?</strong>  &#x21d2; Boolean </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Check if OpenTelemetry is available and configured.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#should_process_event%3F-instance_method" title="#should_process_event? (instance method)">#<strong>should_process_event?</strong>(event_constant)  &#x21d2; Boolean </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Override BaseSubscriber to add telemetry-specific filtering.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#telemetry_enabled%3F-instance_method" title="#telemetry_enabled? (instance method)">#<strong>telemetry_enabled?</strong>  &#x21d2; Boolean </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Check if telemetry is enabled.</p>
 </div></span>
-
+  
 </li>
 
-
+      
     </ul>
+  
 
 
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
+  
   <h3 class="inherited">Methods inherited from <span class='object_link'><a href="BaseSubscriber.html" title="Tasker::Events::Subscribers::BaseSubscriber (class)">BaseSubscriber</a></span></h3>
   <p class="inherited"><span class='object_link'><a href="BaseSubscriber.html#build_event_subscriptions-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#build_event_subscriptions (method)">#build_event_subscriptions</a></span>, <span class='object_link'><a href="BaseSubscriber.html#build_metric_name-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#build_metric_name (method)">#build_metric_name</a></span>, <span class='object_link'><a href="BaseSubscriber.html#custom_event%3F-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#custom_event? (method)">#custom_event?</a></span>, <span class='object_link'><a href="BaseSubscriber.html#event_subscriptions-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#event_subscriptions (method)">#event_subscriptions</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_core_attributes-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_core_attributes (method)">#extract_core_attributes</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_error_metrics-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_error_metrics (method)">#extract_error_metrics</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_metric_tags-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_metric_tags (method)">#extract_metric_tags</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_numeric_metric-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_numeric_metric (method)">#extract_numeric_metric</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_performance_metrics-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_performance_metrics (method)">#extract_performance_metrics</a></span>, <span class='object_link'><a href="BaseSubscriber.html#extract_timing_metrics-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#extract_timing_metrics (method)">#extract_timing_metrics</a></span>, <span class='object_link'><a href="BaseSubscriber.html#filter_events-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.filter_events (method)">filter_events</a></span>, <span class='object_link'><a href="BaseSubscriber.html#generate_handler_method_name-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#generate_handler_method_name (method)">#generate_handler_method_name</a></span>, <span class='object_link'><a href="BaseSubscriber.html#resolve_internal_event_constant-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#resolve_internal_event_constant (method)">#resolve_internal_event_constant</a></span>, <span class='object_link'><a href="BaseSubscriber.html#safe_get-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#safe_get (method)">#safe_get</a></span>, <span class='object_link'><a href="BaseSubscriber.html#should_handle_event%3F-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#should_handle_event? (method)">#should_handle_event?</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.subscribe (method)">subscribe</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe_to-class_method" title="Tasker::Events::Subscribers::BaseSubscriber.subscribe_to (method)">subscribe_to</a></span>, <span class='object_link'><a href="BaseSubscriber.html#subscribe_to_publisher-instance_method" title="Tasker::Events::Subscribers::BaseSubscriber#subscribe_to_publisher (method)">#subscribe_to_publisher</a></span></p>
 <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
-
+  
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Events::Subscribers::TelemetrySubscriber (class)">TelemetrySubscriber</a></span></tt> 
+  
 
-    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Events::Subscribers::TelemetrySubscriber (class)">TelemetrySubscriber</a></span></tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Returns a new instance of TelemetrySubscriber.</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -735,33 +735,33 @@
   </tr>
 </table>
 </div>
-
+  
 </div>
 
   <div id="instance_attr_details" class="attr_details">
     <h2>Instance Attribute Details</h2>
-
-
+    
+      
       <span id="tracer=-instance_method"></span>
       <div class="method_details first">
   <h3 class="signature first" id="tracer-instance_method">
+  
+    #<strong>tracer</strong>  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>tracer</strong>  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Returns the value of attribute tracer.</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -783,26 +783,26 @@
   </tr>
 </table>
 </div>
-
+    
   </div>
 
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
 
-
+    
       <div class="method_details first">
   <h3 class="signature first" id="convert_attributes_for_otel-instance_method">
+  
+    #<strong>convert_attributes_for_otel</strong>(attributes)  &#x21d2; <tt>Hash</tt> 
+  
 
-    #<strong>convert_attributes_for_otel</strong>(attributes)  &#x21d2; <tt>Hash</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Convert event attributes to OpenTelemetry format</p>
 
 
@@ -811,42 +811,42 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>attributes</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The attributes to convert</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>OpenTelemetry-compatible attributes</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -884,7 +884,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_convert_attributes_for_otel'>convert_attributes_for_otel</span><span class='lparen'>(</span><span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='id identifier rubyid_service_name'>service_name</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span>
 
   <span class='comment'># Filter sensitive data first
@@ -909,19 +909,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="create_simple_span-instance_method">
+  
+    #<strong>create_simple_span</strong>(event, span_name, attributes)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>create_simple_span</strong>(event, span_name, attributes)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Create a simple span for events that don’t need complex hierarchy</p>
 
 
@@ -930,55 +930,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>event</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The event data</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>span_name</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The name for the span</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>attributes</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Span attributes</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1020,19 +1020,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="create_step_span-instance_method">
+  
+    #<strong>create_step_span</strong>(event, span_name, attributes, status)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>create_step_span</strong>(event, span_name, attributes, status)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Create a step span as a child of the task span</p>
 
 
@@ -1041,71 +1041,71 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>event</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The event data</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>span_name</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The name for the span</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>attributes</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Span attributes</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>status</span>
-
-
+      
+      
         <span class='type'>(<tt>Symbol</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The span status (:ok or :error)</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1179,19 +1179,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="create_task_span-instance_method">
+  
+    #<strong>create_task_span</strong>(event, span_name, attributes)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>create_task_span</strong>(event, span_name, attributes)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Create a root span for a task and store it for child spans</p>
 
 
@@ -1200,55 +1200,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>event</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The event data</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>span_name</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The name for the span</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>attributes</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Span attributes</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1298,43 +1298,43 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="create_tracer-instance_method">
+  
+    #<strong>create_tracer</strong>  &#x21d2; <tt>OpenTelemetry::Tracer</tt> 
+  
 
-    #<strong>create_tracer</strong>  &#x21d2; <tt>OpenTelemetry::Tracer</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Create the OpenTelemetry tracer</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>OpenTelemetry::Tracer</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The tracer instance</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -1355,7 +1355,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 298</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create_tracer'>create_tracer</span>
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='op'>::</span><span class='const'>OpenTelemetry</span><span class='period'>.</span><span class='id identifier rubyid_tracer_provider'>tracer_provider</span><span class='period'>.</span><span class='id identifier rubyid_tracer'>tracer</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span><span class='comma'>,</span>
     <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_version'>service_version</span>
@@ -1365,26 +1365,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="event_to_annotation_name-instance_method">
+  
+    #<strong>event_to_annotation_name</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>event_to_annotation_name</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Convert event to annotation name</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1410,26 +1410,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="extract_step_attributes-instance_method">
+  
+    #<strong>extract_step_attributes</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>extract_step_attributes</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Extract step-specific attributes (enhanced from BaseSubscriber)</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1455,19 +1455,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="finish_task_span-instance_method">
+  
+    #<strong>finish_task_span</strong>(event, status, attributes)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>finish_task_span</strong>(event, status, attributes)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Finish a task span with the appropriate status</p>
 
 
@@ -1476,55 +1476,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>event</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The event data</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>status</span>
-
-
+      
+      
         <span class='type'>(<tt>Symbol</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The span status (:ok or :error)</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>attributes</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Final span attributes</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1590,26 +1590,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_step_completed-instance_method">
+  
+    #<strong>handle_step_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_step_completed</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle step completion events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1647,26 +1647,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_step_execution_requested-instance_method">
+  
+    #<strong>handle_step_execution_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_step_execution_requested</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle step execution requested events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1702,26 +1702,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_step_failed-instance_method">
+  
+    #<strong>handle_step_failed</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_step_failed</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle step failure events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1763,26 +1763,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_step_retry_requested-instance_method">
+  
+    #<strong>handle_step_retry_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_step_retry_requested</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle step retry events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1820,26 +1820,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_task_completed-instance_method">
+  
+    #<strong>handle_task_completed</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_task_completed</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle task completion events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1885,26 +1885,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_task_failed-instance_method">
+  
+    #<strong>handle_task_failed</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_task_failed</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle task failure events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -1946,26 +1946,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_task_initialize_requested-instance_method">
+  
+    #<strong>handle_task_initialize_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_task_initialize_requested</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle task initialization events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -2001,26 +2001,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="handle_task_start_requested-instance_method">
+  
+    #<strong>handle_task_start_requested</strong>(event)  &#x21d2; <tt>Object</tt> 
+  
 
-    #<strong>handle_task_start_requested</strong>(event)  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Handle task start events</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -2056,43 +2056,43 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="opentelemetry_available?-instance_method">
+  
+    #<strong>opentelemetry_available?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
 
-    #<strong>opentelemetry_available?</strong>  &#x21d2; <tt>Boolean</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Check if OpenTelemetry is available and configured</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Boolean</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>True if OpenTelemetry is available</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -2115,38 +2115,38 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="should_process_event?-instance_method">
+  
+    #<strong>should_process_event?</strong>(event_constant)  &#x21d2; <tt>Boolean</tt> 
+  
 
-    #<strong>should_process_event?</strong>(event_constant)  &#x21d2; <tt>Boolean</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Override BaseSubscriber to add telemetry-specific filtering</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Boolean</tt>)</span>
-
-
-
+      
+      
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -2170,7 +2170,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_should_process_event?'>should_process_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
   <span class='comment'># Get configuration once for efficiency
-</span>  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span>
+</span>  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
 
   <span class='comment'># Only process if telemetry is enabled
 </span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_enabled'>enabled</span>
@@ -2181,38 +2181,38 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="telemetry_enabled?-instance_method">
+  
+    #<strong>telemetry_enabled?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
 
-    #<strong>telemetry_enabled?</strong>  &#x21d2; <tt>Boolean</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Check if telemetry is enabled</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Boolean</tt>)</span>
-
-
-
+      
+      
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -2229,19 +2229,19 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 165</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry_enabled?'>telemetry_enabled?</span>
-  <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span> <span class='op'>!=</span> <span class='kw'>false</span>
+  <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span> <span class='op'>!=</span> <span class='kw'>false</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
 </div>
-
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:16 2025 by
+  Generated on Fri Jul 11 17:34:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
   Class: Tasker::Orchestration::TaskFinalizer::DelayCalculator
-
+  
     &mdash; Documentation by YARD 0.9.37
-
+  
 </title>
 
   <link rel="stylesheet" href="../../../css/style.css" type="text/css" />
@@ -35,16 +35,16 @@
     <div id="main" tabindex="-1">
       <div id="header">
         <div id="menu">
-
+  
     <a href="../../../_index.html">Index (D)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../../Orchestration.html" title="Tasker::Orchestration (module)">Orchestration</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../TaskFinalizer.html" title="Tasker::Orchestration::TaskFinalizer (class)">TaskFinalizer</a></span></span>
-     &raquo;
+     &raquo; 
     <span class="title">DelayCalculator</span>
-
+  
 </div>
 
         <div id="search">
-
+  
     <a class="full_list_link" id="class_list_link"
         href="../../../class_list.html">
 
@@ -54,61 +54,61 @@
           <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
         </svg>
     </a>
-
+  
 </div>
         <div class="clear"></div>
       </div>
 
       <div id="content"><h1>Class: Tasker::Orchestration::TaskFinalizer::DelayCalculator
-
-
-
+  
+  
+  
 </h1>
 <div class="box_info">
-
+  
   <dl>
     <dt>Inherits:</dt>
     <dd>
       <span class="inheritName">Object</span>
-
+      
         <ul class="fullTree">
           <li>Object</li>
-
+          
             <li class="next">Tasker::Orchestration::TaskFinalizer::DelayCalculator</li>
-
+          
         </ul>
         <a href="#" class="inheritanceTree">show all</a>
-
+      
     </dd>
   </dl>
+  
 
+  
+  
+  
+  
+  
 
+  
 
-
-
-
-
-
-
-
-
+  
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/tasker/orchestration/task_finalizer.rb</dd>
   </dl>
-
+  
 </div>
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-
+    
 <p>Service class to calculate delays Reduces complexity by organizing delay calculation logic</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div>
 
@@ -117,179 +117,179 @@
 
 
 
-
+  
     <h2>
       Class Method Summary
       <small><a href="#" class="summary_toggle">collapse</a></small>
     </h2>
 
     <ul class="summary">
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#backoff_config-class_method" title="backoff_config (class method)">.<strong>backoff_config</strong>  &#x21d2; Tasker::Types::BackoffConfig </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Get backoff configuration with memoization.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#calculate_reenqueue_delay-class_method" title="calculate_reenqueue_delay (class method)">.<strong>calculate_reenqueue_delay</strong>(context)  &#x21d2; Integer </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Calculate intelligent re-enqueue delay based on execution context and step backoff timing.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#default_delay-class_method" title="default_delay (class method)">.<strong>default_delay</strong>  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Default delay for unclear states or no context.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#delay_map-class_method" title="delay_map (class method)">.<strong>delay_map</strong>  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Frozen hash for O(1) delay lookups with descriptive comments Values now use configurable backoff progression.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#maximum_delay-class_method" title="maximum_delay (class method)">.<strong>maximum_delay</strong>  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Maximum delay cap.</p>
 </div></span>
-
+  
 </li>
 
-
+      
     </ul>
-
+  
 
 
 
   <div id="class_method_details" class="method_details_list">
     <h2>Class Method Details</h2>
 
-
+    
       <div class="method_details first">
   <h3 class="signature first" id="backoff_config-class_method">
+  
+    .<strong>backoff_config</strong>  &#x21d2; <tt><span class='object_link'><a href="../../Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">Tasker::Types::BackoffConfig</a></span></tt> 
+  
 
-    .<strong>backoff_config</strong>  &#x21d2; <tt><span class='object_link'><a href="../../Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">Tasker::Types::BackoffConfig</a></span></tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Get backoff configuration with memoization</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt><span class='object_link'><a href="../../Types/BackoffConfig.html" title="Tasker::Types::BackoffConfig (class)">Tasker::Types::BackoffConfig</a></span></tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The backoff configuration</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -306,25 +306,25 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/task_finalizer.rb', line 442</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_backoff_config'>backoff_config</span>
-  <span class='ivar'>@backoff_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_backoff'><span class='object_link'><a href="../../Configuration.html#backoff-instance_method" title="Tasker::Configuration#backoff (method)">backoff</a></span></span>
+  <span class='ivar'>@backoff_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_backoff'><span class='object_link'><a href="../../Configuration.html#backoff-instance_method" title="Tasker::Configuration#backoff (method)">backoff</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="calculate_reenqueue_delay-class_method">
+  
+    .<strong>calculate_reenqueue_delay</strong>(context)  &#x21d2; <tt>Integer</tt> 
+  
 
-    .<strong>calculate_reenqueue_delay</strong>(context)  &#x21d2; <tt>Integer</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Calculate intelligent re-enqueue delay based on execution context and step backoff timing</p>
 
 <p>This method considers the actual backoff timing of failed steps to avoid reenqueuing tasks before any steps are ready for retry.</p>
@@ -335,42 +335,42 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>context</span>
-
-
+      
+      
         <span class='type'>(<tt><span class='object_link'><a href="../../TaskExecutionContext.html" title="Tasker::TaskExecutionContext (class)">Tasker::TaskExecutionContext</a></span></tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The execution context</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Integer</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Delay in seconds</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -409,26 +409,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="default_delay-class_method">
+  
+    .<strong>default_delay</strong>  &#x21d2; <tt>Object</tt> 
+  
 
-    .<strong>default_delay</strong>  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Default delay for unclear states or no context</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -450,26 +450,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="delay_map-class_method">
+  
+    .<strong>delay_map</strong>  &#x21d2; <tt>Object</tt> 
+  
 
-    .<strong>delay_map</strong>  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Frozen hash for O(1) delay lookups with descriptive comments Values now use configurable backoff progression</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -499,26 +499,26 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="maximum_delay-class_method">
+  
+    .<strong>maximum_delay</strong>  &#x21d2; <tt>Object</tt> 
+  
 
-    .<strong>maximum_delay</strong>  &#x21d2; <tt>Object</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Maximum delay cap</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -540,13 +540,13 @@
   </tr>
 </table>
 </div>
-
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:14 2025 by
+  Generated on Fri Jul 11 17:34:50 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

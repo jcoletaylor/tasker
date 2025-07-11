@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
   Class: Tasker::Registry::BaseRegistry
-
+  
     &mdash; Documentation by YARD 0.9.37
-
+  
 </title>
 
   <link rel="stylesheet" href="../../css/style.css" type="text/css" />
@@ -35,16 +35,16 @@
     <div id="main" tabindex="-1">
       <div id="header">
         <div id="menu">
-
+  
     <a href="../../_index.html">Index (B)</a> &raquo;
     <span class='title'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Registry.html" title="Tasker::Registry (module)">Registry</a></span></span>
-     &raquo;
+     &raquo; 
     <span class="title">BaseRegistry</span>
-
+  
 </div>
 
         <div id="search">
-
+  
     <a class="full_list_link" id="class_list_link"
         href="../../class_list.html">
 
@@ -54,59 +54,59 @@
           <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
         </svg>
     </a>
-
+  
 </div>
         <div class="clear"></div>
       </div>
 
       <div id="content"><h1>Class: Tasker::Registry::BaseRegistry
-
-
-
+  
+  
+  
 </h1>
 <div class="box_info">
-
+  
   <dl>
     <dt>Inherits:</dt>
     <dd>
       <span class="inheritName">Object</span>
-
+      
         <ul class="fullTree">
           <li>Object</li>
-
+          
             <li class="next">Tasker::Registry::BaseRegistry</li>
-
+          
         </ul>
         <a href="#" class="inheritanceTree">show all</a>
-
+      
     </dd>
   </dl>
+  
 
-
-
-
-
-
+  
+  
+  
+  
   <dl>
       <dt>Includes:</dt>
       <dd><span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></dd>
   </dl>
+  
+  
 
+  
 
-
-
-
-
+  
   <dl>
     <dt>Defined in:</dt>
     <dd>lib/tasker/registry/base_registry.rb</dd>
   </dl>
-
+  
 </div>
 
 <h2>Overview</h2><div class="docstring">
   <div class="discussion">
-
+    
 <p>Base class for all registry systems in Tasker</p>
 
 <p>Provides common functionality including thread-safe operations, structured logging, health checks, and statistics interfaces. All registry classes should inherit from this base class.</p>
@@ -115,7 +115,7 @@
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><div id="subclasses">
   <h2>Direct Known Subclasses</h2>
@@ -125,7 +125,7 @@
 
 
   <h2>Constant Summary</h2>
-
+  
   <h3 class="inherited">Constants included
      from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
   <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#CORRELATION_ID_KEY-constant" title="Tasker::Concerns::StructuredLogging::CORRELATION_ID_KEY (constant)">Concerns::StructuredLogging::CORRELATION_ID_KEY</a></span></p>
@@ -134,389 +134,389 @@
 
 
 
-
+  
     <h2>
       Instance Method Summary
       <small><a href="#" class="summary_toggle">collapse</a></small>
     </h2>
 
     <ul class="summary">
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#all_items-instance_method" title="#all_items (instance method)">#<strong>all_items</strong>  &#x21d2; Hash </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Get all items in the registry.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#base_stats-instance_method" title="#base_stats (instance method)">#<strong>base_stats</strong>  &#x21d2; Hash </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Common registry statistics interface.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#clear!-instance_method" title="#clear! (instance method)">#<strong>clear!</strong>  &#x21d2; void </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Clear all items from the registry.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#health_check-instance_method" title="#health_check (instance method)">#<strong>health_check</strong>  &#x21d2; Hash </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Comprehensive health check with details.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#healthy%3F-instance_method" title="#healthy? (instance method)">#<strong>healthy?</strong>  &#x21d2; Boolean </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Health check interface.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>  &#x21d2; BaseRegistry </a>
+    
 
-
-
+    
   </span>
-
-
+  
+  
     <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>A new instance of BaseRegistry.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#log_registration-instance_method" title="#log_registration (instance method)">#<strong>log_registration</strong>(entity_type, entity_id, entity_class, options = {})  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Log registration events with structured format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#log_registry_error-instance_method" title="#log_registry_error (instance method)">#<strong>log_registry_error</strong>(operation, error, **context)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Log registry errors with structured format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#log_registry_operation-instance_method" title="#log_registry_operation (instance method)">#<strong>log_registry_operation</strong>(operation, **context)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Log registry operations with structured format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#log_unregistration-instance_method" title="#log_unregistration (instance method)">#<strong>log_unregistration</strong>(entity_type, entity_id, entity_class)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Log unregistration events with structured format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#log_validation_failure-instance_method" title="#log_validation_failure (instance method)">#<strong>log_validation_failure</strong>(entity_type, entity_id, validation_error)  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Log validation failures with structured format.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="public ">
   <span class="summary_signature">
-
+    
       <a href="#stats-instance_method" title="#stats (instance method)">#<strong>stats</strong>  &#x21d2; Hash </a>
+    
 
-
-
+    
   </span>
+  
+  
+  
+  
+  
+  
+  
 
-
-
-
-
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Get comprehensive statistics for this registry.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#thread_safe_operation-instance_method" title="#thread_safe_operation (instance method)">#<strong>thread_safe_operation</strong> { ... } &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Execute operations in a thread-safe manner.</p>
 </div></span>
-
+  
 </li>
 
-
+      
         <li class="protected ">
   <span class="summary_signature">
-
+    
       <a href="#validate_registration_params!-instance_method" title="#validate_registration_params! (instance method)">#<strong>validate_registration_params!</strong>(name, entity_class, options = {})  &#x21d2; Object </a>
+    
 
-
-
+    
   </span>
-
-
-
+  
+  
+  
   <span class="note title protected">protected</span>
+  
+  
+  
 
-
-
-
-
+  
     <span class="summary_desc"><div class='inline'>
 <p>Validate registration parameters.</p>
 </div></span>
-
+  
 </li>
 
-
+      
     </ul>
+  
 
 
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
+  
   <h3 class="inherited">Methods included from <span class='object_link'><a href="../Concerns/StructuredLogging.html" title="Tasker::Concerns::StructuredLogging (module)">Concerns::StructuredLogging</a></span></h3>
   <p class="inherited"><span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id (method)">#correlation_id</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#correlation_id=-instance_method" title="Tasker::Concerns::StructuredLogging#correlation_id= (method)">#correlation_id=</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_exception-instance_method" title="Tasker::Concerns::StructuredLogging#log_exception (method)">#log_exception</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_orchestration_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_orchestration_event (method)">#log_orchestration_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_performance_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_performance_event (method)">#log_performance_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_step_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_step_event (method)">#log_step_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_structured-instance_method" title="Tasker::Concerns::StructuredLogging#log_structured (method)">#log_structured</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#log_task_event-instance_method" title="Tasker::Concerns::StructuredLogging#log_task_event (method)">#log_task_event</a></span>, <span class='object_link'><a href="../Concerns/StructuredLogging.html#with_correlation_id-instance_method" title="Tasker::Concerns::StructuredLogging#with_correlation_id (method)">#with_correlation_id</a></span></p>
 
   <div id="constructor_details" class="method_details_list">
   <h2>Constructor Details</h2>
-
+  
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Registry::BaseRegistry (class)">BaseRegistry</a></span></tt> 
+  
 
-    #<strong>initialize</strong>  &#x21d2; <tt><span class='object_link'><a href="" title="Tasker::Registry::BaseRegistry (class)">BaseRegistry</a></span></tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Returns a new instance of BaseRegistry.</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 
 </div><table class="source_code">
   <tr>
@@ -536,7 +536,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='ivar'>@mutex</span> <span class='op'>=</span> <span class='const'>Mutex</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
-  <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker::Configuration.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span>
+  <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span>
   <span class='ivar'>@registry_name</span> <span class='op'>=</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_demodulize'>demodulize</span><span class='period'>.</span><span class='id identifier rubyid_underscore'>underscore</span>
   <span class='ivar'>@created_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
 <span class='kw'>end</span></pre>
@@ -544,68 +544,68 @@
   </tr>
 </table>
 </div>
-
+  
 </div>
 
 
   <div id="instance_method_details" class="method_details_list">
     <h2>Instance Method Details</h2>
 
-
+    
       <div class="method_details first">
   <h3 class="signature first" id="all_items-instance_method">
+  
+    #<strong>all_items</strong>  &#x21d2; <tt>Hash</tt> 
+  
 
-    #<strong>all_items</strong>  &#x21d2; <tt>Hash</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Get all items in the registry</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>All registered items</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 <p class="tag_title">Raises:</p>
 <ul class="raise">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>NotImplementedError</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Must be implemented by subclasses</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -628,43 +628,43 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="base_stats-instance_method">
-
+  
     #<strong>base_stats</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Common registry statistics interface</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Base statistics shared by all registries</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -695,16 +695,16 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="clear!-instance_method">
+  
+    #<strong>clear!</strong>  &#x21d2; <tt>void</tt> 
+  
 
-    #<strong>clear!</strong>  &#x21d2; <tt>void</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
     <p class="note returns_void">This method returns an undefined value.</p>
@@ -714,24 +714,24 @@
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Raises:</p>
 <ul class="raise">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>NotImplementedError</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Must be implemented by subclasses</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -754,43 +754,43 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="health_check-instance_method">
-
+  
     #<strong>health_check</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Comprehensive health check with details</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Health check results</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -823,43 +823,43 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="healthy?-instance_method">
-
+  
     #<strong>healthy?</strong>  &#x21d2; <tt>Boolean</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Health check interface</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Boolean</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>True if registry is healthy</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -884,19 +884,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="log_registration-instance_method">
-
+  
     #<strong>log_registration</strong>(entity_type, entity_id, entity_class, options = {})  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Log registration events with structured format</p>
 
 
@@ -905,73 +905,73 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>entity_type</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Type of entity being registered</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_id</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Unique identifier for the entity</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_class</span>
-
-
+      
+      
         <span class='type'>(<tt>Class</tt>, <tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Class of the entity being registered</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>options</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
+      
+      
         <em class="default">(defaults to: <tt>{}</tt>)</em>
-
-
+      
+      
         &mdash;
         <div class='inline'>
 <p>Additional registration options</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1009,19 +1009,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="log_registry_error-instance_method">
-
+  
     #<strong>log_registry_error</strong>(operation, error, **context)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Log registry errors with structured format</p>
 
 
@@ -1030,55 +1030,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>operation</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Operation that failed</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>error</span>
-
-
+      
+      
         <span class='type'>(<tt>Exception</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>The error that occurred</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>context</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Additional context for the error</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1112,19 +1112,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="log_registry_operation-instance_method">
-
+  
     #<strong>log_registry_operation</strong>(operation, **context)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Log registry operations with structured format</p>
 
 
@@ -1133,39 +1133,39 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>operation</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Operation being performed</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>context</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Additional context for the operation</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1195,19 +1195,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="log_unregistration-instance_method">
-
+  
     #<strong>log_unregistration</strong>(entity_type, entity_id, entity_class)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Log unregistration events with structured format</p>
 
 
@@ -1216,55 +1216,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>entity_type</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Type of entity being unregistered</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_id</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Unique identifier for the entity</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_class</span>
-
-
+      
+      
         <span class='type'>(<tt>Class</tt>, <tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Class of the entity being unregistered</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1300,19 +1300,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="log_validation_failure-instance_method">
-
+  
     #<strong>log_validation_failure</strong>(entity_type, entity_id, validation_error)  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Log validation failures with structured format</p>
 
 
@@ -1321,55 +1321,55 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>entity_type</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Type of entity that failed validation</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_id</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Unique identifier for the entity</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>validation_error</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Description of the validation failure</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 
@@ -1403,61 +1403,61 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="stats-instance_method">
+  
+    #<strong>stats</strong>  &#x21d2; <tt>Hash</tt> 
+  
 
-    #<strong>stats</strong>  &#x21d2; <tt>Hash</tt>
+  
 
-
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Get comprehensive statistics for this registry</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Registry-specific statistics</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 <p class="tag_title">Raises:</p>
 <ul class="raise">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>NotImplementedError</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Must be implemented by subclasses</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -1480,61 +1480,61 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="thread_safe_operation-instance_method">
-
+  
     #<strong>thread_safe_operation</strong> { ... } &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Execute operations in a thread-safe manner</p>
 
 
   </div>
 </div>
 <div class="tags">
-
+  
 <p class="tag_title">Yields:</p>
 <ul class="yield">
-
+  
     <li>
-
-
+      
+      
         <span class='type'></span>
-
-
-
-
+      
+      
+      
+        
         <div class='inline'>
 <p>Block to execute within mutex</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 <p class="tag_title">Returns:</p>
 <ul class="return">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>Object</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Result of the block</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -1557,19 +1557,19 @@
   </tr>
 </table>
 </div>
-
+    
       <div class="method_details ">
   <h3 class="signature " id="validate_registration_params!-instance_method">
-
+  
     #<strong>validate_registration_params!</strong>(name, entity_class, options = {})  &#x21d2; <tt>Object</tt>  <span class="extras">(protected)</span>
+  
 
+  
 
-
-
-
+  
 </h3><div class="docstring">
   <div class="discussion">
-
+    
 <p>Validate registration parameters</p>
 
 
@@ -1578,76 +1578,76 @@
 <div class="tags">
   <p class="tag_title">Parameters:</p>
 <ul class="param">
-
+  
     <li>
-
+      
         <span class='name'>name</span>
-
-
+      
+      
         <span class='type'>(<tt>String</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Name of the entity</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>entity_class</span>
-
-
+      
+      
         <span class='type'>(<tt>Class</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>Class of the entity</p>
 </div>
-
+      
     </li>
-
+  
     <li>
-
+      
         <span class='name'>options</span>
-
-
+      
+      
         <span class='type'>(<tt>Hash</tt>)</span>
-
-
+      
+      
         <em class="default">(defaults to: <tt>{}</tt>)</em>
-
-
+      
+      
         &mdash;
         <div class='inline'>
 <p>Registration options</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 <p class="tag_title">Raises:</p>
 <ul class="raise">
-
+  
     <li>
-
-
+      
+      
         <span class='type'>(<tt>ArgumentError</tt>)</span>
-
-
-
+      
+      
+      
         &mdash;
         <div class='inline'>
 <p>If parameters are invalid</p>
 </div>
-
+      
     </li>
-
+  
 </ul>
 
 </div><table class="source_code">
@@ -1674,13 +1674,13 @@
   </tr>
 </table>
 </div>
-
+    
   </div>
 
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:11 2025 by
+  Generated on Fri Jul 11 17:34:48 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

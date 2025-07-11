@@ -616,27 +616,27 @@
       <pre class="lines">
 
 
-255
-256
-257
-258
-259
-260
-261
-262
-263
-264
-265
-266
-267
-268
-269
-270
-271
-272</pre>
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 255</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 287</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>labels:</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='label'>buckets:</span> <span class='const'><span class='object_link'><a href="#DEFAULT_BUCKETS-constant" title="Tasker::Telemetry::MetricTypes::Histogram::DEFAULT_BUCKETS (constant)">DEFAULT_BUCKETS</a></span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Metric name cannot be nil or empty</span><span class='tstring_end'>&#39;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_strip'>strip</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -712,12 +712,12 @@
       <pre class="lines">
 
 
-241
-242
-243</pre>
+273
+274
+275</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 241</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 273</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_bucket_boundaries'>bucket_boundaries</span>
   <span class='ivar'>@bucket_boundaries</span>
@@ -773,12 +773,12 @@
       <pre class="lines">
 
 
-244
-245
-246</pre>
+276
+277
+278</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 244</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 276</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_created_at'>created_at</span>
   <span class='ivar'>@created_at</span>
@@ -834,12 +834,12 @@
       <pre class="lines">
 
 
-238
-239
-240</pre>
+270
+271
+272</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 270</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_labels'>labels</span>
   <span class='ivar'>@labels</span>
@@ -895,12 +895,12 @@
       <pre class="lines">
 
 
-235
-236
-237</pre>
+267
+268
+269</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 235</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 267</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_name'>name</span>
   <span class='ivar'>@name</span>
@@ -961,15 +961,15 @@
       <pre class="lines">
 
 
-326
-327
-328
-329
-330
-331</pre>
+358
+359
+360
+361
+362
+363</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 326</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 358</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_average'>average</span>
   <span class='id identifier rubyid_current_count'>current_count</span> <span class='op'>=</span> <span class='id identifier rubyid_count'>count</span>
@@ -1026,17 +1026,17 @@
       <pre class="lines">
 
 
-314
-315
-316
-317
-318
-319
-320
-321</pre>
+346
+347
+348
+349
+350
+351
+352
+353</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 314</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 346</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_buckets'>buckets</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
@@ -1095,12 +1095,12 @@
       <pre class="lines">
 
 
-300
-301
-302</pre>
+332
+333
+334</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 300</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 332</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_count'>count</span>
   <span class='ivar'>@count</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -1154,16 +1154,16 @@
       <pre class="lines">
 
 
-352
-353
-354
-355</pre>
+393
+394
+395
+396</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 352</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 393</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_description'>description</span>
-  <span class='id identifier rubyid_label_str'>label_str</span> <span class='op'>=</span> <span class='id identifier rubyid_labels'>labels</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_labels'>labels</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span>
+  <span class='id identifier rubyid_label_str'>label_str</span> <span class='op'>=</span> <span class='id identifier rubyid_labels'>labels</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_end'>&#39;</span></span> <span class='op'>:</span> <span class='id identifier rubyid_format_labels_for_description'>format_labels_for_description</span><span class='lparen'>(</span><span class='id identifier rubyid_labels'>labels</span><span class='rparen'>)</span>
   <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_label_str'>label_str</span><span class='embexpr_end'>}</span><span class='tstring_content'> = </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_count'>count</span><span class='embexpr_end'>}</span><span class='tstring_content'> observations, avg: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_average'>average</span><span class='period'>.</span><span class='id identifier rubyid_round'>round</span><span class='lparen'>(</span><span class='int'>3</span><span class='rparen'>)</span><span class='embexpr_end'>}</span><span class='tstring_content'> (histogram)</span><span class='tstring_end'>&quot;</span></span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1253,26 +1253,26 @@
       <pre class="lines">
 
 
-279
-280
-281
-282
-283
-284
-285
-286
-287
-288
-289
-290
-291
-292
-293
-294
-295</pre>
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 279</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 311</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_observe'>observe</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Observed value must be numeric, got: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_value'>value</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Numeric</span><span class='rparen'>)</span>
@@ -1322,14 +1322,14 @@
       <pre class="lines">
 
 
-360
-361
-362
-363
-364</pre>
+384
+385
+386
+387
+388</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 360</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 384</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_reset!'>reset!</span>
   <span class='ivar'>@count</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='int'>0</span>
@@ -1385,12 +1385,12 @@
       <pre class="lines">
 
 
-307
-308
-309</pre>
+339
+340
+341</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 307</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 339</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_sum'>sum</span>
   <span class='ivar'>@sum</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span>
@@ -1444,21 +1444,21 @@
       <pre class="lines">
 
 
-336
-337
-338
-339
-340
-341
-342
-343
-344
-345
-346
-347</pre>
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 336</span>
+      <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/metric_types.rb', line 368</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_h'>to_h</span>
   <span class='lbrace'>{</span>
@@ -1482,7 +1482,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:12 2025 by
+  Generated on Fri Jul 11 17:34:48 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>
