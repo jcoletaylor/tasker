@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.files = Dir['{app,config,db,docs,lib}/**/*', 'LICENSE', 'Rakefile', 'README.md']
 
   spec.add_dependency 'logger', '~> 1.6'
-  spec.add_dependency 'rails', '~> 7.2.2'
+  spec.add_dependency 'rails', '~> 7.2'
   # Use postgresql as the database for Active Record
   spec.add_dependency 'pg', '~> 1.5'
   # Use Puma as the app server
