@@ -19,7 +19,7 @@ module Tasker
   # - User model integration via the Authorizable concern
   #
   # @example Basic configuration
-  #   Tasker.configuration do |config|
+  #   Tasker::Configuration.configuration do |config|
   #     config.auth do |auth|
   #       auth.enabled = true
   #       auth.coordinator_class = 'MyAuthorizationCoordinator'

@@ -11,7 +11,7 @@ module Tasker
 
       class_option :module_namespace, type: :string, default: nil,
                                       desc: 'The module namespace for the task handler ' \
-                                            '(defaults to Tasker.configuration.engine.default_module_namespace)'
+                                            '(defaults to Tasker::Configuration.configuration.engine.default_module_namespace)'
       class_option :namespace_name, type: :string, default: 'default',
                                     desc: 'The TaskNamespace for organizing the task (e.g., payments, inventory, notifications)'
       class_option :version, type: :string, default: '0.1.0',
@@ -23,7 +23,7 @@ module Tasker
 
       def create_task_handler_files
         # Set variables first
-        @module_namespace = options[:module_namespace] || Tasker.configuration.engine.default_module_namespace
+        @module_namespace = options[:module_namespace] || Tasker::Configuration.configuration.engine.default_module_namespace
         @module_path = @module_namespace&.underscore
         @task_handler_class = name.camelize
         @task_name = name.underscore
@@ -36,8 +36,8 @@ module Tasker
         ensure_configuration_loaded
 
         # Get directory paths from configuration
-        @task_handler_directory = Tasker.configuration.engine.task_handler_directory
-        @task_config_directory = Tasker.configuration.engine.task_config_directory
+        @task_handler_directory = Tasker::Configuration.configuration.engine.task_handler_directory
+        @task_config_directory = Tasker::Configuration.configuration.engine.task_config_directory
 
         # Ensure directories exist
         ensure_directories_exist(

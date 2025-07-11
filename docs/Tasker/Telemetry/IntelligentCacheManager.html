@@ -546,7 +546,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/telemetry/intelligent_cache_manager.rb', line 53</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_cache'><span class='object_link'><a href="../Configuration.html#cache-instance_method" title="Tasker::Configuration#cache (method)">cache</a></span></span>
+  <span class='ivar'>@config</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_cache'><span class='object_link'><a href="../Configuration.html#cache-instance_method" title="Tasker::Configuration#cache (method)">cache</a></span></span>
 
   <span class='comment'># Use unified cache strategy for capability detection
 </span>  <span class='ivar'>@cache_strategy</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../CacheStrategy.html" title="Tasker::CacheStrategy (class)">CacheStrategy</a></span></span><span class='period'>.</span><span class='id identifier rubyid_detect'><span class='object_link'><a href="../CacheStrategy.html#detect-class_method" title="Tasker::CacheStrategy.detect (method)">detect</a></span></span>
@@ -1073,7 +1073,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:16 2025 by
+  Generated on Fri Jul 11 17:34:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -146,7 +146,7 @@ module Tasker
         # Override BaseSubscriber to add telemetry-specific filtering
         def should_process_event?(event_constant)
           # Get configuration once for efficiency
-          config = Tasker.configuration
+          config = Tasker::Configuration.configuration
 
           # Only process if telemetry is enabled
           return false unless config.telemetry.enabled
@@ -163,7 +163,7 @@ module Tasker
 
         # Check if telemetry is enabled
         def telemetry_enabled?
-          Tasker.configuration.telemetry.enabled != false
+          Tasker::Configuration.configuration.telemetry.enabled != false
         end
 
         # Create a simple span for events that don't need complex hierarchy
@@ -296,7 +296,7 @@ module Tasker
         #
         # @return [OpenTelemetry::Tracer] The tracer instance
         def create_tracer
-          config = Tasker.configuration
+          config = Tasker::Configuration.configuration
           ::OpenTelemetry.tracer_provider.tracer(
             config.telemetry.service_name,
             config.telemetry.service_version
@@ -309,7 +309,7 @@ module Tasker
         # @return [Hash] OpenTelemetry-compatible attributes
         def convert_attributes_for_otel(attributes)
           result = {}
-          config = Tasker.configuration
+          config = Tasker::Configuration.configuration
           service_name = config.telemetry.service_name
 
           # Filter sensitive data first
@@ -371,7 +371,7 @@ module Tasker
         # @param attributes [Hash] The attributes to filter
         # @return [Hash] The filtered attributes
         def filter_sensitive_attributes(attributes)
-          filter = Tasker.configuration.telemetry.parameter_filter
+          filter = Tasker::Configuration.configuration.telemetry.parameter_filter
           return attributes unless filter
 
           filtered_data = {}

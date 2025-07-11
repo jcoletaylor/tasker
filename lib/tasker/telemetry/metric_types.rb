@@ -100,8 +100,24 @@ module Tasker
         #
         # @return [String] Human-readable description
         def description
-          label_str = labels.empty? ? '' : labels.inspect
+          label_str = labels.empty? ? '' : format_labels_for_description(labels)
           "#{name}#{label_str} = #{value} (counter)"
+        end
+
+        private
+
+        # Format labels consistently across Ruby versions
+        # Uses the older Ruby hash syntax for backward compatibility with tests
+        #
+        # @param labels_hash [Hash] The labels hash to format
+        # @return [String] Formatted label string
+        def format_labels_for_description(labels_hash)
+          return '' if labels_hash.empty?
+
+          formatted_pairs = labels_hash.map do |key, value|
+            ":#{key}=>#{value.inspect}"
+          end
+          "{#{formatted_pairs.join(', ')}}"
         end
       end
 
@@ -212,8 +228,24 @@ module Tasker
         #
         # @return [String] Human-readable description
         def description
-          label_str = labels.empty? ? '' : labels.inspect
+          label_str = labels.empty? ? '' : format_labels_for_description(labels)
           "#{name}#{label_str} = #{value} (gauge)"
+        end
+
+        private
+
+        # Format labels consistently across Ruby versions
+        # Uses the older Ruby hash syntax for backward compatibility with tests
+        #
+        # @param labels_hash [Hash] The labels hash to format
+        # @return [String] Formatted label string
+        def format_labels_for_description(labels_hash)
+          return '' if labels_hash.empty?
+
+          formatted_pairs = labels_hash.map do |key, value|
+            ":#{key}=>#{value.inspect}"
+          end
+          "{#{formatted_pairs.join(', ')}}"
         end
       end
 
@@ -346,14 +378,6 @@ module Tasker
           }
         end
 
-        # Get a description of this metric for debugging
-        #
-        # @return [String] Human-readable description
-        def description
-          label_str = labels.empty? ? '' : labels.inspect
-          "#{name}#{label_str} = #{count} observations, avg: #{average.round(3)} (histogram)"
-        end
-
         # Reset the histogram (primarily for testing)
         #
         # @return [void]
@@ -361,6 +385,30 @@ module Tasker
           @count.value = 0
           @sum.set(0.0)
           @bucket_counts.each { |bucket| bucket.value = 0 }
+        end
+
+        # Get a description of this metric for debugging
+        #
+        # @return [String] Human-readable description
+        def description
+          label_str = labels.empty? ? '' : format_labels_for_description(labels)
+          "#{name}#{label_str} = #{count} observations, avg: #{average.round(3)} (histogram)"
+        end
+
+        private
+
+        # Format labels consistently across Ruby versions
+        # Uses the older Ruby hash syntax for backward compatibility with tests
+        #
+        # @param labels_hash [Hash] The labels hash to format
+        # @return [String] Formatted label string
+        def format_labels_for_description(labels_hash)
+          return '' if labels_hash.empty?
+
+          formatted_pairs = labels_hash.map do |key, value|
+            ":#{key}=>#{value.inspect}"
+          end
+          "{#{formatted_pairs.join(', ')}}"
         end
       end
     end

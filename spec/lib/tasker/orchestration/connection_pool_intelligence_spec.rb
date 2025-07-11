@@ -8,7 +8,7 @@ RSpec.describe Tasker::Orchestration::ConnectionPoolIntelligence do
 
   before do
     allow(ActiveRecord::Base).to receive(:connection_pool).and_return(mock_pool)
-    allow(Tasker.configuration).to receive(:execution).and_return(mock_config)
+    allow(Tasker::Configuration.configuration).to receive(:execution).and_return(mock_config)
 
     # Default config values
     allow(mock_config).to receive_messages(min_concurrent_steps: 3, max_concurrent_steps_limit: 12, connection_pressure_factors: {

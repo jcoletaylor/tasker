@@ -106,7 +106,7 @@ end
 
 ```ruby
 # Configuration
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.service_bus do |bus|
     bus.backend = :rabbitmq  # or :kafka, :redis, :nats
     bus.connection_url = ENV['SERVICE_BUS_URL']

@@ -204,7 +204,7 @@ module Tasker
       def jwt_config_example
         <<~CONFIG
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = '#{class_name}Authenticator'
@@ -217,7 +217,7 @@ module Tasker
       def devise_config_example
         <<~CONFIG
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = '#{class_name}Authenticator'
@@ -230,7 +230,7 @@ module Tasker
       def api_token_config_example
         <<~CONFIG
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = '#{class_name}Authenticator'
@@ -243,7 +243,7 @@ module Tasker
       def omniauth_config_example
         <<~CONFIG
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = '#{class_name}Authenticator'
@@ -256,7 +256,7 @@ module Tasker
       def custom_config_example
         <<~CONFIG
           # config/initializers/tasker.rb
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.auth do |auth|
               auth.authentication_enabled = true
               auth.authenticator_class = '#{class_name}Authenticator'

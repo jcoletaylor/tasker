@@ -51,7 +51,7 @@ module Tasker
     describe 'task creation' do
       it 'is able to create with defaults' do
         # Set identity strategy to hash for testing
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.engine do |engine|
             engine.identity_strategy = :hash
           end

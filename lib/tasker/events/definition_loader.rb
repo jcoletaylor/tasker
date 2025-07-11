@@ -103,7 +103,7 @@ module Tasker
           metadata = {}
 
           # Load custom events from configured directories if they exist
-          Tasker.configuration.engine.custom_events_directories.each do |directory_path|
+          Tasker::Configuration.configuration.engine.custom_events_directories.each do |directory_path|
             absolute_path = File.expand_path(directory_path, Rails.root)
 
             if File.directory?(absolute_path)

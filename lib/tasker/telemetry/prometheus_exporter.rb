@@ -212,9 +212,9 @@ module Tasker
       #
       # @return [Boolean] True if telemetry is enabled
       def telemetry_enabled?
-        return false unless defined?(Tasker.configuration)
+        return false unless defined?(Tasker::Configuration.configuration)
 
-        Tasker.configuration.telemetry.metrics_enabled
+        Tasker::Configuration.configuration.telemetry.metrics_enabled
       end
 
       # Log export error with structured logging

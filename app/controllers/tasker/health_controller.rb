@@ -213,7 +213,7 @@ module Tasker
     def skip_authentication?
       case action_name
       when 'status'
-        !Tasker.configuration.health.status_requires_authentication
+        !Tasker::Configuration.configuration.health.status_requires_authentication
       else
         super
       end

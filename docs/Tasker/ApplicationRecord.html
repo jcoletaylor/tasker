@@ -121,7 +121,7 @@
 <p>Basic usage with shared database (default)</p>
 </div></h5>
       
-      <pre class="example code"><code><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
+      <pre class="example code"><code><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_config'>config</span><span class='op'>|</span>
   <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_database'>database</span><span class='period'>.</span><span class='id identifier rubyid_enable_secondary_database'>enable_secondary_database</span> <span class='op'>=</span> <span class='kw'>false</span>
 <span class='kw'>end</span></code></pre>
     
@@ -130,7 +130,7 @@
 <p>Using a dedicated Tasker database</p>
 </div></h5>
       
-      <pre class="example code"><code>Tasker.configuration do |config|
+      <pre class="example code"><code>Tasker::Configuration.configuration do |config|
   config.database.enable_secondary_database = true
   config.database.name = :tasker
 end
@@ -281,13 +281,13 @@ production:
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_configure_database_connections'>configure_database_connections</span>
   <span class='comment'># Ensure Tasker configuration is available - fail fast if not
-</span>  <span class='kw'>unless</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker.configuration is not available. This indicates a Rails initialization order issue. </span><span class='tstring_end'>&#39;</span></span> \
+</span>  <span class='kw'>unless</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_error_message'>error_message</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Tasker::Configuration.configuration is not available. This indicates a Rails initialization order issue. </span><span class='tstring_end'>&#39;</span></span> \
                     <span class='tstring'><span class='tstring_beg'>&#39;</span><span class='tstring_content'>Ensure Tasker is properly initialized before models are loaded.</span><span class='tstring_end'>&#39;</span></span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='const'>StandardError</span><span class='comma'>,</span> <span class='id identifier rubyid_error_message'>error_message</span>
   <span class='kw'>end</span>
 
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_database'><span class='object_link'><a href="Configuration.html#database-instance_method" title="Tasker::Configuration#database (method)">database</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_database'><span class='object_link'><a href="Configuration.html#database-instance_method" title="Tasker::Configuration#database (method)">database</a></span></span>
   <span class='kw'>if</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_enable_secondary_database'>enable_secondary_database</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_present?'>present?</span>
     <span class='comment'># Check if the database configuration actually exists before calling connects_to
 </span>    <span class='kw'>if</span> <span class='id identifier rubyid_database_configuration_exists?'>database_configuration_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
@@ -368,7 +368,7 @@ production:
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:13 2025 by
+  Generated on Fri Jul 11 17:34:49 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

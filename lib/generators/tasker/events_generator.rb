@@ -57,7 +57,7 @@ module Tasker
         🔧 Advanced Configuration (if needed):
         For complex organizational needs, configure additional directories:
 
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.add_custom_events_directories(
               'vendor/gems/my_gem/events',
               'app/modules/billing/events'

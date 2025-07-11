@@ -12,7 +12,7 @@ require_relative '../../lib/tasker/authorization'
 # - Integration with user models through the Authorizable concern
 #
 # Usage:
-#   Tasker.configuration do |config|
+#   Tasker::Configuration.configuration do |config|
 #     config.auth do |auth|
 #       auth.strategy = :custom
 #       auth.options = { authenticator_class: 'YourAuthenticator' }

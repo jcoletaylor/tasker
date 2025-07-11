@@ -486,7 +486,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/logging/correlation_id_generator.rb', line 68</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_from_headers'>from_headers</span><span class='lparen'>(</span><span class='id identifier rubyid_headers'>headers</span><span class='comma'>,</span> <span class='id identifier rubyid_header_name'>header_name</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_header_name'>header_name</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_correlation_id_header'><span class='object_link'><a href="../Types/TelemetryConfig.html#correlation_id_header-instance_method" title="Tasker::Types::TelemetryConfig#correlation_id_header (method)">correlation_id_header</a></span></span>
+  <span class='id identifier rubyid_header_name'>header_name</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_correlation_id_header'><span class='object_link'><a href="../Types/TelemetryConfig.html#correlation_id_header-instance_method" title="Tasker::Types::TelemetryConfig#correlation_id_header (method)">correlation_id_header</a></span></span>
 
   <span class='comment'># Handle different header formats (rack vs rails)
 </span>  <span class='id identifier rubyid_header_value'>header_value</span> <span class='op'>=</span> <span class='id identifier rubyid_headers'>headers</span><span class='lbracket'>[</span><span class='id identifier rubyid_header_name'>header_name</span><span class='rbracket'>]</span> <span class='op'>||</span>
@@ -678,7 +678,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:15 2025 by
+  Generated on Fri Jul 11 17:34:51 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

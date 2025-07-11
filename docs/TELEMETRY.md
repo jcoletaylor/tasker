@@ -201,7 +201,7 @@ end
 ### ✅ **Clean Architecture** - Complementary Systems
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     # Enable OpenTelemetry spans (event-driven)
     tel.enabled = true
@@ -222,7 +222,7 @@ See [METRICS.md](METRICS.md) for comprehensive details on the native metrics sys
 Configure Tasker's telemetry in `config/initializers/tasker.rb`:
 
 ```ruby
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     # Enable telemetry (TelemetrySubscriber for OpenTelemetry spans)
     tel.enabled = true
@@ -254,7 +254,7 @@ require 'opentelemetry/instrumentation/all'
 # Configure OpenTelemetry
 OpenTelemetry::SDK.configure do |c|
   # Use the configured service name
-  c.service_name = Tasker.configuration.telemetry.service_name
+  c.service_name = Tasker::Configuration.configuration.telemetry.service_name
 
   # Configure OTLP exporter to send to local Jaeger
   otlp_exporter = OpenTelemetry::Exporter::OTLP::Exporter.new(
@@ -268,8 +268,8 @@ OpenTelemetry::SDK.configure do |c|
 
   # Configure resource with additional attributes
   c.resource = OpenTelemetry::SDK::Resources::Resource.create({
-    'service.name' => Tasker.configuration.telemetry.service_name,
-    'service.version' => Tasker.configuration.telemetry.service_version,
+    'service.name' => Tasker::Configuration.configuration.telemetry.service_name,
+    'service.version' => Tasker::Configuration.configuration.telemetry.service_version,
     'service.framework' => 'tasker'
   })
 

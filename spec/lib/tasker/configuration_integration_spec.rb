@@ -19,7 +19,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
       # Configure like a real application would
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'DeviseAuthenticator'
@@ -65,7 +65,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'ApiAuthenticator'
@@ -112,7 +112,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.database do |db|
           db.enable_secondary_database = true
           db.name = :tasker # References database.yml configuration
@@ -132,7 +132,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.database do |db|
           db.enable_secondary_database = true
           db.name = 'tasker_production'
@@ -150,7 +150,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
       # Don't configure authentication - should default to disabled
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.engine do |engine|
           engine.task_handler_directory = 'my_tasks'
         end
@@ -173,7 +173,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           # Authentication
           auth.authentication_enabled = true
@@ -234,7 +234,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = false
           auth.authorization_enabled = true
@@ -251,7 +251,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = false
         end
@@ -271,7 +271,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.telemetry do |tel|
           tel.enabled = true
           tel.service_name = 'monitoring-only-tasker'
@@ -290,7 +290,7 @@ RSpec.describe 'Tasker Configuration Integration' do
       config_instance = Tasker::Configuration.new
       allow(Tasker::Configuration).to receive(:configuration).and_yield(config_instance).and_return(config_instance)
 
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'DeviseAuthenticator'

@@ -86,7 +86,7 @@ end
 
 **✅ ACHIEVEMENTS**:
 - **Dynamic Calculation**: Intelligent concurrency based on system health and database pool
-- **Configuration System**: `Tasker.configuration.execution` with environment-specific tuning
+- **Configuration System**: `Tasker::Configuration.configuration.execution` with environment-specific tuning
 - **Performance Improvement**: 200-300% potential throughput increase
 - **Template Integration**: All generators and scripts include execution configuration examples
 - **Comprehensive Testing**: FutureStateAnalyzer abstraction with 34 validation tests
@@ -514,7 +514,7 @@ module Tasker
 
       def self.intelligent_concurrency_for_step_executor
         health_data = assess_connection_health
-        config = Tasker.configuration.execution  # Use existing ExecutionConfig
+        config = Tasker::Configuration.configuration.execution  # Use existing ExecutionConfig
 
         # Respect Rails connection pool limits with configurable bounds
         base_recommendation = health_data[:recommended_concurrency]
@@ -553,7 +553,7 @@ module Tasker
         pressure = assess_pressure(pool_stat)
 
         # ✅ CONFIGURABLE: Pressure response factors (environment-dependent)
-        pressure_config = Tasker.configuration.execution.connection_pressure_factors || {
+        pressure_config = Tasker::Configuration.configuration.execution.connection_pressure_factors || {
           low: 0.8,
           moderate: 0.6,
           high: 0.4,

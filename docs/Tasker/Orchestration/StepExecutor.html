@@ -206,7 +206,7 @@
 
   
     <span class="summary_desc"><div class='inline'>
-<p>Configuration-driven execution settings These delegate to Tasker.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations.</p>
+<p>Configuration-driven execution settings These delegate to Tasker::Configuration.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations.</p>
 </div></span>
   
 </li>
@@ -771,7 +771,7 @@
 </h3><div class="docstring">
   <div class="discussion">
     
-<p>Configuration-driven execution settings These delegate to Tasker.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations</p>
+<p>Configuration-driven execution settings These delegate to Tasker::Configuration.configuration.execution for configurable values while maintaining architectural constants for Ruby-specific optimizations</p>
 
 
   </div>
@@ -793,7 +793,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/orchestration/step_executor.rb', line 28</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_execution_config'>execution_config</span>
-  <span class='ivar'>@execution_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
+  <span class='ivar'>@execution_config</span> <span class='op'>||=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -985,7 +985,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:13 2025 by
+  Generated on Fri Jul 11 17:34:50 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

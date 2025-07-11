@@ -1185,7 +1185,7 @@ RSpec.describe Tasker::Telemetry::MetricsBackend do
         it 'creates comprehensive snapshot with metadata' do
           snapshot = backend.send(:create_versioned_snapshot)
 
-          expect(snapshot[:version]).to eq(Tasker::VERSION)
+          expect(snapshot[:version]).to eq(Tasker::Version)
           expect(snapshot[:timestamp]).to be_present
           expect(snapshot[:instance_id]).to eq(backend.instance_id)
           expect(snapshot[:cache_strategy]).to be_present

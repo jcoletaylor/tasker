@@ -536,7 +536,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span>
   <span class='ivar'>@mutex</span> <span class='op'>=</span> <span class='const'>Mutex</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
-  <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span>
+  <span class='ivar'>@telemetry_config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span>
   <span class='ivar'>@registry_name</span> <span class='op'>=</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_demodulize'>demodulize</span><span class='period'>.</span><span class='id identifier rubyid_underscore'>underscore</span>
   <span class='ivar'>@created_at</span> <span class='op'>=</span> <span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span>
 <span class='kw'>end</span></pre>
@@ -1680,7 +1680,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:11 2025 by
+  Generated on Fri Jul 11 17:34:48 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

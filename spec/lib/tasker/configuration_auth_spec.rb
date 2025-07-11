@@ -99,8 +99,8 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
   end
 
   describe 'global configuration integration' do
-    it 'works with Tasker.configuration' do
-      Tasker.configuration do |config|
+    it 'works with Tasker::Configuration.configuration' do
+      described_class.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'DeviseAuthenticator'
@@ -108,9 +108,9 @@ RSpec.describe Tasker::Configuration, 'Auth Configuration' do
         end
       end
 
-      expect(Tasker.configuration.auth.authentication_enabled).to be(true)
-      expect(Tasker.configuration.auth.authenticator_class).to eq('DeviseAuthenticator')
-      expect(Tasker.configuration.auth.authorization_enabled).to be(true)
+      expect(described_class.configuration.auth.authentication_enabled).to be(true)
+      expect(described_class.configuration.auth.authenticator_class).to eq('DeviseAuthenticator')
+      expect(described_class.configuration.auth.authorization_enabled).to be(true)
     end
   end
 

@@ -10,7 +10,7 @@
 # 4. Handle token refresh logic as needed
 #
 # Usage in Tasker configuration:
-#   Tasker.configuration do |config|
+#   Tasker::Configuration.configuration do |config|
 #     config.auth do |auth|
 #       auth.strategy = :custom
 #       auth.options = {

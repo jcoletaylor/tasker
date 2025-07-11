@@ -476,8 +476,8 @@ module Tasker
         }
 
         # Override with telemetry configuration if available
-        if defined?(Tasker.configuration) && Tasker.configuration.telemetry
-          telemetry_config = Tasker.configuration.telemetry
+        if defined?(Tasker::Configuration.configuration) && Tasker::Configuration.configuration.telemetry
+          telemetry_config = Tasker::Configuration.configuration.telemetry
           base_config[:retention_window] = (telemetry_config.metrics_retention_hours || 1).hours
         end
 
@@ -1074,7 +1074,7 @@ module Tasker
       # @return [Hash] Versioned snapshot data
       def create_versioned_snapshot
         {
-          version: Tasker::VERSION,
+          version: Tasker::Version,
           timestamp: Time.current.iso8601,
           instance_id: @instance_id,
           cache_strategy: @sync_strategy,

@@ -129,7 +129,7 @@
 <p>With custom configuration</p>
 </div></h5>
       
-      <pre class="example code"><code><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
+      <pre class="example code"><code><span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
 <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_connection_pressure_factors'>connection_pressure_factors</span> <span class='op'>=</span> <span class='lbrace'>{</span> <span class='label'>high:</span> <span class='float'>0.3</span><span class='comma'>,</span> <span class='label'>critical:</span> <span class='float'>0.1</span> <span class='rbrace'>}</span>
 <span class='id identifier rubyid_concurrency'>concurrency</span> <span class='op'>=</span> <span class='const'>ConnectionPoolIntelligence</span><span class='period'>.</span><span class='id identifier rubyid_intelligent_concurrency_for_step_executor'><span class='object_link'><a href="#intelligent_concurrency_for_step_executor-class_method" title="Tasker::Orchestration::ConnectionPoolIntelligence.intelligent_concurrency_for_step_executor (method)">intelligent_concurrency_for_step_executor</a></span></span></code></pre>
     
@@ -471,7 +471,7 @@
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_intelligent_concurrency_for_step_executor'>intelligent_concurrency_for_step_executor</span>
   <span class='id identifier rubyid_health_data'>health_data</span> <span class='op'>=</span> <span class='id identifier rubyid_assess_connection_health'>assess_connection_health</span>
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_execution'><span class='object_link'><a href="../Configuration.html#execution-instance_method" title="Tasker::Configuration#execution (method)">execution</a></span></span>
 
   <span class='comment'># Get base recommendation from Rails pool analysis
 </span>  <span class='id identifier rubyid_base_recommendation'>base_recommendation</span> <span class='op'>=</span> <span class='id identifier rubyid_health_data'>health_data</span><span class='lbracket'>[</span><span class='symbol'>:recommended_concurrency</span><span class='rbracket'>]</span>
@@ -503,7 +503,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:16 2025 by
+  Generated on Fri Jul 11 17:34:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

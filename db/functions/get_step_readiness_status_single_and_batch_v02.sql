@@ -2,7 +2,7 @@
 -- When attempts is NULL, it should be treated as 0 for comparison purposes
 
 -- Update get_step_readiness_status function
-CREATE OR REPLACE FUNCTION public.get_step_readiness_status(input_task_id bigint, step_ids bigint[] DEFAULT NULL::bigint[]) RETURNS TABLE(workflow_step_id bigint, task_id bigint, named_step_id integer, name text, current_state text, dependencies_satisfied boolean, retry_eligible boolean, ready_for_execution boolean, last_failure_at timestamp without time zone, next_retry_at timestamp without time zone, total_parents integer, completed_parents integer, attempts integer, retry_limit integer, backoff_request_seconds integer, last_attempted_at timestamp without time zone)
+CREATE OR REPLACE FUNCTION get_step_readiness_status(input_task_id bigint, step_ids bigint[] DEFAULT NULL::bigint[]) RETURNS TABLE(workflow_step_id bigint, task_id bigint, named_step_id integer, name text, current_state text, dependencies_satisfied boolean, retry_eligible boolean, ready_for_execution boolean, last_failure_at timestamp without time zone, next_retry_at timestamp without time zone, total_parents integer, completed_parents integer, attempts integer, retry_limit integer, backoff_request_seconds integer, last_attempted_at timestamp without time zone)
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN
@@ -114,7 +114,7 @@ END;
 $$;
 
 -- Also update the batch version
-CREATE OR REPLACE FUNCTION public.get_step_readiness_status_batch(input_task_ids bigint[]) RETURNS TABLE(workflow_step_id bigint, task_id bigint, named_step_id integer, name text, current_state text, dependencies_satisfied boolean, retry_eligible boolean, ready_for_execution boolean, last_failure_at timestamp without time zone, next_retry_at timestamp without time zone, total_parents integer, completed_parents integer, attempts integer, retry_limit integer, backoff_request_seconds integer, last_attempted_at timestamp without time zone)
+CREATE OR REPLACE FUNCTION get_step_readiness_status_batch(input_task_ids bigint[]) RETURNS TABLE(workflow_step_id bigint, task_id bigint, named_step_id integer, name text, current_state text, dependencies_satisfied boolean, retry_eligible boolean, ready_for_execution boolean, last_failure_at timestamp without time zone, next_retry_at timestamp without time zone, total_parents integer, completed_parents integer, attempts integer, retry_limit integer, backoff_request_seconds integer, last_attempted_at timestamp without time zone)
     LANGUAGE plpgsql STABLE
     AS $$
 BEGIN

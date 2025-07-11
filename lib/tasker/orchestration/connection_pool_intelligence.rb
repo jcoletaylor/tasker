@@ -19,7 +19,7 @@ module Tasker
     #   concurrency = ConnectionPoolIntelligence.intelligent_concurrency_for_step_executor
     #
     # @example With custom configuration
-    #   config = Tasker.configuration.execution
+    #   config = Tasker::Configuration.configuration.execution
     #   config.connection_pressure_factors = { high: 0.3, critical: 0.1 }
     #   concurrency = ConnectionPoolIntelligence.intelligent_concurrency_for_step_executor
     class ConnectionPoolIntelligence
@@ -91,7 +91,7 @@ module Tasker
       # @return [Integer] Safe concurrency level for step execution
       def self.intelligent_concurrency_for_step_executor
         health_data = assess_connection_health
-        config = Tasker.configuration.execution
+        config = Tasker::Configuration.configuration.execution
 
         # Get base recommendation from Rails pool analysis
         base_recommendation = health_data[:recommended_concurrency]
@@ -135,7 +135,7 @@ module Tasker
         pressure = assess_pressure(pool_stat)
 
         # ✅ CONFIGURABLE: Pressure response factors (environment-dependent)
-        pressure_config = Tasker.configuration.execution.connection_pressure_factors
+        pressure_config = Tasker::Configuration.configuration.execution.connection_pressure_factors
         factor = pressure_config[pressure] || 0.5
 
         base_recommendation = [pool_stat[:available] * factor, 12].min.floor

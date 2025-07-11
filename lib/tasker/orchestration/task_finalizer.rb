@@ -440,7 +440,7 @@ module Tasker
           #
           # @return [Tasker::Types::BackoffConfig] The backoff configuration
           def backoff_config
-            @backoff_config ||= Tasker.configuration.backoff
+            @backoff_config ||= Tasker::Configuration.configuration.backoff
           end
 
           # Frozen hash for O(1) delay lookups with descriptive comments

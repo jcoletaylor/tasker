@@ -51,7 +51,7 @@ module Tasker
       #
       # @param config [Tasker::Types::CacheConfig, nil] Cache configuration
       def initialize(config = nil)
-        @config = config || Tasker.configuration.cache
+        @config = config || Tasker::Configuration.configuration.cache
 
         # Use unified cache strategy for capability detection
         @cache_strategy = Tasker::CacheStrategy.detect

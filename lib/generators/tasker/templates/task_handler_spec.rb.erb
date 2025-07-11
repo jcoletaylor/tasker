@@ -5,26 +5,17 @@ require 'rails_helper'
 RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task_handler_class %> do
   let(:stubs) { Faraday::Adapter::Test::Stubs.new }
   let(:connection) { Faraday.new { |b| b.adapter(:test, stubs) } }
-  let(:task_handler) do
-    handler = described_class.new
-    mock_connection = connection # Capture connection in closure
-    original_get_step_handler = handler.method(:get_step_handler)
-    handler.define_singleton_method(:get_step_handler) do |step|
-      step_handler = original_get_step_handler.call(step)
-      step_handler.instance_variable_set(:@connection, mock_connection)
-      step_handler
-    end
-    handler
-  end
+  let(:task_handler) { create_api_task_handler_with_connection(described_class, connection) }
   let(:yaml_path) { described_class.yaml_path }
-  let(:yaml_config) { YAML.load_file(yaml_path) }
+  let(:yaml_config) { described_class.config }
   let(:handler_class) { described_class }
+  let(:input_id) { 1 }
   let(:task_request) do
     Tasker::Types::TaskRequest.new(
       name: "<%= @task_name %>",
       namespace: "<%= @namespace_name || 'default' %>",
       version: "<%= @version || '0.1.0' %>",
-      context: { "input_id" => "123" },
+      context: { "input_id" => input_id },
       initiator: "user",
       reason: "test",
       source_system: "test_system"
@@ -32,6 +23,33 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
   end
   let(:task) { task_handler.initialize_task!(task_request) }
   let(:factory) { Tasker::HandlerFactory.instance }
+
+  before do
+    # Register handler with namespace + version support
+    factory.register(
+      "<%= @task_name %>",
+      described_class,
+      namespace_name: "<%= @namespace_name || 'default' %>",
+      version: "<%= @version || '0.1.0' %>",
+      replace: true
+    )
+    # Stub data endpoint
+    stubs.get("/data/#{input_id}") do |_env|
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        { data: { id: input_id } }.to_json
+      ]
+    end
+    # Stub data endpoint
+    stubs.get("/data") do |_env|
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        { data: [ { id: input_id } ] }.to_json
+      ]
+    end
+  end
 
   describe '#initialize' do
     it 'loads the task configuration from YAML' do
@@ -104,36 +122,6 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
   end
 
   describe 'complete workflow' do
-    before do
-      # Register handler with namespace + version support
-      factory.register(
-        "<%= @task_name %>",
-        described_class,
-        namespace_name: "<%= @namespace_name || 'default' %>",
-        version: "<%= @version || '0.1.0' %>"
-      )
-      stubs.get("/data") do |env|
-        Faraday::Response.new(
-          Faraday::Env.from(
-            status: 200,
-            response_headers: { 'Content-Type' => 'application/json' },
-            body: { data: { id: 123 } }.to_json,
-            url: env.url
-          )
-        )
-      end
-      stubs.get("/data/123") do |env|
-        Faraday::Response.new(
-          Faraday::Env.from(
-            status: 200,
-            response_headers: { 'Content-Type' => 'application/json' },
-            body: { data: { id: 123 } }.to_json,
-            url: env.url
-          )
-        )
-      end
-    end
-
     it 'can handle the task' do
       expect(task).to be_valid
       expect(task.save).to be_truthy
@@ -156,4 +144,22 @@ RSpec.describe <%= @module_namespace ? "#{@module_namespace}::" : '' %><%= @task
       expect(task.status).to eq(Tasker::Constants::TaskStatuses::COMPLETE)
     end
   end
+end
+
+# Create task handler with connection stubbing (for API integration tests)
+def create_api_task_handler_with_connection(handler_class, connection)
+  handler = handler_class.new
+
+  # Override get_step_handler to inject the mocked connection
+  original_get_step_handler = handler.method(:get_step_handler)
+  handler.define_singleton_method(:get_step_handler) do |step|
+    step_handler = original_get_step_handler.call(step)
+
+    # For API step handlers, override the connection that was built during initialization
+    step_handler.instance_variable_set(:@connection, connection) if step_handler.is_a?(Tasker::StepHandler::Api)
+
+    step_handler
+  end
+
+  handler
 end

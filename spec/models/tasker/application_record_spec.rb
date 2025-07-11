@@ -5,7 +5,7 @@ require 'rails_helper'
 module Tasker
   RSpec.describe ApplicationRecord do
     describe 'database connection configuration' do
-      let(:original_config) { Tasker.configuration }
+      let(:original_config) { Tasker::Configuration.configuration }
 
       after do
         # Reset configuration after each test
@@ -15,7 +15,7 @@ module Tasker
       context 'when secondary database is disabled' do
         before do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = false
               db.name = nil
@@ -33,7 +33,7 @@ module Tasker
       context 'when secondary database is enabled but no name provided' do
         before do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = true
               db.name = nil
@@ -51,7 +51,7 @@ module Tasker
       context 'when secondary database is enabled but not configured in database.yml' do
         before do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = true
               db.name = :nonexistent_db
@@ -72,7 +72,7 @@ module Tasker
       context 'with configuration examples' do
         it 'supports environment-specific database configuration' do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = Rails.env.production?
               db.name = Rails.env.production? ? :tasker_production : nil
@@ -80,34 +80,34 @@ module Tasker
           end
 
           # In test environment, should not use secondary database
-          expect(Tasker.configuration.database.enable_secondary_database).to be false
-          expect(Tasker.configuration.database.name).to be_nil
+          expect(Tasker::Configuration.configuration.database.enable_secondary_database).to be false
+          expect(Tasker::Configuration.configuration.database.name).to be_nil
         end
 
         it 'supports symbol database names' do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = true
               db.name = :tasker
             end
           end
 
-          expect(Tasker.configuration.database.name).to eq(:tasker)
-          expect(Tasker.configuration.database.enable_secondary_database).to be true
+          expect(Tasker::Configuration.configuration.database.name).to eq(:tasker)
+          expect(Tasker::Configuration.configuration.database.enable_secondary_database).to be true
         end
 
         it 'supports string database names' do
           Tasker.reset_configuration!
-          Tasker.configuration do |config|
+          Tasker::Configuration.configuration do |config|
             config.database do |db|
               db.enable_secondary_database = true
               db.name = 'tasker_development'
             end
           end
 
-          expect(Tasker.configuration.database.name).to eq('tasker_development')
-          expect(Tasker.configuration.database.enable_secondary_database).to be true
+          expect(Tasker::Configuration.configuration.database.name).to eq('tasker_development')
+          expect(Tasker::Configuration.configuration.database.enable_secondary_database).to be true
         end
       end
 
@@ -159,23 +159,23 @@ module Tasker
           expect { described_class.database_configuration_exists?(:test) }.to raise_error(NoMethodError)
         end
 
-        it 'raises an error when Tasker.configuration is not available' do
+        it 'raises an error when Tasker::Configuration.configuration is not available' do
           # Create a test class that simulates the error condition
           test_class = Class.new(ApplicationRecord) do
             self.abstract_class = true
 
             def self.configure_database_connections
-              # Simulate the condition where Tasker.configuration is not defined
-              # This simulates defined?(Tasker.configuration) returning false
+              # Simulate the condition where Tasker::Configuration.configuration is not defined
+              # This simulates defined?(Tasker::Configuration.configuration) returning false
 
-              raise StandardError, 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
+              raise StandardError, 'Tasker::Configuration.configuration is not available. This indicates a Rails initialization order issue. ' \
                                    'Ensure Tasker is properly initialized before models are loaded.'
             end
           end
 
           expect { test_class.configure_database_connections }.to raise_error(
             StandardError,
-            /Tasker\.configuration is not available.*Rails initialization order issue/
+            /Tasker::Configuration\.configuration is not available.*Rails initialization order issue/
           )
         end
       end

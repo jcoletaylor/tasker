@@ -322,7 +322,7 @@ module Tasker
       def extract_standard_context
         context = {
           environment: Rails.env,
-          tasker_version: Tasker::VERSION
+          tasker_version: Tasker::Version
         }
 
         # Add process/thread info if available
@@ -380,7 +380,7 @@ module Tasker
       #
       # @return [Tasker::Types::TelemetryConfig] Telemetry configuration
       def telemetry_config
-        @telemetry_config ||= Tasker.configuration.telemetry
+        @telemetry_config ||= Tasker::Configuration.configuration.telemetry
       end
     end
   end

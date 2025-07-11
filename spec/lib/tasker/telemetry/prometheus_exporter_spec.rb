@@ -8,7 +8,7 @@ RSpec.describe Tasker::Telemetry::PrometheusExporter do
 
   around do |example|
     # Store original configuration
-    original_config = Tasker.configuration.dup
+    original_config = Tasker::Configuration.configuration.dup
 
     # Configure telemetry for tests
     Tasker.configure do |config|

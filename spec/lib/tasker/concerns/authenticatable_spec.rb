@@ -62,7 +62,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   describe '#authenticate_tasker_user!' do
     context 'when authentication is skipped' do
       before do
-        Tasker.configuration { |config| config.auth { |auth| auth.authentication_enabled = false } }
+        Tasker::Configuration.configuration { |config| config.auth { |auth| auth.authentication_enabled = false } }
       end
 
       it 'returns true without calling authenticator' do
@@ -73,7 +73,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
     context 'when authentication is required' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -112,7 +112,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
   describe '#current_tasker_user' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'TestAuthenticator'
@@ -147,7 +147,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
   describe '#tasker_user_authenticated?' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'TestAuthenticator'
@@ -171,7 +171,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   describe '#skip_authentication?' do
     context 'when authentication is disabled' do
       before do
-        Tasker.configuration { |config| config.auth { |auth| auth.authentication_enabled = false } }
+        Tasker::Configuration.configuration { |config| config.auth { |auth| auth.authentication_enabled = false } }
       end
 
       it 'returns true' do
@@ -181,7 +181,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
     context 'when authentication is enabled' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -198,7 +198,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
   describe 'integration with before_action' do
     context 'when authentication should be skipped' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = false
           end
@@ -214,7 +214,7 @@ RSpec.describe Tasker::Concerns::Authenticatable do
 
     context 'when authentication is required' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'

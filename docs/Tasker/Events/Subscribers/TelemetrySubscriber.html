@@ -884,7 +884,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_convert_attributes_for_otel'>convert_attributes_for_otel</span><span class='lparen'>(</span><span class='id identifier rubyid_attributes'>attributes</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='id identifier rubyid_service_name'>service_name</span> <span class='op'>=</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span>
 
   <span class='comment'># Filter sensitive data first
@@ -1355,7 +1355,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 298</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_create_tracer'>create_tracer</span>
-  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span>
+  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
   <span class='op'>::</span><span class='const'>OpenTelemetry</span><span class='period'>.</span><span class='id identifier rubyid_tracer_provider'>tracer_provider</span><span class='period'>.</span><span class='id identifier rubyid_tracer'>tracer</span><span class='lparen'>(</span>
     <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_name'>service_name</span><span class='comma'>,</span>
     <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_service_version'>service_version</span>
@@ -2170,7 +2170,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_should_process_event?'>should_process_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
   <span class='comment'># Get configuration once for efficiency
-</span>  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span>
+</span>  <span class='id identifier rubyid_config'>config</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span>
 
   <span class='comment'># Only process if telemetry is enabled
 </span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='id identifier rubyid_config'>config</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'>telemetry</span><span class='period'>.</span><span class='id identifier rubyid_enabled'>enabled</span>
@@ -2229,7 +2229,7 @@
       <pre class="code"><span class="info file"># File 'lib/tasker/events/subscribers/telemetry_subscriber.rb', line 165</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_telemetry_enabled?'>telemetry_enabled?</span>
-  <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span> <span class='op'>!=</span> <span class='kw'>false</span>
+  <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span> <span class='op'>!=</span> <span class='kw'>false</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2241,7 +2241,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:16 2025 by
+  Generated on Fri Jul 11 17:34:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

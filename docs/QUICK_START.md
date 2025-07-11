@@ -191,7 +191,7 @@ Your demo application includes comprehensive execution configuration examples. E
 rails console
 
 # Check current execution settings
-config = Tasker.configuration.execution
+config = Tasker::Configuration.configuration.execution
 puts "Min concurrent steps: #{config.min_concurrent_steps}"
 puts "Max concurrent steps: #{config.max_concurrent_steps_limit}"
 puts "Concurrency cache duration: #{config.concurrency_cache_duration} seconds"

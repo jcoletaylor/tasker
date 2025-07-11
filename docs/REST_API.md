@@ -33,7 +33,7 @@ If you've configured a custom authenticator, use the authentication method appro
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'YourCustomAuthenticator'

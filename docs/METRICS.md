@@ -327,7 +327,7 @@ groups:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     # Enable native metrics collection
     tel.metrics_enabled = true
@@ -349,7 +349,7 @@ end
 ### Advanced Configuration
 
 ```ruby
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     tel.metrics_enabled = true
     tel.metrics_format = 'prometheus'
@@ -392,7 +392,7 @@ end
 ```ruby
 # config/environments/production.rb
 config.after_initialize do
-  Tasker.configuration do |config|
+  Tasker::Configuration.configuration do |config|
     config.telemetry do |tel|
       tel.metrics_enabled = true
       tel.prometheus = {
@@ -408,7 +408,7 @@ end
 
 # config/environments/development.rb
 config.after_initialize do
-  Tasker.configuration do |config|
+  Tasker::Configuration.configuration do |config|
     config.telemetry do |tel|
       tel.metrics_enabled = true
       tel.prometheus = {

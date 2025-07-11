@@ -695,7 +695,7 @@
 
 <span class='kw'>def</span> <span class='id identifier rubyid_should_process_event?'>should_process_event?</span><span class='lparen'>(</span><span class='id identifier rubyid_event_constant'>event_constant</span><span class='rparen'>)</span>
   <span class='comment'># Only process if telemetry is enabled
-</span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'><span class='object_link'><a href="../../../Tasker.html#configuration-class_method" title="Tasker.configuration (method)">configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span>
+</span>  <span class='kw'>return</span> <span class='kw'>false</span> <span class='kw'>unless</span> <span class='const'><span class='object_link'><a href="../../../Tasker.html" title="Tasker (module)">Tasker</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Configuration.html" title="Tasker::Configuration (class)">Configuration</a></span></span><span class='period'>.</span><span class='id identifier rubyid_configuration'>configuration</span><span class='period'>.</span><span class='id identifier rubyid_telemetry'><span class='object_link'><a href="../../Configuration.html#telemetry-instance_method" title="Tasker::Configuration#telemetry (method)">telemetry</a></span></span><span class='period'>.</span><span class='id identifier rubyid_enabled'><span class='object_link'><a href="../../Types/TelemetryConfig.html#enabled-instance_method" title="Tasker::Types::TelemetryConfig#enabled (method)">enabled</a></span></span>
 
   <span class='comment'># Convert constant to event name if needed
 </span>  <span class='id identifier rubyid_event_name'>event_name</span> <span class='op'>=</span> <span class='id identifier rubyid_event_constant'>event_constant</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:name</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='id identifier rubyid_event_constant'>event_constant</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>:</span> <span class='id identifier rubyid_event_constant'>event_constant</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
@@ -713,7 +713,7 @@
 </div>
 
       <div id="footer">
-  Generated on Fri Jul 11 10:06:16 2025 by
+  Generated on Fri Jul 11 17:34:52 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.2.4).
 </div>

@@ -25,7 +25,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
   describe '.authenticator' do
     context 'with authentication disabled' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = false
           end
@@ -39,7 +39,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with custom authentication enabled' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -52,7 +52,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
       end
 
       it 'passes options to the authenticator' do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'TestAuthenticator'
@@ -68,7 +68,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with authentication enabled but missing authenticator_class' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = nil
@@ -86,7 +86,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     context 'with invalid authenticator class' do
       before do
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth do |auth|
             auth.authentication_enabled = true
             auth.authenticator_class = 'NonExistentClass'
@@ -110,7 +110,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
     before do
       stub_const('IncompleteAuthenticator', incomplete_authenticator_class)
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'IncompleteAuthenticator'
@@ -129,7 +129,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
   describe 'configuration validation' do
     before do
       TestAuthenticator.set_validation_errors(['Invalid configuration'])
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'TestAuthenticator'
@@ -147,7 +147,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe 'method delegation' do
     before do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = true
           auth.authenticator_class = 'TestAuthenticator'
@@ -182,7 +182,7 @@ RSpec.describe Tasker::Authentication::Coordinator do
 
   describe '.reset!' do
     it 'clears the cached authenticator' do
-      Tasker.configuration do |config|
+      Tasker::Configuration.configuration do |config|
         config.auth do |auth|
           auth.authentication_enabled = false
         end

@@ -62,7 +62,7 @@ module Tasker
     #
     # @return [Boolean] True if authentication should be skipped
     def skip_authentication?
-      !Tasker.configuration.telemetry.metrics_auth_required
+      !Tasker::Configuration.configuration.telemetry.metrics_auth_required
     end
 
     # Override authorization check for metrics endpoint
@@ -70,7 +70,7 @@ module Tasker
     #
     # @return [Boolean] True if authorization should be skipped
     def skip_authorization?
-      !Tasker.configuration.telemetry.metrics_auth_required
+      !Tasker::Configuration.configuration.telemetry.metrics_auth_required
     end
 
     # Export metrics using PrometheusExporter
@@ -87,7 +87,7 @@ module Tasker
     #
     # @return [Boolean] True if metrics are enabled
     def metrics_enabled?
-      Tasker.configuration.telemetry.metrics_enabled
+      Tasker::Configuration.configuration.telemetry.metrics_enabled
     end
 
     # Response when metrics are disabled

@@ -208,7 +208,7 @@ Monitor these metrics to optimize configuration:
 
 ```ruby
 # Access current configuration
-current_config = Tasker.configuration.execution
+current_config = Tasker::Configuration.configuration.execution
 
 # Monitor dynamic concurrency decisions
 max_concurrent = step_executor.max_concurrent_steps

@@ -9,12 +9,12 @@ module Tasker
   # When secondary database is enabled, it connects to a database named 'tasker' in database.yml.
   #
   # @example Basic usage with shared database (default)
-  #   Tasker.configuration do |config|
+  #   Tasker::Configuration.configuration do |config|
   #     config.database.enable_secondary_database = false
   #   end
   #
   # @example Using a dedicated Tasker database
-  #   Tasker.configuration do |config|
+  #   Tasker::Configuration.configuration do |config|
   #     config.database.enable_secondary_database = true
   #     config.database.name = :tasker
   #   end
@@ -35,13 +35,13 @@ module Tasker
     # This follows Rails multi-database conventions but only when database is actually available
     def self.configure_database_connections
       # Ensure Tasker configuration is available - fail fast if not
-      unless defined?(Tasker.configuration)
-        error_message = 'Tasker.configuration is not available. This indicates a Rails initialization order issue. ' \
+      unless defined?(::Tasker::Configuration.configuration)
+        error_message = 'Tasker::Configuration.configuration is not available. This indicates a Rails initialization order issue. ' \
                         'Ensure Tasker is properly initialized before models are loaded.'
         raise StandardError, error_message
       end
 
-      config = Tasker.configuration.database
+      config = ::Tasker::Configuration.configuration.database
       if config.enable_secondary_database && config.name.present?
         # Check if the database configuration actually exists before calling connects_to
         if database_configuration_exists?(config.name)

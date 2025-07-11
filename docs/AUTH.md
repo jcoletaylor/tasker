@@ -57,7 +57,7 @@ By default, Tasker requires no authentication:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = false  # Default - no configuration needed
   end
@@ -70,7 +70,7 @@ For any authentication system, enable authentication and specify your authentica
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'YourCustomAuthenticator'
@@ -85,7 +85,7 @@ Enable both authentication and authorization for complete security:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'YourCustomAuthenticator'
@@ -104,7 +104,7 @@ Authorization in Tasker uses a **resource:action** permission model that works s
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authorization_enabled = true
     auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
@@ -232,7 +232,7 @@ Enable health status authorization:
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authorization_enabled = true
     auth.authorization_coordinator_class = 'YourAuthorizationCoordinator'
@@ -464,7 +464,7 @@ rails generate tasker:authenticator CompanyJWT --type=jwt --user-class=User
 ### Authentication Configuration Block
 
 ```ruby
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     # Authentication settings
     auth.authentication_enabled = true | false  # Enable/disable authentication
@@ -840,7 +840,7 @@ Our `ExampleJWTAuthenticator` demonstrates a production-ready JWT implementation
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'ExampleJWTAuthenticator'
@@ -864,7 +864,7 @@ end
 
 ```ruby
 # config/initializers/tasker.rb
-Tasker.configuration do |config|
+Tasker::Configuration.configuration do |config|
   config.auth do |auth|
     auth.authentication_enabled = true
     auth.authenticator_class = 'ExampleJWTAuthenticator'
@@ -1284,7 +1284,7 @@ For authorization testing, use comprehensive integration tests:
 # spec/support/shared_contexts/configuration_test_isolation.rb
 RSpec.shared_context 'configuration test isolation' do
   around(:each) do |example|
-    original_config = Tasker.configuration
+    original_config = Tasker::Configuration.configuration
     example.run
   ensure
     # Reset to clean state
@@ -1443,7 +1443,7 @@ RSpec.configure do |config|
   config.after(:each) do
     # Automatic cleanup of authentication/authorization state
     if defined?(Tasker) && Tasker.respond_to?(:configuration)
-      current_config = Tasker.configuration
+      current_config = Tasker::Configuration.configuration
       if current_config&.auth&.authorization_enabled == true
         needs_reset = true
       end
@@ -1454,7 +1454,7 @@ RSpec.configure do |config|
       end
 
       if needs_reset
-        Tasker.configuration do |config|
+        Tasker::Configuration.configuration do |config|
           config.auth.authentication_enabled = false
           config.auth.authorization_enabled = false
           config.auth.authenticator_class = nil

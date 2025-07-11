@@ -80,7 +80,7 @@ RSpec.configure do |config|
 
     # Check if we have test-only configuration that needs cleanup
     if defined?(Tasker) && Tasker.respond_to?(:configuration)
-      current_config = Tasker.configuration
+      current_config = Tasker::Configuration.configuration
       needs_reset = false
 
       # Check if using test-only authenticators

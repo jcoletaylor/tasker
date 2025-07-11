@@ -20,7 +20,7 @@ module Tasker
 
         Rails.logger.debug do
           "ConnectionBuilder: Building connection to #{config.url} " \
-            "with #{config.params.keys.size} params and #{config.headers.keys.size} headers"
+            "with #{config.params} params and #{config.headers} headers"
         end
 
         connection = Faraday.new(
