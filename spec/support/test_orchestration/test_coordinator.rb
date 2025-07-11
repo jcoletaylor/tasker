@@ -149,7 +149,7 @@ module TestOrchestration
         end
 
         results[:total_execution_time] = Time.current - start_time
-        results[:average_execution_time] = results[:total_execution_time] / tasks.count if tasks.count > 0
+        results[:average_execution_time] = results[:total_execution_time] / tasks.count if tasks.any?
         results
       end
 

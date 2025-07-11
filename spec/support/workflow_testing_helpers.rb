@@ -221,7 +221,7 @@ module WorkflowTestingHelpers
     end
 
     results[:total_execution_time] = Time.current - start_time
-    results[:average_execution_time] = results[:total_execution_time] / workflows.count if workflows.count > 0
+    results[:average_execution_time] = results[:total_execution_time] / workflows.count if workflows.any?
 
     debug_log "FINAL RESULTS: #{results[:successful_workflows]} successful, #{results[:failed_workflows]} failed"
     results
