@@ -13,7 +13,7 @@ RSpec.describe Tasker::Configuration, type: :model do
 
   # Ensure configuration state is reset between tests
   around do |example|
-    original_config = Tasker::Configuration.configuration.dup
+    original_config = described_class.configuration.dup
     example.run
     Tasker.instance_variable_set(:@configuration, original_config)
   end
@@ -21,7 +21,7 @@ RSpec.describe Tasker::Configuration, type: :model do
   describe '#identity_strategy_instance' do
     it 'returns a default IdentityStrategy when identity_strategy is :default' do
       # Store original configuration to restore later
-      original_strategy = Tasker::Configuration.configuration.engine.identity_strategy
+      original_strategy = described_class.configuration.engine.identity_strategy
 
       # Test setting and getting the identity strategy
       config.engine do |engine|
@@ -33,7 +33,7 @@ RSpec.describe Tasker::Configuration, type: :model do
       expect(config.engine.identity_strategy_instance).to be_a(Tasker::IdentityStrategy)
 
       # Restore original configuration
-      Tasker::Configuration.configuration do |global_config|
+      described_class.configuration do |global_config|
         global_config.engine do |engine|
           engine.identity_strategy = original_strategy
         end
@@ -93,21 +93,21 @@ RSpec.describe Tasker::Configuration, type: :model do
   describe 'Tasker::Configuration.configuration' do
     it 'allows setting identity_strategy through the block syntax' do
       # Store original configuration to restore later
-      original_strategy = Tasker::Configuration.configuration.engine.identity_strategy
+      original_strategy = described_class.configuration.engine.identity_strategy
 
       # Test setting and getting the identity strategy
-      Tasker::Configuration.configuration do |config|
+      described_class.configuration do |config|
         config.engine do |engine|
           engine.identity_strategy = :hash
         end
       end
 
       # Check the updated strategy and its instance
-      expect(Tasker::Configuration.configuration.engine.identity_strategy).to eq(:hash)
-      expect(Tasker::Configuration.configuration.engine.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
+      expect(described_class.configuration.engine.identity_strategy).to eq(:hash)
+      expect(described_class.configuration.engine.identity_strategy_instance).to be_a(Tasker::HashIdentityStrategy)
 
       # Restore original configuration
-      Tasker::Configuration.configuration do |global_config|
+      described_class.configuration do |global_config|
         global_config.engine do |engine|
           engine.identity_strategy = original_strategy
         end
@@ -175,8 +175,8 @@ RSpec.describe Tasker::Configuration, type: :model do
         end
       end
 
-      expect(Tasker::Configuration.configuration.health.ready_requires_authentication).to be true
-      expect(Tasker::Configuration.configuration.health.status_requires_authentication).to be false
+      expect(described_class.configuration.health.ready_requires_authentication).to be true
+      expect(described_class.configuration.health.status_requires_authentication).to be false
     end
 
     it 'maintains configuration state across accesses' do
@@ -187,8 +187,8 @@ RSpec.describe Tasker::Configuration, type: :model do
       end
 
       # Access configuration multiple times
-      first_access = Tasker::Configuration.configuration.health.ready_requires_authentication
-      second_access = Tasker::Configuration.configuration.health.ready_requires_authentication
+      first_access = described_class.configuration.health.ready_requires_authentication
+      second_access = described_class.configuration.health.ready_requires_authentication
 
       expect(first_access).to be true
       expect(second_access).to be true
@@ -203,7 +203,7 @@ RSpec.describe Tasker::Configuration, type: :model do
         end
       end
 
-      expect(Tasker::Configuration.configuration.health.ready_requires_authentication).to be false
+      expect(described_class.configuration.health.ready_requires_authentication).to be false
 
       # Modify configuration
       Tasker.configure do |config|
@@ -212,7 +212,7 @@ RSpec.describe Tasker::Configuration, type: :model do
         end
       end
 
-      expect(Tasker::Configuration.configuration.health.ready_requires_authentication).to be true
+      expect(described_class.configuration.health.ready_requires_authentication).to be true
     end
   end
 
@@ -272,9 +272,9 @@ RSpec.describe Tasker::Configuration, type: :model do
         end
       end
 
-      expect(Tasker::Configuration.configuration.auth.authentication_enabled).to be true
-      expect(Tasker::Configuration.configuration.health.ready_requires_authentication).to be true
-      expect(Tasker::Configuration.configuration.health.status_requires_authentication).to be true
+      expect(described_class.configuration.auth.authentication_enabled).to be true
+      expect(described_class.configuration.health.ready_requires_authentication).to be true
+      expect(described_class.configuration.health.status_requires_authentication).to be true
     end
 
     it 'maintains independence from other configuration sections' do
@@ -285,8 +285,8 @@ RSpec.describe Tasker::Configuration, type: :model do
       end
 
       # Other configuration sections should not be affected
-      expect(Tasker::Configuration.configuration.auth.authentication_enabled).to be false # default
-      expect(Tasker::Configuration.configuration.health.ready_requires_authentication).to be true
+      expect(described_class.configuration.auth.authentication_enabled).to be false # default
+      expect(described_class.configuration.health.ready_requires_authentication).to be true
     end
   end
 
@@ -318,7 +318,7 @@ RSpec.describe Tasker::Configuration, type: :model do
         end
       end
 
-      original_config = Tasker::Configuration.configuration
+      original_config = described_class.configuration
       duplicated_config = original_config.dup
 
       expect(duplicated_config.health.ready_requires_authentication).to eq(original_config.health.ready_requires_authentication)
@@ -359,7 +359,7 @@ RSpec.describe Tasker::Configuration, type: :model do
       # Access configuration from multiple threads
       5.times do
         threads << Thread.new do
-          results << Tasker::Configuration.configuration.health.ready_requires_authentication
+          results << described_class.configuration.health.ready_requires_authentication
         end
       end
 

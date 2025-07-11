@@ -19,9 +19,10 @@ module <%= @module_namespace %>
         connection.get("/data/#{input_id}")
       end
 
-      def process_results(_task, _sequence, step)
+      def process_results(step, response, initial_results)
         # Extract the response ID from the API response
-        step.results = { response_id: step.results.deep_symbolize_keys.dig(:data, :id) }
+        data = JSON.parse(response.body)
+        step.results = { response_id: data.deep_symbolize_keys.dig(:data, :id) }
       end
     end
 

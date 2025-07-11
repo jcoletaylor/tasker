@@ -106,15 +106,15 @@ RSpec.describe Tasker::Configuration, 'Database Configuration' do
 
   describe 'global configuration integration' do
     it 'works with Tasker::Configuration.configuration' do
-      Tasker::Configuration.configuration do |config|
+      described_class.configuration do |config|
         config.database do |db|
           db.name = :global_db
           db.enable_secondary_database = true
         end
       end
 
-      expect(Tasker::Configuration.configuration.database.name).to eq(:global_db)
-      expect(Tasker::Configuration.configuration.database.enable_secondary_database).to be(true)
+      expect(described_class.configuration.database.name).to eq(:global_db)
+      expect(described_class.configuration.database.enable_secondary_database).to be(true)
     end
   end
 end

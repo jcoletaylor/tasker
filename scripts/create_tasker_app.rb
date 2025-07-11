@@ -781,6 +781,10 @@ class TaskerAppGenerator < Thor
       end
       say '  ✓ Tasker setup completed', :green
 
+      # Configure SQL schema format for database functions and views
+      say '  🗄️  Configuring SQL schema format...', :cyan
+      configure_sql_schema_format
+
       # Add Tasker engine mount to routes
       say '  🛤️  Setting up Tasker routes...', :cyan
       routes_file = File.join(@app_dir, 'config', 'routes.rb')
@@ -923,6 +927,38 @@ class TaskerAppGenerator < Thor
     # Replace the generated initializer with our enhanced one
     initializer_path = File.join(@app_dir, 'config', 'initializers', 'tasker.rb')
     File.write(initializer_path, rendered_content)
+  end
+
+  def configure_sql_schema_format
+    application_rb_path = File.join(@app_dir, 'config', 'application.rb')
+
+    unless File.exist?(application_rb_path)
+      say "    ❌ Application file not found: #{application_rb_path}", :red
+      exit 1
+    end
+
+    application_content = File.read(application_rb_path)
+
+    if application_content.include?('config.active_record.schema_format = :sql')
+      say '    ✓ SQL schema format already configured', :green
+    elsif application_content.include?('class Application < Rails::Application')
+      # Add SQL schema format configuration
+      new_application_content = application_content.gsub(
+        /(class Application < Rails::Application\s*\n)/,
+        "\\1    # Configure SQL schema format to preserve database functions and views\n    config.active_record.schema_format = :sql\n\n"
+      )
+
+      begin
+        File.write(application_rb_path, new_application_content)
+        say '    ✓ SQL schema format configured (structure.sql will be used)', :green
+      rescue StandardError => e
+        say "    ❌ Failed to update application.rb: #{e.message}", :red
+        exit 1
+      end
+    else
+      say '    ❌ Could not find Application class in application.rb', :red
+      say '    📝 Please manually add: config.active_record.schema_format = :sql', :yellow
+    end
   end
 
   def setup_observability_configuration
@@ -1434,6 +1470,9 @@ class TaskerAppGenerator < Thor
 
       module #{@app_name.classify}
         class Application < Rails::Application
+          # Configure SQL schema format to preserve database functions and views
+          config.active_record.schema_format = :sql
+
           config.load_defaults 7.0
           config.api_only = true
 

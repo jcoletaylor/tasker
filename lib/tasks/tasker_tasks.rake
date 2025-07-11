@@ -12,6 +12,9 @@ namespace :tasker do
 
       puts 'Installing Tasker database objects...'
 
+      # Check and configure SQL schema format
+      check_and_configure_sql_schema_format
+
       # Find the Tasker gem path using multiple methods for reliability
       tasker_gem_path = find_tasker_gem_path
 
@@ -110,6 +113,84 @@ namespace :tasker do
       else
         puts "   ⚠️  #{directory_name.capitalize} directory not found at #{source_path}"
         puts '      This may indicate an incomplete Tasker installation'
+      end
+    end
+
+    # Check if SQL schema format is configured and offer to fix it if needed
+    def check_and_configure_sql_schema_format
+      application_rb_path = Rails.root.join('config/application.rb')
+
+      unless File.exist?(application_rb_path)
+        puts "⚠️  Application file not found: #{application_rb_path}"
+        puts '   This is unexpected for a Rails application.'
+        return
+      end
+
+      application_content = File.read(application_rb_path)
+
+      if application_content.include?('config.active_record.schema_format = :sql')
+        puts '✅ SQL schema format already configured'
+        return
+      end
+
+      puts ''
+      puts '⚠️  IMPORTANT: SQL Schema Format Configuration Required'
+      puts ''
+      puts '   Tasker uses database functions and views that are not preserved'
+      puts "   in Rails' default schema.rb file. To ensure these database objects"
+      puts '   are properly recreated during test database drops/recreates, you'
+      puts '   need to configure Rails to use structure.sql instead.'
+      puts ''
+      puts '   This requires adding the following line to config/application.rb:'
+      puts '   config.active_record.schema_format = :sql'
+      puts ''
+      print '   Would you like me to add this configuration automatically? (y/n): '
+
+      response = $stdin.gets.chomp.downcase
+
+      if %w[y yes].include?(response)
+        if update_application_rb_schema_format(application_rb_path, application_content)
+          puts '✅ SQL schema format configured successfully!'
+          puts '   Your application will now use db/structure.sql instead of db/schema.rb'
+        else
+          puts '❌ Failed to update application.rb automatically'
+          puts '   Please manually add: config.active_record.schema_format = :sql'
+          puts '   to your config/application.rb file inside the Application class'
+        end
+      else
+        puts '⚠️  Skipping automatic configuration.'
+        puts '   WARNING: Database functions and views may not work correctly'
+        puts '   in test environments without this configuration.'
+        puts ''
+        puts '   To configure manually, add this line to config/application.rb:'
+        puts '   config.active_record.schema_format = :sql'
+      end
+      puts ''
+    end
+
+    # Update application.rb to include SQL schema format configuration
+    #
+    # @param application_rb_path [String] Path to application.rb file
+    # @param application_content [String] Current content of application.rb
+    # @return [Boolean] Success status
+    def update_application_rb_schema_format(application_rb_path, application_content)
+      if application_content.include?('class Application < Rails::Application')
+        # Add SQL schema format configuration
+        new_application_content = application_content.gsub(
+          /(class Application < Rails::Application\s*\n)/,
+          "\\1    # Configure SQL schema format to preserve database functions and views\n    config.active_record.schema_format = :sql\n\n"
+        )
+
+        begin
+          File.write(application_rb_path, new_application_content)
+          true
+        rescue StandardError => e
+          puts "   Error writing to application.rb: #{e.message}"
+          false
+        end
+      else
+        puts '   Could not find Application class in application.rb'
+        false
       end
     end
   end
