@@ -58,7 +58,7 @@ class TaskerAppGenerator < Thor
     say "🚀 Generating Tasker Application: #{@app_name}", :green
     say "📋 Selected templates: #{@tasks.join(', ')}", :cyan
     say "📍 Output directory: #{@output_dir}", :cyan
-    say "🔗 Using Latest Tasker gem version", :cyan
+    say '🔗 Using Latest Tasker gem version', :cyan
 
     # Validate templates directory and required files
     validate_templates_directory
@@ -744,6 +744,15 @@ class TaskerAppGenerator < Thor
       end
       say '  ✓ Tasker migrations installed', :green
 
+      # Install Tasker SQL functions
+      say '  📋 Installing Tasker SQL functions...', :cyan
+      system('bundle exec rails tasker:install:database_objects --quiet')
+      unless $CHILD_STATUS.success?
+        say '❌ Failed to install Tasker SQL functions', :red
+        exit 1
+      end
+      say '  ✓ Tasker SQL functions installed', :green
+
       # NOTE: Database objects (views/functions) will be installed via rake task after setup
       say '  📊 Database objects will be installed after Tasker setup...', :cyan
 
@@ -771,17 +780,6 @@ class TaskerAppGenerator < Thor
         exit 1
       end
       say '  ✓ Tasker setup completed', :green
-
-      # Install Tasker database objects (views and functions) - now that gem is loaded
-      say '  📊 Installing Tasker database objects...', :cyan
-      system('bundle exec rake tasker:install:database_objects --quiet')
-      if $CHILD_STATUS.success?
-        say '  ✓ Tasker database objects installed', :green
-      else
-        say '❌ Failed to install Tasker database objects', :red
-        say '⚠️  Some migrations may fail without required database views and functions', :yellow
-        say '💡 You can manually run: bundle exec rake tasker:install:database_objects', :cyan
-      end
 
       # Add Tasker engine mount to routes
       say '  🛤️  Setting up Tasker routes...', :cyan

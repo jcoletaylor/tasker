@@ -28,7 +28,7 @@ Perfect for processes that involve multiple interdependent steps, require automa
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
-gem 'tasker-engine', '~> 1.0.4'
+gem 'tasker-engine', '~> 1.0.5'
 ```
 
 Install and run the migrations:

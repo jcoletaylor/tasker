@@ -18,7 +18,7 @@ RSpec.describe Tasker::StepReadinessStatus do
       # Use the function-based approach to get readiness data
       readiness_statuses = described_class.for_task(task.task_id)
 
-      if readiness_statuses.count == 0
+      if readiness_statuses.none?
         # Debugging: Check if function has any data at all
         all_tasks = Tasker::Task.count
         all_steps = Tasker::WorkflowStep.count
@@ -60,7 +60,7 @@ RSpec.describe Tasker::StepReadinessStatus do
       readiness_statuses = described_class.for_task(task.task_id)
 
       # Skip this test if no function data is available (as it requires complex dependency analysis)
-      skip 'StepReadinessStatus function has no data for dependency analysis' if readiness_statuses.count == 0
+      skip 'StepReadinessStatus function has no data for dependency analysis' if readiness_statuses.none?
 
       # The root steps (no dependencies) should be ready for execution - use Ruby array methods
       root_steps = readiness_statuses.select { |status| status.total_parents == 0 }
