@@ -4,7 +4,7 @@
 **Tasker Engine** is a mature, production-ready Rails engine for enterprise-grade workflow orchestration that has successfully transitioned from internal development to **public release**. We are now in the **Example Validation & Developer Adoption** phase, focused on ensuring comprehensive, tested examples and documentation to drive developer adoption.
 
 ## Current Status: Production-Ready Public Release
-- **Version**: 1.0.0 (public release - reset from internal v2.7.0)
+- **Version**: 0.1.0 (public release - reset from internal v2.7.0)
 - **Gem Name**: `tasker-engine` (renamed from `tasker` due to RubyGems collision)
 - **Release Status**: Published to RubyGems and GitHub Packages
 - **Branch**: `blog-example-validation` - focused on validating blog examples and code samples

@@ -1,7 +1,7 @@
 # Blog Post Inventory: Example Validation Scope
 
 ## Overview
-This inventory catalogs all blog post content and code examples in `/Users/petetaylor/projects/tasker-blog/blog/posts/` that require validation testing. Our goal is to ensure every code sample works correctly with Tasker Engine 1.0.0.
+This inventory catalogs all blog post content and code examples in `/Users/petetaylor/projects/tasker-blog/blog/posts/` that require validation testing. Our goal is to ensure every code sample works correctly with Tasker Engine 0.1.0.
 
 ## Blog Post Structure Analysis
 
@@ -180,7 +180,7 @@ post-XX-topic-name/
 
 ### Testing Approach for Each Post
 1. **Syntax Validation**: Ensure all Ruby code is syntactically correct
-2. **Tasker Engine Compatibility**: Verify compatibility with 1.0.0 API
+2. **Tasker Engine Compatibility**: Verify compatibility with 0.1.0 API
 3. **Pattern Compliance**: Check adherence to Tasker Engine best practices
 4. **Integration Testing**: Test workflow execution end-to-end
 5. **Mock Implementation**: Create simplified versions of external dependencies

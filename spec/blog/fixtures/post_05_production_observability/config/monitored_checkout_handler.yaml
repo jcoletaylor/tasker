@@ -8,7 +8,7 @@ description: "E-commerce checkout workflow with comprehensive event tracking"
 task_handler_class: "BlogExamples::Post05::TaskHandlers::MonitoredCheckoutHandler"
 default_dependent_system: "ecommerce_platform"
 
-# Step templates configuration  
+# Step templates configuration
 step_templates:
   - name: validate_cart
     description: "Validate cart contents and pricing"
@@ -60,7 +60,7 @@ handler_config:
     track_revenue: true
     track_conversion: true
     customer_tier_tracking: true
-  
+
   monitoring:
     critical_workflow: true
     sla_seconds: 45

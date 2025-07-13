@@ -1,7 +1,7 @@
 # Blog Example Validation Framework Plan
 
 ## Overview
-Create a comprehensive testing framework in `spec/blog/` that validates all blog post code examples against Tasker Engine 1.0.0, ensuring every code sample works correctly and follows best practices.
+Create a comprehensive testing framework in `spec/blog/` that validates all blog post code examples against Tasker Engine 0.1.0, ensuring every code sample works correctly and follows best practices.
 
 ## Directory Structure Plan
 
@@ -349,7 +349,7 @@ end
 ### Code Quality Checks
 1. **Syntax Validation**: All Ruby code must be syntactically correct
 2. **Style Compliance**: Code follows Tasker Engine conventions
-3. **API Compatibility**: Uses only Tasker Engine 1.0.0 public APIs
+3. **API Compatibility**: Uses only Tasker Engine 0.1.0 public APIs
 4. **Error Handling**: Proper exception handling and recovery
 5. **Documentation**: Code matches blog post descriptions
 

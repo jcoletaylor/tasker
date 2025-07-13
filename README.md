@@ -28,7 +28,7 @@ Perfect for processes that involve multiple interdependent steps, require automa
 Add Tasker to your Rails app's `Gemfile`:
 
 ```ruby
-gem 'tasker-engine', '~> 1.0.6'
+gem 'tasker-engine', '~> 0.1.0'
 ```
 
 Install and run the migrations:
@@ -123,7 +123,7 @@ This creates a complete workflow structure:
 ---
 name: order_process
 namespace_name: default
-version: 1.0.1
+version: 0.1.0
 task_handler_class: OrderProcess
 
 step_templates:
@@ -169,7 +169,7 @@ end
 task_request = Tasker::Types::TaskRequest.new(
   name: 'order_process',
   namespace: 'default',        # Optional - defaults to 'default'
-  version: '1.0.1',           # Optional - defaults to '0.1.0'
+  version: '0.1.0',           # Optional - defaults to '0.1.0'
   context: { order_id: 12345 }
 )
 
@@ -177,7 +177,7 @@ task_request = Tasker::Types::TaskRequest.new(
 handler = Tasker::HandlerFactory.instance.get(
   'order_process',
   namespace_name: 'default',   # Optional - defaults to 'default'
-  version: '1.0.1'            # Optional - defaults to '0.1.0'
+  version: '0.1.0'            # Optional - defaults to '0.1.0'
 )
 task = handler.initialize_task!(task_request)
 
@@ -292,7 +292,7 @@ Tasker::Configuration.configuration do |config|
   config.telemetry do |tel|
     tel.enabled = true
     tel.service_name = 'my-app-workflows'
-    tel.service_version = '1.0.1'
+    tel.service_version = '0.1.0'
   end
 end
 ```
