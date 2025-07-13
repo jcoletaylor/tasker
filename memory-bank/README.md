@@ -3,7 +3,7 @@
 This memory bank captures the current state of **Tasker Engine** as of January 2025, during the **Example Validation & Developer Adoption** phase.
 
 ## Project Status Summary
-- **Version**: 1.0.0 (public production release)
+- **Version**: 0.1.0 (public production release)
 - **Gem Name**: `tasker-engine` (renamed from `tasker`)
 - **Phase**: Example Validation & Blog Series Development
 - **Branch**: `blog-example-validation`
@@ -23,7 +23,7 @@ This memory bank captures the current state of **Tasker Engine** as of January 2
 
 ### Project Evolution
 Tasker Engine has successfully transitioned from **internal development** to **public production release**:
-- From internal v2.7.0 → public 1.0.0
+- From internal v2.7.0 → public 0.1.0
 - From `tasker` gem → `tasker-engine` gem
 - From core development → example validation and developer adoption
 
@@ -61,7 +61,7 @@ Building a comprehensive **learning ecosystem** with:
 Building systematic testing for all blog examples and documentation code samples to ensure:
 - **Functional Correctness**: All examples execute successfully
 - **Production Viability**: Examples represent real production patterns
-- **Version Compatibility**: Examples work with current Tasker Engine 1.0.0
+- **Version Compatibility**: Examples work with current Tasker Engine 0.1.0
 
 ### Blog Series Development
 Creating comprehensive learning resources at https://docs.tasker.systems with:
@@ -72,7 +72,7 @@ Creating comprehensive learning resources at https://docs.tasker.systems with:
 ## Developer Resources
 
 ### Getting Started
-- **Installation**: `gem 'tasker-engine', '~> 1.0.6'`
+- **Installation**: `gem 'tasker-engine', '~> 0.1.0'`
 - **Quick Start**: 5-minute workflow creation
 - **Generators**: Complete scaffolding for workflows, auth, and subscribers
 

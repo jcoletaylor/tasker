@@ -2,6 +2,15 @@
 
 ## Recently Completed ✅
 
+### Version Restructure Phase 5 (January 2025)
+- **Codebase Version Update**: Successfully updated all version references from 1.0.x to 0.1.0
+- **Core Version File**: Updated lib/tasker/version.rb from 1.0.6 to 0.1.0
+- **Documentation Updates**: Updated README.md and all docs to reference 0.1.0
+- **Template Updates**: Updated all ERB templates to use 0.1.0 instead of 1.0.x
+- **YAML Configuration**: Updated all YAML files to use version 0.1.0
+- **Test Suite Updates**: Updated test files and blog examples to use 0.1.0
+- **Memory Bank Updates**: Updated all memory bank files to reflect new version
+
 ### SQL Schema Format Configuration (July 2025)
 - **Fixed critical Rails schema issue**: Added automatic configuration of `config.active_record.schema_format = :sql`
 - **App generation enhanced**: Both traditional and Docker Rails apps now automatically configure SQL schema format
@@ -15,19 +24,19 @@
 - **Test coverage**: Counter, Gauge, and Histogram description methods now produce consistent output across Ruby versions
 
 ### Current Status
+- **Version**: 0.1.0 (reset from 1.0.6 to signal active development)
 - **All templates working**: Task handler, YAML config, and spec templates generate syntactically valid code
-- **All tests passing**: Fixed 3 fragile metric tests without changing expectations
-- **Template test suite**: Comprehensive validation prevents future template regressions
-- **Schema format configured**: Rails applications will properly preserve database functions and views
+- **All tests passing**: Version references updated throughout codebase
+- **Ready for Phase 6**: Prepared for new gem build and release
 
 ## Next Steps
-- Test the app generation script with the new SQL schema format configuration
-- Monitor real-world usage to ensure the database objects installation works smoothly
-- Consider implementing Phase 2 of template testing (generated code compilation)
+- ✅ **COMPLETED**: Successfully yanked remaining gem versions 1.0.5 and 1.0.6 from RubyGems
+- Build and test new 0.1.0 gem locally
+- Prepare for Phase 6: New release preparation and publishing
+- Consider testing the app generation script with the new version
 
 ## Key Decisions Made
-- **SQL schema format**: Chose to automatically configure `:sql` format for all generated applications
-- **Interactive rake task**: Added user-friendly warning and auto-fix option for existing applications
-- **Clear user messaging**: Explained why SQL schema format is needed for database functions/views
-- **Template testing approach**: Matrix testing over individual template tests for comprehensive coverage
-- **Metric description consistency**: Used older Ruby hash syntax for backward compatibility
+- **Version Strategy**: Reset to 0.1.0 to signal active development and invite community feedback
+- **Comprehensive Update**: Updated all references consistently across codebase, docs, and tests
+- **Backward Compatibility**: Previous versions now have -alpha and -beta suffixes to indicate experimental nature
+- **Memory Bank Alignment**: Updated all memory bank files to reflect new version strategy
